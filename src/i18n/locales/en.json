@@ -54,5 +54,11 @@
     "failedSubtitle": "A stone dropped — let's restart.",
     "restart": "Play again",
     "back": "Back"
+  },
+  "gameIntro": {
+    "howToPlay": "How to play?",
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Let's start!"
   }
 }
