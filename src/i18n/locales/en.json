@@ -1,0 +1,10 @@
+{
+  "common": {
+    "appName": "OYNO",
+    "loading": "Loading..."
+  },
+  "home": {
+    "title": "OYNO",
+    "subtitle": "Kyrgyz culture and traditional games"
+  }
+}

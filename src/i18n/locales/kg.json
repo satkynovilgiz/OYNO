@@ -1,0 +1,10 @@
+{
+  "common": {
+    "appName": "OYNO",
+    "loading": "Жүктөлүүдө..."
+  },
+  "home": {
+    "title": "OYNO",
+    "subtitle": "Кыргыз маданияты жана улуттук оюндар"
+  }
+}
