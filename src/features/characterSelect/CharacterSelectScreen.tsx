@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  ALL_CHARACTER_IDS,
   CHARACTER_DESCRIPTORS,
   CHARACTER_NAMES,
   CHARACTERS_WITH_FULL_SHEET,
@@ -24,10 +25,11 @@ type CharacterSelectScreenProps = {
 
 /**
  * "Каарманыңды танда" - shown after Sign Up and reachable from Profile.
- * Only Бек/Айдана/Аяна are shown: Бөрү/Тулпар/Элчи have no sheet or
- * portrait at all yet, and per an explicit product decision they're hidden
- * entirely from this grid until their assets exist, rather than shown as
- * a "coming soon" placeholder.
+ * Бек/Айдана/Аяна are fully selectable (happy portrait, descriptor, tap to
+ * pick). Бөрү/Тулпар/Элчи have no sheet or portrait at all yet, so per
+ * product decision they still appear in the grid (initial-letter
+ * placeholder via CharacterAvatar) but as disabled "Жакында" cards rather
+ * than being hidden.
  */
 export function CharacterSelectScreen({ isGuest = false, initialCharacterId, onConfirm }: CharacterSelectScreenProps) {
   const { t } = useTranslation();
@@ -44,8 +46,28 @@ export function CharacterSelectScreen({ isGuest = false, initialCharacterId, onC
         <Text style={styles.subtitle}>{t('characterSelect.subtitle')}</Text>
 
         <View style={styles.grid}>
-          {CHARACTERS_WITH_FULL_SHEET.map((characterId) => {
-            const isSelected = selected === characterId;
+          {ALL_CHARACTER_IDS.map((characterId) => {
+            const isComplete = CHARACTERS_WITH_FULL_SHEET.includes(characterId);
+            const isSelected = isComplete && selected === characterId;
+
+            if (!isComplete) {
+              return (
+                <View
+                  key={characterId}
+                  accessibilityLabel={`${CHARACTER_NAMES[characterId]} - ${t('characterSelect.comingSoon')}`}
+                  style={[styles.card, styles.cardDisabled]}
+                >
+                  <View style={styles.avatarWrap}>
+                    <CharacterAvatar characterId={characterId} emotion="happy" size={88} />
+                  </View>
+                  <Text style={styles.name}>{CHARACTER_NAMES[characterId]}</Text>
+                  <View style={styles.comingSoonBadge}>
+                    <Text style={styles.comingSoonLabel}>{t('characterSelect.comingSoon')}</Text>
+                  </View>
+                </View>
+              );
+            }
+
             return (
               <AnimatedPressable
                 key={characterId}
@@ -121,6 +143,21 @@ const styles = StyleSheet.create({
   },
   cardSelected: {
     borderColor: colors.primary,
+  },
+  cardDisabled: {
+    opacity: 0.55,
+  },
+  comingSoonBadge: {
+    marginTop: spacing.xxs,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceAlt,
+  },
+  comingSoonLabel: {
+    ...typography.small,
+    color: colors.textMuted,
+    fontWeight: '700',
   },
   avatarWrap: {
     position: 'relative',

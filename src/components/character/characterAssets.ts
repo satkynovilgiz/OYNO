@@ -90,6 +90,10 @@ const characterEmotionAssets: Partial<Record<CharacterId, Record<CharacterEmotio
 
 export const CHARACTERS_WITH_FULL_SHEET: CharacterId[] = ['bek', 'aidana', 'aiana'];
 
+/** Every character the app knows about, in the order they should be
+ * displayed (full-sheet characters first, then "coming soon" ones). */
+export const ALL_CHARACTER_IDS: CharacterId[] = ['bek', 'aidana', 'aiana', 'boru', 'tulpar', 'elchi'];
+
 /**
  * One-line personality descriptors for CharacterSelectScreen. Бек and
  * Айдана's wording is taken directly from the product spec; Аяна's wasn't

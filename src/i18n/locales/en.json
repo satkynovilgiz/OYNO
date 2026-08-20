@@ -65,6 +65,7 @@
     "title": "Choose your character",
     "subtitle": "This character becomes the face of your profile",
     "continue": "Continue",
-    "guestHint": "Create an account to save your progress"
+    "guestHint": "Create an account to save your progress",
+    "comingSoon": "Coming soon"
   }
 }
