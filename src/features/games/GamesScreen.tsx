@@ -65,7 +65,13 @@ export function GamesScreen() {
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>
-        <BottomTabBar activeTab="games" onPressTab={(tab) => tab === 'home' && router.push('/')} />
+        <BottomTabBar
+          activeTab="games"
+          onPressTab={(tab) => {
+            if (tab === 'home') router.push('/');
+            if (tab === 'explore') router.push('/explore' as never);
+          }}
+        />
       </View>
     </View>
   );

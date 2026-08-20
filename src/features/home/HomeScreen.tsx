@@ -29,7 +29,10 @@ function handlePressTab(tab: TabId) {
   if (tab === 'games') {
     router.push('/games' as never);
   }
-  // explore / culture / profile screens aren't built yet.
+  if (tab === 'explore') {
+    router.push('/explore' as never);
+  }
+  // culture / profile screens aren't built yet.
 }
 
 export function HomeScreen() {
