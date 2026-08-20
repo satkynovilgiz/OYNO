@@ -20,15 +20,17 @@ function isSupportedLanguage(value: string | null | undefined): value is Support
 const languageDetector: LanguageDetectorAsyncModule = {
   type: 'languageDetector',
   async: true,
-  detect: async (callback) => {
-    const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (isSupportedLanguage(stored)) {
-      callback(stored);
-      return;
-    }
+  detect: (callback) => {
+    void (async () => {
+      const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (isSupportedLanguage(stored)) {
+        callback(stored);
+        return;
+      }
 
-    const deviceLanguage = Localization.getLocales()[0]?.languageCode;
-    callback(isSupportedLanguage(deviceLanguage) ? deviceLanguage : DEFAULT_LANGUAGE);
+      const deviceLanguage = Localization.getLocales()[0]?.languageCode;
+      callback(isSupportedLanguage(deviceLanguage) ? deviceLanguage : DEFAULT_LANGUAGE);
+    })();
   },
   init: () => {},
   cacheUserLanguage: async (language) => {
