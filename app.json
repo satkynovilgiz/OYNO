@@ -37,6 +37,12 @@
         "projectId": "bad293a4-8544-4fb6-8b5f-776a51bd4f7b"
       }
     },
-    "owner": "ilgizsatkynov"
+    "owner": "ilgizsatkynov",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bad293a4-8544-4fb6-8b5f-776a51bd4f7b"
+    }
   }
 }
