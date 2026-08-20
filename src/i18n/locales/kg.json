@@ -1,10 +1,41 @@
 {
   "common": {
     "appName": "OYNO",
-    "loading": "Жүктөлүүдө..."
+    "loading": "Жүктөлүүдө...",
+    "seeAll": "Баарын көрүү"
   },
   "home": {
-    "title": "OYNO",
-    "subtitle": "Кыргыз маданияты жана улуттук оюндар"
+    "header": {
+      "tagline": "Кыргыз дүйнөсү телефонуңда.",
+      "menuLabel": "Меню",
+      "notificationsLabel": "Билдирүүлөр"
+    },
+    "profile": {
+      "editLabel": "Аты-жөнүн оңдоо",
+      "level": "Деңгээл {{level}}",
+      "xp": "XP {{current}} / {{max}}"
+    },
+    "dailyChallenge": {
+      "title": "Бүгүнкү тапшырма",
+      "rewardLabel": "Сыйлык:",
+      "openLabel": "Тапшырманы ачуу"
+    },
+    "dailyGift": {
+      "title": "Күнүмдүк белек",
+      "openLabel": "Белекти ачуу"
+    },
+    "games": {
+      "sectionTitle": "Оюндар"
+    },
+    "culture": {
+      "openLabel": "Бөлүмдү ачуу"
+    },
+    "nav": {
+      "home": "Башкы бет",
+      "games": "Оюндар",
+      "explore": "Изилдөө",
+      "culture": "Маданият",
+      "profile": "Профиль"
+    }
   }
 }

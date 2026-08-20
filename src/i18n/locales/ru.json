@@ -1,10 +1,41 @@
 {
   "common": {
     "appName": "OYNO",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "seeAll": "Смотреть все"
   },
   "home": {
-    "title": "OYNO",
-    "subtitle": "Кыргызская культура и национальные игры"
+    "header": {
+      "tagline": "Кыргызский мир у тебя в телефоне.",
+      "menuLabel": "Меню",
+      "notificationsLabel": "Уведомления"
+    },
+    "profile": {
+      "editLabel": "Изменить имя",
+      "level": "Уровень {{level}}",
+      "xp": "XP {{current}} / {{max}}"
+    },
+    "dailyChallenge": {
+      "title": "Задание дня",
+      "rewardLabel": "Награда:",
+      "openLabel": "Открыть задание"
+    },
+    "dailyGift": {
+      "title": "Ежедневный подарок",
+      "openLabel": "Открыть подарок"
+    },
+    "games": {
+      "sectionTitle": "Игры"
+    },
+    "culture": {
+      "openLabel": "Открыть раздел"
+    },
+    "nav": {
+      "home": "Главная",
+      "games": "Игры",
+      "explore": "Исследовать",
+      "culture": "Культура",
+      "profile": "Профиль"
+    }
   }
 }

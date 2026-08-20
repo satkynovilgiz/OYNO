@@ -1,10 +1,41 @@
 {
   "common": {
     "appName": "OYNO",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "seeAll": "See all"
   },
   "home": {
-    "title": "OYNO",
-    "subtitle": "Kyrgyz culture and traditional games"
+    "header": {
+      "tagline": "The Kyrgyz world in your phone.",
+      "menuLabel": "Menu",
+      "notificationsLabel": "Notifications"
+    },
+    "profile": {
+      "editLabel": "Edit name",
+      "level": "Level {{level}}",
+      "xp": "XP {{current}} / {{max}}"
+    },
+    "dailyChallenge": {
+      "title": "Daily challenge",
+      "rewardLabel": "Reward:",
+      "openLabel": "Open challenge"
+    },
+    "dailyGift": {
+      "title": "Daily gift",
+      "openLabel": "Open gift"
+    },
+    "games": {
+      "sectionTitle": "Games"
+    },
+    "culture": {
+      "openLabel": "Open section"
+    },
+    "nav": {
+      "home": "Home",
+      "games": "Games",
+      "explore": "Explore",
+      "culture": "Culture",
+      "profile": "Profile"
+    }
   }
 }

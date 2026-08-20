@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { colors } from '@/theme';
 import { queryClient } from '@/services/queryClient';
 
 export default function RootLayout() {
@@ -13,8 +14,10 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }} />
+          <StatusBar style="dark" />
+          <Stack
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+          />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
