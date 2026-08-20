@@ -90,6 +90,18 @@ const characterEmotionAssets: Partial<Record<CharacterId, Record<CharacterEmotio
 
 export const CHARACTERS_WITH_FULL_SHEET: CharacterId[] = ['bek', 'aidana', 'aiana'];
 
+/**
+ * One-line personality descriptors for CharacterSelectScreen. Бек and
+ * Айдана's wording is taken directly from the product spec; Аяна's wasn't
+ * given anywhere in the spec, so this one is an original short line in the
+ * same voice - flag/replace it if there's an official version.
+ */
+export const CHARACTER_DESCRIPTORS: Partial<Record<CharacterId, string>> = {
+  bek: 'энергиялуу, тайманбас',
+  aidana: 'акылдуу, тынч',
+  aiana: 'жылуу, чыгармачыл',
+};
+
 export function getCharacterEmotionAsset(
   characterId: CharacterId,
   emotion: CharacterEmotion,

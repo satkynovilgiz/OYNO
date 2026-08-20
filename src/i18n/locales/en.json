@@ -60,5 +60,11 @@
     "skip": "Skip",
     "next": "Next",
     "start": "Let's start!"
+  },
+  "characterSelect": {
+    "title": "Choose your character",
+    "subtitle": "This character becomes the face of your profile",
+    "continue": "Continue",
+    "guestHint": "Create an account to save your progress"
   }
 }
