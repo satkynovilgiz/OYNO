@@ -1,3 +1,5 @@
+import type { ImageSourcePropType } from 'react-native';
+
 export type PlayerSummary = {
   name: string;
   rank: string;
@@ -6,7 +8,7 @@ export type PlayerSummary = {
   xpMax: number;
   coins: number;
   gems: number;
-  avatarUri?: string;
+  avatarSource?: ImageSourcePropType;
 };
 
 export type DailyChallenge = {

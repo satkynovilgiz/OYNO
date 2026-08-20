@@ -1,3 +1,5 @@
+import avatarBek from '@assets/img/avatar_bek.png';
+
 import type { CultureTile, DailyChallenge, DailyGift, GameSummary, PlayerSummary } from './types';
 
 export const mockPlayer: PlayerSummary = {
@@ -8,6 +10,7 @@ export const mockPlayer: PlayerSummary = {
   xpMax: 2000,
   coins: 2450,
   gems: 180,
+  avatarSource: avatarBek,
 };
 
 export const mockHasUnreadNotifications = true;
