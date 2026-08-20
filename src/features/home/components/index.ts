@@ -1,4 +1,3 @@
-export * from './BottomTabBar';
 export * from './CultureGrid';
 export * from './DailyChallengeCard';
 export * from './DailyGiftCard';

@@ -1,10 +1,11 @@
+import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
 import { colors, spacing } from '@/theme';
 
 import {
-  BottomTabBar,
   CultureGrid,
   DailyChallengeCard,
   DailyGiftCard,
@@ -23,6 +24,13 @@ import {
   mockHasUnreadNotifications,
   mockPlayer,
 } from './mockData';
+
+function handlePressTab(tab: TabId) {
+  if (tab === 'games') {
+    router.push('/games' as never);
+  }
+  // explore / culture / profile screens aren't built yet.
+}
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -48,7 +56,15 @@ export function HomeScreen() {
           <HeroBanner />
         </View>
 
-        <GamesCarousel games={mockGames} />
+        <GamesCarousel
+          games={mockGames}
+          onPressGame={(game) => {
+            if (game.route) {
+              router.push(game.route as never);
+            }
+          }}
+          onPressSeeAll={() => router.push('/games' as never)}
+        />
 
         <CultureGrid tiles={mockCultureTiles} />
 
@@ -58,7 +74,7 @@ export function HomeScreen() {
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>
-        <BottomTabBar />
+        <BottomTabBar activeTab="home" onPressTab={handlePressTab} />
       </View>
     </View>
   );

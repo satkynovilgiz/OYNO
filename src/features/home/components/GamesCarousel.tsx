@@ -1,15 +1,14 @@
-import { ChevronRight, Dices } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
+import type { GameListItem } from '@/features/games/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
-import type { GameSummary } from '../types';
-
 type GamesCarouselProps = {
-  games: GameSummary[];
-  onPressGame?: (game: GameSummary) => void;
+  games: GameListItem[];
+  onPressGame?: (game: GameListItem) => void;
   onPressSeeAll?: () => void;
 };
 
@@ -41,9 +40,7 @@ export function GamesCarousel({ games, onPressGame, onPressSeeAll }: GamesCarous
             accessibilityRole="button"
             accessibilityLabel={game.name}
           >
-            <View style={styles.thumbnail}>
-              <Dices size={26} color={colors.accentBrown} strokeWidth={1.75} />
-            </View>
+            <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
             <Text style={styles.name} numberOfLines={1}>
               {game.name}
             </Text>
@@ -98,8 +95,6 @@ const styles = StyleSheet.create({
     height: 92,
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
     ...shadows.card,
   },
   name: {

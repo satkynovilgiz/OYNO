@@ -1,7 +1,7 @@
 import { Image, StyleSheet, View } from 'react-native';
 
 import { radii, shadows } from '@/theme';
-import heroBanner from '@assets/img/hero_banner.png';
+import heroBanner from '@assets/img/OYNO_design/hero_banner.png';
 
 /** Boz Üy + grassland scene illustration with the cast of characters. */
 export function HeroBanner() {

@@ -1,5 +1,4 @@
 import { Compass, Home, Swords, UserRound, type LucideIcon } from 'lucide-react-native';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -7,7 +6,7 @@ import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
 import { colors, shadows, spacing, typography } from '@/theme';
 
-type TabId = 'home' | 'games' | 'explore' | 'culture' | 'profile';
+export type TabId = 'home' | 'games' | 'explore' | 'culture' | 'profile';
 
 type TabItem = {
   id: TabId;
@@ -24,12 +23,12 @@ const TABS: TabItem[] = [
 ];
 
 type BottomTabBarProps = {
+  activeTab: TabId;
   onPressTab?: (tab: TabId) => void;
 };
 
-export function BottomTabBar({ onPressTab }: BottomTabBarProps) {
+export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabId>('home');
 
   return (
     <View style={styles.bar}>
@@ -45,10 +44,7 @@ export function BottomTabBar({ onPressTab }: BottomTabBarProps) {
             pressScale={0.9}
             accessibilityRole="button"
             accessibilityLabel={t(tab.labelKey)}
-            onPress={() => {
-              setActiveTab(tab.id);
-              onPressTab?.(tab.id);
-            }}
+            onPress={() => onPressTab?.(tab.id)}
           >
             {tab.id === 'culture' ? (
               <OymoOrnament size={22} color={color} strokeWidth={1.75} />

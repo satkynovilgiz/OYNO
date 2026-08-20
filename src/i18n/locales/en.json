@@ -40,5 +40,19 @@
       "culture": "Culture",
       "profile": "Profile"
     }
+  },
+  "beshTash": {
+    "title": "Besh Tash",
+    "hand": "In hand",
+    "ground": "On the ground",
+    "toss": "Toss!",
+    "catchNow": "Catch!",
+    "start": "Start",
+    "wonTitle": "Victory! 🎉",
+    "wonSubtitle": "You completed the full besh tash sequence!",
+    "failedTitle": "Try again",
+    "failedSubtitle": "A stone dropped — let's restart.",
+    "restart": "Play again",
+    "back": "Back"
   }
 }

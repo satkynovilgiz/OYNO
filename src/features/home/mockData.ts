@@ -1,13 +1,8 @@
-import avatarBek from '@assets/img/avatar_bek.png';
+import avatarBek from '@assets/img/OYNO_design/avatar_bek.png';
 
-import type {
-  CultureTile,
-  DailyChallenge,
-  DailyGift,
-  DailyProgress,
-  GameSummary,
-  PlayerSummary,
-} from './types';
+import { mockGamesList } from '@/features/games/mockData';
+
+import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 
 export const mockPlayer: PlayerSummary = {
   name: 'Бек',
@@ -40,13 +35,9 @@ export const mockDailyProgress: DailyProgress = {
   progressMax: 50,
 };
 
-export const mockGames: GameSummary[] = [
-  { id: 'toguz-korgool', name: 'Тогуз коргоол' },
-  { id: 'chuko', name: 'Чүкө' },
-  { id: 'ordo', name: 'Ордо' },
-  { id: 'besh-tash', name: 'Беш таш' },
-  { id: 'arkan-tartysh', name: 'Аркан тартыш' },
-];
+// Home's carousel is a preview: the first 5 games from the shared list
+// (same order/content as the full Games hub), not a separate data source.
+export const mockGames = mockGamesList.slice(0, 5);
 
 export const mockCultureTiles: CultureTile[] = [
   { id: 'culture', title: 'Маданият', subtitle: 'Боз үй, оймо, шырдак', tone: 'culture' },

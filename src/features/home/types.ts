@@ -29,12 +29,6 @@ export type DailyProgress = {
   progressMax: number;
 };
 
-export type GameSummary = {
-  id: string;
-  name: string;
-  thumbnailUri?: string;
-};
-
 export type CultureTileTone = 'culture' | 'food' | 'music' | 'map';
 
 export type CultureTile = {

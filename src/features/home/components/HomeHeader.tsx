@@ -4,7 +4,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { IconButton } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
-import wordmark from '@assets/img/wordmark.png';
+import wordmark from '@assets/img/OYNO_design/wordmark.png';
 
 type HomeHeaderProps = {
   hasUnreadNotifications: boolean;
