@@ -8,6 +8,7 @@ import {
   CultureGrid,
   DailyChallengeCard,
   DailyGiftCard,
+  DailyProgressCard,
   GamesCarousel,
   HeroBanner,
   HomeHeader,
@@ -17,6 +18,7 @@ import {
   mockCultureTiles,
   mockDailyChallenge,
   mockDailyGift,
+  mockDailyProgress,
   mockGames,
   mockHasUnreadNotifications,
   mockPlayer,
@@ -49,6 +51,10 @@ export function HomeScreen() {
         <GamesCarousel games={mockGames} />
 
         <CultureGrid tiles={mockCultureTiles} />
+
+        <View style={styles.horizontalPad}>
+          <DailyProgressCard progress={mockDailyProgress} />
+        </View>
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>

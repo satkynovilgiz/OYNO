@@ -1,4 +1,4 @@
-import { Coins, Gem, Pencil, UserRound } from 'lucide-react-native';
+import { Award, Coins, Pencil, UserRound } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
@@ -51,7 +51,7 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
           <Text style={styles.currencyText}>{player.coins.toLocaleString('ru-RU')}</Text>
         </View>
         <View style={styles.currencyChip}>
-          <Gem size={16} color={colors.primaryMuted} strokeWidth={2} />
+          <Award size={16} color={colors.accentSilver} strokeWidth={2} />
           <Text style={styles.currencyText}>{player.gems.toLocaleString('ru-RU')}</Text>
         </View>
       </View>

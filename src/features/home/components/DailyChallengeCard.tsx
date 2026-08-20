@@ -1,8 +1,8 @@
-import { ChevronRight, Coins, ScrollText, Star } from 'lucide-react-native';
+import { Calendar, ChevronRight, Coins, Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, IconButton, ProgressBar } from '@/components/ui';
+import { Card, IconButton, IconChip, ProgressBar } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
 import type { DailyChallenge } from '../types';
@@ -20,10 +20,8 @@ export function DailyChallengeCard({ challenge, onPress }: DailyChallengeCardPro
   return (
     <Card style={styles.card}>
       <View style={styles.headerRow}>
-        <ScrollText size={18} color={colors.accentBrown} strokeWidth={2} />
-        <Text style={styles.title} numberOfLines={1}>
-          {t('home.dailyChallenge.title')}
-        </Text>
+        <IconChip icon={Calendar} size={28} iconSize={14} />
+        <Text style={styles.title}>{t('home.dailyChallenge.title')}</Text>
         <IconButton
           icon={ChevronRight}
           variant="primary"

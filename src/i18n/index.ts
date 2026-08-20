@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Localization from 'expo-localization';
 import i18n, { type LanguageDetectorAsyncModule } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -20,16 +19,13 @@ function isSupportedLanguage(value: string | null | undefined): value is Support
 const languageDetector: LanguageDetectorAsyncModule = {
   type: 'languageDetector',
   async: true,
+  // Product requirement: Kyrgyz is always the default on first launch,
+  // regardless of device locale. Only an explicit choice made through the
+  // in-app language switcher (persisted below) should change it.
   detect: (callback) => {
     void (async () => {
       const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (isSupportedLanguage(stored)) {
-        callback(stored);
-        return;
-      }
-
-      const deviceLanguage = Localization.getLocales()[0]?.languageCode;
-      callback(isSupportedLanguage(deviceLanguage) ? deviceLanguage : DEFAULT_LANGUAGE);
+      callback(isSupportedLanguage(stored) ? stored : DEFAULT_LANGUAGE);
     })();
   },
   init: () => {},

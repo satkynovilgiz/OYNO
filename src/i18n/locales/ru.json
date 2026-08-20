@@ -24,6 +24,9 @@
       "title": "Ежедневный подарок",
       "openLabel": "Открыть подарок"
     },
+    "dailyProgress": {
+      "claimLabel": "Забрать награду"
+    },
     "games": {
       "sectionTitle": "Игры"
     },

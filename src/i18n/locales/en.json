@@ -24,6 +24,9 @@
       "title": "Daily gift",
       "openLabel": "Open gift"
     },
+    "dailyProgress": {
+      "claimLabel": "Claim reward"
+    },
     "games": {
       "sectionTitle": "Games"
     },

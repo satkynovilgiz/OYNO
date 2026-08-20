@@ -2,6 +2,7 @@ export * from './BottomTabBar';
 export * from './CultureGrid';
 export * from './DailyChallengeCard';
 export * from './DailyGiftCard';
+export * from './DailyProgressCard';
 export * from './GamesCarousel';
 export * from './HeroBanner';
 export * from './HomeHeader';

@@ -11,6 +11,7 @@ const palette = {
   green700: '#1F3A24',
   gold400: '#E8B93D',
   gold600: '#C79A2E',
+  silver400: '#9AA6AC',
   red500: '#D64545',
   tileGreen: '#33482F',
   tileOrange: '#B9793A',
@@ -34,6 +35,7 @@ export const colors = {
 
   accentGold: palette.gold400,
   accentGoldPressed: palette.gold600,
+  accentSilver: palette.silver400,
   accentBrown: palette.brown500,
   accentBrownDark: palette.brown700,
 

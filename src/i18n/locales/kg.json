@@ -24,6 +24,9 @@
       "title": "Күнүмдүк белек",
       "openLabel": "Белекти ачуу"
     },
+    "dailyProgress": {
+      "claimLabel": "Сыйлыкты ал"
+    },
     "games": {
       "sectionTitle": "Оюндар"
     },

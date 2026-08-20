@@ -23,6 +23,12 @@ export type DailyGift = {
   subtitle: string;
 };
 
+export type DailyProgress = {
+  description: string;
+  progressCurrent: number;
+  progressMax: number;
+};
+
 export type GameSummary = {
   id: string;
   name: string;

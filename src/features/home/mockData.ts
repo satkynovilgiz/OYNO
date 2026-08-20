@@ -1,6 +1,13 @@
 import avatarBek from '@assets/img/avatar_bek.png';
 
-import type { CultureTile, DailyChallenge, DailyGift, GameSummary, PlayerSummary } from './types';
+import type {
+  CultureTile,
+  DailyChallenge,
+  DailyGift,
+  DailyProgress,
+  GameSummary,
+  PlayerSummary,
+} from './types';
 
 export const mockPlayer: PlayerSummary = {
   name: 'Бек',
@@ -25,6 +32,12 @@ export const mockDailyChallenge: DailyChallenge = {
 
 export const mockDailyGift: DailyGift = {
   subtitle: 'Эртен кайра кел!',
+};
+
+export const mockDailyProgress: DailyProgress = {
+  description: 'Чүкө оюнун ойноп, 50 упай топто',
+  progressCurrent: 25,
+  progressMax: 50,
 };
 
 export const mockGames: GameSummary[] = [
