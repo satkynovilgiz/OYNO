@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, Badge } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
@@ -20,9 +20,8 @@ type DiscoveriesRowProps = {
   onPressSeeAll?: () => void;
 };
 
-/** No discovery photos exist yet, so each card falls back to its category
- * color (same "solid tone until real art lands" convention used elsewhere
- * on this screen) instead of a photographic image. */
+/** Falls back to a flat category color when a discovery has no imageSource
+ * yet (same convention used elsewhere on this screen for missing art). */
 export function DiscoveriesRow({ discoveries, onPressDiscovery, onPressSeeAll }: DiscoveriesRowProps) {
   return (
     <View style={styles.section}>
@@ -45,7 +44,11 @@ export function DiscoveriesRow({ discoveries, onPressDiscovery, onPressSeeAll }:
               accessibilityRole="button"
               accessibilityLabel={discovery.title}
             >
-              <View style={[StyleSheet.absoluteFill, { backgroundColor: categoryColor }]} />
+              {discovery.imageSource ? (
+                <Image source={discovery.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: categoryColor }]} />
+              )}
               <LinearGradient
                 colors={['transparent', 'rgba(0,0,0,0.6)']}
                 locations={[0.45, 1]}

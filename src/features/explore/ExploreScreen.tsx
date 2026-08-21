@@ -21,8 +21,6 @@ const mapPins = exploreMapPins.map((pin) => {
     label: location?.name.kg ?? pin.locationId,
     xPercent: pin.xPercent,
     yPercent: pin.yPercent,
-    color: pin.color,
-    variant: pin.variant,
   };
 });
 

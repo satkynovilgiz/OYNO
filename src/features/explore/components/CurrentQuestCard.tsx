@@ -1,10 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { CharacterAvatar } from '@/components/character';
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
+import questBackground from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
 import type { ExploreQuest } from '../types';
 
@@ -13,27 +13,21 @@ type CurrentQuestCardProps = {
   onPress?: () => void;
 };
 
-/**
- * No Бөрү + shyrdak backdrop illustration exists yet, so the card uses a
- * flat forest-green placeholder background (same "solid tone until real
- * art lands" convention as CultureGrid/KyrgyzstanMap) with the character's
- * own portrait standing in for the full scene.
- */
+/** Background art (Бөрү + shyrdak, forest backdrop) sliced from the design
+ * reference, right-aligned; a dark-to-transparent gradient over the left
+ * keeps the text legible per the reference. */
 export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
   return (
     <AnimatedPressable style={styles.card} onPress={onPress} accessibilityRole="button" accessibilityLabel={quest.title}>
       <View style={styles.background} />
+      <Image source={questBackground} style={styles.artwork} resizeMode="cover" />
       <LinearGradient
-        colors={['rgba(20,28,12,0.88)', 'rgba(20,28,12,0.35)', 'rgba(20,28,12,0)']}
+        colors={['rgba(20,28,12,0.9)', 'rgba(20,28,12,0.55)', 'rgba(20,28,12,0)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
-        locations={[0, 0.55, 1]}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
-
-      <View style={styles.avatarWrap}>
-        <CharacterAvatar characterId={quest.characterId} emotion="happy" size={72} />
-      </View>
 
       <View style={styles.content}>
         <Text style={styles.label}>Азыркы квест</Text>
@@ -64,11 +58,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.tiles.culture,
   },
-  avatarWrap: {
+  artwork: {
     position: 'absolute',
-    right: spacing.md,
-    top: '50%',
-    marginTop: -36,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '62%',
   },
   content: {
     paddingHorizontal: spacing.md,

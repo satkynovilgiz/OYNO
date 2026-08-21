@@ -5,6 +5,10 @@
  * live there with citations; this file just shapes them for the UI).
  */
 import { colors } from '@/theme';
+import discoveryBeshbarmak from '@assets/img/OYNO_design/explore/discovery_beshbarmak.png';
+import discoveryBozUy from '@assets/img/OYNO_design/explore/discovery_boz_uy.png';
+import discoveryTooTeke from '@assets/img/OYNO_design/explore/discovery_too_teke.png';
+import discoveryYsykKol from '@assets/img/OYNO_design/explore/discovery_ysyk_kol.png';
 
 import type {
   ExploreDiscovery,
@@ -194,22 +198,24 @@ export function getExploreLocationById(id: string): ExploreLocation | undefined 
 }
 
 /**
- * Pin placement on the KyrgyzstanMap illustration, approximated from the
- * design reference (docs: "Explore Kyrgyzstan Learning Map.png") - percent
- * positions are eyeballed against that mockup, not derived from real
- * geographic coordinates. Colors are decorative variety per the reference
- * (it doesn't use a strict category legend for pin color), except for the
- * two "landmark" pins (Бишкек, Ош) which get a distinct larger variant.
+ * Pin tap-target placement on KyrgyzstanMap, measured directly against the
+ * pins already painted into map_terrain.png (sliced from the design
+ * reference "Explore Kyrgyzstan Learning Map.png") - KyrgyzstanMap renders
+ * that art as-is and places an invisible tap target at each of these
+ * coordinates rather than drawing a second pin on top. `color`/`variant`
+ * aren't consumed by the map right now (nothing to color - the pin is
+ * already baked into the art) but are kept as location metadata for when a
+ * clean, pin-free map asset exists and MapPin goes back to being rendered.
  */
 export const exploreMapPins: ExploreMapPin[] = [
-  { locationId: 'talas', xPercent: 16, yPercent: 20, color: '#2E6E82', variant: 'default' },
-  { locationId: 'chuy', xPercent: 42, yPercent: 16, color: colors.primary, variant: 'default' },
-  { locationId: 'bishkek', xPercent: 60, yPercent: 20, color: '#C0392B', variant: 'landmark' },
-  { locationId: 'ysyk-kol', xPercent: 80, yPercent: 26, color: '#3E8E9E', variant: 'default' },
-  { locationId: 'jalal-abad', xPercent: 18, yPercent: 44, color: colors.primary, variant: 'default' },
-  { locationId: 'naryn', xPercent: 61, yPercent: 42, color: colors.discovery.animals, variant: 'default' },
-  { locationId: 'osh', xPercent: 39, yPercent: 63, color: '#C77B2E', variant: 'landmark' },
-  { locationId: 'batken', xPercent: 8, yPercent: 68, color: colors.discovery.animals, variant: 'default' },
+  { locationId: 'talas', xPercent: 24.7, yPercent: 7.7, color: '#2E6E82', variant: 'default' },
+  { locationId: 'chuy', xPercent: 44.6, yPercent: 7.4, color: colors.primary, variant: 'default' },
+  { locationId: 'bishkek', xPercent: 60.4, yPercent: 12.0, color: '#C0392B', variant: 'landmark' },
+  { locationId: 'ysyk-kol', xPercent: 84.9, yPercent: 17.5, color: '#3E8E9E', variant: 'default' },
+  { locationId: 'jalal-abad', xPercent: 18.0, yPercent: 44.5, color: colors.primary, variant: 'default' },
+  { locationId: 'naryn', xPercent: 60.7, yPercent: 42.7, color: colors.discovery.animals, variant: 'default' },
+  { locationId: 'osh', xPercent: 41.8, yPercent: 64.7, color: '#C77B2E', variant: 'landmark' },
+  { locationId: 'batken', xPercent: 6.1, yPercent: 73.9, color: colors.discovery.animals, variant: 'default' },
 ];
 
 /** Mock exploration progress - matches the numbers given in the Explore
@@ -237,8 +243,8 @@ export const exploreCurrentQuest: ExploreQuest = {
 };
 
 export const exploreDiscoveries: ExploreDiscovery[] = [
-  { id: 'ysyk-kol-shore', title: 'Ысык-Көлдүн жээги', category: 'nature', xpReward: 50 },
-  { id: 'boz-uy', title: 'Боз үй', category: 'culture', xpReward: 60 },
-  { id: 'too-teke', title: 'Тоо теке', category: 'animals', xpReward: 40 },
-  { id: 'beshbarmak-dish', title: 'Бешбармак', category: 'food', xpReward: 50 },
+  { id: 'ysyk-kol-shore', title: 'Ысык-Көлдүн жээги', category: 'nature', xpReward: 50, imageSource: discoveryYsykKol },
+  { id: 'boz-uy', title: 'Боз үй', category: 'culture', xpReward: 60, imageSource: discoveryBozUy },
+  { id: 'too-teke', title: 'Тоо теке', category: 'animals', xpReward: 40, imageSource: discoveryTooTeke },
+  { id: 'beshbarmak-dish', title: 'Бешбармак', category: 'food', xpReward: 50, imageSource: discoveryBeshbarmak },
 ];

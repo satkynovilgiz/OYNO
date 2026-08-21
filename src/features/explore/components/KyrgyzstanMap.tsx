@@ -1,22 +1,15 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { Crosshair, Filter, Mountain } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { IconButton } from '@/components/ui';
-import { colors, radii, spacing } from '@/theme';
-
-import type { MapPinVariant } from '../types';
-import { MapPin } from './MapPin';
+import { radii } from '@/theme';
+import mapTerrain from '@assets/img/OYNO_design/explore/map_terrain.png';
 
 export type KyrgyzstanMapPin = {
   id: string;
   label: string;
   xPercent: number;
   yPercent: number;
-  color: string;
-  variant: MapPinVariant;
 };
 
 type KyrgyzstanMapProps = {
@@ -29,13 +22,16 @@ type KyrgyzstanMapProps = {
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 
-/**
- * Interactive map card: pinch-to-zoom/pan over a stylized Kyrgyzstan
- * terrain illustration, with location pins overlaid. There's no real map
- * illustration asset yet (spec: "static illustration asset for now") - the
- * gradient + watermark mountain icon below is a placeholder background,
- * not final art, sized to swap a real <Image> in later.
- */
+// map_terrain.png is sliced straight from the design reference (docs:
+// "Explore Kyrgyzstan Learning Map.png") - it already has pins, labels, and
+// the locate/filter buttons painted in, so this renders that art as-is and
+// overlays invisible, accessible tap targets at the same coordinates rather
+// than drawing a second set of pins/buttons on top of the baked ones. Once
+// a clean pin-free map illustration exists, swap this for a background-only
+// image and restore visible MapPin markers (component kept in this folder,
+// unused here, for exactly that).
+const TAP_TARGET_SIZE = { width: 15, height: 14 }; // percent of card
+
 export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }: KyrgyzstanMapProps) {
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
@@ -54,6 +50,7 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
     });
 
   const panGesture = Gesture.Pan()
+    .minDistance(10)
     .onUpdate((event) => {
       translateX.value = savedTranslateX.value + event.translationX;
       translateY.value = savedTranslateY.value + event.translationY;
@@ -86,75 +83,88 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
     <View style={styles.card}>
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.surface, contentStyle]}>
-          <LinearGradient
-            colors={['#4A8C6F', '#3D6E72', '#2F5233']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
+          <Image
+            source={mapTerrain}
+            style={[StyleSheet.absoluteFill, styles.terrainImage]}
+            resizeMode="cover"
           />
-          <View style={styles.watermark}>
-            <Mountain size={140} color="rgba(255,255,255,0.14)" strokeWidth={1.25} />
-          </View>
 
-          {pins.map((pin) => {
-            const halfWidth = pin.variant === 'landmark' ? 19 : 15;
-            return (
-              <View
-                key={pin.id}
-                style={[
-                  styles.pinAnchor,
-                  { left: `${pin.xPercent}%`, top: `${pin.yPercent}%`, transform: [{ translateX: -halfWidth }] },
-                ]}
-              >
-                <MapPin
-                  label={pin.label}
-                  color={pin.color}
-                  variant={pin.variant}
-                  onPress={() => onPressPin?.(pin.id)}
-                />
-              </View>
-            );
-          })}
+          {pins.map((pin) => (
+            <View
+              key={pin.id}
+              style={[
+                styles.tapTargetWrap,
+                {
+                  left: `${pin.xPercent - TAP_TARGET_SIZE.width / 2}%`,
+                  top: `${pin.yPercent - TAP_TARGET_SIZE.height / 2}%`,
+                  width: `${TAP_TARGET_SIZE.width}%`,
+                  height: `${TAP_TARGET_SIZE.height}%`,
+                },
+              ]}
+            >
+              <Pressable
+                onPress={() => onPressPin?.(pin.id)}
+                accessibilityRole="button"
+                accessibilityLabel={pin.label}
+                style={styles.tapTargetFill}
+              />
+            </View>
+          ))}
+
+          <View style={[styles.tapTargetWrap, styles.locateTarget]}>
+            <Pressable
+              onPress={() => {
+                recenter();
+                onPressLocate?.();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Ортого келтирүү"
+              style={styles.tapTargetFill}
+            />
+          </View>
+          <View style={[styles.tapTargetWrap, styles.filterTarget]}>
+            <Pressable
+              onPress={onPressFilter}
+              accessibilityRole="button"
+              accessibilityLabel="Чыпкалоо"
+              style={styles.tapTargetFill}
+            />
+          </View>
         </Animated.View>
       </GestureDetector>
-
-      <View style={styles.actions}>
-        <IconButton
-          icon={Crosshair}
-          accessibilityLabel="Ортого келтирүү"
-          onPress={() => {
-            recenter();
-            onPressLocate?.();
-          }}
-        />
-        <IconButton icon={Filter} accessibilityLabel="Чыпкалоо" onPress={onPressFilter} />
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 1.4,
+    aspectRatio: 819 / 544,
     borderRadius: radii.xl,
     overflow: 'hidden',
-    backgroundColor: colors.tiles.map,
   },
   surface: {
     flex: 1,
   },
-  watermark: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
+  terrainImage: {
+    width: '100%',
+    height: '100%',
   },
-  pinAnchor: {
+  tapTargetWrap: {
     position: 'absolute',
   },
-  actions: {
-    position: 'absolute',
-    right: spacing.sm,
-    bottom: spacing.sm,
-    gap: spacing.xs,
+  tapTargetFill: {
+    flex: 1,
+  },
+  locateTarget: {
+    left: '88%',
+    top: '73%',
+    width: '11%',
+    height: '13%',
+  },
+  filterTarget: {
+    left: '88%',
+    top: '86%',
+    width: '11%',
+    height: '13%',
   },
 });

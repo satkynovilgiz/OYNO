@@ -1,3 +1,5 @@
+import type { ImageSourcePropType } from 'react-native';
+
 import type { CharacterId } from '@/components/character';
 
 export type ExploreLocationKind = 'region' | 'nature';
@@ -63,6 +65,7 @@ export type ExploreDiscovery = {
   title: string;
   category: ExploreDiscoveryCategory;
   xpReward: number;
+  imageSource?: ImageSourcePropType;
 };
 
 export type ExploreQuest = {
