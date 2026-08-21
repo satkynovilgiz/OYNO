@@ -40,8 +40,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   loadOnboardingFlags: async () => {
     const [languageChosen, onboardingComplete] = await Promise.all([
-      AsyncStorage.getItem(LANGUAGE_CHOSEN_KEY),
-      AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY),
+      AsyncStorage.getItem(LANGUAGE_CHOSEN_KEY).catch(() => null),
+      AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY).catch(() => null),
     ]);
     set({
       hasChosenLanguage: languageChosen === 'true',

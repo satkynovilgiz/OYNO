@@ -25,27 +25,31 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
         </AnimatedPressable>
       </View>
 
-      <View style={styles.list}>
-        {games.map((game) => (
-          <AnimatedPressable
-            key={game.id}
-            style={styles.gameItem}
-            onPress={() => onPressGame?.(game)}
-            accessibilityRole="button"
-            accessibilityLabel={game.name}
-          >
-            <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
-            <Text style={styles.gameName} numberOfLines={1}>
-              {game.name}
-            </Text>
-            <Text style={styles.gameMeta}>{t('profile.favoriteGames.played', { count: game.gamesPlayed })}</Text>
-            <View style={styles.winsRow}>
-              <Trophy size={11} color={colors.accentGold} strokeWidth={2.25} />
-              <Text style={styles.gameMeta}>{t('profile.favoriteGames.wins', { count: game.wins })}</Text>
-            </View>
-          </AnimatedPressable>
-        ))}
-      </View>
+      {games.length === 0 ? (
+        <Text style={styles.emptyText}>{t('profile.favoriteGames.empty')}</Text>
+      ) : (
+        <View style={styles.list}>
+          {games.map((game) => (
+            <AnimatedPressable
+              key={game.id}
+              style={styles.gameItem}
+              onPress={() => onPressGame?.(game)}
+              accessibilityRole="button"
+              accessibilityLabel={game.name}
+            >
+              <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+              <Text style={styles.gameName} numberOfLines={1}>
+                {game.name}
+              </Text>
+              <Text style={styles.gameMeta}>{t('profile.favoriteGames.played', { count: game.gamesPlayed })}</Text>
+              <View style={styles.winsRow}>
+                <Trophy size={11} color={colors.accentGold} strokeWidth={2.25} />
+                <Text style={styles.gameMeta}>{t('profile.favoriteGames.wins', { count: game.wins })}</Text>
+              </View>
+            </AnimatedPressable>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -99,5 +103,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
+  },
+  emptyText: {
+    ...typography.small,
+    color: colors.textSecondary,
   },
 });

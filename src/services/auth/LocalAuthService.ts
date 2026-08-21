@@ -1,5 +1,7 @@
 import * as Crypto from 'expo-crypto';
 
+import { safeJsonParse } from '@/services/storage/safeJson';
+
 import { secureStorage } from './secureStorage';
 import {
   AuthError,
@@ -48,8 +50,8 @@ async function hashPassword(password: string, salt: string): Promise<string> {
 }
 
 async function readUsers(): Promise<Record<string, StoredUser>> {
-  const raw = await secureStorage.getItem(USERS_KEY);
-  return raw ? JSON.parse(raw) : {};
+  const raw = await secureStorage.getItem(USERS_KEY).catch(() => null);
+  return safeJsonParse(raw, {});
 }
 
 async function writeUsers(users: Record<string, StoredUser>): Promise<void> {
@@ -57,8 +59,8 @@ async function writeUsers(users: Record<string, StoredUser>): Promise<void> {
 }
 
 async function readResetCodes(): Promise<Record<string, ResetCode>> {
-  const raw = await secureStorage.getItem(RESET_CODES_KEY);
-  return raw ? JSON.parse(raw) : {};
+  const raw = await secureStorage.getItem(RESET_CODES_KEY).catch(() => null);
+  return safeJsonParse(raw, {});
 }
 
 async function writeResetCodes(codes: Record<string, ResetCode>): Promise<void> {
@@ -74,10 +76,17 @@ async function persistSession(session: AuthSession): Promise<void> {
   await secureStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
+/** A corrupted session value is treated the same as "no session" - the
+ * user lands on sign-in instead of the app being stuck, matching what
+ * would happen if the key were simply missing. */
+async function readSession(): Promise<AuthSession | null> {
+  const raw = await secureStorage.getItem(SESSION_KEY).catch(() => null);
+  return safeJsonParse<AuthSession | null>(raw, null);
+}
+
 export const localAuthService: AuthService = {
   async getSession() {
-    const raw = await secureStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as AuthSession) : null;
+    return readSession();
   },
 
   async signUp({ name, email, password }: SignUpInput) {
@@ -180,8 +189,7 @@ export const localAuthService: AuthService = {
   },
 
   async deleteAccount(password: string) {
-    const raw = await secureStorage.getItem(SESSION_KEY);
-    const session = raw ? (JSON.parse(raw) as AuthSession) : null;
+    const session = await readSession();
     if (!session) return;
 
     const users = await readUsers();
@@ -199,8 +207,7 @@ export const localAuthService: AuthService = {
   },
 
   async updateProfile({ name, email }) {
-    const raw = await secureStorage.getItem(SESSION_KEY);
-    const session = raw ? (JSON.parse(raw) as AuthSession) : null;
+    const session = await readSession();
     if (!session) {
       throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
     }
@@ -239,8 +246,7 @@ export const localAuthService: AuthService = {
   },
 
   async changePassword(currentPassword: string, newPassword: string) {
-    const raw = await secureStorage.getItem(SESSION_KEY);
-    const session = raw ? (JSON.parse(raw) as AuthSession) : null;
+    const session = await readSession();
     if (!session) {
       throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
     }

@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
+import { safeJsonParse } from '@/services/storage/safeJson';
+
 const STORAGE_KEY = 'oyno.settings';
 
 export type NotificationPreferenceId =
@@ -67,7 +69,7 @@ type SettingsState = PersistedShape & {
 };
 
 async function persist(state: PersistedShape) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -77,18 +79,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   isLoaded: false,
 
   load: async () => {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      set({
-        notifications: { ...DEFAULT_NOTIFICATION_PREFERENCES, ...parsed.notifications },
-        privacy: { ...DEFAULT_PRIVACY_PREFERENCES, ...parsed.privacy },
-        game: { ...DEFAULT_GAME_PREFERENCES, ...parsed.game },
-        isLoaded: true,
-      });
-    } else {
-      set({ isLoaded: true });
-    }
+    const raw = await AsyncStorage.getItem(STORAGE_KEY).catch(() => null);
+    const parsed = safeJsonParse<Partial<PersistedShape>>(raw, {});
+    set({
+      notifications: { ...DEFAULT_NOTIFICATION_PREFERENCES, ...parsed.notifications },
+      privacy: { ...DEFAULT_PRIVACY_PREFERENCES, ...parsed.privacy },
+      game: { ...DEFAULT_GAME_PREFERENCES, ...parsed.game },
+      isLoaded: true,
+    });
   },
 
   setNotificationPreference: (id, value) => {

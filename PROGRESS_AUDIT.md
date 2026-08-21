@@ -700,3 +700,128 @@ rather than letting it hide.
   character is selected via `CharacterAvatar` instead of always showing
   Бек's static PNG, but the selection itself still resets on reload.
 
+## Phase 5 (2026-08-22): Offline, Sync, Error states
+
+Before touching anything, went looking for what could actually break in
+this category rather than building generic scaffolding on spec. Found one
+real, severe bug and fixed it, then built the two pieces of genuinely
+useful infrastructure ("offline" and "sync") this app can honestly support
+today given it has no backend yet.
+
+### The real bug: a single corrupted storage value could brick the app forever
+
+Every store's `load()` did a raw `JSON.parse(raw)` on whatever AsyncStorage/
+SecureStore returned, with no try/catch. Both boot sequences
+(`src/app/index.tsx`'s Splash gate and `src/app/_layout.tsx`'s
+`RouteGuard`) `await Promise.all([...several load() calls...])` with no
+`.catch` before unblocking routing. So: one interrupted write, one bad
+migration, or someone poking at devtools - a single bad JSON value in
+*any* of the ~10 storage keys this app uses - would throw inside that
+`Promise.all`, the "ready" flag would never flip, and the user would be
+stuck on the splash screen forever. No error message, no way out, no
+recourse short of clearing app data. This is about as bad as an error
+state gets, and it was completely plausible, not a hypothetical.
+
+Fixed at the root: `src/services/storage/safeJson.ts` (parse or fall
+back to a default, never throw) is now used everywhere a store reads its
+own persisted value - `useNotificationsStore`, `useSettingsStore`,
+`useProgressStore`, and `LocalAuthService`'s users/session/reset-codes
+reads (added a `readSession()` helper there to stop duplicating the same
+parse-or-null in 4 places). Every `AsyncStorage.getItem`/`secureStorage.
+getItem` call on a boot-critical path also now has a trailing
+`.catch(() => null)`, and every `persist()` write is now best-effort
+(`.catch(() => {})`) - a failed write degrades to "won't survive a
+restart" instead of throwing out of whatever action triggered it.
+
+As a second, independent backstop: `src/services/storage/loadWithTimeout.ts`
+wraps both boot `Promise.all`s so the "ready" flag becomes true within 8s
+no matter what - covers a genuine hang (not just a thrown error) in a
+native module, which safeJsonParse can't help with since there's nothing
+to catch. Traced through what happens if `useAuthStore.initialize()`
+itself hangs forever even past that: `index.tsx`'s own routing decision
+still falls through to `/sign-in` (a real, usable screen - a stale
+session just doesn't auto-restore), so the user is never actually
+stranded. Unit tested with fake timers (`loadWithTimeout.test.ts`).
+
+**Verified live, not just read**: seeded `oyno.progress` and
+`oyno.settings` in `localStorage` with deliberately broken JSON
+(`'{this is not valid json!!!'`), reloaded `/home` cold. Before this fix
+this would have hung on Splash forever. After: the app booted normally,
+signed-in name/level/XP all rendered correctly with safe zeroed defaults
+for the corrupted progress data, and `oyno.progress` self-healed back to
+valid JSON in storage on the same load (visible in `localStorage`
+afterward) since `load()` always re-persists what it recovers to.
+
+### Global error boundary (the other half of "error states")
+
+`safeJsonParse` covers storage-read crashes; it does nothing for a
+render-time crash (bad prop, null dereference, anything throwing inside a
+component tree). Added `src/components/system/ErrorBoundary.tsx` (a class
+component - no hook equivalent exists for `componentDidCatch`), wrapping
+the entire app in `_layout.tsx`. Shows a real "Бир нерсе туура эмес болду"
+screen with a working retry button instead of a blank white screen -
+`window.location.reload()` on web, `expo-updates`' `Updates.reloadAsync()` on
+native (falls back to just clearing the boundary's own state if that API
+isn't available in the current environment, e.g. some Expo Go configs).
+Not exercised with a deliberate render crash this pass (no React
+component-testing harness exists in this repo to do that safely and
+repeatably) - the implementation is the standard React error-boundary
+shape, but flagging that the retry path itself hasn't been watched fire
+against a real crash.
+
+### Offline detection + sync scaffolding (both real, both honestly scoped)
+
+Added `expo-network` (SDK-54-compatible, works in Expo Go, has a web shim
+backed by `navigator.onLine`/the `online`/`offline` events - no config
+plugin or native rebuild needed). Two things built on it:
+
+- `src/components/system/OfflineBanner.tsx` - mounted globally in
+  `_layout.tsx`, uses `expo-network`'s built-in `useNetworkState()` hook.
+  Shows "Интернет байланышы жок" the instant connectivity drops, hides the
+  instant it's back. **Verified live**: flipped `navigator.onLine` to
+  `false` and dispatched a real `offline` event in the running app - the
+  banner appeared in the rendered DOM; flipped back to `online` - it
+  disappeared.
+- `src/services/queryClient.ts` - wired `expo-network`'s connectivity
+  listener into react-query's `onlineManager` (the standard Expo+
+  react-query integration pattern), so queries will correctly pause while
+  offline and refetch on reconnect, using the real device signal instead
+  of react-query's browser-only default.
+
+**Both are honestly scoped as forward-looking infrastructure, not a fix
+for an active problem**: this app makes zero network calls today (no
+backend - see every prior phase's audit notes). Nothing is currently
+blocked, retried, or paused by connectivity. The banner is real and
+correctly driven by live connectivity state; it just has nothing to warn
+about failing yet. Documenting this rather than dressing it up as more
+than it is.
+
+### Small related fix: an honest empty state
+
+Testing Phase 4's `favoriteGames` derivation (real per-game stats, added
+last phase) surfaced a leftover gap: a fresh user with zero games played
+saw a blank, empty-looking card with no explanation. Added a real empty
+state ("Азырынча оюн ойнолгон жок" / "No games played yet") to
+`FavoriteGamesCard`. **Verified live**: a freshly-seeded test user with no
+`gameStats` showed the empty-state text instead of a blank box.
+
+### Not done, flagged rather than faked
+
+- **No real "sync"** in the reconciliation sense (resolving local vs.
+  remote state, conflict resolution, background sync) - there is no
+  remote to sync with yet. Nothing here should be mistaken for that; it's
+  connectivity detection and query-pausing infrastructure only.
+- **ErrorBoundary's retry path** (web reload / `Updates.reloadAsync()`)
+  wasn't exercised against a real thrown render crash - reasoned through
+  from the code, not watched firing, per the caveat above.
+- **`useSettingsStore`'s corrupted value isn't self-healed** the way
+  `useProgressStore`'s is - `load()` recovers to safe in-memory defaults
+  but doesn't re-persist them, so a corrupted `oyno.settings` value stays
+  corrupted in storage until the user changes any setting (which persists
+  the whole object). Harmless (every future `load()` keeps recovering
+  safely) but inconsistent with the progress store; not worth a special
+  case this pass.
+- **No offline-queue/optimistic-write-retry pattern** - not needed yet
+  since every write today is local-only and already succeeds or is
+  swallowed; revisit once a real backend exists.
+

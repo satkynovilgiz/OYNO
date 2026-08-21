@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import { getNewlyUnlockedAchievements } from '@/services/progress/achievements';
 import type { AchievementId } from '@/services/progress/types';
+import { safeJsonParse } from '@/services/storage/safeJson';
 
 const STORAGE_KEY = 'oyno.progress';
 
@@ -71,7 +72,10 @@ const DEFAULT_STATE: PersistedShape = {
 };
 
 async function persist(state: PersistedShape) {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  // A write failure (e.g. device storage full) shouldn't crash the action
+  // that triggered it - the in-memory state is already correct via set();
+  // this best-effort persist just won't survive an app restart this time.
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
 }
 
 function ensureDailyReset(state: PersistedShape): PersistedShape {
@@ -149,8 +153,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     lastUnlockedAchievementId: null,
 
     load: async () => {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
+      const raw = await AsyncStorage.getItem(STORAGE_KEY).catch(() => null);
+      const parsed = safeJsonParse<Partial<PersistedShape>>(raw, {});
       const merged = withDaily({ ...DEFAULT_STATE, ...parsed, gameStats: { ...parsed.gameStats } });
       set({ ...merged, isLoaded: true, lastUnlockedAchievementId: null });
       void persist(merged);

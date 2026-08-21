@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { mockNotifications } from '@/features/notifications/data';
+import { safeJsonParse } from '@/services/storage/safeJson';
 
 const READ_IDS_KEY = 'oyno.notifications.readIds';
 
@@ -15,7 +16,7 @@ type NotificationsState = {
 };
 
 async function persist(readIds: string[]) {
-  await AsyncStorage.setItem(READ_IDS_KEY, JSON.stringify(readIds));
+  await AsyncStorage.setItem(READ_IDS_KEY, JSON.stringify(readIds)).catch(() => {});
 }
 
 export const useNotificationsStore = create<NotificationsState>((set, get) => ({
@@ -23,8 +24,8 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
   isLoaded: false,
 
   load: async () => {
-    const raw = await AsyncStorage.getItem(READ_IDS_KEY);
-    set({ readIds: raw ? JSON.parse(raw) : [], isLoaded: true });
+    const raw = await AsyncStorage.getItem(READ_IDS_KEY).catch(() => null);
+    set({ readIds: safeJsonParse<string[]>(raw, []), isLoaded: true });
   },
 
   markAsRead: (id) => {

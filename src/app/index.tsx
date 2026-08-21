@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
 import { SplashScreen } from '@/features/splash/SplashScreen';
+import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -17,10 +18,16 @@ export default function IndexRoute() {
   const hasNavigated = useRef(false);
 
   useEffect(() => {
-    (async () => {
-      await Promise.all([useAuthStore.getState().initialize(), useAppStore.getState().loadOnboardingFlags()]);
-      setStateLoaded(true);
-    })();
+    return loadWithTimeout(
+      async () => {
+        try {
+          await Promise.all([useAuthStore.getState().initialize(), useAppStore.getState().loadOnboardingFlags()]);
+        } catch (error) {
+          if (__DEV__) console.warn('[splash] state load failed, continuing with defaults', error);
+        }
+      },
+      () => setStateLoaded(true),
+    );
   }, []);
 
   useEffect(() => {

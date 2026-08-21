@@ -37,13 +37,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   error: null,
 
   initialize: async () => {
-    const session = await authService.getSession();
-    if (session) {
-      set({ status: 'authenticated', user: session.user });
-      return;
+    // Falls back to 'unauthenticated' (not 'loading') on any failure here -
+    // status must never get stuck at 'loading' forever, since RouteGuard
+    // and the Splash gate both wait on it before routing anywhere. Worst
+    // case the user has to sign in again; best case nothing was wrong.
+    try {
+      const session = await authService.getSession();
+      if (session) {
+        set({ status: 'authenticated', user: session.user });
+        return;
+      }
+      const isGuest = (await AsyncStorage.getItem(GUEST_MODE_KEY).catch(() => null)) === 'true';
+      set({ status: isGuest ? 'guest' : 'unauthenticated', user: null });
+    } catch {
+      set({ status: 'unauthenticated', user: null });
     }
-    const isGuest = (await AsyncStorage.getItem(GUEST_MODE_KEY)) === 'true';
-    set({ status: isGuest ? 'guest' : 'unauthenticated', user: null });
   },
 
   continueAsGuest: async () => {

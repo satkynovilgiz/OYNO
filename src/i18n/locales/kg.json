@@ -139,7 +139,8 @@
     "favoriteGames": {
       "title": "Сүйүктүү оюндарым",
       "played": "{{count}} оюн",
-      "wins": "{{count}} жеңиш"
+      "wins": "{{count}} жеңиш",
+      "empty": "Азырынча оюн ойнолгон жок"
     },
     "collection": {
       "title": "Менин коллекциям"

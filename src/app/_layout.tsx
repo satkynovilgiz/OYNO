@@ -9,6 +9,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
 import { queryClient } from '@/services/queryClient';
+import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
+import { ErrorBoundary } from '@/components/system/ErrorBoundary';
+import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
@@ -70,34 +73,48 @@ export default function RootLayout() {
     // The Splash/index route also calls these, but _layout mounts first and
     // every screen under RouteGuard needs the flags loaded to make a
     // correct decision, so load them here too (idempotent, cheap reads).
-    (async () => {
-      await Promise.all([
-        useAuthStore.getState().initialize(),
-        useAppStore.getState().loadOnboardingFlags(),
-        useNotificationsStore.getState().load(),
-        useSettingsStore.getState().load(),
-        useProgressStore.getState().load(),
-      ]);
-      setFlagsReady(true);
-    })();
+    // Every individual load() above already recovers from its own storage
+    // errors (see safeJsonParse); loadWithTimeout is a defense-in-depth
+    // backstop against a genuine hang (not just a throw) - flagsReady must
+    // always eventually become true, or the app is stuck behind RouteGuard
+    // forever with no way out.
+    return loadWithTimeout(
+      async () => {
+        try {
+          await Promise.all([
+            useAuthStore.getState().initialize(),
+            useAppStore.getState().loadOnboardingFlags(),
+            useNotificationsStore.getState().load(),
+            useSettingsStore.getState().load(),
+            useProgressStore.getState().load(),
+          ]);
+        } catch (error) {
+          if (__DEV__) console.warn('[boot] one or more stores failed to load, continuing with defaults', error);
+        }
+      },
+      () => setFlagsReady(true),
+    );
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
-          <RouteGuard flagsReady={flagsReady}>
-            <Stack
-              screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <StatusBar style="dark" />
+            <RouteGuard flagsReady={flagsReady}>
+              <Stack
+                screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+              />
+            </RouteGuard>
+            <AchievementUnlockedModal
+              achievement={lastUnlockedAchievementId ? (getAchievement(lastUnlockedAchievementId) ?? null) : null}
+              onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
             />
-          </RouteGuard>
-          <AchievementUnlockedModal
-            achievement={lastUnlockedAchievementId ? (getAchievement(lastUnlockedAchievementId) ?? null) : null}
-            onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
-          />
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+            <OfflineBanner />
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }

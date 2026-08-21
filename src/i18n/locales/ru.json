@@ -139,7 +139,8 @@
     "favoriteGames": {
       "title": "Мои любимые игры",
       "played": "{{count}} игр",
-      "wins": "{{count}} побед"
+      "wins": "{{count}} побед",
+      "empty": "Пока нет сыгранных игр"
     },
     "collection": {
       "title": "Моя коллекция"

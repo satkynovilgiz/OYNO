@@ -139,7 +139,8 @@
     "favoriteGames": {
       "title": "My favorite games",
       "played": "{{count}} games",
-      "wins": "{{count}} wins"
+      "wins": "{{count}} wins",
+      "empty": "No games played yet"
     },
     "collection": {
       "title": "My collection"
