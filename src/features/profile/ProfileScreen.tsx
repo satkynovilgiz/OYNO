@@ -1,9 +1,16 @@
 import { router } from 'expo-router';
+import { Backpack, Compass, Diamond, Gamepad2, Target } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { mockGamesList } from '@/features/games/mockData';
+import { xpProgress } from '@/services/progress/levelConfig';
+import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { DAILY_GIFT_REWARD, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -20,23 +27,74 @@ import {
 } from './components';
 import {
   achievementsTotal,
-  achievementsUnlocked,
   collectionTotal,
   collectionUnlocked,
-  dailyActivity,
-  dailyActivityCompleted,
-  dailyActivityTotal,
-  dailyReward,
-  favoriteGames,
-  mockProfile,
   profileAchievements,
   profileCollection,
-  profileStats,
 } from './data';
+import type { DailyActivityItem, FavoriteGame, ProfileStat, ProfileSummary } from './types';
+
+const QUEST_TOTAL = 5;
 
 export function ProfileScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
+  const user = useAuthStore((state) => state.user);
+  const characterId = useAppStore((state) => state.characterId) ?? 'bek';
+  const progress = useProgressStore();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const giftClaimed = progress.dailyGiftClaimedDateISO === today;
+
+  const { level, xpCurrent, xpMax } = xpProgress(progress.xp);
+  const profile: ProfileSummary = {
+    characterId,
+    name: user?.name ?? t('common.guestName'),
+    level,
+    title: 'Кыргыз маданиятын изилдөөчү',
+    xpCurrent,
+    xpMax,
+    coins: progress.coins,
+    badges: progress.unlockedAchievementIds.length,
+    tokens: progress.gems,
+    streakDays: progress.streakDays,
+  };
+
+  const explorePercent = Math.round((progress.questFoundCount / QUEST_TOTAL) * 100);
+  const cultureRatio = ((progress.cultureDiscoveryCount >= 1 ? 1 : 0) + (progress.bozUyVisited ? 1 : 0)) / 2;
+
+  const profileStats: ProfileStat[] = [
+    { id: 'games', icon: Gamepad2, label: 'Оюндар', valueLabel: String(progress.gamesPlayed), captionKey: 'count', ringProgress: Math.min(1, progress.gamesPlayed / 20) },
+    { id: 'explore', icon: Compass, label: 'Изилдөө', valueLabel: `${explorePercent}%`, captionKey: 'percent', ringProgress: progress.questFoundCount / QUEST_TOTAL },
+    { id: 'culture', icon: Diamond, label: 'Маданият', valueLabel: `${Math.round(cultureRatio * 100)}%`, captionKey: 'percent', ringProgress: cultureRatio },
+    { id: 'quests', icon: Target, label: 'Квесттер', valueLabel: `${progress.questFoundCount} / ${QUEST_TOTAL}`, captionKey: 'fraction', ringProgress: progress.questFoundCount / QUEST_TOTAL },
+    { id: 'collection', icon: Backpack, label: 'Коллекция', valueLabel: `${collectionUnlocked} / ${collectionTotal}`, captionKey: 'fraction', ringProgress: collectionUnlocked / collectionTotal },
+  ];
+
+  const favoriteGames: FavoriteGame[] = mockGamesList
+    .filter((game) => (progress.gameStats[game.id]?.played ?? 0) > 0)
+    .map((game) => ({
+      id: game.id,
+      name: game.name,
+      thumbnail: game.thumbnail,
+      gamesPlayed: progress.gameStats[game.id].played,
+      wins: progress.gameStats[game.id].won,
+      route: game.route,
+    }));
+
+  const dailyActivity: DailyActivityItem[] = [
+    { id: 'games', icon: Gamepad2, label: progress.playsToday > 0 ? `${progress.playsToday} оюн ойнолду` : 'Оюн ойнолгон жок' },
+    { id: 'discovery', icon: Diamond, label: progress.cultureDiscoveryCount >= 1 ? 'Маданий ачылыш табылды' : 'Ачылыш табылган жок' },
+    { id: 'quests', icon: Target, label: `Квест: ${progress.questFoundCount} / ${QUEST_TOTAL} табылды` },
+    { id: 'boz-uy', icon: Compass, label: progress.bozUyVisited ? 'Боз үйгө кирилди' : 'Боз үйгө кирилген жок' },
+  ];
+  const dailyActivityCompleted = [
+    progress.playsToday > 0,
+    progress.cultureDiscoveryCount >= 1,
+    progress.questFoundCount > 0,
+    progress.bozUyVisited,
+  ].filter(Boolean).length;
 
   return (
     <View style={styles.root}>
@@ -53,17 +111,17 @@ export function ProfileScreen() {
 
         <View style={styles.horizontalPad}>
           <ProfileHero
-            profile={mockProfile}
+            profile={profile}
             onPressAvatar={() => router.push('/character-select' as never)}
             onPressEdit={() => router.push('/settings/account' as never)}
           />
         </View>
 
         <View style={styles.horizontalPad}>
-          <XpProgressCard profile={mockProfile} />
+          <XpProgressCard profile={profile} />
         </View>
 
-        <CurrencyRow profile={mockProfile} />
+        <CurrencyRow profile={profile} />
 
         <View style={styles.horizontalPad}>
           <ProfileStatsGrid stats={profileStats} />
@@ -72,31 +130,38 @@ export function ProfileScreen() {
         <View style={[styles.horizontalPad, styles.row]}>
           <AchievementsPreviewCard
             achievements={profileAchievements}
-            unlocked={achievementsUnlocked}
+            unlockedIds={progress.unlockedAchievementIds}
+            unlocked={progress.unlockedAchievementIds.length}
             total={achievementsTotal}
-            onPressSeeAll={() => console.log('navigate: all achievements')}
+            onPressSeeAll={() => router.push('/achievements' as never)}
           />
           <FavoriteGamesCard
             games={favoriteGames}
             onPressSeeAll={() => router.push('/games' as never)}
-            onPressGame={(game) => console.log('navigate: game detail', game.id)}
+            onPressGame={(game) => {
+              if (game.route) router.push(game.route as never);
+            }}
           />
         </View>
 
         <ProfileCollectionRow
           items={profileCollection}
-          onPressItem={(item) => console.log('navigate: collection item', item.id)}
-          onPressSeeAll={() => console.log('navigate: full collection')}
+          onPressItem={() => router.push('/collection' as never)}
+          onPressSeeAll={() => router.push('/collection' as never)}
         />
 
         <View style={[styles.horizontalPad, styles.row]}>
           <DailyActivitySummaryCard
-            profile={mockProfile}
+            profile={profile}
             activity={dailyActivity}
             completed={dailyActivityCompleted}
-            total={dailyActivityTotal}
+            total={dailyActivity.length}
           />
-          <DailyRewardCard reward={dailyReward} onPressClaim={() => console.log('claim: daily reward')} />
+          <DailyRewardCard
+            reward={DAILY_GIFT_REWARD}
+            claimed={giftClaimed}
+            onPressClaim={() => useProgressStore.getState().claimDailyGift()}
+          />
         </View>
       </ScrollView>
 

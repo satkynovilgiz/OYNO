@@ -2,7 +2,8 @@
   "common": {
     "appName": "OYNO",
     "loading": "Loading...",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "guestName": "Guest"
   },
   "home": {
     "header": {
@@ -22,10 +23,15 @@
     },
     "dailyGift": {
       "title": "Daily gift",
-      "openLabel": "Open gift"
+      "openLabel": "Open gift",
+      "subtitleUnclaimed": "Open today's gift!",
+      "subtitleClaimed": "Come back tomorrow!"
     },
     "dailyProgress": {
-      "claimLabel": "Claim reward"
+      "title": "Play today",
+      "description": "{{played}} / {{goal}} games played",
+      "claimLabel": "Claim reward",
+      "claimedLabel": "Claimed"
     },
     "games": {
       "sectionTitle": "Games"
@@ -126,7 +132,9 @@
     },
     "achievements": {
       "title": "Achievements",
-      "unlocked": "{{unlocked}} / {{total}} unlocked"
+      "unlocked": "{{unlocked}} / {{total}} unlocked",
+      "unlockedTitle": "New achievement!",
+      "unlockedCta": "Nice!"
     },
     "favoriteGames": {
       "title": "My favorite games",
@@ -143,7 +151,8 @@
     },
     "reward": {
       "title": "Daily reward",
-      "cta": "Claim"
+      "cta": "Claim",
+      "claimedLabel": "Claimed"
     }
   }
 }

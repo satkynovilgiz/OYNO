@@ -16,13 +16,14 @@ const CATEGORY_LABELS: Record<ExploreDiscovery['category'], string> = {
 
 type DiscoveriesRowProps = {
   discoveries: ExploreDiscovery[];
+  discoveredIds?: string[];
   onPressDiscovery?: (discovery: ExploreDiscovery) => void;
   onPressSeeAll?: () => void;
 };
 
 /** Falls back to a flat category color when a discovery has no imageSource
  * yet (same convention used elsewhere on this screen for missing art). */
-export function DiscoveriesRow({ discoveries, onPressDiscovery, onPressSeeAll }: DiscoveriesRowProps) {
+export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscovery, onPressSeeAll }: DiscoveriesRowProps) {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
@@ -36,6 +37,7 @@ export function DiscoveriesRow({ discoveries, onPressDiscovery, onPressSeeAll }:
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
         {discoveries.map((discovery) => {
           const categoryColor = colors.discovery[discovery.category];
+          const discovered = discoveredIds.includes(discovery.id);
           return (
             <AnimatedPressable
               key={discovery.id}
@@ -58,7 +60,7 @@ export function DiscoveriesRow({ discoveries, onPressDiscovery, onPressSeeAll }:
               <View style={styles.topRow}>
                 <Badge label={CATEGORY_LABELS[discovery.category]} color={categoryColor} />
               </View>
-              <Text style={styles.xpText}>+{discovery.xpReward} XP</Text>
+              <Text style={styles.xpText}>{discovered ? '✓ Табылды' : `+${discovery.xpReward} XP`}</Text>
             </AnimatedPressable>
           );
         })}

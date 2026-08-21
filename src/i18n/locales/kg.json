@@ -2,7 +2,8 @@
   "common": {
     "appName": "OYNO",
     "loading": "Жүктөлүүдө...",
-    "seeAll": "Баарын көрүү"
+    "seeAll": "Баарын көрүү",
+    "guestName": "Меймман"
   },
   "home": {
     "header": {
@@ -22,10 +23,15 @@
     },
     "dailyGift": {
       "title": "Күнүмдүк белек",
-      "openLabel": "Белекти ачуу"
+      "openLabel": "Белекти ачуу",
+      "subtitleUnclaimed": "Бүгүнкү белегиңди ач!",
+      "subtitleClaimed": "Эртен кайра кел!"
     },
     "dailyProgress": {
-      "claimLabel": "Сыйлыкты ал"
+      "title": "Бүгүн ойно",
+      "description": "{{played}} / {{goal}} оюн ойнолду",
+      "claimLabel": "Сыйлыкты ал",
+      "claimedLabel": "Алынды"
     },
     "games": {
       "sectionTitle": "Оюндар"
@@ -126,7 +132,9 @@
     },
     "achievements": {
       "title": "Жетишкендиктер",
-      "unlocked": "{{unlocked}} / {{total}} ачылды"
+      "unlocked": "{{unlocked}} / {{total}} ачылды",
+      "unlockedTitle": "Жаңы жетишкендик!",
+      "unlockedCta": "Сонун!"
     },
     "favoriteGames": {
       "title": "Сүйүктүү оюндарым",
@@ -143,7 +151,8 @@
     },
     "reward": {
       "title": "Күнүмдүк сыйлык",
-      "cta": "Алуу"
+      "cta": "Алуу",
+      "claimedLabel": "Алынды"
     }
   }
 }

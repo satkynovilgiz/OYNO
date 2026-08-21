@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -13,6 +14,7 @@ import {
   RegionProgressCard,
 } from './components';
 import { exploreCurrentQuest, exploreDiscoveries, exploreMapPins, exploreProgress, getExploreLocationById } from './data';
+import type { ExploreDiscovery } from './types';
 
 const mapPins = exploreMapPins.map((pin) => {
   const location = getExploreLocationById(pin.locationId);
@@ -26,6 +28,21 @@ const mapPins = exploreMapPins.map((pin) => {
 
 export function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const progress = useProgressStore();
+
+  const quest = {
+    ...exploreCurrentQuest,
+    foundCount: progress.questFoundCount,
+    ctaLabel: progress.questCompleted ? 'Квест аткарылды!' : exploreCurrentQuest.ctaLabel,
+  };
+
+  function handlePressQuest() {
+    useProgressStore.getState().advanceQuest();
+  }
+
+  function handlePressDiscovery(discovery: ExploreDiscovery) {
+    useProgressStore.getState().discoverExploreItem(discovery.id, discovery.xpReward);
+  }
 
   return (
     <View style={styles.root}>
@@ -35,16 +52,15 @@ export function ExploreScreen() {
       >
         <ExploreHeader
           onPressAvatar={() => router.push('/character-select' as never)}
-          onPressSearch={() => console.log('navigate: explore search')}
-          onPressCollection={() => console.log('navigate: collection screen')}
+          onPressCollection={() => router.push('/collection' as never)}
         />
 
         <View style={styles.horizontalPad}>
           <KyrgyzstanMap
             pins={mapPins}
             onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
-            onPressLocate={() => console.log('map: recenter')}
-            onPressFilter={() => console.log('navigate: map filter')}
+            onPressLocate={() => {}}
+            onPressFilter={() => router.push('/collection' as never)}
           />
         </View>
 
@@ -53,16 +69,14 @@ export function ExploreScreen() {
         </View>
 
         <View style={styles.horizontalPad}>
-          <CurrentQuestCard
-            quest={exploreCurrentQuest}
-            onPress={() => console.log('navigate: quest detail', exploreCurrentQuest.id)}
-          />
+          <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
         </View>
 
         <DiscoveriesRow
           discoveries={exploreDiscoveries}
-          onPressDiscovery={(discovery) => console.log('navigate: discovery detail', discovery.id)}
-          onPressSeeAll={() => console.log('navigate: collection screen')}
+          discoveredIds={progress.discoveredExploreIds}
+          onPressDiscovery={handlePressDiscovery}
+          onPressSeeAll={() => router.push('/collection' as never)}
         />
       </ScrollView>
 

@@ -39,6 +39,7 @@ export type FavoriteGame = {
   thumbnail: ImageSourcePropType;
   gamesPlayed: number;
   wins: number;
+  route?: string;
 };
 
 export type ProfileCollectionItem = {

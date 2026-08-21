@@ -9,10 +9,12 @@ import type { DailyProgress } from '../types';
 
 type DailyProgressCardProps = {
   progress: DailyProgress;
+  claimable?: boolean;
+  claimed?: boolean;
   onPressClaim?: () => void;
 };
 
-export function DailyProgressCard({ progress, onPressClaim }: DailyProgressCardProps) {
+export function DailyProgressCard({ progress, claimable = false, claimed = false, onPressClaim }: DailyProgressCardProps) {
   const { t } = useTranslation();
   const ratio = progress.progressMax > 0 ? progress.progressCurrent / progress.progressMax : 0;
 
@@ -21,7 +23,7 @@ export function DailyProgressCard({ progress, onPressClaim }: DailyProgressCardP
       <IconChip icon={Target} size={44} iconSize={22} />
 
       <View style={styles.textBlock}>
-        <Text style={styles.title}>{t('home.dailyChallenge.title')}</Text>
+        <Text style={styles.title}>{t('home.dailyProgress.title')}</Text>
         <Text style={styles.description}>{progress.description}</Text>
         <View style={styles.progressRow}>
           <ProgressBar progress={ratio} height={6} style={styles.progressBar} />
@@ -31,7 +33,11 @@ export function DailyProgressCard({ progress, onPressClaim }: DailyProgressCardP
         </View>
       </View>
 
-      <Button label={t('home.dailyProgress.claimLabel')} onPress={onPressClaim} />
+      <Button
+        label={t(claimed ? 'home.dailyProgress.claimedLabel' : 'home.dailyProgress.claimLabel')}
+        onPress={onPressClaim}
+        disabled={!claimable || claimed}
+      />
     </Card>
   );
 }

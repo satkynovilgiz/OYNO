@@ -1,7 +1,8 @@
-import { Award, Coins, Pencil, UserRound } from 'lucide-react-native';
+import { Award, Coins, Pencil } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { CharacterAvatar } from '@/components/character';
 import { Card, Pill, ProgressBar } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -19,11 +20,7 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
     <Card style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.avatar}>
-          {player.avatarSource ? (
-            <Image source={player.avatarSource} style={styles.avatarImage} resizeMode="cover" />
-          ) : (
-            <UserRound size={30} color={colors.primary} strokeWidth={1.75} />
-          )}
+          <CharacterAvatar characterId={player.characterId} emotion="happy" size={56} />
         </View>
 
         <View style={styles.identity}>
@@ -76,10 +73,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
   },
   identity: {
     flex: 1,

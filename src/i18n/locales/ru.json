@@ -2,7 +2,8 @@
   "common": {
     "appName": "OYNO",
     "loading": "Загрузка...",
-    "seeAll": "Смотреть все"
+    "seeAll": "Смотреть все",
+    "guestName": "Гость"
   },
   "home": {
     "header": {
@@ -22,10 +23,15 @@
     },
     "dailyGift": {
       "title": "Ежедневный подарок",
-      "openLabel": "Открыть подарок"
+      "openLabel": "Открыть подарок",
+      "subtitleUnclaimed": "Открой сегодняшний подарок!",
+      "subtitleClaimed": "Возвращайся завтра!"
     },
     "dailyProgress": {
-      "claimLabel": "Забрать награду"
+      "title": "Играй сегодня",
+      "description": "{{played}} / {{goal}} игр сыграно",
+      "claimLabel": "Забрать награду",
+      "claimedLabel": "Получено"
     },
     "games": {
       "sectionTitle": "Игры"
@@ -126,7 +132,9 @@
     },
     "achievements": {
       "title": "Достижения",
-      "unlocked": "Открыто {{unlocked}} / {{total}}"
+      "unlocked": "Открыто {{unlocked}} / {{total}}",
+      "unlockedTitle": "Новое достижение!",
+      "unlockedCta": "Отлично!"
     },
     "favoriteGames": {
       "title": "Мои любимые игры",
@@ -143,7 +151,8 @@
     },
     "reward": {
       "title": "Ежедневная награда",
-      "cta": "Забрать"
+      "cta": "Забрать",
+      "claimedLabel": "Получено"
     }
   }
 }

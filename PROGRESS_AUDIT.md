@@ -580,3 +580,123 @@ down to the 1 matching "Оюндар").
   `oyno://` scheme, analytics, and everything else in the master prompt**:
   still untouched.
 
+## Phase 4 (2026-08-21): Collection, Achievements, Rewards, XP, Progress
+
+This was the audit's #1 flagged gap: every XP bar, coin count, streak, and
+achievement badge across Home/Profile/Explore/Culture was hardcoded mock
+data with zero real state behind it. This pass built a real, persisted
+progress engine and wired it through every screen that displayed progress
+numbers, plus the one fully-playable game (Беш таш).
+
+### Architecture
+
+- `src/services/progress/levelConfig.ts` - pure functions for the XP curve
+  (500 XP/level, linear, matches the master prompt's own worked example).
+  Unit tested (`levelConfig.test.ts`).
+- `src/services/progress/achievements.ts` - pure condition-checking engine
+  (`getNewlyUnlockedAchievements`), same style as the `toguzKorgool` game
+  engine. Unit tested (`achievements.test.ts`).
+- `src/store/useProgressStore.ts` - Zustand + AsyncStorage store (key
+  `oyno.progress`), same pattern as `useSettingsStore`/`useNotificationsStore`.
+  Holds xp, coins, gems, gamesPlayed/gamesWon (+ per-game breakdown),
+  streakDays, daily counters (wins/plays today, reset by comparing today's
+  date), quest progress, culture-discovery/boz-üy-visit flags,
+  explore-discovery ids, and unlocked-achievement ids. Loaded once at app
+  start in `_layout.tsx` alongside the other stores.
+- `jest` `testMatch` widened to also run `src/services/**/*.test.ts` (was
+  `games/**/*.test.ts` only) - 11 new tests, 48 total passing.
+
+### Only 4 real, checkable achievements
+
+The Profile design already shipped 4 badge art files (first-win, traveler,
+boz-uy-guest, komuzchu) - those are the only ones with real unlock
+conditions (win Беш таш, complete the Explore quest, visit Боз үй, view a
+Culture discovery). `achievementsTotal = 50` is still the design spec's
+eventual catalog size, not a real number - same honesty convention as
+Explore/Culture's category totals from earlier phases. A global
+`AchievementUnlockedModal`, mounted once in `_layout.tsx` and driven by
+`lastUnlockedAchievementId`, fires the moment any of the 4 conditions is
+met, regardless of which screen the user is on.
+
+### What's now real (verified in a live browser, not just read)
+
+Ran the actual dev server, seeded a session via `localStorage`, and drove
+every flow with real clicks (`javascript_tool` direct `.click()` dispatch,
+same technique as prior phases - `ref`-based clicks are still unreliable
+here), reading `localStorage['oyno.progress']` as ground truth after each
+action rather than trusting rendered text alone:
+
+- **Беш таш**: played a real game end-to-end (had to get toss/catch timing
+  right - failed twice before landing inside the sweet-spot window) and won.
+  Confirmed `recordGamePlayed`/`recordGameWon` fired for real:
+  `gameStats['besh-tash']` incremented correctly, `first-win` achievement
+  unlocked and the global modal appeared immediately. A loss was also
+  triggered and confirmed to award nothing (no partial credit for failing).
+- **Home**: real signed-in name, level/XP, coins/gems all rendered from the
+  store (verified against a seeded test user). Daily Challenge chevron
+  claims the win reward (100 XP + 50 coins) only when `winsToday >= 1` and
+  unclaimed - confirmed the exact amounts landed in `localStorage`, then
+  confirmed clicking again neither double-pays nor no-ops: it correctly
+  falls through to "open Games" once already claimed (fixes a dead-button
+  gap - the chevron previously had no `onPress` at all). Daily Gift's
+  subtitle now actually reflects claimed/unclaimed instead of the mock's
+  permanently-post-claim text. Repurposed the "Chüko" daily-progress card
+  (Chüko isn't built) into a real "play 3 games today" goal tracked by
+  `playsToday`, correctly capped and gated by a disabled `Button` until met.
+- **Profile**: XP/coins/badges/streak all real. Fixed a real honesty bug:
+  `favoriteGames` previously showed invented stats ("23 games played, 16
+  wins") for Тогуз коргоол/Чүкө/Ордо - games with no screen at all, so the
+  user could not possibly have played them. Now it only lists games with
+  `gameStats[id].played > 0`, so today it correctly shows only Беш таш.
+  "Бүгүнкү активдүүлүк" now reports 4 real signals (games played today,
+  culture discovery ever, quest steps found, боз үй visited) instead of a
+  static "2 оюн ойнолду" claim. Built `/achievements` and `/collection` as
+  real destination screens (was `console.log('navigate: ...')` before) -
+  achievements screen dims the 3 still-locked badges with a lock icon.
+- **Explore**: "Квестти улантуу" now really advances `questFoundCount`
+  (verified 0/5 → 5/5 across 5 taps), completion pays the quest reward once
+  and unlocks `traveler`, and the CTA swaps to "Квест аткарылды!" so a
+  finished quest doesn't invite more taps. Each discovery card now pays its
+  listed XP once (`discoverExploreItem`, new store action) and flips to "✓
+  Табылды" - confirmed a second tap on the same card is a no-op (checked
+  `localStorage` didn't change).
+- **Culture**: "Үйрөнүү" on today's discovery and "Боз үйгө кир" both now
+  call real store actions (`discoverCulture`/`visitBozUy`) instead of
+  logging to the console; confirmed both `komuzchu` and `boz-uy-guest`
+  unlocked for real, header streak/coins now read from the store instead of
+  a local `mockStreakDays`/`mockCoins` pair.
+- **Streak**: `streakDays` increments once per calendar day the app is
+  opened (compares `lastActiveDateISO` to today), resets to 1 on a gap.
+  Only verified same-day behavior live (streak = 1); multi-day increment
+  logic is exercised by the date-math itself but not clock-mocked in a test.
+
+### Bug found during verification
+
+When two achievements unlock from two rapid same-tick actions (in testing:
+clicking "Үйрөнүү" then "Боз үйгө кир" back-to-back), both achievements
+correctly land in `unlockedAchievementIds`, but `lastUnlockedAchievementId`
+- and therefore which toast the modal shows - ended up as the first one
+unlocked, not the second, in this exact scenario. Data integrity is
+unaffected (both really unlocked, both persist correctly); only the toast
+picked the wrong one to announce when two fire faster than a user could
+plausibly dismiss the first modal. Not fixed this pass - noting it here
+rather than letting it hide.
+
+### Not done, flagged rather than faked
+
+- **Collection per-item counts (Комуз 3/5, Боз үй буюмдары 7/12, etc.) are
+  still the Profile-phase content-catalog mock** - making these real needs
+  a full discovery/lesson-completion system this pass didn't build. The
+  `/collection` screen renders the same mock numbers, just as a real
+  destination instead of a dead button.
+- **Culture's Quiz teaser and "Жаңы материалдар" row are still
+  `console.log` placeholders** - out of scope for a progress/XP pass (they
+  need a quiz engine and a lesson-material viewer, not a reward hook).
+- **Achievement catalog is 4 of a spec'd 50** - the rest need features that
+  don't exist yet (cooking, Oймо creation, multi-game mastery, etc.); listed
+  honestly as locked rather than invented.
+- **`characterId` still isn't persisted** (pre-existing gap, not
+  introduced here) - Home/Profile avatars now correctly render whichever
+  character is selected via `CharacterAvatar` instead of always showing
+  Бек's static PNG, but the selection itself still resets on reload.
+

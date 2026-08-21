@@ -1,9 +1,14 @@
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
+import { xpProgress } from '@/services/progress/levelConfig';
+import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -16,14 +21,10 @@ import {
   HomeHeader,
   ProfileSummaryCard,
 } from './components';
-import {
-  mockCultureTiles,
-  mockDailyChallenge,
-  mockDailyGift,
-  mockDailyProgress,
-  mockGames,
-  mockPlayer,
-} from './mockData';
+import { mockCultureTiles, mockGames } from './mockData';
+import type { DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
+
+const DAILY_CHALLENGE_DESCRIPTION = 'Беш ташта 1 жолу жеӊ';
 
 function handlePressTab(tab: TabId) {
   if (tab === 'games') {
@@ -41,8 +42,57 @@ function handlePressTab(tab: TabId) {
 }
 
 export function HomeScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
+  const user = useAuthStore((state) => state.user);
+  const characterId = useAppStore((state) => state.characterId) ?? 'bek';
+  const progress = useProgressStore();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const challengeClaimed = progress.dailyChallengeClaimedDateISO === today;
+  const challengeComplete = progress.winsToday >= 1;
+  const giftClaimed = progress.dailyGiftClaimedDateISO === today;
+  const playClaimed = progress.dailyPlayClaimedDateISO === today;
+  const playComplete = progress.playsToday >= DAILY_PLAY_GOAL;
+
+  const { level, xpCurrent, xpMax } = xpProgress(progress.xp);
+  const player: PlayerSummary = {
+    name: user?.name ?? t('common.guestName'),
+    rank: 'Жаш оюнчу',
+    characterId,
+    level,
+    xpCurrent,
+    xpMax,
+    coins: progress.coins,
+    gems: progress.gems,
+  };
+
+  const dailyChallenge: DailyChallenge = {
+    description: DAILY_CHALLENGE_DESCRIPTION,
+    progressCurrent: Math.min(progress.winsToday, 1),
+    progressMax: 1,
+    rewardXp: 100,
+    rewardCoins: 50,
+  };
+
+  const dailyGift: DailyGift = {
+    subtitle: t(giftClaimed ? 'home.dailyGift.subtitleClaimed' : 'home.dailyGift.subtitleUnclaimed'),
+  };
+
+  const dailyProgress: DailyProgress = {
+    description: t('home.dailyProgress.description', { played: Math.min(progress.playsToday, DAILY_PLAY_GOAL), goal: DAILY_PLAY_GOAL }),
+    progressCurrent: Math.min(progress.playsToday, DAILY_PLAY_GOAL),
+    progressMax: DAILY_PLAY_GOAL,
+  };
+
+  function handlePressDailyChallenge() {
+    if (challengeComplete && !challengeClaimed) {
+      useProgressStore.getState().claimDailyChallenge();
+    } else {
+      router.push('/games' as never);
+    }
+  }
 
   return (
     <View style={styles.root}>
@@ -57,12 +107,12 @@ export function HomeScreen() {
         />
 
         <View style={styles.topRow}>
-          <ProfileSummaryCard player={mockPlayer} />
-          <DailyChallengeCard challenge={mockDailyChallenge} />
+          <ProfileSummaryCard player={player} />
+          <DailyChallengeCard challenge={dailyChallenge} onPress={handlePressDailyChallenge} />
         </View>
 
         <View style={styles.horizontalPad}>
-          <DailyGiftCard gift={mockDailyGift} />
+          <DailyGiftCard gift={dailyGift} onPress={() => useProgressStore.getState().claimDailyGift()} />
         </View>
 
         <View style={styles.horizontalPad}>
@@ -82,7 +132,12 @@ export function HomeScreen() {
         <CultureGrid tiles={mockCultureTiles} />
 
         <View style={styles.horizontalPad}>
-          <DailyProgressCard progress={mockDailyProgress} />
+          <DailyProgressCard
+            progress={dailyProgress}
+            claimable={playComplete}
+            claimed={playClaimed}
+            onPressClaim={() => useProgressStore.getState().claimDailyPlay()}
+          />
         </View>
       </ScrollView>
 

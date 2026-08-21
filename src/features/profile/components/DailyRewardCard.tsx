@@ -10,10 +10,11 @@ import type { DailyReward } from '../types';
 
 type DailyRewardCardProps = {
   reward: DailyReward;
+  claimed?: boolean;
   onPressClaim?: () => void;
 };
 
-export function DailyRewardCard({ reward, onPressClaim }: DailyRewardCardProps) {
+export function DailyRewardCard({ reward, claimed = false, onPressClaim }: DailyRewardCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -34,7 +35,11 @@ export function DailyRewardCard({ reward, onPressClaim }: DailyRewardCardProps) 
           </View>
 
           <View style={styles.ctaWrap}>
-            <Button label={t('profile.reward.cta')} onPress={onPressClaim} />
+            <Button
+              label={t(claimed ? 'profile.reward.claimedLabel' : 'profile.reward.cta')}
+              onPress={onPressClaim}
+              disabled={claimed}
+            />
           </View>
         </View>
       </View>

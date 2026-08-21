@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -19,22 +20,18 @@ import {
 import { cultureCategories, cultureNewMaterials, cultureProgress, cultureTodayDiscovery } from './data';
 import type { CultureCategory } from './types';
 
-// Local-only mock (no streak/wallet system exists yet); same convention as
-// the rest of this screen's mock data.
-const mockStreakDays = 12;
-const mockCoins = 450;
-
 function handlePressCategory(category: CultureCategory) {
   if (category.id === 'games') {
     router.push('/games' as never);
     return;
   }
-  console.log('navigate: culture category', category.id);
+  router.push('/collection' as never);
 }
 
 export function CultureScreen() {
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
+  const progress = useProgressStore();
 
   return (
     <View style={styles.root}>
@@ -43,30 +40,29 @@ export function CultureScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
         <CultureHeader
-          streakDays={mockStreakDays}
-          coins={mockCoins}
+          streakDays={progress.streakDays}
+          coins={progress.coins}
           hasUnreadNotifications={hasUnreadNotifications}
           onPressAvatar={() => router.push('/character-select' as never)}
-          onPressSearch={() => console.log('navigate: culture search')}
           onPressNotifications={() => router.push('/notifications' as never)}
         />
 
         <View style={styles.horizontalPad}>
-          <CultureHero onPress={() => console.log('navigate: culture explore')} />
+          <CultureHero onPress={() => router.push('/collection' as never)} />
         </View>
 
         <CultureCategoriesGrid
           categories={cultureCategories}
           onPressCategory={handlePressCategory}
-          onPressSeeAll={() => console.log('navigate: all culture categories')}
+          onPressSeeAll={() => router.push('/collection' as never)}
         />
 
         <View style={[styles.horizontalPad, styles.row]}>
           <TodayDiscoveryCard
             discovery={cultureTodayDiscovery}
-            onPress={() => console.log('navigate: today discovery detail')}
+            onPress={() => useProgressStore.getState().discoverCulture()}
           />
-          <EnterBozUyCard onPress={() => console.log('navigate: interactive boz uy')} />
+          <EnterBozUyCard onPress={() => useProgressStore.getState().visitBozUy()} />
         </View>
 
         <View style={styles.horizontalPad}>

@@ -1,14 +1,14 @@
-import type { ImageSourcePropType } from 'react-native';
+import type { CharacterId } from '@/components/character';
 
 export type PlayerSummary = {
   name: string;
   rank: string;
+  characterId: CharacterId;
   level: number;
   xpCurrent: number;
   xpMax: number;
   coins: number;
   gems: number;
-  avatarSource?: ImageSourcePropType;
 };
 
 export type DailyChallenge = {

@@ -53,7 +53,8 @@
   "jest": {
     "preset": "jest-expo",
     "testMatch": [
-      "<rootDir>/games/**/*.test.ts"
+      "<rootDir>/games/**/*.test.ts",
+      "<rootDir>/src/services/**/*.test.ts"
     ]
   },
   "private": true

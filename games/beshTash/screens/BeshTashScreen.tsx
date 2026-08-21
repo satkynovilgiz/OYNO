@@ -1,9 +1,11 @@
 import { ChevronLeft } from 'lucide-react-native';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, IconButton } from '@/components/ui';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing, typography } from '@/theme';
 
 import { BeshTashBoard } from '../components/BeshTashBoard';
@@ -13,11 +15,29 @@ type BeshTashScreenProps = {
   onPressBack?: () => void;
 };
 
+const GAME_ID = 'besh-tash';
+
 export function BeshTashScreen({ onPressBack }: BeshTashScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { state, isAttempting, liftProgress, ringProgress, sweetSpotFraction, onPressAction, restart } =
     useBeshTashGame();
+
+  const wonRef = useRef(false);
+  useEffect(() => {
+    if (state.status === 'won' && !wonRef.current) {
+      wonRef.current = true;
+      useProgressStore.getState().recordGameWon(GAME_ID);
+    }
+    if (state.status !== 'won') {
+      wonRef.current = false;
+    }
+  }, [state.status]);
+
+  const handleStart = useCallback(() => {
+    useProgressStore.getState().recordGamePlayed(GAME_ID);
+    restart();
+  }, [restart]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
@@ -35,7 +55,7 @@ export function BeshTashScreen({ onPressBack }: BeshTashScreenProps) {
       <View style={styles.content}>
         {state.status === 'idle' && (
           <View style={styles.centerBlock}>
-            <Button label={t('beshTash.start')} onPress={restart} />
+            <Button label={t('beshTash.start')} onPress={handleStart} />
           </View>
         )}
 
@@ -54,7 +74,7 @@ export function BeshTashScreen({ onPressBack }: BeshTashScreenProps) {
           <View style={styles.overlay}>
             <Text style={styles.overlayTitle}>{t('beshTash.wonTitle')}</Text>
             <Text style={styles.overlaySubtitle}>{t('beshTash.wonSubtitle')}</Text>
-            <Button label={t('beshTash.restart')} onPress={restart} />
+            <Button label={t('beshTash.restart')} onPress={handleStart} />
           </View>
         )}
 
@@ -62,7 +82,7 @@ export function BeshTashScreen({ onPressBack }: BeshTashScreenProps) {
           <View style={styles.overlay}>
             <Text style={styles.overlayTitle}>{t('beshTash.failedTitle')}</Text>
             <Text style={styles.overlaySubtitle}>{t('beshTash.failedSubtitle')}</Text>
-            <Button label={t('beshTash.restart')} onPress={restart} />
+            <Button label={t('beshTash.restart')} onPress={handleStart} />
           </View>
         )}
       </View>

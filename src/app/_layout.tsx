@@ -9,9 +9,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
 import { queryClient } from '@/services/queryClient';
+import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
+import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 // Routes reachable without a session (the auth flow itself, plus the splash
@@ -61,6 +64,7 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
 
 export default function RootLayout() {
   const [flagsReady, setFlagsReady] = useState(false);
+  const lastUnlockedAchievementId = useProgressStore((state) => state.lastUnlockedAchievementId);
 
   useEffect(() => {
     // The Splash/index route also calls these, but _layout mounts first and
@@ -72,6 +76,7 @@ export default function RootLayout() {
         useAppStore.getState().loadOnboardingFlags(),
         useNotificationsStore.getState().load(),
         useSettingsStore.getState().load(),
+        useProgressStore.getState().load(),
       ]);
       setFlagsReady(true);
     })();
@@ -87,6 +92,10 @@ export default function RootLayout() {
               screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
             />
           </RouteGuard>
+          <AchievementUnlockedModal
+            achievement={lastUnlockedAchievementId ? (getAchievement(lastUnlockedAchievementId) ?? null) : null}
+            onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
+          />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -9,12 +9,13 @@ import type { ProfileAchievement } from '../types';
 
 type AchievementsPreviewCardProps = {
   achievements: ProfileAchievement[];
+  unlockedIds?: string[];
   unlocked: number;
   total: number;
   onPressSeeAll?: () => void;
 };
 
-export function AchievementsPreviewCard({ achievements, unlocked, total, onPressSeeAll }: AchievementsPreviewCardProps) {
+export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, total, onPressSeeAll }: AchievementsPreviewCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -30,7 +31,11 @@ export function AchievementsPreviewCard({ achievements, unlocked, total, onPress
       <View style={styles.grid}>
         {achievements.map((achievement) => (
           <View key={achievement.id} style={styles.badgeItem}>
-            <Image source={achievement.iconSource} style={styles.badgeImage} resizeMode="cover" />
+            <Image
+              source={achievement.iconSource}
+              style={[styles.badgeImage, unlockedIds && !unlockedIds.includes(achievement.id) && styles.badgeLocked]}
+              resizeMode="cover"
+            />
             <Text style={styles.badgeLabel} numberOfLines={2}>
               {achievement.title}
             </Text>
@@ -81,6 +86,9 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: colors.surfaceAlt,
+  },
+  badgeLocked: {
+    opacity: 0.35,
   },
   badgeLabel: {
     ...typography.small,
