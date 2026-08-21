@@ -105,5 +105,45 @@
         "game": "Оюн"
       }
     }
+  },
+  "profile": {
+    "title": "Профиль",
+    "backLabel": "Артка",
+    "settingsLabel": "Жөндөөлөр",
+    "notificationsLabel": "Билдирүүлөр",
+    "editLabel": "Профилди оңдоо",
+    "changePhotoLabel": "Сүрөттү алмаштыруу",
+    "level": "Деңгээл {{level}}",
+    "xpRemaining": "{{count}} XP калды",
+    "currencies": {
+      "coins": "Монеталар",
+      "xp": "XP",
+      "badges": "Жетишкендиктер",
+      "tokens": "Токендер"
+    },
+    "progress": {
+      "title": "Менин прогрессим"
+    },
+    "achievements": {
+      "title": "Жетишкендиктер",
+      "unlocked": "{{unlocked}} / {{total}} ачылды"
+    },
+    "favoriteGames": {
+      "title": "Сүйүктүү оюндарым",
+      "played": "{{count}} оюн",
+      "wins": "{{count}} жеңиш"
+    },
+    "collection": {
+      "title": "Менин коллекциям"
+    },
+    "dailyActivity": {
+      "title": "Бүгүнкү активдүүлүк",
+      "streak": "{{count}} күн",
+      "progress": "{{completed}} / {{total}} тапшырма"
+    },
+    "reward": {
+      "title": "Күнүмдүк сыйлык",
+      "cta": "Алуу"
+    }
   }
 }

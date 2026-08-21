@@ -105,5 +105,45 @@
         "game": "Game"
       }
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "backLabel": "Back",
+    "settingsLabel": "Settings",
+    "notificationsLabel": "Notifications",
+    "editLabel": "Edit profile",
+    "changePhotoLabel": "Change photo",
+    "level": "Level {{level}}",
+    "xpRemaining": "{{count}} XP left",
+    "currencies": {
+      "coins": "Coins",
+      "xp": "XP",
+      "badges": "Achievements",
+      "tokens": "Tokens"
+    },
+    "progress": {
+      "title": "My progress"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "unlocked": "{{unlocked}} / {{total}} unlocked"
+    },
+    "favoriteGames": {
+      "title": "My favorite games",
+      "played": "{{count}} games",
+      "wins": "{{count}} wins"
+    },
+    "collection": {
+      "title": "My collection"
+    },
+    "dailyActivity": {
+      "title": "Today's activity",
+      "streak": "{{count}} days",
+      "progress": "{{completed}} / {{total}} tasks"
+    },
+    "reward": {
+      "title": "Daily reward",
+      "cta": "Claim"
+    }
   }
 }

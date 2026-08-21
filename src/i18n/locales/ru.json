@@ -105,5 +105,45 @@
         "game": "Игра"
       }
     }
+  },
+  "profile": {
+    "title": "Профиль",
+    "backLabel": "Назад",
+    "settingsLabel": "Настройки",
+    "notificationsLabel": "Уведомления",
+    "editLabel": "Редактировать профиль",
+    "changePhotoLabel": "Сменить фото",
+    "level": "Уровень {{level}}",
+    "xpRemaining": "Осталось {{count}} XP",
+    "currencies": {
+      "coins": "Монеты",
+      "xp": "XP",
+      "badges": "Достижения",
+      "tokens": "Токены"
+    },
+    "progress": {
+      "title": "Мой прогресс"
+    },
+    "achievements": {
+      "title": "Достижения",
+      "unlocked": "Открыто {{unlocked}} / {{total}}"
+    },
+    "favoriteGames": {
+      "title": "Мои любимые игры",
+      "played": "{{count}} игр",
+      "wins": "{{count}} побед"
+    },
+    "collection": {
+      "title": "Моя коллекция"
+    },
+    "dailyActivity": {
+      "title": "Активность сегодня",
+      "streak": "{{count}} дней",
+      "progress": "{{completed}} / {{total}} заданий"
+    },
+    "reward": {
+      "title": "Ежедневная награда",
+      "cta": "Забрать"
+    }
   }
 }

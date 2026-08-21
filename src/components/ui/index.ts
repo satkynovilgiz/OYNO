@@ -6,3 +6,4 @@ export * from './IconButton';
 export * from './IconChip';
 export * from './Pill';
 export * from './ProgressBar';
+export * from './ProgressRing';

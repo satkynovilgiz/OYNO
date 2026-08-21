@@ -93,6 +93,7 @@ export function CultureScreen() {
             if (tab === 'home') router.push('/');
             if (tab === 'games') router.push('/games' as never);
             if (tab === 'explore') router.push('/explore' as never);
+            if (tab === 'profile') router.push('/profile' as never);
           }}
         />
       </View>
