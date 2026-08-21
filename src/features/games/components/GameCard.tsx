@@ -17,14 +17,21 @@ const DIFFICULTY_LABEL: Record<GameListItem['difficulty'], string> = {
 };
 
 export function GameCard({ game, onPress }: GameCardProps) {
+  const isPlayable = !!game.route;
+
   return (
     <View style={styles.pressable}>
-      <Card padded={false} style={styles.card}>
+      <Card padded={false} style={[styles.card, !isPlayable && styles.cardDisabled]}>
         <View style={styles.thumbnailWrap}>
           <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
           {game.featured ? (
             <View style={styles.badge}>
               <Award size={14} color={colors.textOnPrimary} strokeWidth={2} />
+            </View>
+          ) : null}
+          {!isPlayable ? (
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>Жакында</Text>
             </View>
           ) : null}
         </View>
@@ -47,7 +54,13 @@ export function GameCard({ game, onPress }: GameCardProps) {
             <Text style={styles.metaText}>{game.duration}</Text>
           </View>
 
-          <Button label="Ойноо" onPress={() => onPress?.(game)} />
+          {isPlayable ? (
+            <Button label="Ойноо" onPress={() => onPress?.(game)} />
+          ) : (
+            <View style={styles.disabledButton}>
+              <Text style={styles.disabledButtonLabel}>Жакында</Text>
+            </View>
+          )}
         </View>
       </Card>
     </View>
@@ -61,9 +74,38 @@ const styles = StyleSheet.create({
   card: {
     overflow: 'hidden',
   },
+  cardDisabled: {
+    opacity: 0.7,
+  },
   thumbnailWrap: {
     width: '100%',
     aspectRatio: 1.4,
+  },
+  comingSoonBadge: {
+    position: 'absolute',
+    bottom: spacing.xs,
+    left: spacing.xs,
+    backgroundColor: 'rgba(43,32,25,0.75)',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+    borderRadius: radii.pill,
+  },
+  comingSoonText: {
+    ...typography.small,
+    color: colors.textOnDark,
+    fontWeight: '700',
+  },
+  disabledButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+  },
+  disabledButtonLabel: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontWeight: '700',
   },
   thumbnail: {
     width: '100%',
