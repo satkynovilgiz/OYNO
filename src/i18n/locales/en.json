@@ -67,5 +67,43 @@
     "continue": "Continue",
     "guestHint": "Create an account to save your progress",
     "comingSoon": "Coming soon"
+  },
+  "culture": {
+    "title": "Culture",
+    "subtitle": "Discover, learn, and live Kyrgyz culture.",
+    "searchLabel": "Search",
+    "notificationsLabel": "Notifications",
+    "hero": {
+      "title": "The world of the boz üy",
+      "description": "Centuries of nomadic wisdom and craft, preserved.",
+      "cta": "Explore"
+    },
+    "categoriesTitle": "Culture categories",
+    "discovery": {
+      "label": "Today's discovery",
+      "newBadge": "NEW",
+      "cta": "Learn"
+    },
+    "enterBozUy": {
+      "title": "Enter the boz üy",
+      "subtitle": "Interactive experience"
+    },
+    "progress": {
+      "title": "Culture progress"
+    },
+    "quiz": {
+      "title": "Test your knowledge!",
+      "description": "Take quizzes to reinforce what you've learned.",
+      "cta": "Start"
+    },
+    "materials": {
+      "title": "New materials",
+      "duration": "{{count}} min",
+      "types": {
+        "reading": "Reading",
+        "video": "Video",
+        "game": "Game"
+      }
+    }
   }
 }

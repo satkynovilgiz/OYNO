@@ -70,6 +70,7 @@ export function GamesScreen() {
           onPressTab={(tab) => {
             if (tab === 'home') router.push('/');
             if (tab === 'explore') router.push('/explore' as never);
+            if (tab === 'culture') router.push('/culture' as never);
           }}
         />
       </View>

@@ -72,6 +72,7 @@ export function ExploreScreen() {
           onPressTab={(tab) => {
             if (tab === 'home') router.push('/');
             if (tab === 'games') router.push('/games' as never);
+            if (tab === 'culture') router.push('/culture' as never);
           }}
         />
       </View>

@@ -32,7 +32,10 @@ function handlePressTab(tab: TabId) {
   if (tab === 'explore') {
     router.push('/explore' as never);
   }
-  // culture / profile screens aren't built yet.
+  if (tab === 'culture') {
+    router.push('/culture' as never);
+  }
+  // profile screen isn't built yet.
 }
 
 export function HomeScreen() {
