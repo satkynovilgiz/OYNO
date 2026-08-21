@@ -1,0 +1,112 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { ChevronRight } from 'lucide-react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { AnimatedPressable, Badge } from '@/components/ui';
+import { colors, radii, shadows, spacing, typography } from '@/theme';
+
+import type { ExploreDiscovery } from '../types';
+
+const CATEGORY_LABELS: Record<ExploreDiscovery['category'], string> = {
+  nature: 'Жаратылыш',
+  culture: 'Маданият',
+  animals: 'Жаныбарлар',
+  food: 'Ашкана',
+};
+
+type DiscoveriesRowProps = {
+  discoveries: ExploreDiscovery[];
+  onPressDiscovery?: (discovery: ExploreDiscovery) => void;
+  onPressSeeAll?: () => void;
+};
+
+/** No discovery photos exist yet, so each card falls back to its category
+ * color (same "solid tone until real art lands" convention used elsewhere
+ * on this screen) instead of a photographic image. */
+export function DiscoveriesRow({ discoveries, onPressDiscovery, onPressSeeAll }: DiscoveriesRowProps) {
+  return (
+    <View style={styles.section}>
+      <View style={styles.header}>
+        <Text style={styles.sectionTitle}>Жаңы ачылыштар</Text>
+        <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
+          <Text style={styles.seeAllText}>Баарын көрүү</Text>
+          <ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />
+        </AnimatedPressable>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
+        {discoveries.map((discovery) => {
+          const categoryColor = colors.discovery[discovery.category];
+          return (
+            <AnimatedPressable
+              key={discovery.id}
+              style={styles.card}
+              onPress={() => onPressDiscovery?.(discovery)}
+              accessibilityRole="button"
+              accessibilityLabel={discovery.title}
+            >
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: categoryColor }]} />
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.6)']}
+                locations={[0.45, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+
+              <View style={styles.topRow}>
+                <Badge label={CATEGORY_LABELS[discovery.category]} color={categoryColor} />
+              </View>
+              <Text style={styles.xpText}>+{discovery.xpReward} XP</Text>
+            </AnimatedPressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  section: {
+    gap: spacing.sm,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.h1,
+    color: colors.textPrimary,
+  },
+  seeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  seeAllText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  list: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  card: {
+    width: 150,
+    height: 130,
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    justifyContent: 'space-between',
+    padding: spacing.xs,
+    ...shadows.card,
+  },
+  topRow: {
+    flexDirection: 'row',
+  },
+  xpText: {
+    ...typography.small,
+    color: colors.textOnDark,
+    fontWeight: '700',
+  },
+});

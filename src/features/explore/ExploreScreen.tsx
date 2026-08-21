@@ -5,25 +5,29 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { colors, spacing } from '@/theme';
 
-import { ExploreHeader, LocationsSection, OverallProgressCard, QuestComingSoonCard } from './components';
-import { exploreLocations } from './data';
-import type { ExploreLocation } from './types';
+import {
+  CurrentQuestCard,
+  DiscoveriesRow,
+  ExploreHeader,
+  KyrgyzstanMap,
+  RegionProgressCard,
+} from './components';
+import { exploreCurrentQuest, exploreDiscoveries, exploreMapPins, exploreProgress, getExploreLocationById } from './data';
 
-const regions = exploreLocations.filter((location) => location.kind === 'region');
-const natureSites = exploreLocations.filter((location) => location.kind === 'nature');
-
-const discoveredCount = exploreLocations.filter((location) => location.discoveredPercent > 0).length;
-const overallPercent = Math.round(
-  exploreLocations.reduce((sum, location) => sum + location.discoveredPercent, 0) /
-    exploreLocations.length,
-);
+const mapPins = exploreMapPins.map((pin) => {
+  const location = getExploreLocationById(pin.locationId);
+  return {
+    id: pin.locationId,
+    label: location?.name.kg ?? pin.locationId,
+    xPercent: pin.xPercent,
+    yPercent: pin.yPercent,
+    color: pin.color,
+    variant: pin.variant,
+  };
+});
 
 export function ExploreScreen() {
   const insets = useSafeAreaInsets();
-
-  const handlePressLocation = (location: ExploreLocation) => {
-    router.push(`/explore/${location.id}` as never);
-  };
 
   return (
     <View style={styles.root}>
@@ -31,25 +35,36 @@ export function ExploreScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <ExploreHeader />
+        <ExploreHeader
+          onPressAvatar={() => router.push('/character-select' as never)}
+          onPressSearch={() => console.log('navigate: explore search')}
+          onPressCollection={() => console.log('navigate: collection screen')}
+        />
 
         <View style={styles.horizontalPad}>
-          <OverallProgressCard
-            discoveredLocations={discoveredCount}
-            totalLocations={exploreLocations.length}
-            overallPercent={overallPercent}
+          <KyrgyzstanMap
+            pins={mapPins}
+            onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
+            onPressLocate={() => console.log('map: recenter')}
+            onPressFilter={() => console.log('navigate: map filter')}
           />
         </View>
 
         <View style={styles.horizontalPad}>
-          <QuestComingSoonCard />
+          <RegionProgressCard progress={exploreProgress} />
         </View>
 
-        <LocationsSection title="Аймактар" locations={regions} onPressLocation={handlePressLocation} />
-        <LocationsSection
-          title="Жаратылыш"
-          locations={natureSites}
-          onPressLocation={handlePressLocation}
+        <View style={styles.horizontalPad}>
+          <CurrentQuestCard
+            quest={exploreCurrentQuest}
+            onPress={() => console.log('navigate: quest detail', exploreCurrentQuest.id)}
+          />
+        </View>
+
+        <DiscoveriesRow
+          discoveries={exploreDiscoveries}
+          onPressDiscovery={(discovery) => console.log('navigate: discovery detail', discovery.id)}
+          onPressSeeAll={() => console.log('navigate: collection screen')}
         />
       </ScrollView>
 

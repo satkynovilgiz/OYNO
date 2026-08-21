@@ -4,7 +4,15 @@
  * edit facts here without updating the matching content file first (facts
  * live there with citations; this file just shapes them for the UI).
  */
-import type { ExploreLocation } from './types';
+import { colors } from '@/theme';
+
+import type {
+  ExploreDiscovery,
+  ExploreLocation,
+  ExploreMapPin,
+  ExploreProgress,
+  ExploreQuest,
+} from './types';
 
 export const exploreLocations: ExploreLocation[] = [
   // --- Regions -----------------------------------------------------------
@@ -184,3 +192,53 @@ export const exploreLocations: ExploreLocation[] = [
 export function getExploreLocationById(id: string): ExploreLocation | undefined {
   return exploreLocations.find((location) => location.id === id);
 }
+
+/**
+ * Pin placement on the KyrgyzstanMap illustration, approximated from the
+ * design reference (docs: "Explore Kyrgyzstan Learning Map.png") - percent
+ * positions are eyeballed against that mockup, not derived from real
+ * geographic coordinates. Colors are decorative variety per the reference
+ * (it doesn't use a strict category legend for pin color), except for the
+ * two "landmark" pins (Бишкек, Ош) which get a distinct larger variant.
+ */
+export const exploreMapPins: ExploreMapPin[] = [
+  { locationId: 'talas', xPercent: 16, yPercent: 20, color: '#2E6E82', variant: 'default' },
+  { locationId: 'chuy', xPercent: 42, yPercent: 16, color: colors.primary, variant: 'default' },
+  { locationId: 'bishkek', xPercent: 60, yPercent: 20, color: '#C0392B', variant: 'landmark' },
+  { locationId: 'ysyk-kol', xPercent: 80, yPercent: 26, color: '#3E8E9E', variant: 'default' },
+  { locationId: 'jalal-abad', xPercent: 18, yPercent: 44, color: colors.primary, variant: 'default' },
+  { locationId: 'naryn', xPercent: 61, yPercent: 42, color: colors.discovery.animals, variant: 'default' },
+  { locationId: 'osh', xPercent: 39, yPercent: 63, color: '#C77B2E', variant: 'landmark' },
+  { locationId: 'batken', xPercent: 8, yPercent: 68, color: colors.discovery.animals, variant: 'default' },
+];
+
+/** Mock exploration progress - matches the numbers given in the Explore
+ * screen design spec, not wired to real user progress yet. */
+export const exploreProgress: ExploreProgress = {
+  overallPercent: 37,
+  stats: {
+    locations: { current: 12, total: 40 },
+    nature: { current: 15, total: 30 },
+    culture: { current: 20, total: 50 },
+    animals: { current: 8, total: 20 },
+    food: { current: 7, total: 20 },
+    quests: { current: 18, total: 60 },
+  },
+};
+
+export const exploreCurrentQuest: ExploreQuest = {
+  id: 'lost-shyrdak',
+  characterId: 'boru',
+  title: 'Жоголгон шырдакты тап',
+  subtitle: 'Бөрү сага жардамга муктаж!',
+  foundCount: 2,
+  totalCount: 5,
+  ctaLabel: 'Квестти улантуу',
+};
+
+export const exploreDiscoveries: ExploreDiscovery[] = [
+  { id: 'ysyk-kol-shore', title: 'Ысык-Көлдүн жээги', category: 'nature', xpReward: 50 },
+  { id: 'boz-uy', title: 'Боз үй', category: 'culture', xpReward: 60 },
+  { id: 'too-teke', title: 'Тоо теке', category: 'animals', xpReward: 40 },
+  { id: 'beshbarmak-dish', title: 'Бешбармак', category: 'food', xpReward: 50 },
+];

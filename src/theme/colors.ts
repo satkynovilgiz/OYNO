@@ -17,6 +17,7 @@ const palette = {
   tileOrange: '#B9793A',
   tileRed: '#7A3226',
   tileTeal: '#3D6E72',
+  tilePurple: '#5B4B7A',
   ink900: '#2B2019',
   ink600: '#6B5A47',
   ink400: '#9C8A73',
@@ -54,6 +55,18 @@ export const colors = {
     food: palette.tileOrange,
     music: palette.tileRed,
     map: palette.tileTeal,
+  },
+
+  /** Category tag colors for Explore discoveries - kept separate from
+   * `tiles` above since the category names overlap but the semantics
+   * don't (e.g. tiles.food is a Home culture-tile tone, not the same
+   * "food" as a discovery category). Reused by Location pages and the
+   * Collection screen wherever the same category tagging appears. */
+  discovery: {
+    nature: palette.tileGreen,
+    culture: palette.tileOrange,
+    animals: palette.tilePurple,
+    food: palette.tileRed,
   },
 
   overlayStart: 'rgba(20, 14, 8, 0)',

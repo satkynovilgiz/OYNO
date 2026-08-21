@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
-import { colors, shadows, spacing, typography } from '@/theme';
+import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 export type TabId = 'home' | 'games' | 'explore' | 'culture' | 'profile';
 
@@ -46,15 +46,16 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
             accessibilityLabel={t(tab.labelKey)}
             onPress={() => onPressTab?.(tab.id)}
           >
-            {tab.id === 'culture' ? (
-              <OymoOrnament size={22} color={color} strokeWidth={1.75} />
-            ) : (
-              <Icon size={22} color={color} strokeWidth={1.75} />
-            )}
-            <Text style={[styles.label, { color }]} numberOfLines={1}>
-              {t(tab.labelKey)}
-            </Text>
-            <View style={[styles.indicator, isActive && styles.indicatorActive]} />
+            <View style={[styles.highlight, isActive && styles.highlightActive]}>
+              {tab.id === 'culture' ? (
+                <OymoOrnament size={22} color={color} strokeWidth={1.75} />
+              ) : (
+                <Icon size={22} color={color} strokeWidth={1.75} />
+              )}
+              <Text style={[styles.label, { color }]} numberOfLines={1}>
+                {t(tab.labelKey)}
+              </Text>
+            </View>
           </AnimatedPressable>
         );
       })}
@@ -73,20 +74,20 @@ const styles = StyleSheet.create({
   item: {
     flex: 1,
     alignItems: 'center',
+  },
+  highlight: {
+    alignItems: 'center',
     gap: spacing.xxs,
+    paddingVertical: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.lg,
+    backgroundColor: 'transparent',
+  },
+  highlightActive: {
+    backgroundColor: colors.surfaceAlt,
   },
   label: {
     ...typography.small,
     fontWeight: '600',
-  },
-  indicator: {
-    marginTop: 2,
-    width: 16,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: 'transparent',
-  },
-  indicatorActive: {
-    backgroundColor: colors.primary,
   },
 });
