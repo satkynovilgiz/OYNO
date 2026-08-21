@@ -11,6 +11,8 @@ import { colors } from '@/theme';
 import { queryClient } from '@/services/queryClient';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
 // Routes reachable without a session (the auth flow itself, plus the splash
 // gate which does its own one-time redirect).
@@ -65,7 +67,12 @@ export default function RootLayout() {
     // every screen under RouteGuard needs the flags loaded to make a
     // correct decision, so load them here too (idempotent, cheap reads).
     (async () => {
-      await Promise.all([useAuthStore.getState().initialize(), useAppStore.getState().loadOnboardingFlags()]);
+      await Promise.all([
+        useAuthStore.getState().initialize(),
+        useAppStore.getState().loadOnboardingFlags(),
+        useNotificationsStore.getState().load(),
+        useSettingsStore.getState().load(),
+      ]);
       setFlagsReady(true);
     })();
   }, []);

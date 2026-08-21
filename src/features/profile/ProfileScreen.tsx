@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -33,10 +34,9 @@ import {
   profileStats,
 } from './data';
 
-const mockHasUnreadNotifications = true;
-
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
 
   return (
     <View style={styles.root}>
@@ -45,17 +45,17 @@ export function ProfileScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
         <ProfileHeader
-          hasUnreadNotifications={mockHasUnreadNotifications}
+          hasUnreadNotifications={hasUnreadNotifications}
           onPressBack={() => router.back()}
-          onPressSettings={() => console.log('navigate: profile settings')}
-          onPressNotifications={() => console.log('navigate: notifications')}
+          onPressSettings={() => router.push('/settings' as never)}
+          onPressNotifications={() => router.push('/notifications' as never)}
         />
 
         <View style={styles.horizontalPad}>
           <ProfileHero
             profile={mockProfile}
             onPressAvatar={() => router.push('/character-select' as never)}
-            onPressEdit={() => console.log('navigate: edit profile')}
+            onPressEdit={() => router.push('/settings/account' as never)}
           />
         </View>
 

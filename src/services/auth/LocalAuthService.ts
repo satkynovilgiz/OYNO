@@ -179,14 +179,90 @@ export const localAuthService: AuthService = {
     await writeResetCodes(codes);
   },
 
-  async deleteAccount() {
+  async deleteAccount(password: string) {
     const raw = await secureStorage.getItem(SESSION_KEY);
     const session = raw ? (JSON.parse(raw) as AuthSession) : null;
     if (!session) return;
 
     const users = await readUsers();
+    const user = users[session.user.email];
+    if (!user) return;
+
+    const candidateHash = await hashPassword(password, user.passwordSalt);
+    if (candidateHash !== user.passwordHash) {
+      throw new AuthError('invalid-credentials', 'Сырсөз туура эмес.');
+    }
+
     delete users[session.user.email];
     await writeUsers(users);
     await secureStorage.removeItem(SESSION_KEY);
+  },
+
+  async updateProfile({ name, email }) {
+    const raw = await secureStorage.getItem(SESSION_KEY);
+    const session = raw ? (JSON.parse(raw) as AuthSession) : null;
+    if (!session) {
+      throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
+    }
+
+    const users = await readUsers();
+    const currentUser = users[session.user.email];
+    if (!currentUser) {
+      throw new AuthError('user-not-found', 'Колдонуучу табылган жок.');
+    }
+
+    const normalizedEmail = email ? email.trim().toLowerCase() : currentUser.email;
+    if (email) {
+      if (!EMAIL_PATTERN.test(normalizedEmail)) {
+        throw new AuthError('invalid-email', 'Email туура эмес.');
+      }
+      if (normalizedEmail !== currentUser.email && users[normalizedEmail]) {
+        throw new AuthError('email-taken', 'Бул email башка аккаунтта колдонулган.');
+      }
+    }
+
+    const updatedUser: StoredUser = {
+      ...currentUser,
+      name: name?.trim() ?? currentUser.name,
+      email: normalizedEmail,
+    };
+
+    if (normalizedEmail !== currentUser.email) {
+      delete users[currentUser.email];
+    }
+    users[normalizedEmail] = updatedUser;
+    await writeUsers(users);
+
+    const nextSession: AuthSession = { user: toPublicUser(updatedUser), token: session.token };
+    await persistSession(nextSession);
+    return nextSession;
+  },
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    const raw = await secureStorage.getItem(SESSION_KEY);
+    const session = raw ? (JSON.parse(raw) as AuthSession) : null;
+    if (!session) {
+      throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
+    }
+
+    const users = await readUsers();
+    const user = users[session.user.email];
+    if (!user) {
+      throw new AuthError('user-not-found', 'Колдонуучу табылган жок.');
+    }
+
+    const candidateHash = await hashPassword(currentPassword, user.passwordSalt);
+    if (candidateHash !== user.passwordHash) {
+      throw new AuthError('invalid-credentials', 'Учурдагы сырсөз туура эмес.');
+    }
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      throw new AuthError('weak-password', `Сырсөз кеминде ${MIN_PASSWORD_LENGTH} белгиден турушу керек.`);
+    }
+
+    const salt = Crypto.randomUUID();
+    user.passwordSalt = salt;
+    user.passwordHash = await hashPassword(newPassword, salt);
+    users[session.user.email] = user;
+    await writeUsers(users);
   },
 };

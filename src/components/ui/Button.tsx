@@ -11,18 +11,20 @@ type ButtonProps = {
   icon?: ReactNode;
   disabled?: boolean;
   loading?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
 };
 
 /** Labeled pill button (e.g. "Сыйлыкты ал"). For icon-only actions, use IconButton. */
 export function Button({ label, onPress, icon, disabled = false, loading = false, variant = 'primary' }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const isOutlined = variant === 'secondary';
 
   return (
     <AnimatedPressable
       style={[
         styles.button,
-        variant === 'secondary' && styles.buttonSecondary,
+        isOutlined && styles.buttonSecondary,
+        variant === 'danger' && styles.buttonDanger,
         isDisabled && styles.buttonDisabled,
       ]}
       onPress={isDisabled ? undefined : onPress}
@@ -31,11 +33,11 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
       accessibilityState={{ disabled: isDisabled, busy: loading }}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'secondary' ? colors.primary : colors.textOnPrimary} />
+        <ActivityIndicator size="small" color={isOutlined ? colors.primary : colors.textOnPrimary} />
       ) : (
         <>
           {icon}
-          <Text style={[styles.label, variant === 'secondary' && styles.labelSecondary]}>{label}</Text>
+          <Text style={[styles.label, isOutlined && styles.labelSecondary]}>{label}</Text>
         </>
       )}
     </AnimatedPressable>
@@ -60,6 +62,9 @@ const styles = StyleSheet.create({
     borderColor: colors.surfaceBorder,
     shadowOpacity: 0,
     elevation: 0,
+  },
+  buttonDanger: {
+    backgroundColor: colors.danger,
   },
   buttonDisabled: {
     opacity: 0.5,

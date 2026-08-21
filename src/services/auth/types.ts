@@ -59,5 +59,15 @@ export type AuthService = {
    * delivery without a real backend). */
   requestPasswordReset(email: string): Promise<{ demoCode: string }>;
   confirmPasswordReset(email: string, code: string, newPassword: string): Promise<void>;
-  deleteAccount(): Promise<void>;
+  /** Requires the current password (spec Section 63: "Require password or
+   * appropriate authentication") - not just a bare confirmation tap. */
+  deleteAccount(password: string): Promise<void>;
+  /** Updates the signed-in user's profile fields, returns the updated
+   * session. `email` changes take effect immediately (no verification
+   * step) - a real backend should require re-verifying a new email before
+   * accepting it. */
+  updateProfile(input: { name?: string; email?: string }): Promise<AuthSession>;
+  /** Requires the current password, matching Security screen expectations
+   * (spec Section 59) - not just a bare "set new password". */
+  changePassword(currentPassword: string, newPassword: string): Promise<void>;
 };

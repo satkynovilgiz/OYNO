@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -22,7 +23,6 @@ import type { CultureCategory } from './types';
 // the rest of this screen's mock data.
 const mockStreakDays = 12;
 const mockCoins = 450;
-const mockHasUnreadNotifications = true;
 
 function handlePressCategory(category: CultureCategory) {
   if (category.id === 'games') {
@@ -34,6 +34,7 @@ function handlePressCategory(category: CultureCategory) {
 
 export function CultureScreen() {
   const insets = useSafeAreaInsets();
+  const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
 
   return (
     <View style={styles.root}>
@@ -44,10 +45,10 @@ export function CultureScreen() {
         <CultureHeader
           streakDays={mockStreakDays}
           coins={mockCoins}
-          hasUnreadNotifications={mockHasUnreadNotifications}
+          hasUnreadNotifications={hasUnreadNotifications}
           onPressAvatar={() => router.push('/character-select' as never)}
           onPressSearch={() => console.log('navigate: culture search')}
-          onPressNotifications={() => console.log('navigate: notifications')}
+          onPressNotifications={() => router.push('/notifications' as never)}
         />
 
         <View style={styles.horizontalPad}>

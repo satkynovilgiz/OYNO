@@ -475,4 +475,108 @@ the guard's *effect* on a `flagsReady` prop instead.
   the other ~120 master-prompt sections**: untouched. This pass was
   deliberately scoped to Phase 2 only, per the master prompt's own
   development order and this audit's own priority call.
+  **Settings/Notifications/Privacy/Security/Help built in the next pass,
+  below.**
+
+---
+
+## Master Prompt pass (2026-08-21, continued) — Phase 3: Settings, Notifications, Privacy, Security, Help
+
+Requested explicitly as "Phase 3" (the master prompt's own Section 136 calls
+this Phase 7, since Home/Explore/Culture/Profile already existed going in -
+using the requested name here, not relitigating the numbering).
+
+### What was built
+
+- **Settings hub** (`/settings`) - 9 rows grouped into Аккаунт/Жалпы/Колдоо,
+  every row navigates to a real screen, "Чыгуу" (sign out) behind a
+  `ConfirmationModal` (new shared component, spec Section 83).
+- **Account** (`/settings/account`) - edit name/email (pre-filled from the
+  real signed-in user, not a placeholder), "Сырсөздү өзгөртүү" links to
+  Security rather than duplicating the form, "Аккаунтту өчүрүү" requires
+  re-entering the current password before deleting (spec Section 63's
+  explicit requirement - `AuthService.deleteAccount` now takes a password
+  and verifies it, it didn't before this pass).
+- **Language** (`/settings/language`) - same 3 options as the first-launch
+  picker, but selecting applies immediately (spec Section 56) instead of
+  requiring a "continue" step.
+- **Notifications** (`/settings/notifications`) - 7 real toggles (new
+  `Toggle` component), backed by a new `useSettingsStore`, persisted to
+  AsyncStorage.
+- **Privacy** (`/settings/privacy`) - profile/leaderboard/activity
+  visibility, same store, persisted.
+- **Security** (`/settings/security`) - real change-password form (requires
+  the current password, verified locally - see the backend caveat from
+  Phase 2, same `LocalAuthService`); "Active sessions" honestly shows only
+  the current
+  device with a note that multi-device session tracking needs a real
+  backend, rather than fabricating a session list; "sign out all sessions"
+  does the one real sign-out this app can do.
+- **Оюн жөндөөлөрү** (`/settings/game`) - sound/music/haptics toggles, same
+  store. (Nothing in the app plays sound/haptics yet to gate on these - the
+  preference exists and persists correctly, ready for whenever that lands.)
+- **Кэш / Дайындар** (`/settings/data`) - scoped honestly: clears
+  notification read-state and preference settings (both safely
+  regenerable), explicitly does *not* touch the account/session - the UI
+  text says exactly what it does rather than promising a generic "clear
+  cache."
+- **Жардам** (`/settings/help`) - real FAQ (8 items, genuinely accurate
+  about this app's *current* state - e.g. "only Беш таш is playable right
+  now," not aspirational claims) with working search + category filter;
+  contact form opens the device's real mail client via `Linking.openURL('
+  mailto:...')` with the subject/message prefilled, rather than pretending
+  to submit to a support backend that doesn't exist.
+- **OYNO жөнүндө** (`/settings/about`) - version number read live from
+  `app.json` via `expo-constants` (won't drift out of sync); Privacy
+  Policy/Terms/Licenses links show an honest "this document isn't ready
+  yet" alert instead of fabricated legal text - treated the same way as
+  cultural facts: don't invent it, flag it.
+- **Notification Center** (`/notifications`, distinct from the notification
+  *settings* above) - 5 realistic mock notifications, categorized, with
+  real read/unread state (`useNotificationsStore`, persisted) driving the
+  unread dot on every header bell icon across Home/Culture/Profile, and a
+  working "mark all as read."
+- Wired every previously-dead header button this pass touched: Home's menu
+  (→ Settings) and bell (→ Notifications) had *no* handlers at all before
+  this pass (not even a console.log - literally silent taps); Culture's and
+  Profile's bells were `console.log` placeholders; Profile's edit-pencil now
+  goes to Account settings instead of logging.
+
+### Verified end-to-end in a real browser, not just read
+
+Same approach as Phase 2 (ref-based clicks are still unreliable in this
+tool; used direct `element.click()` dispatch via `javascript_tool` and read
+`localStorage` as ground truth). Seeded a valid session directly in
+`localStorage` to skip re-doing the Phase 2 flow, then drove:
+
+Settings hub → Account (confirmed real name/email pre-filled from the
+session) → Сырсөздү өзгөртүү → Security (renders correctly) → Notifications
+(toggled "Жаңылыктар" off→on, confirmed the change hit `localStorage`, not
+just the UI) → Privacy (selected "Жеке" for profile visibility, confirmed
+only that field changed in storage, not the other two) → Notification
+Center (all 5 items render, "Баарын окулган деп белгилөө" correctly wrote
+all 5 ids to `localStorage`) → Sign Out (confirmation modal renders with
+the right copy, confirming clears the session and the route guard correctly
+redirects to `/sign-in`) → Help (category filter correctly narrows 8 items
+down to the 1 matching "Оюндар").
+
+### Not done, flagged rather than faked
+
+- **No real backend still** - password change/account deletion/profile
+  edits are all real, but local-only, per the same `LocalAuthService`
+  caveat as Phase 2.
+- **"Active sessions" only ever shows one session** - this app has no way
+  to know about other devices without a backend; said so in the UI instead
+  of inventing a fake device list.
+- **Оюн жөндөөлөрү preferences aren't consumed anywhere yet** - no game
+  currently plays sound or triggers haptics, so there's nothing for the
+  sound/music/haptics toggles to actually gate. They persist correctly and
+  are ready to be read once that exists.
+- **Support contact form has a placeholder inbox address**
+  (`support@oyno.app`) - opens the real system mail composer (a genuine,
+  working action), but there's no real support inbox behind that address
+  yet. Swap it when one exists.
+- **Dark mode, biometric lock, deep-link handling beyond the existing
+  `oyno://` scheme, analytics, and everything else in the master prompt**:
+  still untouched.
 

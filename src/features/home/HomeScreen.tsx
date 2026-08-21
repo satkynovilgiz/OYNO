@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -21,7 +22,6 @@ import {
   mockDailyGift,
   mockDailyProgress,
   mockGames,
-  mockHasUnreadNotifications,
   mockPlayer,
 } from './mockData';
 
@@ -42,6 +42,7 @@ function handlePressTab(tab: TabId) {
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
 
   return (
     <View style={styles.root}>
@@ -49,7 +50,11 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <HomeHeader hasUnreadNotifications={mockHasUnreadNotifications} />
+        <HomeHeader
+          hasUnreadNotifications={hasUnreadNotifications}
+          onPressMenu={() => router.push('/settings' as never)}
+          onPressNotifications={() => router.push('/notifications' as never)}
+        />
 
         <View style={styles.topRow}>
           <ProfileSummaryCard player={mockPlayer} />

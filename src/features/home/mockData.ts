@@ -15,8 +15,6 @@ export const mockPlayer: PlayerSummary = {
   avatarSource: avatarBek,
 };
 
-export const mockHasUnreadNotifications = true;
-
 export const mockDailyChallenge: DailyChallenge = {
   description: 'Тогуз коргоол оюнун 1 жолу жеӊ',
   progressCurrent: 0,

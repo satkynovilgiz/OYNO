@@ -23,8 +23,10 @@ type AuthState = {
   signUp: (input: SignUpInput) => Promise<boolean>;
   signIn: (input: SignInInput) => Promise<boolean>;
   signOut: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<boolean>;
   continueAsGuest: () => Promise<void>;
+  updateProfile: (input: { name?: string; email?: string }) => Promise<boolean>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   clearError: () => void;
 };
 
@@ -81,9 +83,41 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ status: 'unauthenticated', user: null });
   },
 
-  deleteAccount: async () => {
-    await authService.deleteAccount();
-    set({ status: 'unauthenticated', user: null });
+  deleteAccount: async (password) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      await authService.deleteAccount(password);
+      await AsyncStorage.removeItem(GUEST_MODE_KEY);
+      set({ status: 'unauthenticated', user: null, isSubmitting: false });
+      return true;
+    } catch (error) {
+      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      return false;
+    }
+  },
+
+  updateProfile: async (input) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const session = await authService.updateProfile(input);
+      set({ user: session.user, isSubmitting: false });
+      return true;
+    } catch (error) {
+      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      return false;
+    }
+  },
+
+  changePassword: async (currentPassword, newPassword) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+      set({ isSubmitting: false });
+      return true;
+    } catch (error) {
+      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      return false;
+    }
   },
 
   clearError: () => set({ error: null }),
