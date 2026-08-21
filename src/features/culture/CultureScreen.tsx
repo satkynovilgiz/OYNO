@@ -90,7 +90,7 @@ export function CultureScreen() {
         <BottomTabBar
           activeTab="culture"
           onPressTab={(tab) => {
-            if (tab === 'home') router.push('/');
+            if (tab === 'home') router.push('/home');
             if (tab === 'games') router.push('/games' as never);
             if (tab === 'explore') router.push('/explore' as never);
             if (tab === 'profile') router.push('/profile' as never);

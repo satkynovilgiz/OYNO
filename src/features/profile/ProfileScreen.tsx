@@ -104,7 +104,7 @@ export function ProfileScreen() {
         <BottomTabBar
           activeTab="profile"
           onPressTab={(tab) => {
-            if (tab === 'home') router.push('/');
+            if (tab === 'home') router.push('/home');
             if (tab === 'games') router.push('/games' as never);
             if (tab === 'explore') router.push('/explore' as never);
             if (tab === 'culture') router.push('/culture' as never);

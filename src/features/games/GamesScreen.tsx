@@ -68,7 +68,7 @@ export function GamesScreen() {
         <BottomTabBar
           activeTab="games"
           onPressTab={(tab) => {
-            if (tab === 'home') router.push('/');
+            if (tab === 'home') router.push('/home');
             if (tab === 'explore') router.push('/explore' as never);
             if (tab === 'culture') router.push('/culture' as never);
             if (tab === 'profile') router.push('/profile' as never);

@@ -1,17 +1,29 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import i18n, { DEFAULT_LANGUAGE, type SupportedLanguage } from '@/i18n';
 import type { CharacterId } from '@/components/character';
 
+const ONBOARDING_COMPLETE_KEY = 'oyno.onboardingComplete';
+const LANGUAGE_CHOSEN_KEY = 'oyno.languageChosen';
+
 type AppState = {
   language: SupportedLanguage;
   setLanguage: (language: SupportedLanguage) => void;
-  /** The user's chosen avatar character (Task 3, Каарманыңды танда).
-   * Local-only for now - there's no auth/backend layer in this codebase
-   * yet, so "persist for registered accounts" isn't wired up. Once one
-   * exists, setCharacterId is the place to add that sync call. */
   characterId: CharacterId | null;
   setCharacterId: (characterId: CharacterId) => void;
+
+  /** Whether the first-launch language picker (spec Section 14, distinct
+   * from the Settings language switcher) has already been shown once. */
+  hasChosenLanguage: boolean;
+  /** Whether the onboarding slides (spec Section 12) have been completed.
+   * Persisted so returning users skip straight past them. */
+  hasCompletedOnboarding: boolean;
+  /** Loads the two persisted flags above. Call once from Splash before
+   * deciding where to route. */
+  loadOnboardingFlags: () => Promise<void>;
+  markLanguageChosen: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
 };
 
 export const useAppStore = create<AppState>((set) => ({
@@ -22,6 +34,30 @@ export const useAppStore = create<AppState>((set) => ({
   },
   characterId: null,
   setCharacterId: (characterId) => set({ characterId }),
+
+  hasChosenLanguage: false,
+  hasCompletedOnboarding: false,
+
+  loadOnboardingFlags: async () => {
+    const [languageChosen, onboardingComplete] = await Promise.all([
+      AsyncStorage.getItem(LANGUAGE_CHOSEN_KEY),
+      AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY),
+    ]);
+    set({
+      hasChosenLanguage: languageChosen === 'true',
+      hasCompletedOnboarding: onboardingComplete === 'true',
+    });
+  },
+
+  markLanguageChosen: async () => {
+    await AsyncStorage.setItem(LANGUAGE_CHOSEN_KEY, 'true');
+    set({ hasChosenLanguage: true });
+  },
+
+  completeOnboarding: async () => {
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    set({ hasCompletedOnboarding: true });
+  },
 }));
 
 // i18next resolves the persisted/device language asynchronously after init,

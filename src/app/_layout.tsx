@@ -1,23 +1,85 @@
 import '@/i18n';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState, type ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
 import { queryClient } from '@/services/queryClient';
+import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
+
+// Routes reachable without a session (the auth flow itself, plus the splash
+// gate which does its own one-time redirect).
+const UNGATED_ROUTES = [
+  '/',
+  '/language',
+  '/onboarding',
+  '/sign-up',
+  '/sign-in',
+  '/forgot-password',
+  '/verify-reset-code',
+  '/reset-password',
+];
+
+/**
+ * Defends the routes above against direct navigation (deep link, restored
+ * back-stack, etc.) bypassing the Splash gate's own redirect logic - e.g.
+ * an unauthenticated user hitting /home directly gets bounced to /sign-in,
+ * and a signed-in user hitting /sign-in gets bounced to /home.
+ */
+function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady: boolean }) {
+  const pathname = usePathname();
+  const authStatus = useAuthStore((state) => state.status);
+  const hasChosenLanguage = useAppStore((state) => state.hasChosenLanguage);
+  const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
+
+  useEffect(() => {
+    if (!flagsReady || authStatus === 'loading' || pathname === '/') return;
+
+    const isAuthenticatedOrGuest = authStatus === 'authenticated' || authStatus === 'guest';
+    const isUngatedRoute = UNGATED_ROUTES.includes(pathname);
+
+    if (!hasChosenLanguage && pathname !== '/language') {
+      router.replace('/language');
+    } else if (hasChosenLanguage && !hasCompletedOnboarding && pathname !== '/onboarding') {
+      router.replace('/onboarding');
+    } else if (hasCompletedOnboarding && !isAuthenticatedOrGuest && !isUngatedRoute) {
+      router.replace('/sign-in');
+    } else if (isAuthenticatedOrGuest && (pathname === '/sign-in' || pathname === '/sign-up')) {
+      router.replace('/home');
+    }
+  }, [pathname, authStatus, hasChosenLanguage, hasCompletedOnboarding, flagsReady]);
+
+  return children;
+}
 
 export default function RootLayout() {
+  const [flagsReady, setFlagsReady] = useState(false);
+
+  useEffect(() => {
+    // The Splash/index route also calls these, but _layout mounts first and
+    // every screen under RouteGuard needs the flags loaded to make a
+    // correct decision, so load them here too (idempotent, cheap reads).
+    (async () => {
+      await Promise.all([useAuthStore.getState().initialize(), useAppStore.getState().loadOnboardingFlags()]);
+      setFlagsReady(true);
+    })();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar style="dark" />
-          <Stack
-            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
-          />
+          <RouteGuard flagsReady={flagsReady}>
+            <Stack
+              screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+            />
+          </RouteGuard>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

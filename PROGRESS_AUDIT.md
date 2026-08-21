@@ -143,13 +143,13 @@ decision) → Жоолук таштамай → Аркан тартыш → Ор
 
 ## 6. Onboarding / Auth (spec Section 2)
 
-❌ **MISSING entirely.** `src/app/index.tsx` renders `HomeScreen` directly —
-there is no Sign Up screen, no Login screen, no guest-vs-account choice
-screen, anywhere in `src/app`. `useAppStore` has no `user`/`isGuest`/`account`
-concept at all, only `language` and `characterId`. Every "per spec Section 2"
-comment in the codebase (CharacterSelectScreen, TodayDiscoveryCard's guest
-hint, etc.) is describing behavior for a flow that doesn't exist yet to route
-into it.
+✅ **DONE as of the Master Prompt pass below** - see that section for detail.
+Originally MISSING entirely: `src/app/index.tsx` rendered `HomeScreen`
+directly, there was no Sign Up/Login/guest-choice screen anywhere, and
+`useAppStore` had no `user`/`isGuest` concept. This is now built - full
+Splash → Language → Onboarding → Sign Up/Sign In → Profile Setup → Home
+flow, a real (if backend-less) auth service, and route guarding. Verified
+by actually driving it in a browser end-to-end, not just read.
 
 ## 7. Home
 
@@ -186,12 +186,13 @@ real state — see Section 9 below).
 ## 9. Shared systems (XP, achievements, daily challenges, notifications,
 leaderboards, friends/social, economy)
 
-❌ **None of these have real backing state.** Checked `src/store/` directly —
-`useAppStore.ts` is the *only* Zustand store in the app and it holds exactly
-two fields: `language` and `characterId`. Every XP bar, coin count, streak
-counter, achievement badge, daily-challenge card, and quest-progress number
-anywhere in Home/Games/Explore/Culture/Profile is **rendering a hardcoded mock
-object** (`mockPlayer`, `mockProfile`, `exploreProgress`, `cultureProgress`,
+❌ **Still true for XP/coins/achievements/etc.** as of the Master Prompt pass
+below - only auth/session state became real (`useAuthStore`), which is a
+different thing from game/progress state. `useAppStore.ts` +
+`useAuthStore.ts` are the only two Zustand stores in the app. Every XP bar,
+coin count, streak counter, achievement badge, daily-challenge card, and
+quest-progress number anywhere in Home/Games/Explore/Culture/Profile is still
+**rendering a hardcoded mock object** (`mockPlayer`, `mockProfile`, `exploreProgress`, `cultureProgress`,
 etc.). Tapping "Алуу" (claim reward) on any card logs to the console and
 changes nothing. There is no persistence layer at all — a full reload always
 resets to the same mock numbers.
@@ -367,4 +368,111 @@ OOM-crash mid-audit. Not an app bug, but worth knowing if this recurs.
    guest-vs-account concept) is written assuming this flow exists and routes
    into it. It's the most obvious "next foundational piece" after the shared
    state question above, if you want a recommendation.
+   **Resolved in the Master Prompt pass below.**
+
+---
+
+## Master Prompt pass (2026-08-21) — Phase 2: Auth + Onboarding
+
+A separate, much larger "full production app" master prompt (138 sections)
+was received after the audit above. It's out of scope to build in full (real
+backend, dozens of screens, dark mode, analytics, testing infra - genuinely
+weeks of work), but it gave two things this audit didn't have: an explicit
+phase order (its Section 136) and Phase 2 in that order is exactly this
+audit's own #1/#8 recommendation - Authentication + Onboarding. Built that
+phase for real this pass; everything else in the master prompt (Phases 3-12
+beyond what already existed, Settings, Notifications, dark mode, Supabase,
+testing infra, etc.) is untouched and out of scope for this pass.
+
+### Backend decision made without asking, documented here
+
+No Supabase project/credentials exist for this app. Rather than block on
+that, built a clean `AuthService` interface
+(`src/services/auth/types.ts`) with one implementation,
+`LocalAuthService` (device-local, AsyncStorage/SecureStore-backed, SHA-256
+password hashing via expo-crypto). It's explicitly documented in its own
+file as **not production-secure** and as the placeholder to swap for a real
+`SupabaseAuthService` later - screens and the auth store only depend on the
+interface, so that swap is one import change, not a rewrite. This is a real
+architecture decision, not a shortcut - flagging it prominently rather than
+burying it in a code comment, since "which backend" is exactly the kind of
+call the original audit said should come back to you.
+
+### What was built
+
+- `src/services/auth/` - `AuthService` interface, `LocalAuthService`
+  implementation, cross-platform `secureStorage` (SecureStore on native,
+  AsyncStorage on web, matching the pattern already used for language
+  persistence).
+- `src/store/useAuthStore.ts` - status (`loading`/`authenticated`/
+  `unauthenticated`/`guest`), signUp/signIn/signOut/deleteAccount/
+  continueAsGuest, all backed by the real service above.
+- `src/store/useAppStore.ts` extended with persisted `hasChosenLanguage` /
+  `hasCompletedOnboarding` flags (spec: "do not show onboarding again").
+- Screens: `SplashScreen` (animated, spec Section 11), `LanguageSelectScreen`
+  (Section 14), `OnboardingScreen` (4 slides, verbatim copy from Section 12,
+  reusing existing real art - hero_banner/map_terrain/culture_hero/a game
+  thumbnail - rather than inventing new placeholder images), `SignUpScreen` +
+  `SignInScreen` (real inline validation, loading/error states),
+  `ForgotPasswordScreen` → `VerifyResetCodeScreen` → `ResetPasswordScreen`
+  (full 3-step flow; the "email" step honestly shows the demo code on-screen
+  since there's no email delivery, rather than pretending one was sent), and
+  `ProfileSetupScreen` (name step + reuses the existing `CharacterSelectScreen`
+  component directly, rather than rebuilding character choice).
+- Root routing rework: `/` is now a Splash/decision gate (was `HomeScreen`
+  directly), Home moved to `/home`, and `_layout.tsx` gained a `RouteGuard`
+  that redirects direct navigation/deep-links to the correct screen based on
+  language/onboarding/auth state (e.g. hitting `/explore` while logged out
+  bounces to `/sign-in`; hitting `/sign-in` while logged in bounces to
+  `/home`).
+- Extended shared components rather than duplicating: `Button` gained
+  `loading`/`disabled`/`secondary` states (spec Section 8's button-state
+  requirements), new `TextField` (doubles as the spec's TextInput +
+  PasswordInput via a `secure` prop instead of two near-duplicate
+  components).
+
+### Verified by actually driving it, not just reading code
+
+The Chrome browser tool that blocked Profile's visual QA earlier in this
+project was still unreliable this pass (screenshots failed with a CDP
+`params.clip.scale` error all pass; `ref`-based clicks silently didn't
+trigger RN-Web's press handling - confirmed by checking `localStorage`
+before/after a "successful-looking" click and seeing no state change).
+Worked around it: dispatched real `element.click()` calls via
+`javascript_tool` instead (which *does* fire the events RN-Web listens for),
+and read ground truth from `localStorage` directly rather than trusting
+screenshots. With that, ran the actual flow end-to-end in the browser:
+
+**Sign Up (real form fill + submit) → Profile Setup (name pre-filled from
+the account just created) → Character Select (Бек chosen, reusing the
+existing component, "Жакында" cards correctly shown for Бөрү/Тулпар/Элчи) →
+Home (loaded correctly).** Then separately verified the route guard by
+clearing the session and confirming a direct hit to `/explore` correctly
+redirected to `/sign-in`, and that `/sign-in` rendered correctly for a
+logged-out user. `localStorage` after the run showed a correctly
+password-hashed (not plaintext) user record and a valid session token.
+
+One real bug was caught and fixed *during* this verification, before it
+shipped: `_layout.tsx` originally rendered `<RouteGuard><Stack/></RouteGuard>`
+only after flags loaded, and a bare `<Stack/>` before that - two different
+tree shapes, which would have remounted the entire navigator (resetting
+whatever screen was mid-render, e.g. the Splash animation) the moment app
+state finished loading. Fixed by keeping the tree shape constant and gating
+the guard's *effect* on a `flagsReady` prop instead.
+
+### Not done, and why
+
+- **Google/Apple sign-in buttons are visible but honestly non-functional** -
+  tapping either shows an explicit "not available yet" alert rather than a
+  fake OAuth flow. Real social sign-in needs real Google/Apple developer
+  credentials this environment doesn't have.
+- **No Toast/Snackbar component** was built despite being in the master
+  prompt's component list (Section 7) - used React Native's built-in `Alert`
+  for the one place a transient message was needed (unavailable-provider
+  notices). A proper toast system is a small, self-contained follow-up, not
+  done here to keep this pass focused on the auth flow itself.
+- **Settings, Notifications, Privacy, Security, Help, dark mode, Supabase,
+  the other ~120 master-prompt sections**: untouched. This pass was
+  deliberately scoped to Phase 2 only, per the master prompt's own
+  development order and this audit's own priority call.
 

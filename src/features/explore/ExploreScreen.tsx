@@ -70,7 +70,7 @@ export function ExploreScreen() {
         <BottomTabBar
           activeTab="explore"
           onPressTab={(tab) => {
-            if (tab === 'home') router.push('/');
+            if (tab === 'home') router.push('/home');
             if (tab === 'games') router.push('/games' as never);
             if (tab === 'culture') router.push('/culture' as never);
             if (tab === 'profile') router.push('/profile' as never);
