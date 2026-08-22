@@ -954,3 +954,36 @@ terminal) rather than repeating this by hand each time.
   Storage usage yet** - all later phases per `BACKEND_PLAN.md` §6, not
   started.
 
+### Post-phase fix (2026-08-22, same day): custom SMTP
+
+Real usage almost immediately hit a real limit this section didn't
+anticipate: Supabase's default/shared email service caps at **2 emails/
+hour per project**, with the email templates and that rate limit itself
+both locked from editing until custom SMTP is configured (a project-wide
+anti-abuse measure, not something raisable from the dashboard). Between
+Phase 6a's own testing and the user's parallel manual testing, this cap
+was hit for real - one account got created but its confirmation email
+never arrived, and further signups/resets started failing outright with
+`over_email_send_rate_limit`.
+
+Fixed by configuring **custom SMTP via Gmail** (`smtp.gmail.com:587`,
+an app password, sender `satkynovilgiz2008@gmail.com` "OYNO") in
+Supabase's Auth SMTP Settings. An earlier attempt at Outlook SMTP was
+tried first and abandoned after two consecutive `504 upstream request
+timeout` responses from Supabase's own signup endpoint (probed directly,
+not inferred from the UI) - consumer Outlook.com's SMTP relay is known to
+aggressively block/throttle automated connections from cloud-provider
+IPs, which matches that symptom. Gmail's relay worked immediately.
+
+**Verified live** with the same disposable-inbox technique as the rest of
+Phase 6a: signed up fresh → confirmation email arrived instantly, from
+`satkynovilgiz2008@gmail.com` (not the old Supabase shared sender) →
+tapped the real link → landed authenticated → completed profile setup →
+signed out → signed back in with the same real credentials → correctly
+authenticated again. Full loop, no rate limit, no timeout.
+
+Not done: the personal Gmail account's own sending cap (~500/day) is
+fine for now but should move to a dedicated transactional provider
+(Resend, per `BACKEND_PLAN.md`) before any real launch/scale - that move
+needs a verified domain, which wasn't available at the time of this fix.
+
