@@ -825,3 +825,132 @@ state ("Азырынча оюн ойнолгон жок" / "No games played yet"
   since every write today is local-only and already succeeds or is
   swallowed; revisit once a real backend exists.
 
+## Phase 6a (2026-08-22): Real backend, part 1 - Supabase auth + profiles
+
+Full plan lives in `BACKEND_PLAN.md` (architecture audit, schema, security
+plan, phased roadmap - written first, per the production-backend prompt's
+own instruction to inspect and plan before implementing). This section is
+the "what actually got built and verified" record for the first slice of
+that plan: real auth backed by a real Supabase project, replacing
+`LocalAuthService` (retired - deleted, not deprecated in place) entirely.
+
+### What's real now
+
+- **A real Supabase project** (`jcjfcykjndhtmbeeavpe`), `.env`/`.env.example`
+  wired to `EXPO_PUBLIC_SUPABASE_URL`/`EXPO_PUBLIC_SUPABASE_ANON_KEY`
+  (anon key only - service role never touches the client, see
+  `BACKEND_PLAN.md` §5/§7).
+- **`profiles` table**, RLS-protected (own-row select/update/delete only,
+  no client insert policy - rows are created only by a `SECURITY DEFINER`
+  trigger on `auth.users` insert). First migration, applied by the user
+  directly via the SQL Editor (no CLI/access-token exchange - see below).
+- **`SupabaseAuthService`** implementing the same `AuthService` interface
+  `LocalAuthService` used to - the swap-in seam built back in Phase 2
+  worked exactly as intended; no screen needed to change shape, only the
+  auth flow's own screens (see next point).
+- **Real email verification and password reset**, both via magic links
+  (not typed OTP codes as originally built - Supabase locks email-template
+  customization behind configuring custom SMTP, a real external-service
+  decision the user correctly declined to take on just to keep the
+  code-entry UX; switching to links needed zero new accounts and works
+  with Supabase's default mail service today). Two new deep-link routes
+  (`auth-callback-signup.tsx`, `auth-callback-recovery.tsx`) exchange the
+  email link's params for a real session - see the flow-type bug below.
+- **Real session persistence + auto-refresh** (`supabase-js`'s own
+  AsyncStorage-backed session storage), real sign-out, real re-authentication
+  (password change/account deletion both re-verify the current password via
+  a real `signInWithPassword` call, not a client-side hash comparison).
+
+### Verified live against the real project, not just read
+
+Used a disposable inbox (mail.tm's API - create an address, poll for
+messages, extract the real link from the real email Supabase sent) so the
+*actual* email round-trip could be driven end-to-end, not simulated:
+
+1. Signed up for real → real "Confirm your email address" email arrived
+   from `noreply@mail.app.supabase.io` → tapped the real link → landed on
+   `/profile-setup` with a real session → confirmed the `profiles` row the
+   trigger created (`select * from profiles`, RLS correctly scoped to the
+   caller's own row) matched the real signup name.
+2. Signed out (real Supabase sign-out) → signed back in with the real
+   password → landed on `/home` with the real name rendered.
+3. Requested a password reset for real → real "Reset your password" email
+   arrived → tapped the real link → landed on `/reset-password` → set a
+   new password → confirmed the *old* password no longer works and the
+   *new* one does (full round trip, not just "the API call didn't throw").
+4. Navigated cold, directly, to `/settings/account` (a realistic scenario
+   - a bookmarked URL, a killed-and-restored app, a future push-notification
+   deep link) and to account deletion, confirming the exact documented
+   partial-deletion behavior: the `profiles` row is really gone (a
+   fresh sign-in falls back to the email-derived display name, not the
+   real one) while the underlying Supabase Auth user still exists (sign-in
+   with the same password still works) - exactly what the code's own doc
+   comment says it does, not more.
+
+### Three real bugs found and fixed by testing this live (not by review)
+
+- **Wrong Supabase flow type assumed.** Built against PKCE (`code` query
+  param) by default; the live confirmation email actually came back as
+  the *implicit* flow (`access_token`/`refresh_token` in the URL
+  fragment) - a project setting, not something the client controls. Fixed
+  by making the callback routes handle both (`useAuthCallbackParams.ts`),
+  confirmed against the real email both before (crashed) and after (
+  worked) the fix.
+- **`useAuthStore.status` went stale after `confirmPasswordReset`'s
+  internal `signOut()`.** That call goes straight through the Supabase
+  client (by design, so a recovery link can't leave you silently signed
+  in), bypassing the store - so the store kept reporting `authenticated`
+  with a stale user, and `RouteGuard` sent a just-reset user to `/home`
+  with a session that no longer existed instead of `/sign-in`. Fixed with
+  a global `supabase.auth.onAuthStateChange` listener that keeps `status`
+  synced to the real session regardless of which code path changed it -
+  the correct, general fix (Supabase's own recommended pattern), not a
+  patch on one call site.
+- **`AccountSettingsScreen`'s null-user guard crashed the whole app on a
+  cold deep link.** Two compounding issues, both pre-existing (not
+  introduced this phase): (1) it called `router.replace()` synchronously
+  during render on `!user`, which expo-router disallows before the root
+  navigator has fully mounted - fixed by switching to the declarative
+  `<Redirect>` component, which defers correctly; (2) even after that fix,
+  it treated "auth state hasn't loaded yet" (`user` is `null` transiently
+  while `status === 'loading'`) the same as "not logged in," causing a
+  premature redirect to `/sign-up` that then bounced again once the real
+  session arrived - fixed by gating on `status` first. Caught only because
+  a cold, direct navigation to `/settings/account` was actually tried, not
+  because it was reasoned about in the abstract.
+
+### Migration workflow note (why there's no CLI-applied migration)
+
+`supabase link`/`supabase login` require either an interactive browser
+OAuth session or an account-level personal access token - the CLI
+refuses to run in this non-TTY environment without one. An access token
+is as sensitive as a service-role key (broader, actually - it's
+account-wide), so it was never requested. The one migration this phase
+needed was applied by the user directly via the Supabase SQL Editor
+instead - fine for a single early migration, but `BACKEND_PLAN.md`'s
+later phases (many more tables) should revisit a proper CLI-linked
+workflow (the user running `supabase login` themselves, in their own
+terminal) rather than repeating this by hand each time.
+
+### Not done, flagged rather than faked
+
+- **Account deletion is real but partial** - see the doc comment on
+  `SupabaseAuthService.deleteAccount` and the verified behavior above.
+  Full hard-deletion of the `auth.users` row needs a service-role Edge
+  Function (`BACKEND_PLAN.md` Phase 6d+); the disposable test account used
+  for this phase's testing is still sitting in the project's user list
+  and should be deleted from the dashboard (Authentication → Users) when
+  convenient - it's a throwaway `@emalupe.com` address, not a real person,
+  but it's real data in a real project now.
+- **`user_settings`/progress/achievements/etc. are all still 100%
+  local-only** (`useProgressStore`, `useSettingsStore`,
+  `useNotificationsStore` - untouched this phase). Only identity/auth
+  moved to the real backend; everything from Phase 4/5 remains
+  client-authoritative until Phase 6b.
+- **Google/Apple sign-in buttons still show "not available" alerts** -
+  unchanged from Phase 2, correctly not touched (no OAuth provider
+  configured in the Supabase project).
+- **No admin panel, no CMS, no push notifications, no analytics, no
+  Storage usage yet** - all later phases per `BACKEND_PLAN.md` §6, not
+  started.
+

@@ -7,8 +7,7 @@ export type AuthUser = {
 
 export type AuthSession = {
   user: AuthUser;
-  /** Opaque local session token. Stands in for a real backend session/JWT -
-   * see AuthService.ts for why there's no real one yet. */
+  /** Supabase access token. */
   token: string;
 };
 
@@ -19,7 +18,10 @@ export type AuthErrorCode =
   | 'email-taken'
   | 'invalid-credentials'
   | 'user-not-found'
-  | 'invalid-reset-code'
+  | 'invalid-link'
+  | 'not-verified'
+  | 'rate-limited'
+  | 'network-error'
   | 'unknown';
 
 export class AuthError extends Error {
@@ -42,32 +44,54 @@ export type SignInInput = {
   password: string;
 };
 
+/** Whichever of Supabase's two flow types the tapped email link produced -
+ * see useAuthCallbackParams's doc comment. Exactly one of `code` or the
+ * token pair is present. */
+export type EmailLinkParams = { code: string } | { accessToken: string; refreshToken: string };
+
+export type SignUpResult =
+  /** The normal path when the Supabase project has "Confirm email"
+   * enabled (the default) - no session exists yet until the code is
+   * verified. */
+  | { status: 'verification-required'; email: string }
+  /** Only happens if the project has email confirmation turned off. */
+  | { status: 'signed-in'; session: AuthSession };
+
 /**
- * Backend-agnostic auth contract. `LocalAuthService` is the only
- * implementation right now (see its own doc comment for why); a future
- * `SupabaseAuthService` implementing this same interface is a drop-in
- * replacement - nothing above the service layer (the store, screens) should
- * need to change.
+ * Backend-agnostic auth contract. `SupabaseAuthService` is the only
+ * implementation (see its own doc comment) - screens/the store were built
+ * against this interface from Phase 2 onward specifically so the backend
+ * underneath it could change without touching them.
  */
 export type AuthService = {
   getSession(): Promise<AuthSession | null>;
-  signUp(input: SignUpInput): Promise<AuthSession>;
+  signUp(input: SignUpInput): Promise<SignUpResult>;
   signIn(input: SignInInput): Promise<AuthSession>;
   signOut(): Promise<void>;
-  /** Starts a password reset; returns the demo verification code so the UI
-   * can display it (see LocalAuthService doc comment - there's no email
-   * delivery without a real backend). */
-  requestPasswordReset(email: string): Promise<{ demoCode: string }>;
-  confirmPasswordReset(email: string, code: string, newPassword: string): Promise<void>;
-  /** Requires the current password (spec Section 63: "Require password or
-   * appropriate authentication") - not just a bare confirmation tap. */
+  /** Caller is responsible for its own cooldown timer (spec Section 6) - this
+   * always attempts a real resend; Supabase's own rate limiting is the
+   * backstop against abuse. */
+  resendVerificationEmail(email: string): Promise<void>;
+  requestPasswordReset(email: string): Promise<void>;
+  /** Exchanges the params from a tapped email link (signup confirmation
+   * or password recovery - both land here, the app's two separate
+   * deep-link routes call this the same way) for a real session. Signup
+   * confirmation and password recovery are otherwise identical at the
+   * Supabase API level; which one it was is which deep-link route the OS
+   * opened, not anything this call itself reports. */
+  completeFromEmailLink(params: EmailLinkParams): Promise<AuthSession>;
+  /** Uses whatever session is currently active (the one
+   * completeFromEmailLink just established for a recovery link) - signs
+   * out afterward so the user re-authenticates with the new password
+   * rather than silently staying logged in from the recovery link. */
+  confirmPasswordReset(newPassword: string): Promise<void>;
+  /** Requires the current password (spec Section 63) - not just a bare
+   * confirmation tap. */
   deleteAccount(password: string): Promise<void>;
   /** Updates the signed-in user's profile fields, returns the updated
-   * session. `email` changes take effect immediately (no verification
-   * step) - a real backend should require re-verifying a new email before
-   * accepting it. */
+   * session. Email changes trigger Supabase's own re-verification flow
+   * for the new address. */
   updateProfile(input: { name?: string; email?: string }): Promise<AuthSession>;
-  /** Requires the current password, matching Security screen expectations
-   * (spec Section 59) - not just a bare "set new password". */
+  /** Requires the current password (spec Section 59). */
   changePassword(currentPassword: string, newPassword: string): Promise<void>;
 };

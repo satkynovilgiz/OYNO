@@ -14,9 +14,14 @@ export default function SignUpRoute() {
       isSubmitting={isSubmitting}
       serverError={error}
       onSubmit={async (input) => {
-        const ok = await signUp(input);
-        if (ok) router.replace('/profile-setup');
-        return ok;
+        const result = await signUp(input);
+        if (!result) return false;
+        if (result.status === 'verification-required') {
+          router.replace({ pathname: '/verify-email', params: { email: result.email } } as never);
+        } else {
+          router.replace('/profile-setup');
+        }
+        return true;
       }}
       onPressSignIn={() => {
         clearError();

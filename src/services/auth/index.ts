@@ -1,16 +1,17 @@
-import { localAuthService } from './LocalAuthService';
+import { supabaseAuthService } from './SupabaseAuthService';
 
-export { localAuthService } from './LocalAuthService';
+export { supabaseAuthService } from './SupabaseAuthService';
 export {
   AuthError,
   type AuthErrorCode,
   type AuthService,
   type AuthSession,
   type AuthUser,
+  type EmailLinkParams,
   type SignInInput,
   type SignUpInput,
+  type SignUpResult,
 } from './types';
+export { useAuthCallbackParams } from './useAuthCallbackParams';
 
-/** The one place to swap in a real backend later, e.g.:
- *   export const authService: AuthServiceType = supabaseAuthService; */
-export const authService = localAuthService;
+export const authService = supabaseAuthService;

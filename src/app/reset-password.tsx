@@ -1,11 +1,10 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 
 import { ResetPasswordScreen } from '@/features/auth/ResetPasswordScreen';
 import { authService, AuthError } from '@/services/auth';
 
 export default function ResetPasswordRoute() {
-  const { email, code } = useLocalSearchParams<{ email: string; code: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +16,7 @@ export default function ResetPasswordRoute() {
         setIsSubmitting(true);
         setError(null);
         try {
-          await authService.confirmPasswordReset(email, code, newPassword);
+          await authService.confirmPasswordReset(newPassword);
           return true;
         } catch (err) {
           setError(err instanceof AuthError ? err.message : 'Белгисиз ката кетти.');

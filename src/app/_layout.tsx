@@ -28,8 +28,11 @@ const UNGATED_ROUTES = [
   '/onboarding',
   '/sign-up',
   '/sign-in',
+  '/verify-email',
+  '/auth-callback-signup',
+  '/auth-callback-recovery',
   '/forgot-password',
-  '/verify-reset-code',
+  '/reset-password-sent',
   '/reset-password',
 ];
 
