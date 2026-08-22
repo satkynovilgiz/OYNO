@@ -104,6 +104,15 @@ export const supabaseAuthService: AuthService = {
     if (error) throw mapSupabaseError(error);
     if (!data.user) throw new AuthError('unknown', 'Белгисиз ката кетти.');
 
+    // Supabase returns 200 with a user object that has zero identities
+    // (instead of a "this email is taken" error) when the email already
+    // belongs to a confirmed account - an anti-enumeration measure. Left
+    // undetected, this path was falling through to "verification-required"
+    // and telling the user to check for a code that was never sent.
+    if (data.user.identities?.length === 0) {
+      throw new AuthError('email-taken', 'Бул email башка аккаунтта колдонулган.');
+    }
+
     if (data.session) {
       // Only happens if the project has "Confirm email" turned off.
       return { status: 'signed-in', session: await toAuthSession(data.session, data.user) };

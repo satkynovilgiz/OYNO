@@ -1021,6 +1021,20 @@ were found and fixed during this verification:
    real confirmation content) - a copy-paste mistake when both templates
    were edited in the same pass.
 
+**Also fixed (found during the same live pass):** signing up with an
+email that already belongs to a confirmed account was silently treated
+as a successful new signup - Supabase returns `200` with a user object
+that has an empty `identities` array for this case (its anti-enumeration
+behavior, not an error), which `SupabaseAuthService.signUp` wasn't
+checking for, so it fell through to `{ status: 'verification-required' }`
+and told the user to check their email for a code that was never sent.
+This is very likely the real cause of the "created an account before but
+couldn't sign in" report from earlier in this project. Fixed by checking
+`data.user.identities?.length === 0` and throwing the existing
+`email-taken` error in that case - verified live (signing up again with
+an already-registered email now correctly shows "Бул email башка
+аккаунтта колдонулган." and stays on the form, no fake email sent).
+
 **Not done / still broken:** the "Reset Password" template itself was
 **never actually edited** - live-tested by requesting a real reset code,
 the received email is still Supabase's untouched default ("Reset your
