@@ -42,25 +42,24 @@ export function GameCard({ game, onPress }: GameCardProps) {
           </Text>
 
           <View style={styles.metaRow}>
-            <Signal size={12} color={colors.textSecondary} strokeWidth={2} />
-            <Text style={styles.metaText}>{DIFFICULTY_LABEL[game.difficulty]}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <Users size={12} color={colors.textSecondary} strokeWidth={2} />
-            <Text style={styles.metaText}>{game.players}</Text>
+            <View style={styles.metaItem}>
+              <Signal size={12} color={colors.textSecondary} strokeWidth={2} />
+              <Text style={styles.metaText}>{DIFFICULTY_LABEL[game.difficulty]}</Text>
+            </View>
+            <View style={styles.metaDot} />
+            <View style={styles.metaItem}>
+              <Users size={12} color={colors.textSecondary} strokeWidth={2} />
+              <Text style={styles.metaText} numberOfLines={1}>
+                {game.players}
+              </Text>
+            </View>
           </View>
           <View style={styles.metaRow}>
             <Clock size={12} color={colors.textSecondary} strokeWidth={2} />
             <Text style={styles.metaText}>{game.duration}</Text>
           </View>
 
-          {isPlayable ? (
-            <Button label="Ойноо" onPress={() => onPress?.(game)} />
-          ) : (
-            <View style={styles.disabledButton}>
-              <Text style={styles.disabledButtonLabel}>Жакында</Text>
-            </View>
-          )}
+          {isPlayable && <Button label="Ойноо" onPress={() => onPress?.(game)} />}
         </View>
       </Card>
     </View>
@@ -95,18 +94,6 @@ const styles = StyleSheet.create({
     color: colors.textOnDark,
     fontWeight: '700',
   },
-  disabledButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceAlt,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-  },
-  disabledButtonLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
-    fontWeight: '700',
-  },
   thumbnail: {
     width: '100%',
     height: '100%',
@@ -126,7 +113,7 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: spacing.sm,
-    gap: 3,
+    gap: 4,
   },
   name: {
     ...typography.bodyBold,
@@ -137,6 +124,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xxs,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    flexShrink: 1,
+  },
+  metaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.textMuted,
   },
   metaText: {
     ...typography.small,

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -18,12 +19,11 @@ import {
 import { mockGamesList } from './mockData';
 import type { GameListItem } from './types';
 
-const MOCK_COINS = 2450;
-const MOCK_TOKENS = 180;
-
 export function GamesScreen() {
   useTrackScreenView('games');
   const insets = useSafeAreaInsets();
+  const coins = useProgressStore((state) => state.coins);
+  const gems = useProgressStore((state) => state.gems);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<GameListItem['category'] | 'all'>('all');
 
@@ -48,7 +48,7 @@ export function GamesScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <GamesHeader coins={MOCK_COINS} tokens={MOCK_TOKENS} />
+        <GamesHeader coins={coins} tokens={gems} />
 
         <SearchBar value={query} onChangeText={setQuery} />
 
