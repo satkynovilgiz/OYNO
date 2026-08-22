@@ -119,6 +119,16 @@ create trigger on_auth_user_created_progress
   after insert on auth.users
   for each row execute procedure public.handle_new_user_progress();
 
+-- The trigger only fires for signups from here on - every account
+-- created before this migration ran (including real ones already in
+-- production use) has no user_progress row at all yet. Backfill them
+-- now so `select ... single()` on the client doesn't come back empty for
+-- an existing user.
+insert into public.user_progress (user_id)
+select id from auth.users
+where id not in (select user_id from public.user_progress)
+on conflict (user_id) do nothing;
+
 -- ---------------------------------------------------------------------
 -- Internal helpers. These take a user_id parameter and MUST NEVER be
 -- directly callable by a client - an authenticated user could otherwise

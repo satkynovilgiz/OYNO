@@ -1,5 +1,5 @@
 import type { AuthError as SupabaseAuthErrorType, Session, User } from '@supabase/supabase-js';
-import { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 
 import { supabase } from '@/services/supabase/client';
 
@@ -33,16 +33,20 @@ import {
 const MIN_PASSWORD_LENGTH = 8;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** `oyno://auth-callback-signup` on native; an http(s) URL on web, since a
- * browser has no OS-level handler for a custom scheme - Supabase's
- * redirect just needs to be a URL this running instance of the app will
- * actually receive. Both must be added to the project's Auth > URL
- * Configuration > Redirect URLs allow-list. */
+/**
+ * `Linking.createURL` (not a hand-rolled `oyno://` string) because the
+ * correct redirect URL genuinely differs by environment: a real
+ * `oyno://` scheme link in a standalone/dev-client build, an `exp://
+ * <lan-ip>:8081/--/<path>` link when running in Expo Go (Expo Go owns the
+ * OS-level `oyno://` registration, not this app, so a hardcoded
+ * `oyno://` link silently fails to open correctly there - this is the
+ * actual bug behind a real "verification failed" the user hit testing
+ * through Expo Go), and the current origin on web. All three must be
+ * covered in the project's Auth > URL Configuration > Redirect URLs
+ * allow-list - `exp://**` in addition to `oyno://**` and the web origin.
+ */
 function getRedirectUrl(path: string): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    return `${window.location.origin}/${path}`;
-  }
-  return `oyno://${path}`;
+  return Linking.createURL(path);
 }
 
 function mapSupabaseError(error: SupabaseAuthErrorType | { message: string; code?: string } | null): AuthError {
