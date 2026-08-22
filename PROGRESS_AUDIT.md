@@ -1072,6 +1072,42 @@ password → real Kyrgyz reset code received → password changed
 successfully → signed in with the new password, landed authenticated
 with the same real progress data.
 
+### Phase 6c (2026-08-22): Culture/Explore content moved to the database
+
+Migrated `culture_categories`, `culture_materials`, `explore_regions`,
+and `quests` from hardcoded TS arrays (`src/features/culture/data.ts`,
+`src/features/explore/data.ts`) into real Postgres tables, public-read
+RLS (published static content, no owner). Seeded with the exact existing
+Kyrgyz content - titles, taglines, and every cited fact - not new or
+invented content. `CultureScreen`, `ExploreScreen`, and the
+`/explore/[id]` region-detail route now fetch via
+`src/services/content/{cultureService,exploreService}.ts` (react-query,
+finally wired up per `BACKEND_PLAN.md`'s own note that it was sitting
+unused) instead of importing the static arrays, with loading/error
+states on every touched screen.
+
+**Deliberately not migrated, and why:** the `current`/`total` counts on
+each culture category, `ExploreLocation.discoveredPercent`, and all of
+`exploreProgress` are explicitly commented in the original source as
+mock placeholders never wired to a real count. There is no real
+"12-item boz-uy collection" to count yet. Copying those numbers into the
+database wouldn't have made them real, only relocated the fakeness -
+they remain client-side mock constants in the trimmed `data.ts` files,
+byte-for-byte the same values as before, clearly commented as such.
+Bundled local images also stay client-side (`id -> imageSource` lookup
+maps) since RN's `require()` needs a static literal path a DB-supplied
+string can never satisfy - real Storage-backed images are Phase 6g.
+
+**Verified live:** re-ran the app against the migrated database -
+Culture screen renders all 10 real categories with correct titles and
+(unchanged) mock progress numbers, today's discovery card renders from
+the DB, Explore's map pin labels and the current quest card
+("Жоголгон шырдакты тап", 0/5) render from the DB with real
+`quest_found_count` merged in from Phase 6b, and `/explore/ysyk-kol`
+renders all 3 real cited facts and the correct hero color band -
+confirmed via `read_network_requests`-free visual inspection since these
+are simple `select`s, not RPCs with a meaningful non-200 case to probe.
+
 **Also fixed in this pass, found by the user testing on a real device
 (not caught by browser-based QA, which has no on-screen keyboard):** the
 email-verification and reset-code screens had no `KeyboardAvoidingView`

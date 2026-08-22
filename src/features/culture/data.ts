@@ -12,52 +12,62 @@ import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png'
 import materialBoorsok from '@assets/img/OYNO_design/culture/material_boorsok.png';
 import materialKalpak from '@assets/img/OYNO_design/culture/material_kalpak.png';
 import materialKyzKuumai from '@assets/img/OYNO_design/culture/material_kyz_kuumai.png';
+import type { ImageSourcePropType } from 'react-native';
 
-import type { CultureCategory, CultureDiscovery, CultureMaterial, CultureProgress } from './types';
+import type { CultureCategoryId, CultureProgress, CultureStatId } from './types';
 
 /**
- * Mock content for the Culture home screen, matching the numbers/titles
- * given in the design reference (docs: "OYNO Kyrgyz Culture App
- * Interface1.png") - not wired to real user progress or a content backend
- * yet. Category/material titles are kept in Kyrgyz (not run through
- * i18n) since most are proper nouns for specific cultural items (Комуз,
- * Шырдак, Оймо...) rather than UI chrome - same convention already used for
- * game names and Explore location names elsewhere in this app.
+ * Category/material content itself (id, title, description) is now
+ * server-driven (Phase 6c, see src/services/content/cultureService.ts) -
+ * this file only keeps what genuinely can't live in the database: bundled
+ * local image assets (RN `require()` needs a static literal path, so a
+ * DB-supplied string can never resolve one - real Storage-backed images are
+ * Phase 6g) and the still-mock progress numbers below, which were never
+ * wired to a real collection-items count and stay exactly as fake as they
+ * were before this migration - not real per-user data, just a placeholder
+ * for a system that doesn't exist yet.
  */
-export const cultureCategories: CultureCategory[] = [
-  { id: 'boz-uy', title: 'Боз үй', current: 8, total: 12, imageSource: catBozUy },
-  { id: 'oymo', title: 'Оймо', current: 10, total: 20, imageSource: catOymo },
-  { id: 'shyrdak', title: 'Шырдак', current: 5, total: 10, imageSource: catShyrdak },
-  { id: 'komuz', title: 'Комуз', current: 6, total: 10, imageSource: catKomuz },
-  { id: 'music', title: 'Музыка', current: 7, total: 15, imageSource: catMusic },
-  { id: 'clothing', title: 'Улуттук кийим', current: 6, total: 12, imageSource: catClothing },
-  { id: 'horse', title: 'Ат маданияты', current: 8, total: 15, imageSource: catHorse },
-  { id: 'food', title: 'Ашкана', current: 12, total: 20, imageSource: catFood },
-  { id: 'games', title: 'Улуттук оюндар', current: 9, total: 15, imageSource: catGames },
-  { id: 'tradition', title: 'Каада-салт', current: 8, total: 15, imageSource: catTradition },
-];
+export const cultureCategoryImages: Record<CultureCategoryId, ImageSourcePropType> = {
+  'boz-uy': catBozUy,
+  oymo: catOymo,
+  shyrdak: catShyrdak,
+  komuz: catKomuz,
+  music: catMusic,
+  clothing: catClothing,
+  horse: catHorse,
+  food: catFood,
+  games: catGames,
+  tradition: catTradition,
+};
 
+/** Mock per-category progress - not wired to a real collection-items count. */
+export const cultureCategoryMockProgress: Record<CultureCategoryId, { current: number; total: number }> = {
+  'boz-uy': { current: 8, total: 12 },
+  oymo: { current: 10, total: 20 },
+  shyrdak: { current: 5, total: 10 },
+  komuz: { current: 6, total: 10 },
+  music: { current: 7, total: 15 },
+  clothing: { current: 6, total: 12 },
+  horse: { current: 8, total: 15 },
+  food: { current: 12, total: 20 },
+  games: { current: 9, total: 15 },
+  tradition: { current: 8, total: 15 },
+};
+
+export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
+  'komuz-discovery': discoveryKomuz,
+  'kalpak-history': materialKalpak,
+  'boorsok-cooking': materialBoorsok,
+  'kyz-kuumai-game': materialKyzKuumai,
+};
+
+/** Mock overview progress - not wired to real user progress yet. */
 export const cultureProgress: CultureProgress = {
   overallPercent: 47,
-  stats: {
-    'boz-uy': { current: 8, total: 12 },
-    oymo: { current: 10, total: 20 },
-    shyrdak: { current: 5, total: 10 },
-    komuz: { current: 6, total: 10 },
-    food: { current: 12, total: 20 },
-    games: { current: 9, total: 15 },
-  },
+  stats: Object.fromEntries(
+    (['boz-uy', 'oymo', 'shyrdak', 'komuz', 'food', 'games'] as CultureStatId[]).map((id) => [
+      id,
+      cultureCategoryMockProgress[id],
+    ]),
+  ) as Record<CultureStatId, { current: number; total: number }>,
 };
-
-export const cultureTodayDiscovery: CultureDiscovery = {
-  title: 'Комуз',
-  description: 'Кыргыздын улуттук музыкалык аспабы жөнүндө жаңы нерсе үйрөн.',
-  imageSource: discoveryKomuz,
-  isNew: true,
-};
-
-export const cultureNewMaterials: CultureMaterial[] = [
-  { id: 'kalpak-history', title: 'Калпактын тарыхы', type: 'reading', durationMinutes: 5, imageSource: materialKalpak },
-  { id: 'boorsok-cooking', title: 'Боорсок жасоо', type: 'video', durationMinutes: 7, imageSource: materialBoorsok },
-  { id: 'kyz-kuumai-game', title: 'Кыз куумай оюну', type: 'game', durationMinutes: 3, imageSource: materialKyzKuumai },
-];

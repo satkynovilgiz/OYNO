@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
@@ -13,28 +15,14 @@ import {
   KyrgyzstanMap,
   RegionProgressCard,
 } from './components';
-import { exploreCurrentQuest, exploreDiscoveries, exploreMapPins, exploreProgress, getExploreLocationById } from './data';
+import { exploreDiscoveries, exploreMapPins, exploreProgress } from './data';
 import type { ExploreDiscovery } from './types';
-
-const mapPins = exploreMapPins.map((pin) => {
-  const location = getExploreLocationById(pin.locationId);
-  return {
-    id: pin.locationId,
-    label: location?.name.kg ?? pin.locationId,
-    xPercent: pin.xPercent,
-    yPercent: pin.yPercent,
-  };
-});
 
 export function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const progress = useProgressStore();
-
-  const quest = {
-    ...exploreCurrentQuest,
-    foundCount: progress.questFoundCount,
-    ctaLabel: progress.questCompleted ? 'Квест аткарылды!' : exploreCurrentQuest.ctaLabel,
-  };
+  const { data: regions, isLoading: regionsLoading, error: regionsError } = useExploreRegions();
+  const { data: questRow, isLoading: questLoading, error: questError } = useCurrentQuest();
 
   function handlePressQuest() {
     useProgressStore.getState().advanceQuest();
@@ -43,6 +31,33 @@ export function ExploreScreen() {
   function handlePressDiscovery(discovery: ExploreDiscovery) {
     useProgressStore.getState().discoverExploreItem(discovery.id);
   }
+
+  const isLoading = regionsLoading || questLoading;
+  const hasError = !!regionsError || !!questError;
+
+  const mapPins = (regions ?? []).length
+    ? exploreMapPins.map((pin) => {
+        const region = regions?.find((item) => item.id === pin.locationId);
+        return {
+          id: pin.locationId,
+          label: region?.name_kg ?? pin.locationId,
+          xPercent: pin.xPercent,
+          yPercent: pin.yPercent,
+        };
+      })
+    : [];
+
+  const quest = questRow
+    ? {
+        id: questRow.id,
+        characterId: questRow.character_id as CharacterId,
+        title: questRow.title,
+        subtitle: questRow.subtitle,
+        foundCount: progress.questFoundCount,
+        totalCount: questRow.total_count,
+        ctaLabel: progress.questCompleted ? 'Квест аткарылды!' : questRow.cta_label,
+      }
+    : null;
 
   return (
     <View style={styles.root}>
@@ -55,29 +70,43 @@ export function ExploreScreen() {
           onPressCollection={() => router.push('/collection' as never)}
         />
 
-        <View style={styles.horizontalPad}>
-          <KyrgyzstanMap
-            pins={mapPins}
-            onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
-            onPressLocate={() => {}}
-            onPressFilter={() => router.push('/collection' as never)}
-          />
-        </View>
+        {isLoading ? (
+          <View style={styles.stateBlock}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : hasError ? (
+          <View style={styles.stateBlock}>
+            <Text style={styles.stateText}>Мазмун жүктөлгөн жок. Кайра аракет кылыңыз.</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.horizontalPad}>
+              <KyrgyzstanMap
+                pins={mapPins}
+                onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
+                onPressLocate={() => {}}
+                onPressFilter={() => router.push('/collection' as never)}
+              />
+            </View>
 
-        <View style={styles.horizontalPad}>
-          <RegionProgressCard progress={exploreProgress} />
-        </View>
+            <View style={styles.horizontalPad}>
+              <RegionProgressCard progress={exploreProgress} />
+            </View>
 
-        <View style={styles.horizontalPad}>
-          <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
-        </View>
+            {quest && (
+              <View style={styles.horizontalPad}>
+                <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
+              </View>
+            )}
 
-        <DiscoveriesRow
-          discoveries={exploreDiscoveries}
-          discoveredIds={progress.discoveredExploreIds}
-          onPressDiscovery={handlePressDiscovery}
-          onPressSeeAll={() => router.push('/collection' as never)}
-        />
+            <DiscoveriesRow
+              discoveries={exploreDiscoveries}
+              discoveredIds={progress.discoveredExploreIds}
+              onPressDiscovery={handlePressDiscovery}
+              onPressSeeAll={() => router.push('/collection' as never)}
+            />
+          </>
+        )}
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>
@@ -106,5 +135,13 @@ const styles = StyleSheet.create({
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
+  },
+  stateBlock: {
+    paddingVertical: spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stateText: {
+    color: colors.textSecondary,
   },
 });
