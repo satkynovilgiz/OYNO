@@ -17,7 +17,7 @@ export default function ForgotPasswordRoute() {
         setError(null);
         try {
           await authService.requestPasswordReset(email);
-          router.push({ pathname: '/reset-password-sent', params: { email } } as never);
+          router.push({ pathname: '/verify-reset-code', params: { email } } as never);
         } catch (err) {
           setError(err instanceof AuthError ? err.message : 'Белгисиз ката кетти.');
         } finally {

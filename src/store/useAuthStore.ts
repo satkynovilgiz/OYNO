@@ -1,15 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
-import {
-  AuthError,
-  authService,
-  type AuthUser,
-  type EmailLinkParams,
-  type SignInInput,
-  type SignUpInput,
-  type SignUpResult,
-} from '@/services/auth';
+import { AuthError, authService, type AuthUser, type SignInInput, type SignUpInput, type SignUpResult } from '@/services/auth';
 import { supabase } from '@/services/supabase/client';
 
 /** "guest" = explored without an account (spec: guests can browse/play
@@ -34,11 +26,7 @@ type AuthState = {
   signUp: (input: SignUpInput) => Promise<SignUpResult | false>;
   signIn: (input: SignInInput) => Promise<boolean>;
   signOut: () => Promise<void>;
-  /** Exchanges the code from a tapped signup-confirmation email link and
-   * signs the user in. Password-recovery links go through the same
-   * service method directly from the recovery callback route instead -
-   * that one deliberately does not touch this store's `status`. */
-  completeSignupVerification: (params: EmailLinkParams) => Promise<boolean>;
+  verifyEmail: (email: string, code: string) => Promise<boolean>;
   resendVerificationEmail: (email: string) => Promise<boolean>;
   deleteAccount: (password: string) => Promise<boolean>;
   continueAsGuest: () => Promise<void>;
@@ -112,10 +100,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ status: 'unauthenticated', user: null });
   },
 
-  completeSignupVerification: async (params) => {
+  verifyEmail: async (email, code) => {
     set({ isSubmitting: true, error: null });
     try {
-      const session = await authService.completeFromEmailLink(params);
+      const session = await authService.verifyEmail(email, code);
       await AsyncStorage.removeItem(GUEST_MODE_KEY);
       set({ status: 'authenticated', user: session.user, isSubmitting: false });
       return true;

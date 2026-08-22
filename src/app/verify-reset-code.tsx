@@ -1,29 +1,31 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-import { CheckEmailScreen } from '@/features/auth/CheckEmailScreen';
+import { VerifyResetCodeScreen } from '@/features/auth/VerifyResetCodeScreen';
 import { authService, AuthError } from '@/services/auth';
 
-export default function ResetPasswordSentRoute() {
+export default function VerifyResetCodeRoute() {
   const { email } = useLocalSearchParams<{ email: string }>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <CheckEmailScreen
-      title="Сырсөздү калыбына келтирүү"
+    <VerifyResetCodeScreen
       email={email}
+      isSubmitting={isSubmitting}
       error={error}
-      onResend={async () => {
+      onSubmit={async (code) => {
+        setIsSubmitting(true);
         setError(null);
         try {
-          await authService.requestPasswordReset(email);
-          return true;
+          await authService.verifyPasswordResetCode(email, code);
+          router.push('/reset-password');
         } catch (err) {
           setError(err instanceof AuthError ? err.message : 'Белгисиз ката кетти.');
-          return false;
+        } finally {
+          setIsSubmitting(false);
         }
       }}
-      links={[{ label: 'Кирүүгө кайтуу', onPress: () => router.replace('/sign-in') }]}
     />
   );
 }

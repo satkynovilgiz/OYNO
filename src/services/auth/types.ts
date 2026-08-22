@@ -18,7 +18,7 @@ export type AuthErrorCode =
   | 'email-taken'
   | 'invalid-credentials'
   | 'user-not-found'
-  | 'invalid-link'
+  | 'invalid-code'
   | 'not-verified'
   | 'rate-limited'
   | 'network-error'
@@ -44,11 +44,6 @@ export type SignInInput = {
   password: string;
 };
 
-/** Whichever of Supabase's two flow types the tapped email link produced -
- * see useAuthCallbackParams's doc comment. Exactly one of `code` or the
- * token pair is present. */
-export type EmailLinkParams = { code: string } | { accessToken: string; refreshToken: string };
-
 export type SignUpResult =
   /** The normal path when the Supabase project has "Confirm email"
    * enabled (the default) - no session exists yet until the code is
@@ -62,28 +57,35 @@ export type SignUpResult =
  * implementation (see its own doc comment) - screens/the store were built
  * against this interface from Phase 2 onward specifically so the backend
  * underneath it could change without touching them.
+ *
+ * Verification uses typed OTP codes emailed to the user (not magic
+ * links) - a deliberate choice, not the original one. Magic links were
+ * tried first and worked on web, but Expo Go can't reliably open a link
+ * tapped from an external app (a known platform limitation - its
+ * `exp://` scheme isn't meant for arbitrary OS-level link handoff), which
+ * made testing on a real phone unworkable before a dev/production build
+ * exists. A typed code sidesteps that entirely: no link ever needs to
+ * open, the user just types what the email shows. See PROGRESS_AUDIT.md.
  */
 export type AuthService = {
   getSession(): Promise<AuthSession | null>;
   signUp(input: SignUpInput): Promise<SignUpResult>;
   signIn(input: SignInInput): Promise<AuthSession>;
   signOut(): Promise<void>;
+  /** Confirms the code emailed after signUp() and returns the now-active session. */
+  verifyEmail(email: string, code: string): Promise<AuthSession>;
   /** Caller is responsible for its own cooldown timer (spec Section 6) - this
    * always attempts a real resend; Supabase's own rate limiting is the
    * backstop against abuse. */
   resendVerificationEmail(email: string): Promise<void>;
   requestPasswordReset(email: string): Promise<void>;
-  /** Exchanges the params from a tapped email link (signup confirmation
-   * or password recovery - both land here, the app's two separate
-   * deep-link routes call this the same way) for a real session. Signup
-   * confirmation and password recovery are otherwise identical at the
-   * Supabase API level; which one it was is which deep-link route the OS
-   * opened, not anything this call itself reports. */
-  completeFromEmailLink(params: EmailLinkParams): Promise<AuthSession>;
-  /** Uses whatever session is currently active (the one
-   * completeFromEmailLink just established for a recovery link) - signs
-   * out afterward so the user re-authenticates with the new password
-   * rather than silently staying logged in from the recovery link. */
+  /** Verifies the emailed code and establishes a temporary recovery
+   * session; confirmPasswordReset() then uses that session, so it no
+   * longer needs the email/code passed to it again. */
+  verifyPasswordResetCode(email: string, code: string): Promise<void>;
+  /** Uses whatever session verifyPasswordResetCode just established -
+   * signs out afterward so the user re-authenticates with the new
+   * password rather than silently staying logged in from the reset. */
   confirmPasswordReset(newPassword: string): Promise<void>;
   /** Requires the current password (spec Section 63) - not just a bare
    * confirmation tap. */

@@ -29,10 +29,8 @@ const UNGATED_ROUTES = [
   '/sign-up',
   '/sign-in',
   '/verify-email',
-  '/auth-callback-signup',
-  '/auth-callback-recovery',
   '/forgot-password',
-  '/reset-password-sent',
+  '/verify-reset-code',
   '/reset-password',
 ];
 
@@ -70,7 +68,18 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
 
 export default function RootLayout() {
   const [flagsReady, setFlagsReady] = useState(false);
+  const authStatus = useAuthStore((state) => state.status);
   const lastUnlockedAchievementId = useProgressStore((state) => state.lastUnlockedAchievementId);
+
+  // Reacts to every authStatus change, not just the one at boot - covers
+  // signing in mid-session (progress didn't exist to load at boot time)
+  // and signing out (clears progress from view rather than leaving a
+  // previous user's numbers on screen). useProgressStore.load() itself
+  // already no-ops to defaults for a non-'authenticated' status.
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    void useProgressStore.getState().load();
+  }, [authStatus]);
 
   useEffect(() => {
     // The Splash/index route also calls these, but _layout mounts first and
@@ -84,12 +93,14 @@ export default function RootLayout() {
     return loadWithTimeout(
       async () => {
         try {
+          // useProgressStore isn't loaded here - it depends on auth status,
+          // which this Promise.all itself is still resolving, so loading it
+          // here would race (see the authStatus effect below instead).
           await Promise.all([
             useAuthStore.getState().initialize(),
             useAppStore.getState().loadOnboardingFlags(),
             useNotificationsStore.getState().load(),
             useSettingsStore.getState().load(),
-            useProgressStore.getState().load(),
           ]);
         } catch (error) {
           if (__DEV__) console.warn('[boot] one or more stores failed to load, continuing with defaults', error);

@@ -5,6 +5,7 @@ export * from './Card';
 export * from './ConfirmationModal';
 export * from './IconButton';
 export * from './IconChip';
+export * from './OtpCodeInput';
 export * from './Pill';
 export * from './ProgressBar';
 export * from './ProgressRing';

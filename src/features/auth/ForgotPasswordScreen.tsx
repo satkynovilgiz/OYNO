@@ -30,7 +30,7 @@ export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: Fo
       <View style={styles.content}>
         <Text style={styles.title}>Сырсөздү калыбына келтирүү</Text>
         <Text style={styles.description}>
-          Аккаунтуңузга байланыштуу email дарегиңизди жазыңыз - калыбына келтирүү шилтемеси жөнөтүлөт.
+          Аккаунтуңузга байланыштуу email дарегиңизди жазыңыз - ырастоо коду жөнөтүлөт.
         </Text>
 
         <TextField
@@ -46,7 +46,7 @@ export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: Fo
         {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
       </View>
 
-      <Button label="Шилтеме жөнөтүү" onPress={handleSubmit} loading={isSubmitting} />
+      <Button label="Код жөнөтүү" onPress={handleSubmit} loading={isSubmitting} />
     </View>
   );
 }

@@ -1,5 +1,4 @@
 import type { AuthError as SupabaseAuthErrorType, Session, User } from '@supabase/supabase-js';
-import * as Linking from 'expo-linking';
 
 import { supabase } from '@/services/supabase/client';
 
@@ -9,7 +8,6 @@ import {
   type AuthService,
   type AuthSession,
   type AuthUser,
-  type EmailLinkParams,
   type SignInInput,
   type SignUpInput,
   type SignUpResult,
@@ -23,31 +21,15 @@ import {
  * verification, and password-reset delivery are all real Supabase Auth
  * behavior now, not a device-local simulation of it.
  *
- * Uses magic links, not typed OTP codes, for signup confirmation and
- * password reset - Supabase locks email-template customization (needed to
- * show a typed code) behind configuring a custom SMTP provider, which is
- * a real external-service decision left to whoever runs this project, not
- * something to force through in code. See BACKEND_PLAN.md.
+ * Uses typed OTP codes, not magic links, for signup confirmation and
+ * password reset - see AuthService's doc comment for why (Expo Go can't
+ * reliably open a link tapped from an external app; a code sidesteps
+ * that entirely). No redirect URL is needed anywhere in this file as a
+ * result - Supabase's OTP email/verify flow never leaves the app.
  */
 
 const MIN_PASSWORD_LENGTH = 8;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/**
- * `Linking.createURL` (not a hand-rolled `oyno://` string) because the
- * correct redirect URL genuinely differs by environment: a real
- * `oyno://` scheme link in a standalone/dev-client build, an `exp://
- * <lan-ip>:8081/--/<path>` link when running in Expo Go (Expo Go owns the
- * OS-level `oyno://` registration, not this app, so a hardcoded
- * `oyno://` link silently fails to open correctly there - this is the
- * actual bug behind a real "verification failed" the user hit testing
- * through Expo Go), and the current origin on web. All three must be
- * covered in the project's Auth > URL Configuration > Redirect URLs
- * allow-list - `exp://**` in addition to `oyno://**` and the web origin.
- */
-function getRedirectUrl(path: string): string {
-  return Linking.createURL(path);
-}
 
 function mapSupabaseError(error: SupabaseAuthErrorType | { message: string; code?: string } | null): AuthError {
   const code = (error as { code?: string } | null)?.code;
@@ -59,8 +41,8 @@ function mapSupabaseError(error: SupabaseAuthErrorType | { message: string; code
     invalid_credentials: ['invalid-credentials', 'Email же сырсөз туура эмес.'],
     weak_password: ['weak-password', `Сырсөз кеминде ${MIN_PASSWORD_LENGTH} белгиден турушу керек.`],
     email_not_confirmed: ['not-verified', 'Email дареги ырасталган эмес.'],
-    otp_expired: ['invalid-link', 'Шилтеменин мөөнөтү бүттү. Кайра сурап көрүңүз.'],
-    invalid_otp: ['invalid-link', 'Шилтеме жараксыз.'],
+    otp_expired: ['invalid-code', 'Коддун мөөнөтү бүттү. Кайра сурап көрүңүз.'],
+    invalid_otp: ['invalid-code', 'Код туура эмес.'],
     over_email_send_rate_limit: ['rate-limited', 'Өтө көп аракет. Бир аздан кийин кайра аракет кылыңыз.'],
     over_request_rate_limit: ['rate-limited', 'Өтө көп аракет. Бир аздан кийин кайра аракет кылыңыз.'],
     user_not_found: ['user-not-found', 'Колдонуучу табылган жок.'],
@@ -117,7 +99,7 @@ export const supabaseAuthService: AuthService = {
     const { data, error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
-      options: { data: { name: name.trim() }, emailRedirectTo: getRedirectUrl('auth-callback-signup') },
+      options: { data: { name: name.trim() } },
     });
     if (error) throw mapSupabaseError(error);
     if (!data.user) throw new AuthError('unknown', 'Белгисиз ката кетти.');
@@ -140,36 +122,26 @@ export const supabaseAuthService: AuthService = {
     await supabase.auth.signOut();
   },
 
+  async verifyEmail(email, code) {
+    const { data, error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code, type: 'signup' });
+    if (error) throw mapSupabaseError(error);
+    if (!data.session || !data.user) throw new AuthError('invalid-code', 'Код туура эмес.');
+    return toAuthSession(data.session, data.user);
+  },
+
   async resendVerificationEmail(email) {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: getRedirectUrl('auth-callback-signup') },
-    });
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
     if (error) throw mapSupabaseError(error);
   },
 
   async requestPasswordReset(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: getRedirectUrl('auth-callback-recovery'),
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
     if (error) throw mapSupabaseError(error);
   },
 
-  async completeFromEmailLink(params: EmailLinkParams) {
-    if ('code' in params) {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(params.code);
-      if (error) throw mapSupabaseError(error);
-      if (!data.session || !data.user) throw new AuthError('invalid-link', 'Шилтеме жараксыз.');
-      return toAuthSession(data.session, data.user);
-    }
-    const { data, error } = await supabase.auth.setSession({
-      access_token: params.accessToken,
-      refresh_token: params.refreshToken,
-    });
+  async verifyPasswordResetCode(email, code) {
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code, type: 'recovery' });
     if (error) throw mapSupabaseError(error);
-    if (!data.session || !data.user) throw new AuthError('invalid-link', 'Шилтеме жараксыз.');
-    return toAuthSession(data.session, data.user);
   },
 
   async confirmPasswordReset(newPassword) {
@@ -178,10 +150,10 @@ export const supabaseAuthService: AuthService = {
     }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw mapSupabaseError(error);
-    // The recovery link's session did its one job (proving email
+    // The recovery code's session did its one job (proving email
     // ownership so this password change is allowed) - sign out so the
     // user re-authenticates fresh with the new password rather than
-    // silently ending up logged in from a link they got over email.
+    // silently ending up logged in from the reset flow.
     await supabase.auth.signOut();
   },
 

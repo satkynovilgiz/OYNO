@@ -987,3 +987,48 @@ fine for now but should move to a dedicated transactional provider
 (Resend, per `BACKEND_PLAN.md`) before any real launch/scale - that move
 needs a verified domain, which wasn't available at the time of this fix.
 
+### Post-phase fix (2026-08-21): magic links → typed OTP codes
+
+Real device testing via Expo Go hit a platform limitation no amount of
+redirect-URL fixing could solve: Expo Go cannot reliably reopen a link
+tapped from an external app (Gmail) back into itself - `Linking.createURL`
+made the redirect URL environment-correct, but the OS-level hand-off back
+into Expo Go still failed ("the application couldn't be opened"). Per the
+user's direction, replaced the whole magic-link flow with typed
+verification codes entered in-app (`supabase.auth.verifyOtp`), which need
+no redirect/deep-link at all. Deleted the callback routes
+(`auth-callback-signup.tsx`, `auth-callback-recovery.tsx`,
+`useAuthCallbackParams.ts`, `CheckEmailScreen.tsx`, `reset-password-sent.tsx`)
+and rebuilt `verify-email.tsx` / `verify-reset-code.tsx` as plain code-entry
+screens using a new reusable `OtpCodeInput` component.
+
+Also redesigned both verification screens per explicit design feedback,
+and switched the email templates themselves to Kyrgyz.
+
+**Verified live** (fresh disposable inbox, full flow): sign up → real
+8-character code arrives by email in Kyrgyz → entered via the redesigned
+`OtpCodeInput` → lands authenticated on `/profile-setup` → character
+select → `/home` with real server-backed profile/progress data loaded →
+sign out (via Коопсуздук → "Бардык сессиялардан чыгуу") → sign back in
+with the same credentials → correctly re-authenticated. Two real bugs
+were found and fixed during this verification:
+
+1. The code is **8 characters**, not the assumed 6 - `OtpCodeInput` and
+   both screens' validation were hardcoded to 6 and have been corrected.
+2. The "Confirm signup" email template body had the "Reset Password"
+   template's content pasted in underneath it (visible in the raw email:
+   a second "СЫРСӨЗДҮ КАЛЫБЫНА КЕЛТИРҮҮ" heading and body appear after the
+   real confirmation content) - a copy-paste mistake when both templates
+   were edited in the same pass.
+
+**Not done / still broken:** the "Reset Password" template itself was
+**never actually edited** - live-tested by requesting a real reset code,
+the received email is still Supabase's untouched default ("Reset your
+password" in English, link only, no `{{ .Token }}`, no code at all). The
+`/forgot-password` → `/verify-reset-code` screen correctly renders and
+waits for an 8-digit code, but no code is ever sent, so **the password
+reset flow is currently completely non-functional in production** until
+the Reset Password template is fixed to actually include `{{ .Token }}`
+in Kyrgyz (separately from the Confirm Signup template, not pasted
+together with it).
+

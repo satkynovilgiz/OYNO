@@ -24,11 +24,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    // Signup/reset links are handled manually via two dedicated Expo
-    // Router routes (auth-callback-signup.tsx, auth-callback-recovery.tsx)
-    // that call exchangeCodeForSession explicitly, not supabase-js's own
-    // automatic URL-based detection (a web-browser-oriented feature that
-    // doesn't map cleanly onto React Native navigation).
+    // Signup/reset verification uses typed OTP codes entered in-app
+    // (SupabaseAuthService.verifyEmail/verifyPasswordResetCode), not
+    // links - there's no auth URL for this client to ever detect.
     detectSessionInUrl: false,
   },
 });
