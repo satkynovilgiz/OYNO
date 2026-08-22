@@ -20,7 +20,9 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
     <View style={styles.grid}>
       {tiles.map((tile) => (
         <View key={tile.id} style={styles.tile}>
-          {tile.imageUri ? (
+          {tile.imageSource ? (
+            <Image source={tile.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          ) : tile.imageUri ? (
             <Image source={{ uri: tile.imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tiles[tile.tone] }]} />

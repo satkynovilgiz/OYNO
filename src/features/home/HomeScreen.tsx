@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
+import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -42,6 +43,7 @@ function handlePressTab(tab: TabId) {
 }
 
 export function HomeScreen() {
+  useTrackScreenView('home');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());

@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -30,6 +31,7 @@ function handlePressCategory(category: CultureCategory) {
 }
 
 export function CultureScreen() {
+  useTrackScreenView('culture');
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const progress = useProgressStore();

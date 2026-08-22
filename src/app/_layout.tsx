@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
+import { track } from '@/services/analytics/analytics';
 import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
 import { ErrorBoundary } from '@/components/system/ErrorBoundary';
@@ -92,6 +93,7 @@ export default function RootLayout() {
     // forever with no way out.
     return loadWithTimeout(
       async () => {
+        track('app_open');
         try {
           // useProgressStore isn't loaded here - it depends on auth status,
           // which this Promise.all itself is still resolving, so loading it

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
+import { track } from '@/services/analytics/analytics';
 import type { AchievementId } from '@/services/progress/types';
 import { safeJsonParse } from '@/services/storage/safeJson';
 import { supabase } from '@/services/supabase/client';
@@ -152,6 +153,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       ? Array.from(new Set([...current.unlockedAchievementIds, ...newlyUnlocked]))
       : current.unlockedAchievementIds;
 
+    newlyUnlocked?.forEach((id) => track('achievement_unlocked', { achievementId: id }));
+
     set({
       ...fields,
       unlockedAchievementIds,
@@ -247,17 +250,23 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     },
 
     advanceQuest: async () => {
+      const wasNotStarted = get().questFoundCount === 0;
       const result = await callAction('advance_quest');
       if (!result) return;
       applyProgress(result.progress, result.newlyUnlocked);
+      if (wasNotStarted) track('quest_started');
+      if (result.progress.quest_completed) track('quest_completed');
     },
 
     discoverExploreItem: async (id) => {
+      const isNew = !get().discoveredExploreIds.includes(id);
       const result = await callAction('discover_explore_item', { p_discovery_id: id });
       if (!result) return;
       applyProgress(result.progress);
-      if (!get().discoveredExploreIds.includes(id)) {
+      if (isNew) {
         set({ discoveredExploreIds: [...get().discoveredExploreIds, id] });
+        track('location_discovered', { locationId: id });
+        track('collection_item_discovered', { itemId: id });
       }
     },
 
@@ -271,12 +280,14 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       const result = await callAction('discover_culture');
       if (!result) return;
       applyProgress(result.progress, result.newlyUnlocked);
+      track('culture_complete');
     },
 
     claimDailyChallenge: async () => {
       const result = await callAction('claim_daily_challenge');
       if (!result) return false;
       applyProgress(result.progress);
+      track('reward_claimed', { source: 'daily_challenge' });
       return true;
     },
 
@@ -284,6 +295,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       const result = await callAction('claim_daily_gift');
       if (!result) return false;
       applyProgress(result.progress);
+      track('reward_claimed', { source: 'daily_gift' });
       return true;
     },
 
@@ -291,6 +303,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       const result = await callAction('claim_daily_play');
       if (!result) return false;
       applyProgress(result.progress);
+      track('reward_claimed', { source: 'daily_play' });
       return true;
     },
 

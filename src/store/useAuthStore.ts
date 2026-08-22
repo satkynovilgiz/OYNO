@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { AuthError, authService, type AuthUser, type SignInInput, type SignUpInput, type SignUpResult } from '@/services/auth';
+import { track } from '@/services/analytics/analytics';
 import { supabase } from '@/services/supabase/client';
 
 /** "guest" = explored without an account (spec: guests can browse/play
@@ -71,6 +72,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await AsyncStorage.removeItem(GUEST_MODE_KEY);
       if (result.status === 'signed-in') {
         set({ status: 'authenticated', user: result.session.user, isSubmitting: false });
+        track('sign_up');
       } else {
         set({ isSubmitting: false });
       }
@@ -87,6 +89,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const session = await authService.signIn(input);
       await AsyncStorage.removeItem(GUEST_MODE_KEY);
       set({ status: 'authenticated', user: session.user, isSubmitting: false });
+      track('sign_in');
       return true;
     } catch (error) {
       set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
@@ -106,6 +109,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const session = await authService.verifyEmail(email, code);
       await AsyncStorage.removeItem(GUEST_MODE_KEY);
       set({ status: 'authenticated', user: session.user, isSubmitting: false });
+      track('sign_up');
       return true;
     } catch (error) {
       set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
@@ -142,6 +146,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const session = await authService.updateProfile(input);
       set({ user: session.user, isSubmitting: false });
+      track('profile_updated');
       return true;
     } catch (error) {
       set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });

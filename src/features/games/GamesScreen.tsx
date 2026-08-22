@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { colors, spacing } from '@/theme';
 
 import {
@@ -21,6 +22,7 @@ const MOCK_COINS = 2450;
 const MOCK_TOKENS = 180;
 
 export function GamesScreen() {
+  useTrackScreenView('games');
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<GameListItem['category'] | 'all'>('all');

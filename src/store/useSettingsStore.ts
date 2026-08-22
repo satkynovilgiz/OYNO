@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
+import { supabase } from '@/services/supabase/client';
+import { useAuthStore } from '@/store/useAuthStore';
 
 const STORAGE_KEY = 'oyno.settings';
 
@@ -68,8 +70,28 @@ type SettingsState = PersistedShape & {
   setGamePreference: <K extends keyof GamePreferences>(key: K, value: GamePreferences[K]) => void;
 };
 
-async function persist(state: PersistedShape) {
+function isRealUser(): boolean {
+  return useAuthStore.getState().status === 'authenticated';
+}
+
+async function persistCache(state: PersistedShape) {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {});
+}
+
+/** Real per-account storage (supabase/migrations/20260825000001_settings_and_analytics.sql)
+ * so preferences follow the user across devices/reinstalls instead of
+ * living only in this device's AsyncStorage. AsyncStorage stays as an
+ * offline-read cache and the fallback for guests, same pattern as
+ * useProgressStore's cache. */
+async function persistServer(state: PersistedShape) {
+  if (!isRealUser()) return;
+  await supabase
+    .from('user_settings')
+    .update({ notifications: state.notifications, privacy: state.privacy, game: state.game })
+    .eq('user_id', useAuthStore.getState().user?.id)
+    .then(({ error }) => {
+      if (error && __DEV__) console.warn('[settings] failed to sync to server', error.message);
+    });
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -80,11 +102,29 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   load: async () => {
     const raw = await AsyncStorage.getItem(STORAGE_KEY).catch(() => null);
-    const parsed = safeJsonParse<Partial<PersistedShape>>(raw, {});
+    const cached = safeJsonParse<Partial<PersistedShape>>(raw, {});
+
+    if (isRealUser()) {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('notifications, privacy, game')
+        .single();
+      if (!error && data) {
+        const fields: PersistedShape = {
+          notifications: { ...DEFAULT_NOTIFICATION_PREFERENCES, ...(data.notifications as Partial<NotificationPreferences>) },
+          privacy: { ...DEFAULT_PRIVACY_PREFERENCES, ...(data.privacy as Partial<PrivacyPreferences>) },
+          game: { ...DEFAULT_GAME_PREFERENCES, ...(data.game as Partial<GamePreferences>) },
+        };
+        set({ ...fields, isLoaded: true });
+        void persistCache(fields);
+        return;
+      }
+    }
+
     set({
-      notifications: { ...DEFAULT_NOTIFICATION_PREFERENCES, ...parsed.notifications },
-      privacy: { ...DEFAULT_PRIVACY_PREFERENCES, ...parsed.privacy },
-      game: { ...DEFAULT_GAME_PREFERENCES, ...parsed.game },
+      notifications: { ...DEFAULT_NOTIFICATION_PREFERENCES, ...cached.notifications },
+      privacy: { ...DEFAULT_PRIVACY_PREFERENCES, ...cached.privacy },
+      game: { ...DEFAULT_GAME_PREFERENCES, ...cached.game },
       isLoaded: true,
     });
   },
@@ -92,18 +132,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setNotificationPreference: (id, value) => {
     const notifications = { ...get().notifications, [id]: value };
     set({ notifications });
-    void persist({ notifications, privacy: get().privacy, game: get().game });
+    const next = { notifications, privacy: get().privacy, game: get().game };
+    void persistCache(next);
+    void persistServer(next);
   },
 
   setPrivacyPreference: (key, value) => {
     const privacy = { ...get().privacy, [key]: value };
     set({ privacy });
-    void persist({ notifications: get().notifications, privacy, game: get().game });
+    const next = { notifications: get().notifications, privacy, game: get().game };
+    void persistCache(next);
+    void persistServer(next);
   },
 
   setGamePreference: (key, value) => {
     const game = { ...get().game, [key]: value };
     set({ game });
-    void persist({ notifications: get().notifications, privacy: get().privacy, game });
+    const next = { notifications: get().notifications, privacy: get().privacy, game };
+    void persistCache(next);
+    void persistServer(next);
   },
 }));

@@ -1,3 +1,5 @@
+import type { ImageSourcePropType } from 'react-native';
+
 import type { CharacterId } from '@/components/character';
 
 export type PlayerSummary = {
@@ -37,4 +39,5 @@ export type CultureTile = {
   subtitle: string;
   tone: CultureTileTone;
   imageUri?: string;
+  imageSource?: ImageSourcePropType;
 };

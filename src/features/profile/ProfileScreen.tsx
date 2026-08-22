@@ -8,6 +8,7 @@ import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { mockGamesList } from '@/features/games/mockData';
 import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
+import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { DAILY_GIFT_REWARD, useProgressStore } from '@/store/useProgressStore';
@@ -37,6 +38,7 @@ import type { DailyActivityItem, FavoriteGame, ProfileStat, ProfileSummary } fro
 const QUEST_TOTAL = 5;
 
 export function ProfileScreen() {
+  useTrackScreenView('profile');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());

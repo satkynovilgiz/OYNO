@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
@@ -19,6 +20,7 @@ import { exploreDiscoveries, exploreMapPins, exploreProgress } from './data';
 import type { ExploreDiscovery } from './types';
 
 export function ExploreScreen() {
+  useTrackScreenView('explore');
   const insets = useSafeAreaInsets();
   const progress = useProgressStore();
   const { data: regions, isLoading: regionsLoading, error: regionsError } = useExploreRegions();

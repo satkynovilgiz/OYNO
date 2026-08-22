@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import i18n, { DEFAULT_LANGUAGE, type SupportedLanguage } from '@/i18n';
 import type { CharacterId } from '@/components/character';
+import { track } from '@/services/analytics/analytics';
 
 const ONBOARDING_COMPLETE_KEY = 'oyno.onboardingComplete';
 const LANGUAGE_CHOSEN_KEY = 'oyno.languageChosen';
@@ -57,6 +58,7 @@ export const useAppStore = create<AppState>((set) => ({
   completeOnboarding: async () => {
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
     set({ hasCompletedOnboarding: true });
+    track('onboarding_completed');
   },
 }));
 

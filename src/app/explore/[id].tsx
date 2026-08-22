@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { LocationDetailScreen } from '@/features/explore/LocationDetailScreen';
 import type { ExploreLocation } from '@/features/explore/types';
+import { track } from '@/services/analytics/analytics';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { mapExploreRegionName } from '@/services/content/types';
 import { colors } from '@/theme';
@@ -16,6 +18,12 @@ const MOCK_DISCOVERED_PERCENT: Record<string, number> = { 'ysyk-kol': 42 };
 export default function ExploreLocationRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: regions, isLoading, error } = useExploreRegions();
+  const row = regions?.find((item) => item.id === id);
+
+  useEffect(() => {
+    if (row) track('location_open', { locationId: row.id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row?.id]);
 
   if (isLoading) {
     return (
@@ -33,7 +41,6 @@ export default function ExploreLocationRoute() {
     );
   }
 
-  const row = regions?.find((item) => item.id === id);
   if (!row) {
     return (
       <View style={styles.center}>
