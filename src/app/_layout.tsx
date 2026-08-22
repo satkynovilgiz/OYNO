@@ -82,6 +82,16 @@ export default function RootLayout() {
     void useProgressStore.getState().load();
   }, [authStatus]);
 
+  // Same race as above: useSettingsStore.load() checks auth status to
+  // decide whether to fetch user_settings from the server, so it can't
+  // run inside the boot Promise.all either (see 2026-08-22 - shipped that
+  // race once already, caught it live: the fetch never fired, silently
+  // falling back to AsyncStorage/defaults with no error).
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    void useSettingsStore.getState().load();
+  }, [authStatus]);
+
   useEffect(() => {
     // The Splash/index route also calls these, but _layout mounts first and
     // every screen under RouteGuard needs the flags loaded to make a
@@ -95,14 +105,14 @@ export default function RootLayout() {
       async () => {
         track('app_open');
         try {
-          // useProgressStore isn't loaded here - it depends on auth status,
-          // which this Promise.all itself is still resolving, so loading it
-          // here would race (see the authStatus effect below instead).
+          // useProgressStore/useSettingsStore aren't loaded here - both
+          // depend on auth status, which this Promise.all itself is still
+          // resolving, so loading them here would race (see the authStatus
+          // effects below instead).
           await Promise.all([
             useAuthStore.getState().initialize(),
             useAppStore.getState().loadOnboardingFlags(),
             useNotificationsStore.getState().load(),
-            useSettingsStore.getState().load(),
           ]);
         } catch (error) {
           if (__DEV__) console.warn('[boot] one or more stores failed to load, continuing with defaults', error);
