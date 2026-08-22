@@ -36,10 +36,10 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
 
           <View style={styles.content}>
             <View style={styles.textBlock}>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text style={styles.title} numberOfLines={2}>
                 {tile.title}
               </Text>
-              <Text style={styles.subtitle} numberOfLines={2}>
+              <Text style={styles.subtitle} numberOfLines={1}>
                 {tile.subtitle}
               </Text>
             </View>
