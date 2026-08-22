@@ -80,9 +80,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   card: {
-    flexGrow: 1,
-    flexBasis: '17%',
-    minWidth: 90,
+    flexGrow: 0,
+    flexBasis: '30%',
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.xxs,

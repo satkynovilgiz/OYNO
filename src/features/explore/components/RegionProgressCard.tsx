@@ -72,11 +72,12 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
     marginTop: spacing.xxs,
+    rowGap: spacing.sm,
   },
   statItem: {
-    flex: 1,
+    width: '33.33%',
     alignItems: 'center',
     gap: 2,
   },
