@@ -1035,14 +1035,52 @@ couldn't sign in" report from earlier in this project. Fixed by checking
 an already-registered email now correctly shows "Бул email башка
 аккаунтта колдонулган." and stays on the form, no fake email sent).
 
-**Not done / still broken:** the "Reset Password" template itself was
-**never actually edited** - live-tested by requesting a real reset code,
-the received email is still Supabase's untouched default ("Reset your
-password" in English, link only, no `{{ .Token }}`, no code at all). The
-`/forgot-password` → `/verify-reset-code` screen correctly renders and
-waits for an 8-digit code, but no code is ever sent, so **the password
-reset flow is currently completely non-functional in production** until
-the Reset Password template is fixed to actually include `{{ .Token }}`
-in Kyrgyz (separately from the Confirm Signup template, not pasted
-together with it).
+### Post-phase fix (2026-08-22): both P0 QA blockers closed, plus a real security bug caught before deploy
+
+Following a full QA pass (see below), two release blockers were found and
+both are now fixed and verified live:
+
+1. **Reset Password email template** - was still Supabase's untouched
+   English default (no `{{ .Token }}`). Fixed directly in the Supabase
+   dashboard (Auth → Email Templates → Reset password): Kyrgyz subject +
+   body with `{{ .Token }}`, matching the Confirm Signup template's
+   style. Also cleaned up Confirm Signup's body, which had the Reset
+   Password template's content pasted in underneath it (a copy-paste
+   mistake from an earlier session) - verified by inspecting the raw
+   template source before and after.
+
+2. **Phase 6b migration applied to production** - before running it,
+   caught a real anti-cheat bug during review: `discover_explore_item`
+   took `p_xp_reward` as a **client-supplied parameter** and applied it
+   directly, meaning any authenticated user could call the RPC directly
+   with an arbitrary reward value (exactly what master prompt §11/§37
+   forbid). Fixed by hardcoding each discovery's XP reward server-side
+   in a new `explore_discovery_xp(p_discovery_id)` lookup function
+   (matching `src/features/explore/data.ts`) before the migration was
+   ever run, and updated the client to stop sending a reward amount at
+   all. The corrected migration was then applied via the SQL Editor -
+   confirmed live: 6 tables, 9 RPC functions, 4 backfilled existing
+   users.
+
+**Verified live, end to end, against production:** fresh signup → real
+Kyrgyz code → `/profile-setup` → character select → `/home` → claimed
+the daily gift (real RPC call, no more 404) → XP/coins updated correctly
+(20 XP / 30 coins, matching `DAILY_GIFT_REWARD`) → re-tapping the claim
+correctly rejected as `ALREADY_CLAIMED` (duplicate-claim protection
+confirmed working, not just assumed from the SQL). Separately: forgot
+password → real Kyrgyz reset code received → password changed
+successfully → signed in with the new password, landed authenticated
+with the same real progress data.
+
+**Also fixed in this pass, found by the user testing on a real device
+(not caught by browser-based QA, which has no on-screen keyboard):** the
+email-verification and reset-code screens had no `KeyboardAvoidingView`
+- the manual "Ырастоо" button was reachable in a desktop browser but got
+covered by the native keyboard on device, with no way to scroll to it.
+Fixed both `VerifyEmailScreen.tsx` and `VerifyResetCodeScreen.tsx` by
+wrapping them in `KeyboardAvoidingView` + `ScrollView`, and added
+auto-submit once the 8th digit is entered (manual button kept as
+fallback for retrying a failed code). Verified live twice - signup
+verification and password-reset verification both auto-submitted
+correctly without ever tapping the button.
 

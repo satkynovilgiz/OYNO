@@ -1,6 +1,6 @@
 import { MailCheck } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, IconChip, OtpCodeInput } from '@/components/ui';
@@ -25,6 +25,7 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
   const [isResending, setIsResending] = useState(false);
   const [resendConfirmed, setResendConfirmed] = useState(false);
+  const autoSubmittedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -45,6 +46,17 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
     onSubmit(code);
   };
 
+  // Auto-submit once all 8 digits are entered - the manual "Ырастоо" button
+  // stays as a fallback (e.g. to retry after a failed attempt without
+  // retyping, since a wrong code leaves `code` unchanged).
+  useEffect(() => {
+    if (code.length === 8 && code !== autoSubmittedCodeRef.current && !isSubmitting) {
+      autoSubmittedCodeRef.current = code;
+      handleSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, isSubmitting]);
+
   const handleResend = async () => {
     if (cooldown > 0 || isResending) return;
     setIsResending(true);
@@ -60,49 +72,64 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
   const shownError = localError ?? error;
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl }]}>
-      <View style={styles.content}>
-        <IconChip icon={MailCheck} size={64} iconSize={30} color={colors.primary} />
+    <KeyboardAvoidingView
+      style={styles.avoider}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={insets.top}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.root,
+          { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <IconChip icon={MailCheck} size={64} iconSize={30} color={colors.primary} />
 
-        <View style={styles.textBlock}>
-          <Text style={styles.title}>Email дарегиңизди текшериңиз</Text>
-          <Text style={styles.description}>
-            <Text style={styles.emailText}>{email}</Text> дарегине 8 сандан турган код жөнөтүлдү.
-          </Text>
+          <View style={styles.textBlock}>
+            <Text style={styles.title}>Email дарегиңизди текшериңиз</Text>
+            <Text style={styles.description}>
+              <Text style={styles.emailText}>{email}</Text> дарегине 8 сандан турган код жөнөтүлдү.
+            </Text>
+          </View>
+
+          <View style={styles.codeBlock}>
+            <OtpCodeInput value={code} onChangeText={setCode} error={!!shownError} autoFocus />
+            {shownError ? <Text style={styles.errorText}>{shownError}</Text> : null}
+          </View>
+
+          <View style={styles.resendBlock}>
+            {resendConfirmed && !shownError ? <Text style={styles.confirmedText}>Код кайра жөнөтүлдү.</Text> : null}
+            <Text style={[styles.resendLink, (cooldown > 0 || isResending) && styles.resendLinkDisabled]} onPress={handleResend}>
+              {cooldown > 0 ? `Кайра жөнөтүү (${cooldown}с)` : 'Кодду кайра жөнөтүү'}
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.codeBlock}>
-          <OtpCodeInput value={code} onChangeText={setCode} error={!!shownError} autoFocus />
-          {shownError ? <Text style={styles.errorText}>{shownError}</Text> : null}
+        <View style={styles.footer}>
+          <Button label="Ырастоо" onPress={handleSubmit} loading={isSubmitting} />
+          <View style={styles.linksRow}>
+            <Text style={styles.linkText} onPress={onChangeEmail}>
+              Email өзгөртүү
+            </Text>
+            <Text style={styles.linkText} onPress={onBackToSignIn}>
+              Кирүүгө кайтуу
+            </Text>
+          </View>
         </View>
-
-        <View style={styles.resendBlock}>
-          {resendConfirmed && !shownError ? <Text style={styles.confirmedText}>Код кайра жөнөтүлдү.</Text> : null}
-          <Text style={[styles.resendLink, (cooldown > 0 || isResending) && styles.resendLinkDisabled]} onPress={handleResend}>
-            {cooldown > 0 ? `Кайра жөнөтүү (${cooldown}с)` : 'Кодду кайра жөнөтүү'}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.footer}>
-        <Button label="Ырастоо" onPress={handleSubmit} loading={isSubmitting} />
-        <View style={styles.linksRow}>
-          <Text style={styles.linkText} onPress={onChangeEmail}>
-            Email өзгөртүү
-          </Text>
-          <Text style={styles.linkText} onPress={onBackToSignIn}>
-            Кирүүгө кайтуу
-          </Text>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  avoider: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  root: {
+    flexGrow: 1,
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
   },

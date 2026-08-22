@@ -41,7 +41,7 @@ export function ExploreScreen() {
   }
 
   function handlePressDiscovery(discovery: ExploreDiscovery) {
-    useProgressStore.getState().discoverExploreItem(discovery.id, discovery.xpReward);
+    useProgressStore.getState().discoverExploreItem(discovery.id);
   }
 
   return (

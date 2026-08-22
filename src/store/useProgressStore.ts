@@ -135,7 +135,7 @@ type ProgressState = ProgressFields & {
   recordGamePlayed: (gameId: string) => Promise<void>;
   recordGameWon: (gameId: string) => Promise<void>;
   advanceQuest: () => Promise<void>;
-  discoverExploreItem: (id: string, xpReward: number) => Promise<void>;
+  discoverExploreItem: (id: string) => Promise<void>;
   visitBozUy: () => Promise<void>;
   discoverCulture: () => Promise<void>;
   claimDailyChallenge: () => Promise<boolean>;
@@ -252,8 +252,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       applyProgress(result.progress, result.newlyUnlocked);
     },
 
-    discoverExploreItem: async (id, xpReward) => {
-      const result = await callAction('discover_explore_item', { p_discovery_id: id, p_xp_reward: xpReward });
+    discoverExploreItem: async (id) => {
+      const result = await callAction('discover_explore_item', { p_discovery_id: id });
       if (!result) return;
       applyProgress(result.progress);
       if (!get().discoveredExploreIds.includes(id)) {

@@ -453,7 +453,25 @@ end;
 $$;
 grant execute on function public.discover_culture() to authenticated;
 
-create function public.discover_explore_item(p_discovery_id text, p_xp_reward int)
+-- Explore discovery XP rewards are fixed per discovery_id, hardcoded here
+-- to match src/features/explore/data.ts - deliberately NOT a client-
+-- supplied parameter (an authenticated user could otherwise call this RPC
+-- directly with an arbitrary reward value, per master prompt §11/§37).
+create function public.explore_discovery_xp(p_discovery_id text)
+returns int
+language sql
+immutable
+as $$
+  select case p_discovery_id
+    when 'ysyk-kol-shore' then 50
+    when 'boz-uy' then 60
+    when 'too-teke' then 40
+    when 'beshbarmak-dish' then 50
+    else null
+  end;
+$$;
+
+create function public.discover_explore_item(p_discovery_id text)
 returns jsonb
 language plpgsql
 security definer set search_path = public
@@ -462,19 +480,21 @@ declare
   v_user_id uuid := auth.uid();
   v_row public.user_progress;
   v_rows int;
+  v_xp_reward int := public.explore_discovery_xp(p_discovery_id);
 begin
   if v_user_id is null then raise exception 'NOT_AUTHENTICATED'; end if;
+  if v_xp_reward is null then raise exception 'UNKNOWN_DISCOVERY'; end if;
   perform public.apply_daily_reset(v_user_id);
 
   insert into public.user_discoveries (user_id, discovery_id) values (v_user_id, p_discovery_id) on conflict do nothing;
   get diagnostics v_rows = row_count;
 
   if v_rows > 0 then
-    perform public.apply_reward(v_user_id, p_xp_reward, 0, 'explore_discovery', p_discovery_id);
+    perform public.apply_reward(v_user_id, v_xp_reward, 0, 'explore_discovery', p_discovery_id);
   end if;
 
   select * into v_row from public.user_progress where user_id = v_user_id;
   return jsonb_build_object('progress', to_jsonb(v_row));
 end;
 $$;
-grant execute on function public.discover_explore_item(text, int) to authenticated;
+grant execute on function public.discover_explore_item(text) to authenticated;
