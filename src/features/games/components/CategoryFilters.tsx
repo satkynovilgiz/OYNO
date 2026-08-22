@@ -1,9 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
-import { mockGameCategories } from '../mockData';
 import type { GameListItem } from '../types';
 
 type CategoryFiltersProps = {
@@ -11,24 +11,37 @@ type CategoryFiltersProps = {
   onSelect: (category: GameListItem['category'] | 'all') => void;
 };
 
+const CATEGORY_IDS: (GameListItem['category'] | 'all')[] = [
+  'all',
+  'national',
+  'horse',
+  'team',
+  'logic',
+  'skill',
+  'cooking',
+];
+
 export function CategoryFilters({ active, onSelect }: CategoryFiltersProps) {
+  const { t } = useTranslation();
+
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
-      {mockGameCategories.map((category) => {
-        const isActive = category.id === active;
+      {CATEGORY_IDS.map((categoryId) => {
+        const isActive = categoryId === active;
+        const label = t(`games.categories.${categoryId}`);
         return (
           <AnimatedPressable
-            key={category.id}
+            key={categoryId}
             style={[styles.pill, isActive && styles.pillActive]}
-            onPress={() => onSelect(category.id)}
+            onPress={() => onSelect(categoryId)}
             accessibilityRole="button"
-            accessibilityLabel={category.label}
+            accessibilityLabel={label}
           >
-            <Text style={[styles.label, isActive && styles.labelActive]}>{category.label}</Text>
+            <Text style={[styles.label, isActive && styles.labelActive]}>{label}</Text>
           </AnimatedPressable>
         );
       })}

@@ -47,6 +47,21 @@
       "profile": "Profile"
     }
   },
+  "games": {
+    "title": "Games",
+    "subtitle": "Play and learn our national games",
+    "searchPlaceholder": "Search for a game...",
+    "filterLabel": "Filter",
+    "categories": {
+      "all": "All",
+      "national": "National games",
+      "horse": "Horse games",
+      "team": "Team games",
+      "logic": "Logic games",
+      "skill": "Skill games",
+      "cooking": "Cooking"
+    }
+  },
   "beshTash": {
     "title": "Besh Tash",
     "hand": "In hand",
@@ -73,6 +88,30 @@
     "continue": "Continue",
     "guestHint": "Create an account to save your progress",
     "comingSoon": "Coming soon"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get started",
+    "later": "Later",
+    "slides": {
+      "welcome": {
+        "title": "The Kyrgyz world, in your pocket",
+        "description": "Discover Kyrgyz culture, games, and traditions in a new way."
+      },
+      "play": {
+        "title": "Play",
+        "description": "Get to know Kyrgyz national games in a fresh new format."
+      },
+      "explore": {
+        "title": "Explore",
+        "description": "Discover Kyrgyzstan's regions, nature, and heritage."
+      },
+      "culture": {
+        "title": "Learn the culture",
+        "description": "Get to know the yurt, oymo, shyrdak, komuz, cuisine, and traditions."
+      }
+    }
   },
   "culture": {
     "title": "Culture",

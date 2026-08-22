@@ -116,13 +116,3 @@ export const mockGamesList: GameListItem[] = [
     duration: '10–20 мүнөт',
   },
 ];
-
-export const mockGameCategories: { id: GameListItem['category'] | 'all'; label: string }[] = [
-  { id: 'all', label: 'Бардыгы' },
-  { id: 'national', label: 'Улуттук оюндар' },
-  { id: 'horse', label: 'Ат оюндары' },
-  { id: 'team', label: 'Командалык' },
-  { id: 'logic', label: 'Логикалык' },
-  { id: 'skill', label: 'Эптүү оюндар' },
-  { id: 'cooking', label: 'Ашкана' },
-];

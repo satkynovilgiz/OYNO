@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dimensions,
   Image,
@@ -14,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedPressable, Button } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
-import { onboardingSlides } from './data';
+import { onboardingSlideImages } from './data';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -24,10 +25,11 @@ type OnboardingScreenProps = {
 };
 
 export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
-  const isLastSlide = index === onboardingSlides.length - 1;
+  const isLastSlide = index === onboardingSlideImages.length - 1;
 
   const goToIndex = (nextIndex: number) => {
     scrollRef.current?.scrollTo({ x: nextIndex * SCREEN_WIDTH, animated: true });
@@ -53,10 +55,10 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         <AnimatedPressable
           onPress={onFinish}
           accessibilityRole="button"
-          accessibilityLabel="Өткөрүп жиберүү"
+          accessibilityLabel={t('onboarding.skip')}
           style={styles.skipButton}
         >
-          <Text style={styles.skipLabel}>Өткөрүп жиберүү</Text>
+          <Text style={styles.skipLabel}>{t('onboarding.skip')}</Text>
         </AnimatedPressable>
       </View>
 
@@ -68,19 +70,19 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         onMomentumScrollEnd={handleMomentumScrollEnd}
         scrollEventThrottle={16}
       >
-        {onboardingSlides.map((slide) => (
+        {onboardingSlideImages.map((slide) => (
           <View key={slide.id} style={[styles.slide, { width: SCREEN_WIDTH }]}>
             <View style={styles.imageWrap}>
               <Image source={slide.image} style={styles.image} resizeMode="cover" />
             </View>
-            <Text style={styles.title}>{slide.title}</Text>
-            <Text style={styles.description}>{slide.description}</Text>
+            <Text style={styles.title}>{t(`onboarding.slides.${slide.id}.title`)}</Text>
+            <Text style={styles.description}>{t(`onboarding.slides.${slide.id}.description`)}</Text>
           </View>
         ))}
       </ScrollView>
 
       <View style={styles.dots}>
-        {onboardingSlides.map((slide, dotIndex) => (
+        {onboardingSlideImages.map((slide, dotIndex) => (
           <View key={slide.id} style={[styles.dot, dotIndex === index && styles.dotActive]} />
         ))}
       </View>
@@ -88,18 +90,18 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         {isLastSlide ? (
           <>
-            <Button label="Баштоо" onPress={handleContinue} />
+            <Button label={t('onboarding.start')} onPress={handleContinue} />
             <AnimatedPressable
               onPress={onContinueAsGuest}
               accessibilityRole="button"
-              accessibilityLabel="Кийинчерээк"
+              accessibilityLabel={t('onboarding.later')}
               style={styles.laterButton}
             >
-              <Text style={styles.laterLabel}>Кийинчерээк</Text>
+              <Text style={styles.laterLabel}>{t('onboarding.later')}</Text>
             </AnimatedPressable>
           </>
         ) : (
-          <Button label="Улантуу" onPress={handleContinue} />
+          <Button label={t('onboarding.next')} onPress={handleContinue} />
         )}
       </View>
     </View>

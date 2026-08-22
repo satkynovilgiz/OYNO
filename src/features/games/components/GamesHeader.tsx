@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
@@ -13,13 +14,15 @@ type GamesHeaderProps = {
 };
 
 export function GamesHeader({ coins, tokens, onPressAddCoins, onPressAddTokens }: GamesHeaderProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
-        <Text style={styles.title}>Оюндар</Text>
+        <Text style={styles.title}>{t('games.title')}</Text>
         <OymoOrnament size={20} color={colors.primary} strokeWidth={1.5} />
       </View>
-      <Text style={styles.subtitle}>Улуттук оюндарыбызды ойнойбуз жана үйрөнөбүз</Text>
+      <Text style={styles.subtitle}>{t('games.subtitle')}</Text>
 
       <View style={styles.currencyRow}>
         <CurrencyChip label={coins.toLocaleString('ru-RU')} tone="gold" onPress={onPressAddCoins} />
