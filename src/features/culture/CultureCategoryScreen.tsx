@@ -68,20 +68,22 @@ export function CultureCategoryScreen({
                     accessibilityRole="button"
                     accessibilityLabel={item.title}
                   >
-                    {categoryImage ? (
-                      <Image source={categoryImage} style={styles.rowImage} resizeMode="cover" />
-                    ) : (
-                      <View style={styles.rowImagePlaceholder} />
-                    )}
-                    <View style={styles.rowBody}>
-                      <Text style={styles.rowTitle} numberOfLines={1}>
-                        {item.title}
-                      </Text>
-                      {item.type_label ? (
-                        <Text style={styles.rowType}>{t(`culture.item.type.${item.type_label}`)}</Text>
-                      ) : null}
+                    <View style={styles.rowInner}>
+                      {categoryImage ? (
+                        <Image source={categoryImage} style={styles.rowImage} resizeMode="cover" />
+                      ) : (
+                        <View style={styles.rowImagePlaceholder} />
+                      )}
+                      <View style={styles.rowBody}>
+                        <Text style={styles.rowTitle} numberOfLines={1}>
+                          {item.title}
+                        </Text>
+                        {item.type_label ? (
+                          <Text style={styles.rowType}>{t(`culture.item.type.${item.type_label}`)}</Text>
+                        ) : null}
+                      </View>
+                      <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} style={styles.rowChevron} />
                     </View>
-                    <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
                   </AnimatedPressable>
                 ))}
               </View>
@@ -114,30 +116,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
     ...shadows.card,
   },
+  rowInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    overflow: 'hidden',
+  },
   rowImage: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
+    width: 92,
+    height: 92,
     backgroundColor: colors.surfaceAlt,
   },
   rowImagePlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
+    width: 92,
+    height: 92,
     backgroundColor: colors.surfaceAlt,
   },
   rowBody: {
     flex: 1,
     gap: 2,
+    paddingHorizontal: spacing.sm,
   },
   rowType: {
     ...typography.small,
@@ -147,5 +149,8 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     fontWeight: '600',
+  },
+  rowChevron: {
+    marginRight: spacing.sm,
   },
 });
