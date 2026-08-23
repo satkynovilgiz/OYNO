@@ -1,5 +1,6 @@
+import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
@@ -8,6 +9,7 @@ import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 type CultureCategoryScreenProps = {
   categoryTitle: string;
+  categoryImage?: ImageSourcePropType;
   items: CultureItemRow[];
   isLoading: boolean;
   hasError: boolean;
@@ -21,6 +23,7 @@ type CultureCategoryScreenProps = {
  * header. */
 export function CultureCategoryScreen({
   categoryTitle,
+  categoryImage,
   items,
   isLoading,
   hasError,
@@ -60,12 +63,25 @@ export function CultureCategoryScreen({
                     key={item.id}
                     style={styles.row}
                     onPress={() => onPressItem(item)}
+                    pressScale={0.98}
+                    hoverEffect
                     accessibilityRole="button"
                     accessibilityLabel={item.title}
                   >
-                    <Text style={styles.rowTitle} numberOfLines={1}>
-                      {item.title}
-                    </Text>
+                    {categoryImage ? (
+                      <Image source={categoryImage} style={styles.rowImage} resizeMode="cover" />
+                    ) : (
+                      <View style={styles.rowImagePlaceholder} />
+                    )}
+                    <View style={styles.rowBody}>
+                      <Text style={styles.rowTitle} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      {item.type_label ? (
+                        <Text style={styles.rowType}>{t(`culture.item.type.${item.type_label}`)}</Text>
+                      ) : null}
+                    </View>
+                    <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
                   </AnimatedPressable>
                 ))}
               </View>
@@ -98,11 +114,34 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     ...shadows.card,
+  },
+  rowImage: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+  },
+  rowImagePlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceAlt,
+  },
+  rowBody: {
+    flex: 1,
+    gap: 2,
+  },
+  rowType: {
+    ...typography.small,
+    color: colors.textMuted,
   },
   rowTitle: {
     ...typography.body,

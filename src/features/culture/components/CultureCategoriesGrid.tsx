@@ -33,6 +33,8 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
             key={category.id}
             style={styles.card}
             onPress={() => onPressCategory?.(category)}
+            pressScale={0.98}
+            hoverEffect
             accessibilityRole="button"
             accessibilityLabel={category.title}
           >
