@@ -63,7 +63,7 @@ export function CultureCategoryScreen({
                     key={item.id}
                     style={styles.row}
                     onPress={() => onPressItem(item)}
-                    pressScale={0.98}
+                    pressScale={1}
                     hoverEffect
                     accessibilityRole="button"
                     accessibilityLabel={item.title}
