@@ -375,6 +375,32 @@
       "komuz": "Комуз",
       "food": "Ашкана",
       "games": "Оюндар"
+    },
+    "subgroups": {
+      "meat": "Эт тамактары",
+      "dairy": "Сүт азыктары",
+      "grain": "Дан жана ун азыктары",
+      "beverage": "Улуттук суусундуктар",
+      "birth-and-childhood": "Бала төрөлүшү жана өсүшүнө байланыштуу каада-салттар",
+      "wedding-and-family": "Үйлөнүү жана үй-бүлө куруу салттары"
+    },
+    "item": {
+      "originLabel": "Келип чыгышы",
+      "historyLabel": "Тарыхы",
+      "culturalMeaningLabel": "Маданияттагы мааниси",
+      "whenUsedLabel": "Качан",
+      "ingredientsLabel": "Ингредиенттери",
+      "traditionalMethodLabel": "Салттуу даярдоо жолу",
+      "funFactsLabel": "Билесиңби?",
+      "sourcesLabel": "Булактар",
+      "tracksLabel": "Күүлөр",
+      "titleUnconfirmed": "Аталышы азырынча тактала элек",
+      "pendingResearch": "Бул жазуунун толук мазмуну азырынча изилденген жок.",
+      "accuracy": {
+        "verified": "Ырасталган",
+        "partially_verified": "Жарым-жартылай ырасталган",
+        "unverified": "Ырасталган эмес"
+      }
     }
   },
   "explore": {

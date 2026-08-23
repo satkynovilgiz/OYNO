@@ -8,6 +8,9 @@ import catMusic from '@assets/img/OYNO_design/culture/cat_music.png';
 import catOymo from '@assets/img/OYNO_design/culture/cat_oymo.png';
 import catShyrdak from '@assets/img/OYNO_design/culture/cat_shyrdak.png';
 import catTradition from '@assets/img/OYNO_design/culture/cat_tradition.png';
+import bozUyTunduk from '@assets/img/OYNO_design/culture/boz_uy/tunduk_roof_crown.jpg';
+import bozUyTushKiyiz from '@assets/img/OYNO_design/culture/boz_uy/tush_kiyiz_and_souvenirs.jpg';
+import bozUyWallHanging from '@assets/img/OYNO_design/culture/boz_uy/wall_hanging_and_komuz.jpg';
 import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png';
 import materialBoorsok from '@assets/img/OYNO_design/culture/material_boorsok.png';
 import materialKalpak from '@assets/img/OYNO_design/culture/material_kalpak.png';
@@ -52,6 +55,15 @@ export const cultureCategoryMockProgress: Record<CultureCategoryId, { current: n
   food: { current: 12, total: 20 },
   games: { current: 9, total: 15 },
   tradition: { current: 8, total: 15 },
+};
+
+/** Local image galleries for individual culture_items rows - RN's
+ * require() needs a static literal path, so a DB-supplied image URL can
+ * never resolve one (same constraint noted above for category/material
+ * images); real photo uploads live here as a lookup map until Storage-
+ * backed images exist (Phase 6g). */
+export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
+  'boz-uy-overview': [bozUyTushKiyiz, bozUyTunduk, bozUyWallHanging],
 };
 
 export const cultureMaterialImages: Record<string, ImageSourcePropType> = {

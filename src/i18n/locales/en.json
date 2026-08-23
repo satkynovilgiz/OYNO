@@ -375,6 +375,32 @@
       "komuz": "Komuz",
       "food": "Food",
       "games": "Games"
+    },
+    "subgroups": {
+      "meat": "Meat dishes",
+      "dairy": "Dairy products",
+      "grain": "Grain & flour",
+      "beverage": "Beverages",
+      "birth-and-childhood": "Birth & childhood customs",
+      "wedding-and-family": "Wedding & family customs"
+    },
+    "item": {
+      "originLabel": "Origin",
+      "historyLabel": "History",
+      "culturalMeaningLabel": "Cultural meaning",
+      "whenUsedLabel": "When",
+      "ingredientsLabel": "Ingredients",
+      "traditionalMethodLabel": "Traditional method",
+      "funFactsLabel": "Did you know?",
+      "sourcesLabel": "Sources",
+      "tracksLabel": "Tracks",
+      "titleUnconfirmed": "Title not yet confirmed",
+      "pendingResearch": "Full details for this entry haven't been researched yet.",
+      "accuracy": {
+        "verified": "Verified",
+        "partially_verified": "Partially verified",
+        "unverified": "Unverified"
+      }
     }
   },
   "explore": {

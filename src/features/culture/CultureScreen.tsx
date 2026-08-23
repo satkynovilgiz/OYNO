@@ -28,7 +28,7 @@ function handlePressCategory(category: CultureCategory) {
     router.push('/games' as never);
     return;
   }
-  router.push('/collection' as never);
+  router.push(`/culture/${category.id}` as never);
 }
 
 export function CultureScreen() {

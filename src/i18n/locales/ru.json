@@ -375,6 +375,32 @@
       "komuz": "Комуз",
       "food": "Кухня",
       "games": "Игры"
+    },
+    "subgroups": {
+      "meat": "Мясные блюда",
+      "dairy": "Молочные продукты",
+      "grain": "Зерновые и мучные изделия",
+      "beverage": "Напитки",
+      "birth-and-childhood": "Обряды рождения и детства",
+      "wedding-and-family": "Свадебные и семейные обряды"
+    },
+    "item": {
+      "originLabel": "Происхождение",
+      "historyLabel": "История",
+      "culturalMeaningLabel": "Культурное значение",
+      "whenUsedLabel": "Когда",
+      "ingredientsLabel": "Ингредиенты",
+      "traditionalMethodLabel": "Традиционный способ",
+      "funFactsLabel": "Знаете ли вы?",
+      "sourcesLabel": "Источники",
+      "tracksLabel": "Треки",
+      "titleUnconfirmed": "Название пока не подтверждено",
+      "pendingResearch": "Подробности по этой записи ещё не исследованы.",
+      "accuracy": {
+        "verified": "Проверено",
+        "partially_verified": "Частично проверено",
+        "unverified": "Не проверено"
+      }
     }
   },
   "explore": {
