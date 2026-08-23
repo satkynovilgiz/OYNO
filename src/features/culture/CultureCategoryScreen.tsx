@@ -1,4 +1,3 @@
-import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 
@@ -58,34 +57,35 @@ export function CultureCategoryScreen({
                 {showSubgroupHeaders && subgroup ? (
                   <Text style={styles.groupTitle}>{t(`culture.subgroups.${subgroup}`)}</Text>
                 ) : null}
-                {groupItems.map((item) => (
-                  <AnimatedPressable
-                    key={item.id}
-                    style={styles.row}
-                    onPress={() => onPressItem(item)}
-                    pressScale={1}
-                    hoverEffect
-                    accessibilityRole="button"
-                    accessibilityLabel={item.title}
-                  >
-                    <View style={styles.rowInner}>
-                      {categoryImage ? (
-                        <Image source={categoryImage} style={styles.rowImage} resizeMode="cover" />
-                      ) : (
-                        <View style={styles.rowImagePlaceholder} />
-                      )}
-                      <View style={styles.rowBody}>
-                        <Text style={styles.rowTitle} numberOfLines={1}>
-                          {item.title}
-                        </Text>
-                        {item.type_label ? (
-                          <Text style={styles.rowType}>{t(`culture.item.type.${item.type_label}`)}</Text>
-                        ) : null}
+                <View style={styles.itemGrid}>
+                  {groupItems.map((item) => (
+                    <AnimatedPressable
+                      key={item.id}
+                      style={styles.card}
+                      onPress={() => onPressItem(item)}
+                      pressScale={1}
+                      hoverEffect
+                      accessibilityRole="button"
+                      accessibilityLabel={item.title}
+                    >
+                      <View style={styles.cardInner}>
+                        {categoryImage ? (
+                          <Image source={categoryImage} style={styles.cardImage} resizeMode="cover" />
+                        ) : (
+                          <View style={styles.cardImagePlaceholder} />
+                        )}
+                        <View style={styles.cardBody}>
+                          <Text style={styles.cardTitle} numberOfLines={2}>
+                            {item.title}
+                          </Text>
+                          {item.type_label ? (
+                            <Text style={styles.cardType}>{t(`culture.item.type.${item.type_label}`)}</Text>
+                          ) : null}
+                        </View>
                       </View>
-                      <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} style={styles.rowChevron} />
-                    </View>
-                  </AnimatedPressable>
-                ))}
+                    </AnimatedPressable>
+                  ))}
+                </View>
               </View>
             );
           })}
@@ -115,42 +115,43 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.textSecondary,
   },
-  row: {
+  itemGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  card: {
+    flexGrow: 0,
+    flexBasis: '47%',
     borderRadius: radii.lg,
     ...shadows.card,
   },
-  rowInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
+  cardInner: {
     borderRadius: radii.lg,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
-  rowImage: {
-    width: 92,
-    height: 92,
+  cardImage: {
+    width: '100%',
+    aspectRatio: 4 / 3,
     backgroundColor: colors.surfaceAlt,
   },
-  rowImagePlaceholder: {
-    width: 92,
-    height: 92,
+  cardImagePlaceholder: {
+    width: '100%',
+    aspectRatio: 4 / 3,
     backgroundColor: colors.surfaceAlt,
   },
-  rowBody: {
-    flex: 1,
+  cardBody: {
+    padding: spacing.xs,
     gap: 2,
-    paddingHorizontal: spacing.sm,
   },
-  rowType: {
+  cardType: {
     ...typography.small,
     color: colors.textMuted,
   },
-  rowTitle: {
+  cardTitle: {
     ...typography.body,
     color: colors.textPrimary,
     fontWeight: '600',
-  },
-  rowChevron: {
-    marginRight: spacing.sm,
   },
 });
