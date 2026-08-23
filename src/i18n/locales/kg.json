@@ -382,7 +382,11 @@
       "grain": "Дан жана ун азыктары",
       "beverage": "Улуттук суусундуктар",
       "birth-and-childhood": "Бала төрөлүшү жана өсүшүнө байланыштуу каада-салттар",
-      "wedding-and-family": "Үйлөнүү жана үй-бүлө куруу салттары"
+      "wedding-and-family": "Үйлөнүү жана үй-бүлө куруу салттары",
+      "hospitality": "Конок күтүү жана тууганчылык салттары",
+      "nomadic-labor": "Көчмөн турмуш жана эмгек салттары",
+      "festive-spiritual": "Майрамдык жана руханий салттар",
+      "funeral": "Акыркы сапарга узатуу салттары"
     },
     "item": {
       "originLabel": "Келип чыгышы",
@@ -391,6 +395,10 @@
       "whenUsedLabel": "Качан",
       "ingredientsLabel": "Ингредиенттери",
       "traditionalMethodLabel": "Салттуу даярдоо жолу",
+      "whoParticipatesLabel": "Кимдер катышат",
+      "objectsUsedLabel": "Колдонулган буюмдар",
+      "regionalNotesLabel": "Аймактык айырмачылыктар",
+      "modernStatusLabel": "Бүгүнкү күндө",
       "funFactsLabel": "Билесиңби?",
       "sourcesLabel": "Булактар",
       "tracksLabel": "Күүлөр",
@@ -401,6 +409,13 @@
         "verified": "Ырасталган",
         "partially_verified": "Жарым-жартылай ырасталган",
         "unverified": "Ырасталган эмес"
+      },
+      "type": {
+        "custom": "Каада-салт",
+        "practice": "Үрп-адат",
+        "ritual": "Ырым-жырым",
+        "ceremony": "Жөрөлгө",
+        "festival": "Майрам"
       }
     }
   },

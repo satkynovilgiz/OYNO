@@ -22,6 +22,10 @@ const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
   { key: 'when_used', labelKey: 'culture.item.whenUsedLabel' },
   { key: 'ingredients', labelKey: 'culture.item.ingredientsLabel' },
   { key: 'traditional_method', labelKey: 'culture.item.traditionalMethodLabel' },
+  { key: 'who_participates', labelKey: 'culture.item.whoParticipatesLabel' },
+  { key: 'objects_used', labelKey: 'culture.item.objectsUsedLabel' },
+  { key: 'regional_notes', labelKey: 'culture.item.regionalNotesLabel' },
+  { key: 'modern_status', labelKey: 'culture.item.modernStatusLabel' },
   { key: 'fun_facts', labelKey: 'culture.item.funFactsLabel' },
 ];
 
@@ -35,6 +39,9 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
     <SettingsScreenLayout title={item.title} onPressBack={onPressBack}>
       <View style={styles.headerBlock}>
         {item.alt_names ? <Text style={styles.altNames}>{item.alt_names}</Text> : null}
+        {item.type_label ? (
+          <Badge label={t(`culture.item.type.${item.type_label}`)} color={colors.surfaceAlt} textColor={colors.primary} />
+        ) : null}
         <Badge label={t(`culture.item.accuracy.${item.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
       </View>
 

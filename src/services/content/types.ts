@@ -40,22 +40,30 @@ export type QuestRow = {
 
 export type CultureAccuracyLevel = 'verified' | 'partially_verified' | 'unverified';
 
+export type CultureItemTypeLabel = 'custom' | 'practice' | 'ritual' | 'ceremony' | 'festival';
+
 /** A single culture item (custom, dish, etc.) under a culture_categories
  * row. Most optional fields are null until that item's own research pass
- * is done - see the migration comment in
- * supabase/migrations/20260826000001_culture_items.sql. */
+ * is done - see the migration comments in
+ * supabase/migrations/20260826000001_culture_items.sql and
+ * supabase/migrations/20260828000001_customs_expansion.sql. */
 export type CultureItemRow = {
   id: string;
   category_id: string;
   subgroup: string | null;
   title: string;
   alt_names: string | null;
+  type_label: CultureItemTypeLabel | null;
   origin: string | null;
   history: string | null;
   cultural_meaning: string | null;
   when_used: string | null;
   ingredients: string | null;
   traditional_method: string | null;
+  who_participates: string | null;
+  objects_used: string | null;
+  regional_notes: string | null;
+  modern_status: string | null;
   fun_facts: string | null;
   accuracy_level: CultureAccuracyLevel;
   sources: string[] | null;

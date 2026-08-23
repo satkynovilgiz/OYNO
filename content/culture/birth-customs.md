@@ -5,7 +5,10 @@ Status: **UNVERIFIED** — term list only, no individual per-term write-ups yet
 far; each term below needs its own history/meaning/sources pass before it can
 be treated as verified content.
 
-- Category: tradition (`culture_categories.id = 'tradition'`)
+- Category: tradition (`culture_categories.id = 'tradition'`); see
+  customs-overview.md for the type-label rule and per-item card template
+  that apply to every item below (worked example there: Сүйүнчү, which also
+  appears in this list).
 - One of the largest and richest custom categories: early-20th-century
   ethnographic material documents жентек, киндик эне, and related infant
   rites as recorded across multiple Kyrgyz tribal groups of that period.

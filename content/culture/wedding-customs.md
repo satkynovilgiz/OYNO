@@ -2,7 +2,8 @@
 
 Status: **UNVERIFIED** — term list only, no individual per-term write-ups yet
 (same standard as content/culture/birth-customs.md). Category: tradition
-(`culture_categories.id = 'tradition'`).
+(`culture_categories.id = 'tradition'`); see customs-overview.md for the
+type-label rule and per-item card template that apply to every item below.
 
 Этнографияда үйлөнүү, баланын төрөлүшү жана сөөк коюу жөрөлгөлөрү
 үй-бүлөлүк ырым-жырымдардын негизги топтору катары каралат. Кыргыздарда

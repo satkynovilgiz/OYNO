@@ -382,7 +382,11 @@
       "grain": "Grain & flour",
       "beverage": "Beverages",
       "birth-and-childhood": "Birth & childhood customs",
-      "wedding-and-family": "Wedding & family customs"
+      "wedding-and-family": "Wedding & family customs",
+      "hospitality": "Hospitality & social customs",
+      "nomadic-labor": "Nomadic life & labor customs",
+      "festive-spiritual": "Festive & spiritual customs",
+      "funeral": "Funeral customs"
     },
     "item": {
       "originLabel": "Origin",
@@ -391,6 +395,10 @@
       "whenUsedLabel": "When",
       "ingredientsLabel": "Ingredients",
       "traditionalMethodLabel": "Traditional method",
+      "whoParticipatesLabel": "Who takes part",
+      "objectsUsedLabel": "Objects used",
+      "regionalNotesLabel": "Regional variation",
+      "modernStatusLabel": "Today",
       "funFactsLabel": "Did you know?",
       "sourcesLabel": "Sources",
       "tracksLabel": "Tracks",
@@ -401,6 +409,13 @@
         "verified": "Verified",
         "partially_verified": "Partially verified",
         "unverified": "Unverified"
+      },
+      "type": {
+        "custom": "Custom",
+        "practice": "Customary practice",
+        "ritual": "Ritual",
+        "ceremony": "Rite of passage",
+        "festival": "Festival"
       }
     }
   },

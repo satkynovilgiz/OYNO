@@ -382,7 +382,11 @@
       "grain": "Зерновые и мучные изделия",
       "beverage": "Напитки",
       "birth-and-childhood": "Обряды рождения и детства",
-      "wedding-and-family": "Свадебные и семейные обряды"
+      "wedding-and-family": "Свадебные и семейные обряды",
+      "hospitality": "Гостеприимство и родственные обычаи",
+      "nomadic-labor": "Кочевой быт и трудовые обычаи",
+      "festive-spiritual": "Праздничные и духовные обряды",
+      "funeral": "Похоронные обряды"
     },
     "item": {
       "originLabel": "Происхождение",
@@ -391,6 +395,10 @@
       "whenUsedLabel": "Когда",
       "ingredientsLabel": "Ингредиенты",
       "traditionalMethodLabel": "Традиционный способ",
+      "whoParticipatesLabel": "Кто участвует",
+      "objectsUsedLabel": "Используемые предметы",
+      "regionalNotesLabel": "Региональные различия",
+      "modernStatusLabel": "Сегодня",
       "funFactsLabel": "Знаете ли вы?",
       "sourcesLabel": "Источники",
       "tracksLabel": "Треки",
@@ -401,6 +409,13 @@
         "verified": "Проверено",
         "partially_verified": "Частично проверено",
         "unverified": "Не проверено"
+      },
+      "type": {
+        "custom": "Обычай",
+        "practice": "Традиционная практика",
+        "ritual": "Ритуал",
+        "ceremony": "Обряд",
+        "festival": "Праздник"
       }
     }
   },
