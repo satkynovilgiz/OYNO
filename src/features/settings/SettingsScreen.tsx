@@ -12,7 +12,7 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -48,7 +48,7 @@ export function SettingsScreen({ onPressBack, onNavigate, onSignOut }: SettingsS
         <View style={{ width: 44 }} />
       </View>
 
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionLabel}>{t('settings.sections.account')}</Text>
         <View style={styles.group}>
           <SettingsRow icon={CircleUser} label={t('settings.rows.account')} onPress={() => onNavigate('account')} />
@@ -79,7 +79,7 @@ export function SettingsScreen({ onPressBack, onNavigate, onSignOut }: SettingsS
             onPress={() => setSignOutVisible(true)}
           />
         </View>
-      </View>
+      </ScrollView>
 
       <ConfirmationModal
         visible={signOutVisible}
