@@ -38,13 +38,17 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
             accessibilityRole="button"
             accessibilityLabel={category.title}
           >
-            <Image source={category.imageSource} style={styles.image} resizeMode="cover" />
-            <Text style={styles.title} numberOfLines={1}>
-              {category.title}
-            </Text>
-            <Text style={styles.progress}>
-              {category.current} / {category.total}
-            </Text>
+            <View style={styles.cardInner}>
+              <Image source={category.imageSource} style={styles.image} resizeMode="cover" />
+              <View style={styles.textBlock}>
+                <Text style={styles.title} numberOfLines={1}>
+                  {category.title}
+                </Text>
+                <Text style={styles.progress}>
+                  {category.current} / {category.total}
+                </Text>
+              </View>
+            </View>
           </AnimatedPressable>
         ))}
       </View>
@@ -75,23 +79,27 @@ const styles = StyleSheet.create({
   card: {
     flexGrow: 0,
     flexBasis: '30%',
-    backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    padding: spacing.xxs,
-    gap: 2,
     ...shadows.card,
+  },
+  cardInner: {
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
-    aspectRatio: 1,
-    borderRadius: radii.md,
+    aspectRatio: 4 / 3,
     backgroundColor: colors.surfaceAlt,
+  },
+  textBlock: {
+    padding: spacing.xxs,
+    gap: 2,
   },
   title: {
     ...typography.caption,
     color: colors.textPrimary,
     fontWeight: '700',
-    marginTop: 2,
   },
   progress: {
     ...typography.small,
