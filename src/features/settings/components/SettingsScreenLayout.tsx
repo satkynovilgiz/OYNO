@@ -1,6 +1,7 @@
 import { ChevronLeft } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconButton } from '@/components/ui';
@@ -14,12 +15,13 @@ type SettingsScreenLayoutProps = {
 };
 
 export function SettingsScreenLayout({ title, onPressBack, children, footer }: SettingsScreenLayoutProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel="Артка" onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
         <Text style={styles.title}>{title}</Text>
         <View style={{ width: 44 }} />
       </View>

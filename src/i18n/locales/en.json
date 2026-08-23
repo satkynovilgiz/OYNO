@@ -5,6 +5,200 @@
     "seeAll": "See all",
     "guestName": "Guest"
   },
+  "auth": {
+    "signIn": {
+      "title": "Sign in",
+      "emailError": "Please enter your email.",
+      "passwordError": "Please enter your password.",
+      "passwordLabel": "Password",
+      "forgotPassword": "Forgot your password?",
+      "submit": "Sign in",
+      "or": "or",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithApple": "Continue with Apple",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up",
+      "unavailableTitle": "Not available",
+      "unavailableMessage": "Signing in with {{provider}} isn't available yet."
+    },
+    "signUp": {
+      "title": "Sign up",
+      "nameLabel": "Name",
+      "namePlaceholder": "Bek Asanov",
+      "nameError": "Please enter your name.",
+      "emailError": "Invalid email.",
+      "passwordError": "Password must be at least {{count}} characters.",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordError": "Passwords don't match.",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "unavailableTitle": "Not available",
+      "unavailableMessage": "Signing up with {{provider}} isn't available yet."
+    },
+    "forgotPassword": {
+      "title": "Reset password",
+      "description": "Enter the email linked to your account — a verification code will be sent.",
+      "emailError": "Please enter your email.",
+      "submit": "Send code"
+    },
+    "resetPassword": {
+      "title": "New password",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordError": "Password must be at least {{count}} characters.",
+      "confirmPasswordError": "Passwords don't match.",
+      "submit": "Change password",
+      "successTitle": "Your password was changed successfully.",
+      "successCta": "Sign in"
+    },
+    "verifyEmail": {
+      "title": "Verify your email",
+      "descriptionPrefix": "An 8-digit code was sent to ",
+      "descriptionSuffix": ".",
+      "codeError": "Enter the 8-digit code.",
+      "resendCooldown": "Resend ({{seconds}}s)",
+      "resend": "Resend code",
+      "resendConfirmed": "Code resent.",
+      "submit": "Verify",
+      "changeEmail": "Change email",
+      "backToSignIn": "Back to sign in"
+    },
+    "verifyResetCode": {
+      "title": "Verification code",
+      "descriptionPrefix": "Enter the code sent to ",
+      "descriptionSuffix": ".",
+      "codeError": "Enter the 8-digit code.",
+      "submit": "Verify"
+    }
+  },
+  "settings": {
+    "backLabel": "Back",
+    "title": "Settings",
+    "sections": {
+      "account": "Account",
+      "general": "General",
+      "support": "Support"
+    },
+    "rows": {
+      "account": "Account",
+      "language": "Language",
+      "notifications": "Notifications",
+      "privacy": "Privacy",
+      "security": "Security",
+      "game": "Game settings",
+      "data": "Cache / Data",
+      "help": "Help",
+      "about": "About OYNO"
+    },
+    "signOut": {
+      "rowLabel": "Sign out",
+      "title": "Sign out of your account?",
+      "message": "You'll need your email and password to sign back in.",
+      "confirm": "Sign out",
+      "cancel": "Cancel"
+    },
+    "account": {
+      "title": "Account",
+      "nameLabel": "Name",
+      "namePlaceholder": "Bek Asanov",
+      "savedLabel": "Saved ✓",
+      "save": "Save",
+      "changePassword": "Change password",
+      "deleteAccount": "Delete account",
+      "deletePasswordError": "Please enter your password.",
+      "deleteWrongPassword": "Incorrect password.",
+      "deleteModalTitle": "Delete account",
+      "deleteModalMessage": "This action cannot be undone. All your progress (XP, collection, achievements) will be permanently deleted.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deleteConfirmHint": "Enter your password to confirm.",
+      "passwordLabel": "Password"
+    },
+    "about": {
+      "title": "About OYNO",
+      "version": "Version {{version}}",
+      "mission": "Bringing Kyrgyz culture into the modern digital world.",
+      "privacyPolicy": "Privacy policy",
+      "termsOfUse": "Terms of use",
+      "licenses": "Licenses",
+      "unavailable": "This document isn't ready yet."
+    },
+    "data": {
+      "title": "Cache / Data",
+      "description": "You can reset notification read-state and preferences here. Your account and progress won't change.",
+      "clearCache": "Clear cache",
+      "cleared": "Cleared ✓",
+      "modalTitle": "Clear cache",
+      "modalMessage": "Notification read-state and preferences will reset. Continue?",
+      "confirm": "Clear",
+      "cancel": "Cancel"
+    },
+    "game": {
+      "title": "Game settings",
+      "soundEffects": "Sound effects",
+      "music": "Music",
+      "haptics": "Haptics"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "dailyChallenge": "Daily challenge",
+      "rewards": "Rewards",
+      "achievements": "Achievements",
+      "friendRequests": "Friend requests",
+      "gameInvitations": "Game invitations",
+      "events": "Events",
+      "news": "News"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "profileVisibility": "Profile visibility",
+      "leaderboardVisibility": "Leaderboard visibility",
+      "activityVisibility": "Activity visibility",
+      "public": "Public",
+      "friendsOnly": "Friends only",
+      "private": "Private",
+      "visible": "Visible",
+      "hidden": "Hidden"
+    },
+    "security": {
+      "title": "Security",
+      "changePasswordTitle": "Change password",
+      "currentPasswordLabel": "Current password",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords don't match.",
+      "saved": "Password changed ✓",
+      "submit": "Change password",
+      "activeSessionsTitle": "Active sessions",
+      "thisDevice": "This device",
+      "sessionsUnavailable": "Viewing sessions on other devices isn't available yet — this needs server support.",
+      "signOutAll": "Sign out of all sessions"
+    },
+    "help": {
+      "title": "Help",
+      "searchPlaceholder": "Search a question...",
+      "searchLabel": "Search question",
+      "allCategory": "All",
+      "categories": {
+        "account": "Account",
+        "games": "Games",
+        "culture": "Culture",
+        "explore": "Explore",
+        "rewards": "Rewards",
+        "settings": "Settings"
+      },
+      "empty": "Nothing found.",
+      "contactTitle": "Contact us",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Subject of your question",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Write your message...",
+      "send": "Send",
+      "defaultSubject": "OYNO support"
+    }
+  },
   "home": {
     "header": {
       "tagline": "The Kyrgyz world in your phone.",
@@ -13,11 +207,13 @@
     },
     "profile": {
       "editLabel": "Edit name",
+      "rank": "Young player",
       "level": "Level {{level}}",
       "xp": "XP {{current}} / {{max}}"
     },
     "dailyChallenge": {
       "title": "Daily challenge",
+      "description": "Win once in Besh Tash",
       "rewardLabel": "Reward:",
       "openLabel": "Open challenge"
     },
@@ -60,6 +256,22 @@
       "logic": "Logic games",
       "skill": "Skill games",
       "cooking": "Cooking"
+    },
+    "comingSoon": {
+      "title": "New games",
+      "subtitle": "Coming soon..."
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium"
+    },
+    "comingSoonBadge": "Coming soon",
+    "play": "Play",
+    "addFunds": "Add funds",
+    "invite": {
+      "title": "Invite your friends!",
+      "subtitle": "Get more rewards when you play with friends!",
+      "cta": "Invite"
     }
   },
   "beshTash": {
@@ -88,6 +300,10 @@
     "continue": "Continue",
     "guestHint": "Create an account to save your progress",
     "comingSoon": "Coming soon"
+  },
+  "language": {
+    "title": "Choose your language",
+    "continue": "Continue"
   },
   "onboarding": {
     "skip": "Skip",
@@ -149,6 +365,95 @@
         "video": "Video",
         "game": "Game"
       }
+    },
+    "loadError": "Content failed to load. Please try again.",
+    "profileLabel": "Profile",
+    "progressStats": {
+      "bozUy": "Boz üy",
+      "oymo": "Oymo",
+      "shyrdak": "Shyrdak",
+      "komuz": "Komuz",
+      "food": "Food",
+      "games": "Games"
+    }
+  },
+  "explore": {
+    "header": {
+      "title": "Explore",
+      "subtitle": "Explore, learn, and discover Kyrgyzstan!",
+      "profileLabel": "Profile",
+      "searchLabel": "Search",
+      "collectionLabel": "Collection"
+    },
+    "loadError": "Content failed to load. Please try again.",
+    "map": {
+      "recenterLabel": "Recenter",
+      "filterLabel": "Filter"
+    },
+    "progress": {
+      "title": "Kyrgyzstan exploration progress",
+      "stats": {
+        "locations": "Locations",
+        "nature": "Nature",
+        "culture": "Culture",
+        "animals": "Animals",
+        "food": "Food",
+        "quests": "Quests"
+      }
+    },
+    "quest": {
+      "label": "Current quest",
+      "foundSuffix": "found",
+      "completedCta": "Quest complete!"
+    },
+    "discoveries": {
+      "title": "New discoveries",
+      "seeAll": "See all",
+      "discoveredLabel": "✓ Found",
+      "categories": {
+        "nature": "Nature",
+        "culture": "Culture",
+        "animals": "Animals",
+        "food": "Food"
+      }
+    },
+    "categories": {
+      "nature": "Nature",
+      "games": "Games",
+      "food": "Food",
+      "music": "Music",
+      "culture": "Culture",
+      "history": "History",
+      "crafts": "Crafts",
+      "animals": "Animals",
+      "quests": "Quests"
+    },
+    "locationDetail": {
+      "backLabel": "Back",
+      "progressLabel": "This region is {{percent}}% explored",
+      "sectionsTitle": "Sections",
+      "factsTitle": "Did you know?"
+    }
+  },
+  "profileSetup": {
+    "title": "Set up your profile",
+    "description": "Other players will see you by this name.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Bek Asanov",
+    "nameError": "Please enter your name.",
+    "continue": "Continue"
+  },
+  "notificationsScreen": {
+    "backLabel": "Back",
+    "title": "Notifications",
+    "markAllAsRead": "Mark all as read",
+    "empty": "No new notifications.",
+    "categories": {
+      "rewards": "Rewards",
+      "achievements": "Achievements",
+      "dailyTasks": "Daily tasks",
+      "system": "System",
+      "friends": "Friends"
     }
   },
   "profile": {
@@ -160,6 +465,7 @@
     "changePhotoLabel": "Change photo",
     "level": "Level {{level}}",
     "xpRemaining": "{{count}} XP left",
+    "rankTitle": "Explorer of Kyrgyz culture",
     "currencies": {
       "coins": "Coins",
       "xp": "XP",
@@ -168,6 +474,13 @@
     },
     "progress": {
       "title": "My progress"
+    },
+    "stats": {
+      "games": "Games",
+      "explore": "Explore",
+      "culture": "Culture",
+      "quests": "Quests",
+      "collection": "Collection"
     },
     "achievements": {
       "title": "Achievements",
@@ -187,7 +500,20 @@
     "dailyActivity": {
       "title": "Today's activity",
       "streak": "{{count}} days",
-      "progress": "{{completed}} / {{total}} tasks"
+      "progress": "{{completed}} / {{total}} tasks",
+      "games": {
+        "played": "{{count}} games played",
+        "empty": "No games played"
+      },
+      "discovery": {
+        "found": "Cultural discovery found",
+        "empty": "No discovery yet"
+      },
+      "quests": "Quest: {{found}} / {{total}} found",
+      "bozUy": {
+        "visited": "Visited the boz üy",
+        "notVisited": "Boz üy not visited"
+      }
     },
     "reward": {
       "title": "Daily reward",

@@ -1,6 +1,7 @@
 import { MailCheck } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, IconChip, OtpCodeInput } from '@/components/ui';
@@ -19,6 +20,7 @@ type VerifyEmailScreenProps = {
 };
 
 export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onResend, onChangeEmail, onBackToSignIn }: VerifyEmailScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -39,14 +41,14 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
 
   const handleSubmit = () => {
     if (code.length !== 8) {
-      setLocalError('8 сандан турган кодду жазыңыз.');
+      setLocalError(t('auth.verifyEmail.codeError'));
       return;
     }
     setLocalError(null);
     onSubmit(code);
   };
 
-  // Auto-submit once all 8 digits are entered - the manual "Ырастоо" button
+  // Auto-submit once all 8 digits are entered - the manual "Verify" button
   // stays as a fallback (e.g. to retry after a failed attempt without
   // retyping, since a wrong code leaves `code` unchanged).
   useEffect(() => {
@@ -88,9 +90,11 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
           <IconChip icon={MailCheck} size={64} iconSize={30} color={colors.primary} />
 
           <View style={styles.textBlock}>
-            <Text style={styles.title}>Email дарегиңизди текшериңиз</Text>
+            <Text style={styles.title}>{t('auth.verifyEmail.title')}</Text>
             <Text style={styles.description}>
-              <Text style={styles.emailText}>{email}</Text> дарегине 8 сандан турган код жөнөтүлдү.
+              {t('auth.verifyEmail.descriptionPrefix')}
+              <Text style={styles.emailText}>{email}</Text>
+              {t('auth.verifyEmail.descriptionSuffix')}
             </Text>
           </View>
 
@@ -100,21 +104,23 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
           </View>
 
           <View style={styles.resendBlock}>
-            {resendConfirmed && !shownError ? <Text style={styles.confirmedText}>Код кайра жөнөтүлдү.</Text> : null}
+            {resendConfirmed && !shownError ? (
+              <Text style={styles.confirmedText}>{t('auth.verifyEmail.resendConfirmed')}</Text>
+            ) : null}
             <Text style={[styles.resendLink, (cooldown > 0 || isResending) && styles.resendLinkDisabled]} onPress={handleResend}>
-              {cooldown > 0 ? `Кайра жөнөтүү (${cooldown}с)` : 'Кодду кайра жөнөтүү'}
+              {cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend')}
             </Text>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <Button label="Ырастоо" onPress={handleSubmit} loading={isSubmitting} />
+          <Button label={t('auth.verifyEmail.submit')} onPress={handleSubmit} loading={isSubmitting} />
           <View style={styles.linksRow}>
             <Text style={styles.linkText} onPress={onChangeEmail}>
-              Email өзгөртүү
+              {t('auth.verifyEmail.changeEmail')}
             </Text>
             <Text style={styles.linkText} onPress={onBackToSignIn}>
-              Кирүүгө кайтуу
+              {t('auth.verifyEmail.backToSignIn')}
             </Text>
           </View>
         </View>

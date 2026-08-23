@@ -1,6 +1,7 @@
 import { KeyRound, ShieldAlert, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Button, ConfirmationModal, TextField } from '@/components/ui';
 import type { AuthUser } from '@/services/auth';
@@ -28,6 +29,7 @@ export function AccountSettingsScreen({
   onPressChangePassword,
   onDeleteAccount,
 }: AccountSettingsScreenProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [savedNotice, setSavedNotice] = useState(false);
@@ -47,36 +49,41 @@ export function AccountSettingsScreen({
 
   const handleConfirmDelete = async () => {
     if (!deletePassword) {
-      setDeleteError('Сырсөзүңүздү жазыңыз.');
+      setDeleteError(t('settings.account.deletePasswordError'));
       return;
     }
     setIsDeleting(true);
     const ok = await onDeleteAccount(deletePassword);
     setIsDeleting(false);
     if (!ok) {
-      setDeleteError('Сырсөз туура эмес.');
+      setDeleteError(t('settings.account.deleteWrongPassword'));
       return;
     }
     setDeleteVisible(false);
   };
 
   return (
-    <SettingsScreenLayout title="Аккаунт" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.account.title')} onPressBack={onPressBack}>
       <View style={styles.form}>
-        <TextField label="Аты-жөнү" value={name} onChangeText={setName} placeholder="Бек Асанов" />
+        <TextField
+          label={t('settings.account.nameLabel')}
+          value={name}
+          onChangeText={setName}
+          placeholder={t('settings.account.namePlaceholder')}
+        />
         <TextField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {savedNotice && !hasChanges ? <Text style={styles.saved}>Сакталды ✓</Text> : null}
+        {savedNotice && !hasChanges ? <Text style={styles.saved}>{t('settings.account.savedLabel')}</Text> : null}
 
-        <Button label="Сактоо" onPress={handleSave} loading={isSubmitting} disabled={!hasChanges} />
+        <Button label={t('settings.account.save')} onPress={handleSave} loading={isSubmitting} disabled={!hasChanges} />
       </View>
 
       <View style={styles.group}>
-        <SettingsRow icon={KeyRound} label="Сырсөздү өзгөртүү" onPress={onPressChangePassword} />
+        <SettingsRow icon={KeyRound} label={t('settings.account.changePassword')} onPress={onPressChangePassword} />
         <SettingsRow
           icon={Trash2}
-          label="Аккаунтту өчүрүү"
+          label={t('settings.account.deleteAccount')}
           destructive
           showChevron={false}
           onPress={() => setDeleteVisible(true)}
@@ -85,10 +92,10 @@ export function AccountSettingsScreen({
 
       <ConfirmationModal
         visible={deleteVisible}
-        title="Аккаунтту өчүрүү"
-        message="Бул аракетти артка кайтаруу мүмкүн эмес. Бардык прогрессиңиз (XP, коллекция, жетишкендиктер) биротоло өчүрүлөт."
-        confirmLabel="Өчүрүү"
-        cancelLabel="Жок"
+        title={t('settings.account.deleteModalTitle')}
+        message={t('settings.account.deleteModalMessage')}
+        confirmLabel={t('settings.account.deleteConfirm')}
+        cancelLabel={t('settings.account.deleteCancel')}
         destructive
         isConfirming={isDeleting}
         onConfirm={handleConfirmDelete}
@@ -100,9 +107,15 @@ export function AccountSettingsScreen({
       >
         <View style={styles.deleteWarning}>
           <ShieldAlert size={16} color={colors.danger} strokeWidth={2} />
-          <Text style={styles.deleteWarningText}>Ырастоо үчүн сырсөзүңүздү жазыңыз.</Text>
+          <Text style={styles.deleteWarningText}>{t('settings.account.deleteConfirmHint')}</Text>
         </View>
-        <TextField label="Сырсөз" value={deletePassword} onChangeText={setDeletePassword} error={deleteError} secure />
+        <TextField
+          label={t('settings.account.passwordLabel')}
+          value={deletePassword}
+          onChangeText={setDeletePassword}
+          error={deleteError}
+          secure
+        />
       </ConfirmationModal>
     </SettingsScreenLayout>
   );

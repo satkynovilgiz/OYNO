@@ -54,7 +54,7 @@ export function ProfileScreen() {
     characterId,
     name: user?.name ?? t('common.guestName'),
     level,
-    title: 'Кыргыз маданиятын изилдөөчү',
+    title: t('profile.rankTitle'),
     xpCurrent,
     xpMax,
     coins: progress.coins,
@@ -67,11 +67,11 @@ export function ProfileScreen() {
   const cultureRatio = ((progress.cultureDiscoveryCount >= 1 ? 1 : 0) + (progress.bozUyVisited ? 1 : 0)) / 2;
 
   const profileStats: ProfileStat[] = [
-    { id: 'games', icon: Gamepad2, label: 'Оюндар', valueLabel: String(progress.gamesPlayed), captionKey: 'count', ringProgress: Math.min(1, progress.gamesPlayed / 20) },
-    { id: 'explore', icon: Compass, label: 'Изилдөө', valueLabel: `${explorePercent}%`, captionKey: 'percent', ringProgress: progress.questFoundCount / QUEST_TOTAL },
-    { id: 'culture', icon: Diamond, label: 'Маданият', valueLabel: `${Math.round(cultureRatio * 100)}%`, captionKey: 'percent', ringProgress: cultureRatio },
-    { id: 'quests', icon: Target, label: 'Квесттер', valueLabel: `${progress.questFoundCount} / ${QUEST_TOTAL}`, captionKey: 'fraction', ringProgress: progress.questFoundCount / QUEST_TOTAL },
-    { id: 'collection', icon: Backpack, label: 'Коллекция', valueLabel: `${collectionUnlocked} / ${collectionTotal}`, captionKey: 'fraction', ringProgress: collectionUnlocked / collectionTotal },
+    { id: 'games', icon: Gamepad2, label: t('profile.stats.games'), valueLabel: String(progress.gamesPlayed), captionKey: 'count', ringProgress: Math.min(1, progress.gamesPlayed / 20) },
+    { id: 'explore', icon: Compass, label: t('profile.stats.explore'), valueLabel: `${explorePercent}%`, captionKey: 'percent', ringProgress: progress.questFoundCount / QUEST_TOTAL },
+    { id: 'culture', icon: Diamond, label: t('profile.stats.culture'), valueLabel: `${Math.round(cultureRatio * 100)}%`, captionKey: 'percent', ringProgress: cultureRatio },
+    { id: 'quests', icon: Target, label: t('profile.stats.quests'), valueLabel: `${progress.questFoundCount} / ${QUEST_TOTAL}`, captionKey: 'fraction', ringProgress: progress.questFoundCount / QUEST_TOTAL },
+    { id: 'collection', icon: Backpack, label: t('profile.stats.collection'), valueLabel: `${collectionUnlocked} / ${collectionTotal}`, captionKey: 'fraction', ringProgress: collectionUnlocked / collectionTotal },
   ];
 
   const favoriteGames: FavoriteGame[] = mockGamesList
@@ -86,10 +86,34 @@ export function ProfileScreen() {
     }));
 
   const dailyActivity: DailyActivityItem[] = [
-    { id: 'games', icon: Gamepad2, label: progress.playsToday > 0 ? `${progress.playsToday} оюн ойнолду` : 'Оюн ойнолгон жок' },
-    { id: 'discovery', icon: Diamond, label: progress.cultureDiscoveryCount >= 1 ? 'Маданий ачылыш табылды' : 'Ачылыш табылган жок' },
-    { id: 'quests', icon: Target, label: `Квест: ${progress.questFoundCount} / ${QUEST_TOTAL} табылды` },
-    { id: 'boz-uy', icon: Compass, label: progress.bozUyVisited ? 'Боз үйгө кирилди' : 'Боз үйгө кирилген жок' },
+    {
+      id: 'games',
+      icon: Gamepad2,
+      label:
+        progress.playsToday > 0
+          ? t('profile.dailyActivity.games.played', { count: progress.playsToday })
+          : t('profile.dailyActivity.games.empty'),
+    },
+    {
+      id: 'discovery',
+      icon: Diamond,
+      label:
+        progress.cultureDiscoveryCount >= 1
+          ? t('profile.dailyActivity.discovery.found')
+          : t('profile.dailyActivity.discovery.empty'),
+    },
+    {
+      id: 'quests',
+      icon: Target,
+      label: t('profile.dailyActivity.quests', { found: progress.questFoundCount, total: QUEST_TOTAL }),
+    },
+    {
+      id: 'boz-uy',
+      icon: Compass,
+      label: progress.bozUyVisited
+        ? t('profile.dailyActivity.bozUy.visited')
+        : t('profile.dailyActivity.bozUy.notVisited'),
+    },
   ];
   const dailyActivityCompleted = [
     progress.playsToday > 0,

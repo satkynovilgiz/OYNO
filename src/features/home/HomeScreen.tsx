@@ -25,8 +25,6 @@ import {
 import { mockCultureTiles, mockGames } from './mockData';
 import type { DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 
-const DAILY_CHALLENGE_DESCRIPTION = 'Беш ташта 1 жолу жеӊ';
-
 function handlePressTab(tab: TabId) {
   if (tab === 'games') {
     router.push('/games' as never);
@@ -61,7 +59,7 @@ export function HomeScreen() {
   const { level, xpCurrent, xpMax } = xpProgress(progress.xp);
   const player: PlayerSummary = {
     name: user?.name ?? t('common.guestName'),
-    rank: 'Жаш оюнчу',
+    rank: t('home.profile.rank'),
     characterId,
     level,
     xpCurrent,
@@ -71,7 +69,7 @@ export function HomeScreen() {
   };
 
   const dailyChallenge: DailyChallenge = {
-    description: DAILY_CHALLENGE_DESCRIPTION,
+    description: t('home.dailyChallenge.description'),
     progressCurrent: Math.min(progress.winsToday, 1),
     progressMax: 1,
     rewardXp: 100,

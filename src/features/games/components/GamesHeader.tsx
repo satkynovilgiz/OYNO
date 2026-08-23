@@ -41,6 +41,7 @@ function CurrencyChip({
   tone: 'gold' | 'silver';
   onPress?: () => void;
 }) {
+  const { t } = useTranslation();
   const dotColor = tone === 'gold' ? colors.accentGold : colors.accentSilver;
   return (
     <View style={styles.chip}>
@@ -50,7 +51,7 @@ function CurrencyChip({
         style={styles.chipAdd}
         onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel="Толуктоо"
+        accessibilityLabel={t('games.addFunds')}
       >
         <Plus size={12} color={colors.textOnPrimary} strokeWidth={2.5} />
       </AnimatedPressable>

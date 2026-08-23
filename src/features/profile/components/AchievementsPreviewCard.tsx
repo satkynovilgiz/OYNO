@@ -21,7 +21,9 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('profile.achievements.title')}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {t('profile.achievements.title')}
+        </Text>
         <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
           <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
@@ -57,12 +59,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    gap: spacing.xxs,
   },
   title: {
-    ...typography.h1,
+    ...typography.h2,
     color: colors.textPrimary,
+    flexShrink: 1,
   },
   seeAll: {
     padding: 2,

@@ -26,7 +26,7 @@ export function CultureHeader({
   onPressNotifications,
 }: CultureHeaderProps) {
   const { t } = useTranslation();
-  const characterId = useAppStore((state) => state.characterId);
+  const characterId = useAppStore((state) => state.characterId) ?? 'bek';
 
   return (
     <View style={styles.wrap}>
@@ -36,13 +36,9 @@ export function CultureHeader({
             style={styles.avatarWrap}
             onPress={onPressAvatar}
             accessibilityRole="button"
-            accessibilityLabel="Профиль"
+            accessibilityLabel={t('culture.profileLabel')}
           >
-            {characterId ? (
-              <CharacterAvatar characterId={characterId} emotion="happy" size={40} />
-            ) : (
-              <View style={styles.avatarPlaceholder} />
-            )}
+            <CharacterAvatar characterId={characterId} emotion="happy" size={40} />
           </AnimatedPressable>
           <View style={styles.statChip}>
             <Flame size={14} color={colors.danger} strokeWidth={2} />
@@ -99,14 +95,6 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     overflow: 'hidden',
-  },
-  avatarPlaceholder: {
-    flex: 1,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
   },
   statChip: {
     flexDirection: 'row',

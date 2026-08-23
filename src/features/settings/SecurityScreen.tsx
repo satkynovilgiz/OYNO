@@ -1,6 +1,7 @@
 import { Laptop2, LogOut } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Button, TextField } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -16,6 +17,7 @@ type SecurityScreenProps = {
 };
 
 export function SecurityScreen({ isSubmitting, error, onChangePassword, onSignOutAllSessions, onPressBack }: SecurityScreenProps) {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,8 +27,8 @@ export function SecurityScreen({ isSubmitting, error, onChangePassword, onSignOu
   const handleSubmit = async () => {
     setSavedNotice(false);
     const errors: typeof fieldErrors = {};
-    if (newPassword.length < 8) errors.newPassword = 'Сырсөз кеминде 8 белгиден турушу керек.';
-    if (confirmPassword !== newPassword) errors.confirmPassword = 'Сырсөздөр дал келбейт.';
+    if (newPassword.length < 8) errors.newPassword = t('settings.security.passwordTooShort');
+    if (confirmPassword !== newPassword) errors.confirmPassword = t('settings.security.passwordMismatch');
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -40,40 +42,43 @@ export function SecurityScreen({ isSubmitting, error, onChangePassword, onSignOu
   };
 
   return (
-    <SettingsScreenLayout title="Коопсуздук" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.security.title')} onPressBack={onPressBack}>
       <View style={styles.form}>
-        <Text style={styles.sectionTitle}>Сырсөздү өзгөртүү</Text>
-        <TextField label="Учурдагы сырсөз" value={currentPassword} onChangeText={setCurrentPassword} secure />
-        <TextField label="Жаңы сырсөз" value={newPassword} onChangeText={setNewPassword} error={fieldErrors.newPassword} secure />
+        <Text style={styles.sectionTitle}>{t('settings.security.changePasswordTitle')}</Text>
+        <TextField label={t('settings.security.currentPasswordLabel')} value={currentPassword} onChangeText={setCurrentPassword} secure />
         <TextField
-          label="Жаңы сырсөздү ырастоо"
+          label={t('settings.security.newPasswordLabel')}
+          value={newPassword}
+          onChangeText={setNewPassword}
+          error={fieldErrors.newPassword}
+          secure
+        />
+        <TextField
+          label={t('settings.security.confirmPasswordLabel')}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           error={fieldErrors.confirmPassword}
           secure
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {savedNotice ? <Text style={styles.saved}>Сырсөз өзгөртүлдү ✓</Text> : null}
-        <Button label="Сырсөздү өзгөртүү" onPress={handleSubmit} loading={isSubmitting} />
+        {savedNotice ? <Text style={styles.saved}>{t('settings.security.saved')}</Text> : null}
+        <Button label={t('settings.security.submit')} onPress={handleSubmit} loading={isSubmitting} />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Активдүү сессиялар</Text>
+        <Text style={styles.sectionTitle}>{t('settings.security.activeSessionsTitle')}</Text>
         <View style={styles.sessionCard}>
           <View style={styles.sessionIconWrap}>
             <Laptop2 size={20} color={colors.primary} strokeWidth={1.75} />
           </View>
           <View style={styles.sessionBody}>
-            <Text style={styles.sessionTitle}>Бул түзмөк</Text>
-            <Text style={styles.sessionMeta}>
-              Учурда башка түзмөктөрдөгү сессияларды көрсөтүү жеткиликсиз - бул функция үчүн серверлик колдоо
-              керек.
-            </Text>
+            <Text style={styles.sessionTitle}>{t('settings.security.thisDevice')}</Text>
+            <Text style={styles.sessionMeta}>{t('settings.security.sessionsUnavailable')}</Text>
           </View>
         </View>
 
         <Button
-          label="Бардык сессиялардан чыгуу"
+          label={t('settings.security.signOutAll')}
           variant="secondary"
           icon={<LogOut size={16} color={colors.primary} strokeWidth={2} />}
           onPress={onSignOutAllSessions}

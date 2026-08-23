@@ -1,6 +1,7 @@
 import { KeyRound } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, IconChip, OtpCodeInput } from '@/components/ui';
@@ -14,6 +15,7 @@ type VerifyResetCodeScreenProps = {
 };
 
 export function VerifyResetCodeScreen({ email, isSubmitting, error, onSubmit }: VerifyResetCodeScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -25,14 +27,14 @@ export function VerifyResetCodeScreen({ email, isSubmitting, error, onSubmit }: 
 
   const handleSubmit = () => {
     if (code.length !== 8) {
-      setLocalError('8 сандан турган кодду жазыңыз.');
+      setLocalError(t('auth.verifyResetCode.codeError'));
       return;
     }
     setLocalError(null);
     onSubmit(code);
   };
 
-  // Auto-submit once all 8 digits are entered - the manual "Ырастоо" button
+  // Auto-submit once all 8 digits are entered - the manual "Verify" button
   // stays as a fallback (e.g. to retry after a failed attempt without
   // retyping, since a wrong code leaves `code` unchanged).
   useEffect(() => {
@@ -62,9 +64,11 @@ export function VerifyResetCodeScreen({ email, isSubmitting, error, onSubmit }: 
           <IconChip icon={KeyRound} size={64} iconSize={30} color={colors.primary} />
 
           <View style={styles.textBlock}>
-            <Text style={styles.title}>Ырастоо коду</Text>
+            <Text style={styles.title}>{t('auth.verifyResetCode.title')}</Text>
             <Text style={styles.description}>
-              <Text style={styles.emailText}>{email}</Text> дарегине жөнөтүлгөн кодду жазыңыз.
+              {t('auth.verifyResetCode.descriptionPrefix')}
+              <Text style={styles.emailText}>{email}</Text>
+              {t('auth.verifyResetCode.descriptionSuffix')}
             </Text>
           </View>
 
@@ -74,7 +78,7 @@ export function VerifyResetCodeScreen({ email, isSubmitting, error, onSubmit }: 
           </View>
         </View>
 
-        <Button label="Ырастоо" onPress={handleSubmit} loading={isSubmitting} />
+        <Button label={t('auth.verifyResetCode.submit')} onPress={handleSubmit} loading={isSubmitting} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, TextField } from '@/components/ui';
@@ -14,6 +15,7 @@ type SignInScreenProps = {
 };
 
 export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignUp, onPressForgotPassword }: SignInScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,8 +23,8 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
 
   const validate = (): boolean => {
     const nextErrors: { email?: string; password?: string } = {};
-    if (!email.trim()) nextErrors.email = 'Email жазыңыз.';
-    if (!password) nextErrors.password = 'Сырсөздү жазыңыз.';
+    if (!email.trim()) nextErrors.email = t('auth.signIn.emailError');
+    if (!password) nextErrors.password = t('auth.signIn.passwordError');
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -33,7 +35,7 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
   };
 
   const handleUnavailableProvider = (provider: string) => {
-    Alert.alert('Жеткиликтүү эмес', `${provider} аркылуу кирүү азырынча жеткиликтүү эмес.`);
+    Alert.alert(t('auth.signIn.unavailableTitle'), t('auth.signIn.unavailableMessage', { provider }));
   };
 
   return (
@@ -42,7 +44,7 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Кирүү</Text>
+      <Text style={styles.title}>{t('auth.signIn.title')}</Text>
 
       <View style={styles.form}>
         <TextField
@@ -54,30 +56,37 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
           keyboardType="email-address"
           autoComplete="email"
         />
-        <TextField label="Сырсөз" value={password} onChangeText={setPassword} error={errors.password} secure autoComplete="password" />
+        <TextField
+          label={t('auth.signIn.passwordLabel')}
+          value={password}
+          onChangeText={setPassword}
+          error={errors.password}
+          secure
+          autoComplete="password"
+        />
 
         <Text style={styles.forgotLink} onPress={onPressForgotPassword}>
-          Сырсөздү унуттуңузбу?
+          {t('auth.signIn.forgotPassword')}
         </Text>
 
         {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
 
-        <Button label="Кирүү" onPress={handleSubmit} loading={isSubmitting} />
+        <Button label={t('auth.signIn.submit')} onPress={handleSubmit} loading={isSubmitting} />
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>же</Text>
+          <Text style={styles.dividerText}>{t('auth.signIn.or')}</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        <Button label="Google менен улантуу" variant="secondary" onPress={() => handleUnavailableProvider('Google')} />
-        <Button label="Apple менен улантуу" variant="secondary" onPress={() => handleUnavailableProvider('Apple')} />
+        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={() => handleUnavailableProvider('Google')} />
+        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={() => handleUnavailableProvider('Apple')} />
       </View>
 
       <View style={styles.footerRow}>
-        <Text style={styles.footerText}>Аккаунтуңуз жокпу?</Text>
+        <Text style={styles.footerText}>{t('auth.signIn.noAccount')}</Text>
         <Text style={styles.footerLink} onPress={onPressSignUp}>
-          Катталуу
+          {t('auth.signIn.signUpLink')}
         </Text>
       </View>
     </ScrollView>

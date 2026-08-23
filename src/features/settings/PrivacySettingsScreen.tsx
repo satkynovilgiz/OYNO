@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable } from '@/components/ui';
 import type { PrivacyPreferences } from '@/store/useSettingsStore';
@@ -14,35 +15,37 @@ type PrivacySettingsScreenProps = {
 };
 
 export function PrivacySettingsScreen({ preferences, onChange, onPressBack }: PrivacySettingsScreenProps) {
+  const { t } = useTranslation();
+
   return (
-    <SettingsScreenLayout title="Купуялык" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.privacy.title')} onPressBack={onPressBack}>
       <OptionGroup
-        title="Профилдин көрүнүшү"
+        title={t('settings.privacy.profileVisibility')}
         options={[
-          { value: 'public', label: 'Ачык' },
-          { value: 'friends', label: 'Достор гана' },
-          { value: 'private', label: 'Жеке' },
+          { value: 'public', label: t('settings.privacy.public') },
+          { value: 'friends', label: t('settings.privacy.friendsOnly') },
+          { value: 'private', label: t('settings.privacy.private') },
         ]}
         selected={preferences.profileVisibility}
         onSelect={(value) => onChange('profileVisibility', value)}
       />
 
       <OptionGroup
-        title="Рейтингде көрүнүү"
+        title={t('settings.privacy.leaderboardVisibility')}
         options={[
-          { value: 'visible', label: 'Көрүнөт' },
-          { value: 'hidden', label: 'Жашырылган' },
+          { value: 'visible', label: t('settings.privacy.visible') },
+          { value: 'hidden', label: t('settings.privacy.hidden') },
         ]}
         selected={preferences.leaderboardVisibility}
         onSelect={(value) => onChange('leaderboardVisibility', value)}
       />
 
       <OptionGroup
-        title="Активдүүлүктүн көрүнүшү"
+        title={t('settings.privacy.activityVisibility')}
         options={[
-          { value: 'public', label: 'Ачык' },
-          { value: 'friends', label: 'Достор гана' },
-          { value: 'private', label: 'Жеке' },
+          { value: 'public', label: t('settings.privacy.public') },
+          { value: 'friends', label: t('settings.privacy.friendsOnly') },
+          { value: 'private', label: t('settings.privacy.private') },
         ]}
         selected={preferences.activityVisibility}
         onSelect={(value) => onChange('activityVisibility', value)}

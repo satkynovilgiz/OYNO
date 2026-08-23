@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
@@ -24,8 +25,9 @@ type SettingsLanguageScreenProps = {
 /** Settings > Тил (spec Section 56) - unlike the first-launch language
  * picker, selecting here applies immediately, no separate "continue" step. */
 export function SettingsLanguageScreen({ selected, onSelect, onPressBack }: SettingsLanguageScreenProps) {
+  const { t } = useTranslation();
   return (
-    <SettingsScreenLayout title="Тил" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.rows.language')} onPressBack={onPressBack}>
       <View style={styles.list}>
         {LANGUAGE_OPTIONS.map((option) => {
           const isSelected = option.id === selected;

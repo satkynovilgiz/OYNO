@@ -5,6 +5,200 @@
     "seeAll": "Баарын көрүү",
     "guestName": "Меймман"
   },
+  "auth": {
+    "signIn": {
+      "title": "Кирүү",
+      "emailError": "Email жазыңыз.",
+      "passwordError": "Сырсөздү жазыңыз.",
+      "passwordLabel": "Сырсөз",
+      "forgotPassword": "Сырсөздү унуттуңузбу?",
+      "submit": "Кирүү",
+      "or": "же",
+      "continueWithGoogle": "Google менен улантуу",
+      "continueWithApple": "Apple менен улантуу",
+      "noAccount": "Аккаунтуңуз жокпу?",
+      "signUpLink": "Катталуу",
+      "unavailableTitle": "Жеткиликтүү эмес",
+      "unavailableMessage": "{{provider}} аркылуу кирүү азырынча жеткиликтүү эмес."
+    },
+    "signUp": {
+      "title": "Катталуу",
+      "nameLabel": "Аты-жөнү",
+      "namePlaceholder": "Бек Асанов",
+      "nameError": "Атыңызды жазыңыз.",
+      "emailError": "Email туура эмес.",
+      "passwordError": "Сырсөз кеминде {{count}} белгиден турушу керек.",
+      "confirmPasswordLabel": "Сырсөздү ырастоо",
+      "confirmPasswordError": "Сырсөздөр дал келбейт.",
+      "submit": "Катталуу",
+      "hasAccount": "Аккаунтуңуз барбы?",
+      "signInLink": "Кирүү",
+      "unavailableTitle": "Жеткиликтүү эмес",
+      "unavailableMessage": "{{provider}} аркылуу катталуу азырынча жеткиликтүү эмес."
+    },
+    "forgotPassword": {
+      "title": "Сырсөздү калыбына келтирүү",
+      "description": "Аккаунтуңузга байланыштуу email дарегиңизди жазыңыз - ырастоо коду жөнөтүлөт.",
+      "emailError": "Email жазыңыз.",
+      "submit": "Код жөнөтүү"
+    },
+    "resetPassword": {
+      "title": "Жаңы сырсөз",
+      "newPasswordLabel": "Жаңы сырсөз",
+      "confirmPasswordLabel": "Сырсөздү ырастоо",
+      "passwordError": "Сырсөз кеминде {{count}} белгиден турушу керек.",
+      "confirmPasswordError": "Сырсөздөр дал келбейт.",
+      "submit": "Сырсөздү өзгөртүү",
+      "successTitle": "Сырсөз ийгиликтүү өзгөртүлдү.",
+      "successCta": "Кирүү"
+    },
+    "verifyEmail": {
+      "title": "Email дарегиңизди текшериңиз",
+      "descriptionPrefix": "",
+      "descriptionSuffix": " дарегине 8 сандан турган код жөнөтүлдү.",
+      "codeError": "8 сандан турган кодду жазыңыз.",
+      "resendCooldown": "Кайра жөнөтүү ({{seconds}}с)",
+      "resend": "Кодду кайра жөнөтүү",
+      "resendConfirmed": "Код кайра жөнөтүлдү.",
+      "submit": "Ырастоо",
+      "changeEmail": "Email өзгөртүү",
+      "backToSignIn": "Кирүүгө кайтуу"
+    },
+    "verifyResetCode": {
+      "title": "Ырастоо коду",
+      "descriptionPrefix": "",
+      "descriptionSuffix": " дарегине жөнөтүлгөн кодду жазыңыз.",
+      "codeError": "8 сандан турган кодду жазыңыз.",
+      "submit": "Ырастоо"
+    }
+  },
+  "settings": {
+    "backLabel": "Артка",
+    "title": "Жөндөөлөр",
+    "sections": {
+      "account": "Аккаунт",
+      "general": "Жалпы",
+      "support": "Колдоо"
+    },
+    "rows": {
+      "account": "Аккаунт",
+      "language": "Тил",
+      "notifications": "Билдирүүлөр",
+      "privacy": "Купуялык",
+      "security": "Коопсуздук",
+      "game": "Оюн жөндөөлөрү",
+      "data": "Кэш / Дайындар",
+      "help": "Жардам",
+      "about": "OYNO жөнүндө"
+    },
+    "signOut": {
+      "rowLabel": "Чыгуу",
+      "title": "Аккаунттан чыгасызбы?",
+      "message": "Кайра кирүү үчүн email жана сырсөзүңүз керек болот.",
+      "confirm": "Чыгуу",
+      "cancel": "Жок"
+    },
+    "account": {
+      "title": "Аккаунт",
+      "nameLabel": "Аты-жөнү",
+      "namePlaceholder": "Бек Асанов",
+      "savedLabel": "Сакталды ✓",
+      "save": "Сактоо",
+      "changePassword": "Сырсөздү өзгөртүү",
+      "deleteAccount": "Аккаунтту өчүрүү",
+      "deletePasswordError": "Сырсөзүңүздү жазыңыз.",
+      "deleteWrongPassword": "Сырсөз туура эмес.",
+      "deleteModalTitle": "Аккаунтту өчүрүү",
+      "deleteModalMessage": "Бул аракетти артка кайтаруу мүмкүн эмес. Бардык прогрессиңиз (XP, коллекция, жетишкендиктер) биротоло өчүрүлөт.",
+      "deleteConfirm": "Өчүрүү",
+      "deleteCancel": "Жок",
+      "deleteConfirmHint": "Ырастоо үчүн сырсөзүңүздү жазыңыз.",
+      "passwordLabel": "Сырсөз"
+    },
+    "about": {
+      "title": "OYNO жөнүндө",
+      "version": "Версия {{version}}",
+      "mission": "Кыргыз маданиятын заманбап санариптик дүйнөгө алып келүү.",
+      "privacyPolicy": "Купуялык саясаты",
+      "termsOfUse": "Колдонуу шарттары",
+      "licenses": "Лицензиялар",
+      "unavailable": "Бул документ азырынча даяр эмес."
+    },
+    "data": {
+      "title": "Кэш / Дайындар",
+      "description": "Бул жерден билдирүүлөрдүн окулган абалын жана жөндөөлөрдү баштапкы абалга келтирсеңиз болот. Аккаунтуңуз жана прогрессиңиз өзгөрбөйт.",
+      "clearCache": "Кэшти тазалоо",
+      "cleared": "Тазаланды ✓",
+      "modalTitle": "Кэшти тазалоо",
+      "modalMessage": "Билдирүүлөрдүн окулган абалы жана жөндөөлөр баштапкы абалга келет. Улантасызбы?",
+      "confirm": "Тазалоо",
+      "cancel": "Жок"
+    },
+    "game": {
+      "title": "Оюн жөндөөлөрү",
+      "soundEffects": "Үн эффекттери",
+      "music": "Музыка",
+      "haptics": "Дирилдөө (Haptics)"
+    },
+    "notifications": {
+      "title": "Билдирүүлөр",
+      "dailyChallenge": "Күнүмдүк тапшырма",
+      "rewards": "Сыйлыктар",
+      "achievements": "Жетишкендиктер",
+      "friendRequests": "Досторго кошуу сунуштары",
+      "gameInvitations": "Оюнга чакыруулар",
+      "events": "Иш-чаралар",
+      "news": "Жаңылыктар"
+    },
+    "privacy": {
+      "title": "Купуялык",
+      "profileVisibility": "Профилдин көрүнүшү",
+      "leaderboardVisibility": "Рейтингде көрүнүү",
+      "activityVisibility": "Активдүүлүктүн көрүнүшү",
+      "public": "Ачык",
+      "friendsOnly": "Достор гана",
+      "private": "Жеке",
+      "visible": "Көрүнөт",
+      "hidden": "Жашырылган"
+    },
+    "security": {
+      "title": "Коопсуздук",
+      "changePasswordTitle": "Сырсөздү өзгөртүү",
+      "currentPasswordLabel": "Учурдагы сырсөз",
+      "newPasswordLabel": "Жаңы сырсөз",
+      "confirmPasswordLabel": "Жаңы сырсөздү ырастоо",
+      "passwordTooShort": "Сырсөз кеминде 8 белгиден турушу керек.",
+      "passwordMismatch": "Сырсөздөр дал келбейт.",
+      "saved": "Сырсөз өзгөртүлдү ✓",
+      "submit": "Сырсөздү өзгөртүү",
+      "activeSessionsTitle": "Активдүү сессиялар",
+      "thisDevice": "Бул түзмөк",
+      "sessionsUnavailable": "Учурда башка түзмөктөрдөгү сессияларды көрсөтүү жеткиликсиз - бул функция үчүн серверлик колдоо керек.",
+      "signOutAll": "Бардык сессиялардан чыгуу"
+    },
+    "help": {
+      "title": "Жардам",
+      "searchPlaceholder": "Суроо издеңиз...",
+      "searchLabel": "Суроо издөө",
+      "allCategory": "Баары",
+      "categories": {
+        "account": "Аккаунт",
+        "games": "Оюндар",
+        "culture": "Маданият",
+        "explore": "Изилдөө",
+        "rewards": "Сыйлыктар",
+        "settings": "Жөндөөлөр"
+      },
+      "empty": "Эч нерсе табылган жок.",
+      "contactTitle": "Биз менен байланышуу",
+      "subjectLabel": "Тема",
+      "subjectPlaceholder": "Суроонун темасы",
+      "messageLabel": "Билдирүү",
+      "messagePlaceholder": "Билдирүүңүздү жазыңыз...",
+      "send": "Жөнөтүү",
+      "defaultSubject": "OYNO колдоо"
+    }
+  },
   "home": {
     "header": {
       "tagline": "Кыргыз дүйнөсү телефонуңда.",
@@ -13,11 +207,13 @@
     },
     "profile": {
       "editLabel": "Аты-жөнүн оңдоо",
+      "rank": "Жаш оюнчу",
       "level": "Деңгээл {{level}}",
       "xp": "XP {{current}} / {{max}}"
     },
     "dailyChallenge": {
       "title": "Бүгүнкү тапшырма",
+      "description": "Беш ташта 1 жолу жеӊ",
       "rewardLabel": "Сыйлык:",
       "openLabel": "Тапшырманы ачуу"
     },
@@ -60,6 +256,22 @@
       "logic": "Логикалык",
       "skill": "Эптүү оюндар",
       "cooking": "Ашкана"
+    },
+    "comingSoon": {
+      "title": "Жаңы оюндар",
+      "subtitle": "Жакында..."
+    },
+    "difficulty": {
+      "easy": "Жеңил",
+      "medium": "Орточо"
+    },
+    "comingSoonBadge": "Жакында",
+    "play": "Ойноо",
+    "addFunds": "Толуктоо",
+    "invite": {
+      "title": "Досторуңду чакыр!",
+      "subtitle": "Досторуң менен ойногондо көбүрөөк сыйлыктарды ал!",
+      "cta": "Чакыруу"
     }
   },
   "beshTash": {
@@ -88,6 +300,10 @@
     "continue": "Улантуу",
     "guestHint": "Прогрессиңизди сактоо үчүн аккаунт түзүңүз",
     "comingSoon": "Жакында"
+  },
+  "language": {
+    "title": "Тилди тандаңыз",
+    "continue": "Улантуу"
   },
   "onboarding": {
     "skip": "Өткөрүп жиберүү",
@@ -149,6 +365,95 @@
         "video": "Видео",
         "game": "Оюн"
       }
+    },
+    "loadError": "Мазмун жүктөлгөн жок. Кайра аракет кылыңыз.",
+    "profileLabel": "Профиль",
+    "progressStats": {
+      "bozUy": "Боз үй",
+      "oymo": "Оймо",
+      "shyrdak": "Шырдак",
+      "komuz": "Комуз",
+      "food": "Ашкана",
+      "games": "Оюндар"
+    }
+  },
+  "explore": {
+    "header": {
+      "title": "Изилдөө",
+      "subtitle": "Кыргызстанды изилде, үйрөн, ач!",
+      "profileLabel": "Профиль",
+      "searchLabel": "Издөө",
+      "collectionLabel": "Коллекция"
+    },
+    "loadError": "Мазмун жүктөлгөн жок. Кайра аракет кылыңыз.",
+    "map": {
+      "recenterLabel": "Ортого келтирүү",
+      "filterLabel": "Чыпкалоо"
+    },
+    "progress": {
+      "title": "Кыргызстанды изилдөө прогресси",
+      "stats": {
+        "locations": "Локациялар",
+        "nature": "Жаратылыш",
+        "culture": "Маданият",
+        "animals": "Жаныбарлар",
+        "food": "Ашкана",
+        "quests": "Квесттер"
+      }
+    },
+    "quest": {
+      "label": "Азыркы квест",
+      "foundSuffix": "табылды",
+      "completedCta": "Квест аткарылды!"
+    },
+    "discoveries": {
+      "title": "Жаңы ачылыштар",
+      "seeAll": "Баарын көрүү",
+      "discoveredLabel": "✓ Табылды",
+      "categories": {
+        "nature": "Жаратылыш",
+        "culture": "Маданият",
+        "animals": "Жаныбарлар",
+        "food": "Ашкана"
+      }
+    },
+    "categories": {
+      "nature": "Жаратылыш",
+      "games": "Оюндар",
+      "food": "Ашкана",
+      "music": "Музыка",
+      "culture": "Маданият",
+      "history": "Тарых",
+      "crafts": "Кол өнөрчүлүк",
+      "animals": "Жаныбарлар",
+      "quests": "Квесттер"
+    },
+    "locationDetail": {
+      "backLabel": "Артка",
+      "progressLabel": "Бул аймак {{percent}}% изилденди",
+      "sectionsTitle": "Бөлүмдөр",
+      "factsTitle": "Билесиңби?"
+    }
+  },
+  "profileSetup": {
+    "title": "Профилиңизди түзүңүз",
+    "description": "Башка оюнчулар сизди ушул ат менен көрүшөт.",
+    "nameLabel": "Аты-жөнү",
+    "namePlaceholder": "Бек Асанов",
+    "nameError": "Атыңызды жазыңыз.",
+    "continue": "Улантуу"
+  },
+  "notificationsScreen": {
+    "backLabel": "Артка",
+    "title": "Билдирүүлөр",
+    "markAllAsRead": "Баарын окулган деп белгилөө",
+    "empty": "Жаңы билдирүү жок.",
+    "categories": {
+      "rewards": "Сыйлыктар",
+      "achievements": "Жетишкендиктер",
+      "dailyTasks": "Күнүмдүк тапшырмалар",
+      "system": "Тутум",
+      "friends": "Достор"
     }
   },
   "profile": {
@@ -160,6 +465,7 @@
     "changePhotoLabel": "Сүрөттү алмаштыруу",
     "level": "Деңгээл {{level}}",
     "xpRemaining": "{{count}} XP калды",
+    "rankTitle": "Кыргыз маданиятын изилдөөчү",
     "currencies": {
       "coins": "Монеталар",
       "xp": "XP",
@@ -168,6 +474,13 @@
     },
     "progress": {
       "title": "Менин прогрессим"
+    },
+    "stats": {
+      "games": "Оюндар",
+      "explore": "Изилдөө",
+      "culture": "Маданият",
+      "quests": "Квесттер",
+      "collection": "Коллекция"
     },
     "achievements": {
       "title": "Жетишкендиктер",
@@ -187,7 +500,20 @@
     "dailyActivity": {
       "title": "Бүгүнкү активдүүлүк",
       "streak": "{{count}} күн",
-      "progress": "{{completed}} / {{total}} тапшырма"
+      "progress": "{{completed}} / {{total}} тапшырма",
+      "games": {
+        "played": "{{count}} оюн ойнолду",
+        "empty": "Оюн ойнолгон жок"
+      },
+      "discovery": {
+        "found": "Маданий ачылыш табылды",
+        "empty": "Ачылыш табылган жок"
+      },
+      "quests": "Квест: {{found}} / {{total}} табылды",
+      "bozUy": {
+        "visited": "Боз үйгө кирилди",
+        "notVisited": "Боз үйгө кирилген жок"
+      }
     },
     "reward": {
       "title": "Күнүмдүк сыйлык",

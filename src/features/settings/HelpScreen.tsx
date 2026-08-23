@@ -1,12 +1,13 @@
 import { ChevronDown, ChevronUp, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable, Button, TextField } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
-import { FAQ_CATEGORY_LABELS, faqItems, type FaqCategory } from './faqData';
+import { faqItems, type FaqCategory } from './faqData';
 
 const SUPPORT_EMAIL = 'support@oyno.app'; // placeholder inbox - swap for a real one when it exists
 
@@ -15,6 +16,7 @@ type HelpScreenProps = {
 };
 
 export function HelpScreen({ onPressBack }: HelpScreenProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<FaqCategory | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -34,31 +36,33 @@ export function HelpScreen({ onPressBack }: HelpScreenProps) {
   }, [query, activeCategory]);
 
   const handleSendMessage = () => {
-    const mailSubject = encodeURIComponent(subject || 'OYNO колдоо');
+    const mailSubject = encodeURIComponent(subject || t('settings.help.defaultSubject'));
     const mailBody = encodeURIComponent(message);
     Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${mailSubject}&body=${mailBody}`);
   };
 
+  const categories: FaqCategory[] = ['account', 'games', 'culture', 'explore', 'rewards', 'settings'];
+
   return (
-    <SettingsScreenLayout title="Жардам" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.help.title')} onPressBack={onPressBack}>
       <View style={styles.searchRow}>
         <Search size={16} color={colors.textMuted} strokeWidth={2} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Суроо издеңиз..."
+          placeholder={t('settings.help.searchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           style={styles.searchInput}
-          accessibilityLabel="Суроо издөө"
+          accessibilityLabel={t('settings.help.searchLabel')}
         />
       </View>
 
       <View style={styles.chipsRow}>
-        <CategoryChip label="Баары" isActive={!activeCategory} onPress={() => setActiveCategory(null)} />
-        {(Object.keys(FAQ_CATEGORY_LABELS) as FaqCategory[]).map((category) => (
+        <CategoryChip label={t('settings.help.allCategory')} isActive={!activeCategory} onPress={() => setActiveCategory(null)} />
+        {categories.map((category) => (
           <CategoryChip
             key={category}
-            label={FAQ_CATEGORY_LABELS[category]}
+            label={t(`settings.help.categories.${category}`)}
             isActive={activeCategory === category}
             onPress={() => setActiveCategory(category)}
           />
@@ -66,7 +70,7 @@ export function HelpScreen({ onPressBack }: HelpScreenProps) {
       </View>
 
       {filteredFaq.length === 0 ? (
-        <Text style={styles.emptyText}>Эч нерсе табылган жок.</Text>
+        <Text style={styles.emptyText}>{t('settings.help.empty')}</Text>
       ) : (
         <View style={styles.faqList}>
           {filteredFaq.map((item) => {
@@ -95,10 +99,20 @@ export function HelpScreen({ onPressBack }: HelpScreenProps) {
       )}
 
       <View style={styles.contactForm}>
-        <Text style={styles.contactTitle}>Биз менен байланышуу</Text>
-        <TextField label="Тема" value={subject} onChangeText={setSubject} placeholder="Суроонун темасы" />
-        <TextField label="Билдирүү" value={message} onChangeText={setMessage} placeholder="Билдирүүңүздү жазыңыз..." />
-        <Button label="Жөнөтүү" onPress={handleSendMessage} disabled={!message.trim()} />
+        <Text style={styles.contactTitle}>{t('settings.help.contactTitle')}</Text>
+        <TextField
+          label={t('settings.help.subjectLabel')}
+          value={subject}
+          onChangeText={setSubject}
+          placeholder={t('settings.help.subjectPlaceholder')}
+        />
+        <TextField
+          label={t('settings.help.messageLabel')}
+          value={message}
+          onChangeText={setMessage}
+          placeholder={t('settings.help.messagePlaceholder')}
+        />
+        <Button label={t('settings.help.send')} onPress={handleSendMessage} disabled={!message.trim()} />
       </View>
     </SettingsScreenLayout>
   );

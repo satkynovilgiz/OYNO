@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +22,7 @@ type Step = 'name' | 'character';
  * "change avatar") rather than rebuilding the character grid here.
  */
 export function ProfileSetupScreen({ defaultName, onComplete }: ProfileSetupScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('name');
   const [name, setName] = useState(defaultName);
@@ -36,7 +38,7 @@ export function ProfileSetupScreen({ defaultName, onComplete }: ProfileSetupScre
 
   const handleContinue = () => {
     if (!name.trim()) {
-      setError('Атыңызды жазыңыз.');
+      setError(t('profileSetup.nameError'));
       return;
     }
     setError(null);
@@ -46,13 +48,19 @@ export function ProfileSetupScreen({ defaultName, onComplete }: ProfileSetupScre
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}>
       <View style={styles.content}>
-        <Text style={styles.title}>Профилиңизди түзүңүз</Text>
-        <Text style={styles.description}>Башка оюнчулар сизди ушул ат менен көрүшөт.</Text>
+        <Text style={styles.title}>{t('profileSetup.title')}</Text>
+        <Text style={styles.description}>{t('profileSetup.description')}</Text>
 
-        <TextField label="Аты-жөнү" value={name} onChangeText={setName} error={error ?? undefined} placeholder="Бек Асанов" />
+        <TextField
+          label={t('profileSetup.nameLabel')}
+          value={name}
+          onChangeText={setName}
+          error={error ?? undefined}
+          placeholder={t('profileSetup.namePlaceholder')}
+        />
       </View>
 
-      <Button label="Улантуу" onPress={handleContinue} />
+      <Button label={t('profileSetup.continue')} onPress={handleContinue} />
     </View>
   );
 }

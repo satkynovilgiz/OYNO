@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Toggle } from '@/components/ui';
 import type { GamePreferences } from '@/store/useSettingsStore';
@@ -6,11 +7,7 @@ import { colors, radii, spacing, typography } from '@/theme';
 
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
 
-const ROWS: { id: keyof GamePreferences; label: string }[] = [
-  { id: 'soundEffects', label: 'Үн эффекттери' },
-  { id: 'music', label: 'Музыка' },
-  { id: 'haptics', label: 'Дирилдөө (Haptics)' },
-];
+const ROW_IDS: (keyof GamePreferences)[] = ['soundEffects', 'music', 'haptics'];
 
 type GameSettingsScreenProps = {
   preferences: GamePreferences;
@@ -19,19 +16,20 @@ type GameSettingsScreenProps = {
 };
 
 export function GameSettingsScreen({ preferences, onChange, onPressBack }: GameSettingsScreenProps) {
+  const { t } = useTranslation();
+
   return (
-    <SettingsScreenLayout title="Оюн жөндөөлөрү" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.game.title')} onPressBack={onPressBack}>
       <View style={styles.group}>
-        {ROWS.map((row, index) => (
-          <View key={row.id} style={[styles.row, index === ROWS.length - 1 && styles.rowLast]}>
-            <Text style={styles.label}>{row.label}</Text>
-            <Toggle
-              value={preferences[row.id]}
-              onValueChange={(value) => onChange(row.id, value)}
-              accessibilityLabel={row.label}
-            />
-          </View>
-        ))}
+        {ROW_IDS.map((id, index) => {
+          const label = t(`settings.game.${id}`);
+          return (
+            <View key={id} style={[styles.row, index === ROW_IDS.length - 1 && styles.rowLast]}>
+              <Text style={styles.label}>{label}</Text>
+              <Toggle value={preferences[id]} onValueChange={(value) => onChange(id, value)} accessibilityLabel={label} />
+            </View>
+          );
+        })}
       </View>
     </SettingsScreenLayout>
   );

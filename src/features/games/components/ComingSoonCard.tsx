@@ -1,16 +1,19 @@
 import { Lock } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, radii, spacing, typography } from '@/theme';
 
 export function ComingSoonCard() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
       <View style={styles.iconWrap}>
         <Lock size={22} color={colors.textOnDark} strokeWidth={1.75} />
       </View>
-      <Text style={styles.title}>Жаңы оюндар</Text>
-      <Text style={styles.subtitle}>Жакында...</Text>
+      <Text style={styles.title}>{t('games.comingSoon.title')}</Text>
+      <Text style={styles.subtitle}>{t('games.comingSoon.subtitle')}</Text>
     </View>
   );
 }

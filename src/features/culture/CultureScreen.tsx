@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
@@ -32,6 +33,7 @@ function handlePressCategory(category: CultureCategory) {
 
 export function CultureScreen() {
   useTrackScreenView('culture');
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const progress = useProgressStore();
@@ -95,7 +97,7 @@ export function CultureScreen() {
           </View>
         ) : hasError ? (
           <View style={styles.stateBlock}>
-            <Text style={styles.stateText}>Мазмун жүктөлгөн жок. Кайра аракет кылыңыз.</Text>
+            <Text style={styles.stateText}>{t('culture.loadError')}</Text>
           </View>
         ) : (
           <>

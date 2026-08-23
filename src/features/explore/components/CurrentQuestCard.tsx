@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
@@ -17,6 +18,8 @@ type CurrentQuestCardProps = {
  * reference, right-aligned; a dark-to-transparent gradient over the left
  * keeps the text legible per the reference. */
 export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
+  const { t } = useTranslation();
+
   return (
     <AnimatedPressable style={styles.card} onPress={onPress} accessibilityRole="button" accessibilityLabel={quest.title}>
       <View style={styles.background} />
@@ -30,11 +33,11 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
       />
 
       <View style={styles.content}>
-        <Text style={styles.label}>Азыркы квест</Text>
+        <Text style={styles.label}>{t('explore.quest.label')}</Text>
         <Text style={styles.title}>{quest.title}</Text>
         <Text style={styles.subtitle}>{quest.subtitle}</Text>
         <Text style={styles.progress}>
-          {quest.foundCount} / {quest.totalCount} табылды
+          {quest.foundCount} / {quest.totalCount} {t('explore.quest.foundSuffix')}
         </Text>
 
         <View style={styles.cta}>

@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { FileText, Scale, ScrollText } from 'lucide-react-native';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { colors, spacing, typography } from '@/theme';
 import wordmark from '@assets/img/OYNO_design/wordmark.png';
@@ -12,32 +13,39 @@ type AboutScreenProps = {
   onPressBack: () => void;
 };
 
-/** Privacy Policy / Terms / Licenses have no real, legally-reviewed text
- * yet - showing an honest "not available yet" notice here rather than
- * fabricating legal documents (same principle as the cultural-accuracy
- * "don't invent" rule, applied to legal content). */
-function showUnavailable(title: string) {
-  Alert.alert(title, 'Бул документ азырынча даяр эмес.');
-}
-
 export function AboutScreen({ onPressBack }: AboutScreenProps) {
+  const { t } = useTranslation();
   const version = Constants.expoConfig?.version ?? '—';
 
+  /** Privacy Policy / Terms / Licenses have no real, legally-reviewed text
+   * yet - showing an honest "not available yet" notice here rather than
+   * fabricating legal documents (same principle as the cultural-accuracy
+   * "don't invent" rule, applied to legal content). */
+  function showUnavailable(title: string) {
+    Alert.alert(title, t('settings.about.unavailable'));
+  }
+
   return (
-    <SettingsScreenLayout title="OYNO жөнүндө" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.about.title')} onPressBack={onPressBack}>
       <View style={styles.hero}>
         <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
-        <Text style={styles.version}>Версия {version}</Text>
+        <Text style={styles.version}>{t('settings.about.version', { version })}</Text>
       </View>
 
-      <Text style={styles.mission}>
-        Кыргыз маданиятын заманбап санариптик дүйнөгө алып келүү.
-      </Text>
+      <Text style={styles.mission}>{t('settings.about.mission')}</Text>
 
       <View style={styles.group}>
-        <SettingsRow icon={FileText} label="Купуялык саясаты" onPress={() => showUnavailable('Купуялык саясаты')} />
-        <SettingsRow icon={ScrollText} label="Колдонуу шарттары" onPress={() => showUnavailable('Колдонуу шарттары')} />
-        <SettingsRow icon={Scale} label="Лицензиялар" onPress={() => showUnavailable('Лицензиялар')} />
+        <SettingsRow
+          icon={FileText}
+          label={t('settings.about.privacyPolicy')}
+          onPress={() => showUnavailable(t('settings.about.privacyPolicy'))}
+        />
+        <SettingsRow
+          icon={ScrollText}
+          label={t('settings.about.termsOfUse')}
+          onPress={() => showUnavailable(t('settings.about.termsOfUse'))}
+        />
+        <SettingsRow icon={Scale} label={t('settings.about.licenses')} onPress={() => showUnavailable(t('settings.about.licenses'))} />
       </View>
     </SettingsScreenLayout>
   );

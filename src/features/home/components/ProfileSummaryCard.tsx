@@ -20,17 +20,19 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
     <Card style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.avatar}>
-          <CharacterAvatar characterId={player.characterId} emotion="happy" size={56} />
+          <CharacterAvatar characterId={player.characterId} emotion="happy" size={44} />
         </View>
 
         <View style={styles.identity}>
           <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>
+            <Text style={styles.name} numberOfLines={2}>
               {player.name}
             </Text>
-            <Pencil size={14} color={colors.textSecondary} strokeWidth={2} />
+            <Pencil size={12} color={colors.textSecondary} strokeWidth={2} style={styles.pencil} />
           </View>
-          <Text style={styles.rank}>{player.rank}</Text>
+          <Text style={styles.rank} numberOfLines={1}>
+            {player.rank}
+          </Text>
           <Pill label={t('home.profile.level', { level: player.level })} />
         </View>
       </View>
@@ -66,9 +68,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
@@ -80,13 +82,17 @@ const styles = StyleSheet.create({
   },
   nameRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.xxs,
   },
   name: {
-    ...typography.h1,
+    ...typography.bodyBold,
     color: colors.textPrimary,
     flexShrink: 1,
+    lineHeight: 17,
+  },
+  pencil: {
+    marginTop: 2,
   },
   rank: {
     ...typography.caption,

@@ -1,6 +1,7 @@
 import { Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { ConfirmationModal } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
@@ -19,6 +20,7 @@ type DataSettingsScreenProps = {
  * meaningful here since this app doesn't run its own image cache beyond
  * what Expo/RN Image already manages. */
 export function DataSettingsScreen({ onClearCache, onPressBack }: DataSettingsScreenProps) {
+  const { t } = useTranslation();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [cleared, setCleared] = useState(false);
@@ -32,24 +34,27 @@ export function DataSettingsScreen({ onClearCache, onPressBack }: DataSettingsSc
   };
 
   return (
-    <SettingsScreenLayout title="Кэш / Дайындар" onPressBack={onPressBack}>
-      <Text style={styles.description}>
-        Бул жерден билдирүүлөрдүн окулган абалын жана жөндөөлөрдү баштапкы абалга келтирсеңиз болот.
-        Аккаунтуңуз жана прогрессиңиз өзгөрбөйт.
-      </Text>
+    <SettingsScreenLayout title={t('settings.data.title')} onPressBack={onPressBack}>
+      <Text style={styles.description}>{t('settings.data.description')}</Text>
 
       <View style={styles.group}>
-        <SettingsRow icon={Trash2} label="Кэшти тазалоо" destructive showChevron={false} onPress={() => setConfirmVisible(true)} />
+        <SettingsRow
+          icon={Trash2}
+          label={t('settings.data.clearCache')}
+          destructive
+          showChevron={false}
+          onPress={() => setConfirmVisible(true)}
+        />
       </View>
 
-      {cleared ? <Text style={styles.saved}>Тазаланды ✓</Text> : null}
+      {cleared ? <Text style={styles.saved}>{t('settings.data.cleared')}</Text> : null}
 
       <ConfirmationModal
         visible={confirmVisible}
-        title="Кэшти тазалоо"
-        message="Билдирүүлөрдүн окулган абалы жана жөндөөлөр баштапкы абалга келет. Улантасызбы?"
-        confirmLabel="Тазалоо"
-        cancelLabel="Жок"
+        title={t('settings.data.modalTitle')}
+        message={t('settings.data.modalMessage')}
+        confirmLabel={t('settings.data.confirm')}
+        cancelLabel={t('settings.data.cancel')}
         destructive
         isConfirming={isClearing}
         onConfirm={handleConfirm}

@@ -1,5 +1,6 @@
 import { Gift } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Button, Card, IconChip } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
@@ -9,14 +10,16 @@ type InviteFriendsBannerProps = {
 };
 
 export function InviteFriendsBanner({ onPressInvite }: InviteFriendsBannerProps) {
+  const { t } = useTranslation();
+
   return (
     <Card style={styles.card}>
       <IconChip icon={Gift} size={48} iconSize={24} color={colors.accentGold} />
       <View style={styles.textBlock}>
-        <Text style={styles.title}>Досторуңду чакыр!</Text>
-        <Text style={styles.subtitle}>Досторуң менен ойногондо көбүрөөк сыйлыктарды ал!</Text>
+        <Text style={styles.title}>{t('games.invite.title')}</Text>
+        <Text style={styles.subtitle}>{t('games.invite.subtitle')}</Text>
       </View>
-      <Button label="Чакыруу" onPress={onPressInvite} />
+      <Button label={t('games.invite.cta')} onPress={onPressInvite} />
     </Card>
   );
 }

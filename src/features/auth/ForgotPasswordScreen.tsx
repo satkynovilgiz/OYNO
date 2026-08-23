@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, TextField } from '@/components/ui';
@@ -12,13 +13,14 @@ type ForgotPasswordScreenProps = {
 };
 
 export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: ForgotPasswordScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!email.trim()) {
-      setError('Email жазыңыз.');
+      setError(t('auth.forgotPassword.emailError'));
       return;
     }
     setError(null);
@@ -28,10 +30,8 @@ export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: Fo
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}>
       <View style={styles.content}>
-        <Text style={styles.title}>Сырсөздү калыбына келтирүү</Text>
-        <Text style={styles.description}>
-          Аккаунтуңузга байланыштуу email дарегиңизди жазыңыз - ырастоо коду жөнөтүлөт.
-        </Text>
+        <Text style={styles.title}>{t('auth.forgotPassword.title')}</Text>
+        <Text style={styles.description}>{t('auth.forgotPassword.description')}</Text>
 
         <TextField
           label="Email"
@@ -46,7 +46,7 @@ export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: Fo
         {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
       </View>
 
-      <Button label="Код жөнөтүү" onPress={handleSubmit} loading={isSubmitting} />
+      <Button label={t('auth.forgotPassword.submit')} onPress={handleSubmit} loading={isSubmitting} />
     </View>
   );
 }

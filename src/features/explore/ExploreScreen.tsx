@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CharacterId } from '@/components/character';
@@ -21,6 +22,7 @@ import type { ExploreDiscovery } from './types';
 
 export function ExploreScreen() {
   useTrackScreenView('explore');
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const progress = useProgressStore();
   const { data: regions, isLoading: regionsLoading, error: regionsError } = useExploreRegions();
@@ -57,7 +59,7 @@ export function ExploreScreen() {
         subtitle: questRow.subtitle,
         foundCount: progress.questFoundCount,
         totalCount: questRow.total_count,
-        ctaLabel: progress.questCompleted ? 'Квест аткарылды!' : questRow.cta_label,
+        ctaLabel: progress.questCompleted ? t('explore.quest.completedCta') : questRow.cta_label,
       }
     : null;
 
@@ -78,7 +80,7 @@ export function ExploreScreen() {
           </View>
         ) : hasError ? (
           <View style={styles.stateBlock}>
-            <Text style={styles.stateText}>Мазмун жүктөлгөн жок. Кайра аракет кылыңыз.</Text>
+            <Text style={styles.stateText}>{t('explore.loadError')}</Text>
           </View>
         ) : (
           <>

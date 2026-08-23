@@ -1,4 +1,5 @@
 import { Compass, Diamond, Mountain, PawPrint, Soup, TreePine, type LucideIcon } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, ProgressBar } from '@/components/ui';
@@ -6,15 +7,15 @@ import { colors, spacing, typography } from '@/theme';
 
 import type { ExploreProgress, ExploreStatId } from '../types';
 
-type StatDef = { id: ExploreStatId; label: string; icon: LucideIcon };
+type StatDef = { id: ExploreStatId; icon: LucideIcon };
 
 const STATS: StatDef[] = [
-  { id: 'locations', label: 'Локациялар', icon: Mountain },
-  { id: 'nature', label: 'Жаратылыш', icon: TreePine },
-  { id: 'culture', label: 'Маданият', icon: Diamond },
-  { id: 'animals', label: 'Жаныбарлар', icon: PawPrint },
-  { id: 'food', label: 'Ашкана', icon: Soup },
-  { id: 'quests', label: 'Квесттер', icon: Compass },
+  { id: 'locations', icon: Mountain },
+  { id: 'nature', icon: TreePine },
+  { id: 'culture', icon: Diamond },
+  { id: 'animals', icon: PawPrint },
+  { id: 'food', icon: Soup },
+  { id: 'quests', icon: Compass },
 ];
 
 type RegionProgressCardProps = {
@@ -22,23 +23,25 @@ type RegionProgressCardProps = {
 };
 
 export function RegionProgressCard({ progress }: RegionProgressCardProps) {
+  const { t } = useTranslation();
+
   return (
     <Card style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Кыргызстанды изилдөө прогресси</Text>
+        <Text style={styles.title}>{t('explore.progress.title')}</Text>
         <Text style={styles.percent}>{progress.overallPercent}%</Text>
       </View>
 
       <ProgressBar progress={progress.overallPercent / 100} height={8} />
 
       <View style={styles.statsRow}>
-        {STATS.map(({ id, label, icon: Icon }) => {
+        {STATS.map(({ id, icon: Icon }) => {
           const stat = progress.stats[id];
           return (
             <View key={id} style={styles.statItem}>
               <Icon size={20} color={colors.primary} strokeWidth={1.75} />
               <Text style={styles.statLabel} numberOfLines={1}>
-                {label}
+                {t(`explore.progress.stats.${id}`)}
               </Text>
               <Text style={styles.statCount}>
                 {stat.current} / {stat.total}

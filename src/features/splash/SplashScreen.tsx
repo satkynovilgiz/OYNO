@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -22,6 +23,7 @@ type SplashScreenProps = {
  * short - this isn't the OS-level native splash (expo-splash-screen owns
  * that), it's the branded screen shown while that state resolves. */
 export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
+  const { t } = useTranslation();
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(0.92);
   const taglineOpacity = useSharedValue(0);
@@ -59,7 +61,7 @@ export function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
           <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
         </Animated.View>
 
-        <Animated.Text style={[styles.tagline, taglineStyle]}>Кыргыз дүйнөсү телефонуңда</Animated.Text>
+        <Animated.Text style={[styles.tagline, taglineStyle]}>{t('home.header.tagline')}</Animated.Text>
       </View>
     </View>
   );

@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,12 +25,13 @@ type LanguageSelectScreenProps = {
  * language switcher that will live in Settings, though both just call
  * useAppStore.setLanguage under the hood. */
 export function LanguageSelectScreen({ selected, onSelect, onContinue }: LanguageSelectScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.root}>
       <View style={[styles.content, { paddingTop: insets.top + spacing.xxl }]}>
-        <Text style={styles.title}>Тилди тандаңыз</Text>
+        <Text style={styles.title}>{t('language.title')}</Text>
 
         <View style={styles.list}>
           {LANGUAGE_OPTIONS.map((option) => {
@@ -52,7 +54,7 @@ export function LanguageSelectScreen({ selected, onSelect, onContinue }: Languag
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label="Улантуу" onPress={onContinue} />
+        <Button label={t('language.continue')} onPress={onContinue} />
       </View>
     </View>
   );

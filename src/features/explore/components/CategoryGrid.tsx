@@ -10,6 +10,7 @@ import {
   UtensilsCrossed,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
@@ -17,18 +18,18 @@ import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ExploreCategoryId } from '../types';
 
-type CategoryDef = { id: ExploreCategoryId; label: string; icon: LucideIcon };
+type CategoryDef = { id: ExploreCategoryId; icon: LucideIcon };
 
 const CATEGORIES: CategoryDef[] = [
-  { id: 'nature', label: 'Жаратылыш', icon: Mountain },
-  { id: 'games', label: 'Оюндар', icon: Swords },
-  { id: 'food', label: 'Ашкана', icon: UtensilsCrossed },
-  { id: 'music', label: 'Музыка', icon: Music },
-  { id: 'culture', label: 'Маданият', icon: Home },
-  { id: 'history', label: 'Тарых', icon: ScrollText },
-  { id: 'crafts', label: 'Кол өнөрчүлүк', icon: Scissors },
-  { id: 'animals', label: 'Жаныбарлар', icon: PawPrint },
-  { id: 'quests', label: 'Квесттер', icon: Target },
+  { id: 'nature', icon: Mountain },
+  { id: 'games', icon: Swords },
+  { id: 'food', icon: UtensilsCrossed },
+  { id: 'music', icon: Music },
+  { id: 'culture', icon: Home },
+  { id: 'history', icon: ScrollText },
+  { id: 'crafts', icon: Scissors },
+  { id: 'animals', icon: PawPrint },
+  { id: 'quests', icon: Target },
 ];
 
 type CategoryGridProps = {
@@ -42,24 +43,29 @@ type CategoryGridProps = {
  * nothing real to show.
  */
 export function CategoryGrid({ onPressCategory }: CategoryGridProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.grid}>
-      {CATEGORIES.map((category) => (
-        <AnimatedPressable
-          key={category.id}
-          style={styles.tile}
-          onPress={() => onPressCategory?.(category.id)}
-          accessibilityRole="button"
-          accessibilityLabel={category.label}
-        >
-          <View style={styles.iconWrap}>
-            <category.icon size={22} color={colors.primary} strokeWidth={1.75} />
-          </View>
-          <Text style={styles.label} numberOfLines={1}>
-            {category.label}
-          </Text>
-        </AnimatedPressable>
-      ))}
+      {CATEGORIES.map((category) => {
+        const label = t(`explore.categories.${category.id}`);
+        return (
+          <AnimatedPressable
+            key={category.id}
+            style={styles.tile}
+            onPress={() => onPressCategory?.(category.id)}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+          >
+            <View style={styles.iconWrap}>
+              <category.icon size={22} color={colors.primary} strokeWidth={1.75} />
+            </View>
+            <Text style={styles.label} numberOfLines={1}>
+              {label}
+            </Text>
+          </AnimatedPressable>
+        );
+      })}
     </View>
   );
 }

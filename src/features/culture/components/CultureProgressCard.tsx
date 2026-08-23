@@ -7,15 +7,15 @@ import { colors, spacing, typography } from '@/theme';
 
 import type { CultureProgress, CultureStatId } from '../types';
 
-type StatDef = { id: CultureStatId; label: string; icon: LucideIcon };
+type StatDef = { id: CultureStatId; labelKey: string; icon: LucideIcon };
 
 const STATS: StatDef[] = [
-  { id: 'boz-uy', label: 'Боз үй', icon: Home },
-  { id: 'oymo', label: 'Оймо', icon: Diamond },
-  { id: 'shyrdak', label: 'Шырдак', icon: Grid3x3 },
-  { id: 'komuz', label: 'Комуз', icon: Music2 },
-  { id: 'food', label: 'Ашкана', icon: Soup },
-  { id: 'games', label: 'Оюндар', icon: Gamepad2 },
+  { id: 'boz-uy', labelKey: 'bozUy', icon: Home },
+  { id: 'oymo', labelKey: 'oymo', icon: Diamond },
+  { id: 'shyrdak', labelKey: 'shyrdak', icon: Grid3x3 },
+  { id: 'komuz', labelKey: 'komuz', icon: Music2 },
+  { id: 'food', labelKey: 'food', icon: Soup },
+  { id: 'games', labelKey: 'games', icon: Gamepad2 },
 ];
 
 type CultureProgressCardProps = {
@@ -35,13 +35,13 @@ export function CultureProgressCard({ progress }: CultureProgressCardProps) {
       <ProgressBar progress={progress.overallPercent / 100} height={8} />
 
       <View style={styles.statsRow}>
-        {STATS.map(({ id, label, icon: Icon }) => {
+        {STATS.map(({ id, labelKey, icon: Icon }) => {
           const stat = progress.stats[id];
           return (
             <View key={id} style={styles.statItem}>
               <Icon size={20} color={colors.primary} strokeWidth={1.75} />
               <Text style={styles.statLabel} numberOfLines={1}>
-                {label}
+                {t(`culture.progressStats.${labelKey}`)}
               </Text>
               <Text style={styles.statCount}>
                 {stat.current} / {stat.total}

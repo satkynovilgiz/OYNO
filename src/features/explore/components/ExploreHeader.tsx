@@ -1,4 +1,5 @@
 import { Backpack, Search } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CharacterAvatar } from '@/components/character';
@@ -14,7 +15,8 @@ type ExploreHeaderProps = {
 };
 
 export function ExploreHeader({ onPressAvatar, onPressSearch, onPressCollection }: ExploreHeaderProps) {
-  const characterId = useAppStore((state) => state.characterId);
+  const { t } = useTranslation();
+  const characterId = useAppStore((state) => state.characterId) ?? 'bek';
 
   return (
     <View style={styles.row}>
@@ -22,30 +24,31 @@ export function ExploreHeader({ onPressAvatar, onPressSearch, onPressCollection 
         style={styles.avatarWrap}
         onPress={onPressAvatar}
         accessibilityRole="button"
-        accessibilityLabel="Профиль"
+        accessibilityLabel={t('explore.header.profileLabel')}
       >
-        {characterId ? (
-          <CharacterAvatar characterId={characterId} emotion="happy" size={56} />
-        ) : (
-          <View style={styles.avatarPlaceholder} />
-        )}
+        <CharacterAvatar characterId={characterId} emotion="happy" size={56} />
       </AnimatedPressable>
 
       <View style={styles.center}>
         <View style={styles.titleRow}>
           <OymoOrnament size={16} color={colors.accentBrown} />
-          <Text style={styles.title}>Изилдөө</Text>
+          <Text style={styles.title}>{t('explore.header.title')}</Text>
           <OymoOrnament size={16} color={colors.accentBrown} />
         </View>
-        <Text style={styles.subtitle}>Кыргызстанды изилде, үйрөн, ач!</Text>
+        <Text style={styles.subtitle}>{t('explore.header.subtitle')}</Text>
       </View>
 
       <View style={styles.actions}>
-        <IconButton icon={Search} shape="roundedSquare" accessibilityLabel="Издөө" onPress={onPressSearch} />
+        <IconButton
+          icon={Search}
+          shape="roundedSquare"
+          accessibilityLabel={t('explore.header.searchLabel')}
+          onPress={onPressSearch}
+        />
         <IconButton
           icon={Backpack}
           shape="roundedSquare"
-          accessibilityLabel="Коллекция"
+          accessibilityLabel={t('explore.header.collectionLabel')}
           onPress={onPressCollection}
         />
       </View>
@@ -66,14 +69,6 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     overflow: 'hidden',
-  },
-  avatarPlaceholder: {
-    flex: 1,
-    borderRadius: 28,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
   },
   center: {
     flex: 1,

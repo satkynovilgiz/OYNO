@@ -5,6 +5,200 @@
     "seeAll": "Смотреть все",
     "guestName": "Гость"
   },
+  "auth": {
+    "signIn": {
+      "title": "Вход",
+      "emailError": "Введите email.",
+      "passwordError": "Введите пароль.",
+      "passwordLabel": "Пароль",
+      "forgotPassword": "Забыли пароль?",
+      "submit": "Войти",
+      "or": "или",
+      "continueWithGoogle": "Продолжить с Google",
+      "continueWithApple": "Продолжить с Apple",
+      "noAccount": "Нет аккаунта?",
+      "signUpLink": "Зарегистрироваться",
+      "unavailableTitle": "Недоступно",
+      "unavailableMessage": "Вход через {{provider}} пока недоступен."
+    },
+    "signUp": {
+      "title": "Регистрация",
+      "nameLabel": "Имя",
+      "namePlaceholder": "Бек Асанов",
+      "nameError": "Введите ваше имя.",
+      "emailError": "Неверный email.",
+      "passwordError": "Пароль должен содержать не менее {{count}} символов.",
+      "confirmPasswordLabel": "Подтвердите пароль",
+      "confirmPasswordError": "Пароли не совпадают.",
+      "submit": "Зарегистрироваться",
+      "hasAccount": "Уже есть аккаунт?",
+      "signInLink": "Войти",
+      "unavailableTitle": "Недоступно",
+      "unavailableMessage": "Регистрация через {{provider}} пока недоступна."
+    },
+    "forgotPassword": {
+      "title": "Восстановление пароля",
+      "description": "Введите email, привязанный к аккаунту — на него придёт код подтверждения.",
+      "emailError": "Введите email.",
+      "submit": "Отправить код"
+    },
+    "resetPassword": {
+      "title": "Новый пароль",
+      "newPasswordLabel": "Новый пароль",
+      "confirmPasswordLabel": "Подтвердите пароль",
+      "passwordError": "Пароль должен содержать не менее {{count}} символов.",
+      "confirmPasswordError": "Пароли не совпадают.",
+      "submit": "Изменить пароль",
+      "successTitle": "Пароль успешно изменён.",
+      "successCta": "Войти"
+    },
+    "verifyEmail": {
+      "title": "Подтвердите email",
+      "descriptionPrefix": "8-значный код отправлен на ",
+      "descriptionSuffix": ".",
+      "codeError": "Введите 8-значный код.",
+      "resendCooldown": "Отправить снова ({{seconds}}с)",
+      "resend": "Отправить код снова",
+      "resendConfirmed": "Код отправлен снова.",
+      "submit": "Подтвердить",
+      "changeEmail": "Изменить email",
+      "backToSignIn": "Назад ко входу"
+    },
+    "verifyResetCode": {
+      "title": "Код подтверждения",
+      "descriptionPrefix": "Введите код, отправленный на ",
+      "descriptionSuffix": ".",
+      "codeError": "Введите 8-значный код.",
+      "submit": "Подтвердить"
+    }
+  },
+  "settings": {
+    "backLabel": "Назад",
+    "title": "Настройки",
+    "sections": {
+      "account": "Аккаунт",
+      "general": "Общее",
+      "support": "Поддержка"
+    },
+    "rows": {
+      "account": "Аккаунт",
+      "language": "Язык",
+      "notifications": "Уведомления",
+      "privacy": "Конфиденциальность",
+      "security": "Безопасность",
+      "game": "Настройки игры",
+      "data": "Кэш / Данные",
+      "help": "Помощь",
+      "about": "Об OYNO"
+    },
+    "signOut": {
+      "rowLabel": "Выйти",
+      "title": "Выйти из аккаунта?",
+      "message": "Для повторного входа понадобятся email и пароль.",
+      "confirm": "Выйти",
+      "cancel": "Отмена"
+    },
+    "account": {
+      "title": "Аккаунт",
+      "nameLabel": "Имя",
+      "namePlaceholder": "Бек Асанов",
+      "savedLabel": "Сохранено ✓",
+      "save": "Сохранить",
+      "changePassword": "Изменить пароль",
+      "deleteAccount": "Удалить аккаунт",
+      "deletePasswordError": "Введите пароль.",
+      "deleteWrongPassword": "Неверный пароль.",
+      "deleteModalTitle": "Удалить аккаунт",
+      "deleteModalMessage": "Это действие необратимо. Весь ваш прогресс (XP, коллекция, достижения) будет удалён навсегда.",
+      "deleteConfirm": "Удалить",
+      "deleteCancel": "Отмена",
+      "deleteConfirmHint": "Введите пароль для подтверждения.",
+      "passwordLabel": "Пароль"
+    },
+    "about": {
+      "title": "Об OYNO",
+      "version": "Версия {{version}}",
+      "mission": "Приносим кыргызскую культуру в современный цифровой мир.",
+      "privacyPolicy": "Политика конфиденциальности",
+      "termsOfUse": "Условия использования",
+      "licenses": "Лицензии",
+      "unavailable": "Этот документ пока не готов."
+    },
+    "data": {
+      "title": "Кэш / Данные",
+      "description": "Здесь можно сбросить статус прочтения уведомлений и настройки. Аккаунт и прогресс не изменятся.",
+      "clearCache": "Очистить кэш",
+      "cleared": "Очищено ✓",
+      "modalTitle": "Очистить кэш",
+      "modalMessage": "Статус прочтения уведомлений и настройки будут сброшены. Продолжить?",
+      "confirm": "Очистить",
+      "cancel": "Отмена"
+    },
+    "game": {
+      "title": "Настройки игры",
+      "soundEffects": "Звуковые эффекты",
+      "music": "Музыка",
+      "haptics": "Вибрация (Haptics)"
+    },
+    "notifications": {
+      "title": "Уведомления",
+      "dailyChallenge": "Задание дня",
+      "rewards": "Награды",
+      "achievements": "Достижения",
+      "friendRequests": "Заявки в друзья",
+      "gameInvitations": "Приглашения в игру",
+      "events": "События",
+      "news": "Новости"
+    },
+    "privacy": {
+      "title": "Конфиденциальность",
+      "profileVisibility": "Видимость профиля",
+      "leaderboardVisibility": "Видимость в рейтинге",
+      "activityVisibility": "Видимость активности",
+      "public": "Открыто",
+      "friendsOnly": "Только друзья",
+      "private": "Приватно",
+      "visible": "Видно",
+      "hidden": "Скрыто"
+    },
+    "security": {
+      "title": "Безопасность",
+      "changePasswordTitle": "Изменить пароль",
+      "currentPasswordLabel": "Текущий пароль",
+      "newPasswordLabel": "Новый пароль",
+      "confirmPasswordLabel": "Подтвердите новый пароль",
+      "passwordTooShort": "Пароль должен содержать не менее 8 символов.",
+      "passwordMismatch": "Пароли не совпадают.",
+      "saved": "Пароль изменён ✓",
+      "submit": "Изменить пароль",
+      "activeSessionsTitle": "Активные сессии",
+      "thisDevice": "Это устройство",
+      "sessionsUnavailable": "Просмотр сессий на других устройствах пока недоступен — для этого нужна серверная поддержка.",
+      "signOutAll": "Выйти со всех устройств"
+    },
+    "help": {
+      "title": "Помощь",
+      "searchPlaceholder": "Найти вопрос...",
+      "searchLabel": "Поиск вопроса",
+      "allCategory": "Все",
+      "categories": {
+        "account": "Аккаунт",
+        "games": "Игры",
+        "culture": "Культура",
+        "explore": "Исследование",
+        "rewards": "Награды",
+        "settings": "Настройки"
+      },
+      "empty": "Ничего не найдено.",
+      "contactTitle": "Связаться с нами",
+      "subjectLabel": "Тема",
+      "subjectPlaceholder": "Тема вашего вопроса",
+      "messageLabel": "Сообщение",
+      "messagePlaceholder": "Напишите ваше сообщение...",
+      "send": "Отправить",
+      "defaultSubject": "Поддержка OYNO"
+    }
+  },
   "home": {
     "header": {
       "tagline": "Кыргызский мир у тебя в телефоне.",
@@ -13,11 +207,13 @@
     },
     "profile": {
       "editLabel": "Изменить имя",
+      "rank": "Молодой игрок",
       "level": "Уровень {{level}}",
       "xp": "XP {{current}} / {{max}}"
     },
     "dailyChallenge": {
       "title": "Задание дня",
+      "description": "Выиграй один раз в Беш таш",
       "rewardLabel": "Награда:",
       "openLabel": "Открыть задание"
     },
@@ -60,6 +256,22 @@
       "logic": "Логические",
       "skill": "На ловкость",
       "cooking": "Кулинария"
+    },
+    "comingSoon": {
+      "title": "Новые игры",
+      "subtitle": "Скоро..."
+    },
+    "difficulty": {
+      "easy": "Лёгкий",
+      "medium": "Средний"
+    },
+    "comingSoonBadge": "Скоро",
+    "play": "Играть",
+    "addFunds": "Пополнить",
+    "invite": {
+      "title": "Пригласи друзей!",
+      "subtitle": "Получай больше наград, играя с друзьями!",
+      "cta": "Пригласить"
     }
   },
   "beshTash": {
@@ -88,6 +300,10 @@
     "continue": "Продолжить",
     "guestHint": "Создай аккаунт, чтобы сохранить прогресс",
     "comingSoon": "Скоро"
+  },
+  "language": {
+    "title": "Выберите язык",
+    "continue": "Продолжить"
   },
   "onboarding": {
     "skip": "Пропустить",
@@ -149,6 +365,95 @@
         "video": "Видео",
         "game": "Игра"
       }
+    },
+    "loadError": "Не удалось загрузить контент. Попробуйте снова.",
+    "profileLabel": "Профиль",
+    "progressStats": {
+      "bozUy": "Юрта",
+      "oymo": "Оймо",
+      "shyrdak": "Шырдак",
+      "komuz": "Комуз",
+      "food": "Кухня",
+      "games": "Игры"
+    }
+  },
+  "explore": {
+    "header": {
+      "title": "Исследование",
+      "subtitle": "Исследуй, изучай и открывай Кыргызстан!",
+      "profileLabel": "Профиль",
+      "searchLabel": "Поиск",
+      "collectionLabel": "Коллекция"
+    },
+    "loadError": "Не удалось загрузить контент. Попробуйте снова.",
+    "map": {
+      "recenterLabel": "Центрировать",
+      "filterLabel": "Фильтр"
+    },
+    "progress": {
+      "title": "Прогресс исследования Кыргызстана",
+      "stats": {
+        "locations": "Локации",
+        "nature": "Природа",
+        "culture": "Культура",
+        "animals": "Животные",
+        "food": "Кухня",
+        "quests": "Квесты"
+      }
+    },
+    "quest": {
+      "label": "Текущий квест",
+      "foundSuffix": "найдено",
+      "completedCta": "Квест выполнен!"
+    },
+    "discoveries": {
+      "title": "Новые открытия",
+      "seeAll": "Смотреть все",
+      "discoveredLabel": "✓ Найдено",
+      "categories": {
+        "nature": "Природа",
+        "culture": "Культура",
+        "animals": "Животные",
+        "food": "Кухня"
+      }
+    },
+    "categories": {
+      "nature": "Природа",
+      "games": "Игры",
+      "food": "Кухня",
+      "music": "Музыка",
+      "culture": "Культура",
+      "history": "История",
+      "crafts": "Ремёсла",
+      "animals": "Животные",
+      "quests": "Квесты"
+    },
+    "locationDetail": {
+      "backLabel": "Назад",
+      "progressLabel": "Этот регион исследован на {{percent}}%",
+      "sectionsTitle": "Разделы",
+      "factsTitle": "Знаете ли вы?"
+    }
+  },
+  "profileSetup": {
+    "title": "Создайте свой профиль",
+    "description": "Другие игроки будут видеть вас под этим именем.",
+    "nameLabel": "Имя",
+    "namePlaceholder": "Бек Асанов",
+    "nameError": "Пожалуйста, введите ваше имя.",
+    "continue": "Продолжить"
+  },
+  "notificationsScreen": {
+    "backLabel": "Назад",
+    "title": "Уведомления",
+    "markAllAsRead": "Отметить все как прочитанные",
+    "empty": "Новых уведомлений нет.",
+    "categories": {
+      "rewards": "Награды",
+      "achievements": "Достижения",
+      "dailyTasks": "Ежедневные задания",
+      "system": "Система",
+      "friends": "Друзья"
     }
   },
   "profile": {
@@ -160,6 +465,7 @@
     "changePhotoLabel": "Сменить фото",
     "level": "Уровень {{level}}",
     "xpRemaining": "Осталось {{count}} XP",
+    "rankTitle": "Исследователь кыргызской культуры",
     "currencies": {
       "coins": "Монеты",
       "xp": "XP",
@@ -168,6 +474,13 @@
     },
     "progress": {
       "title": "Мой прогресс"
+    },
+    "stats": {
+      "games": "Игры",
+      "explore": "Исследование",
+      "culture": "Культура",
+      "quests": "Квесты",
+      "collection": "Коллекция"
     },
     "achievements": {
       "title": "Достижения",
@@ -187,7 +500,20 @@
     "dailyActivity": {
       "title": "Активность сегодня",
       "streak": "{{count}} дней",
-      "progress": "{{completed}} / {{total}} заданий"
+      "progress": "{{completed}} / {{total}} заданий",
+      "games": {
+        "played": "Сыграно игр: {{count}}",
+        "empty": "Игр не сыграно"
+      },
+      "discovery": {
+        "found": "Найдено культурное открытие",
+        "empty": "Открытие не найдено"
+      },
+      "quests": "Квест: {{found}} / {{total}} найдено",
+      "bozUy": {
+        "visited": "Юрта посещена",
+        "notVisited": "Юрта не посещена"
+      }
     },
     "reward": {
       "title": "Ежедневная награда",

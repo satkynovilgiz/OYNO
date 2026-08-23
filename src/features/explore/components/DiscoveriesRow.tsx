@@ -1,18 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable, Badge } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ExploreDiscovery } from '../types';
-
-const CATEGORY_LABELS: Record<ExploreDiscovery['category'], string> = {
-  nature: 'Жаратылыш',
-  culture: 'Маданият',
-  animals: 'Жаныбарлар',
-  food: 'Ашкана',
-};
 
 type DiscoveriesRowProps = {
   discoveries: ExploreDiscovery[];
@@ -24,12 +18,14 @@ type DiscoveriesRowProps = {
 /** Falls back to a flat category color when a discovery has no imageSource
  * yet (same convention used elsewhere on this screen for missing art). */
 export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscovery, onPressSeeAll }: DiscoveriesRowProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>Жаңы ачылыштар</Text>
+        <Text style={styles.sectionTitle}>{t('explore.discoveries.title')}</Text>
         <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
-          <Text style={styles.seeAllText}>Баарын көрүү</Text>
+          <Text style={styles.seeAllText}>{t('explore.discoveries.seeAll')}</Text>
           <ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
       </View>
@@ -58,9 +54,11 @@ export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscove
               />
 
               <View style={styles.topRow}>
-                <Badge label={CATEGORY_LABELS[discovery.category]} color={categoryColor} />
+                <Badge label={t(`explore.discoveries.categories.${discovery.category}`)} color={categoryColor} />
               </View>
-              <Text style={styles.xpText}>{discovered ? '✓ Табылды' : `+${discovery.xpReward} XP`}</Text>
+              <Text style={styles.xpText}>
+                {discovered ? t('explore.discoveries.discoveredLabel') : `+${discovery.xpReward} XP`}
+              </Text>
             </AnimatedPressable>
           );
         })}

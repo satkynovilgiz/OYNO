@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, TextField } from '@/components/ui';
@@ -18,6 +19,7 @@ type SignUpScreenProps = {
 };
 
 export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignIn }: SignUpScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,12 +29,12 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
 
   const validate = (): boolean => {
     const nextErrors: FieldErrors = {};
-    if (!name.trim()) nextErrors.name = 'Атыңызды жазыңыз.';
-    if (!EMAIL_PATTERN.test(email.trim())) nextErrors.email = 'Email туура эмес.';
+    if (!name.trim()) nextErrors.name = t('auth.signUp.nameError');
+    if (!EMAIL_PATTERN.test(email.trim())) nextErrors.email = t('auth.signUp.emailError');
     if (password.length < MIN_PASSWORD_LENGTH) {
-      nextErrors.password = `Сырсөз кеминде ${MIN_PASSWORD_LENGTH} белгиден турушу керек.`;
+      nextErrors.password = t('auth.signUp.passwordError', { count: MIN_PASSWORD_LENGTH });
     }
-    if (confirmPassword !== password) nextErrors.confirmPassword = 'Сырсөздөр дал келбейт.';
+    if (confirmPassword !== password) nextErrors.confirmPassword = t('auth.signUp.confirmPasswordError');
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -43,7 +45,7 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
   };
 
   const handleUnavailableProvider = (provider: string) => {
-    Alert.alert('Жеткиликтүү эмес', `${provider} аркылуу катталуу азырынча жеткиликтүү эмес.`);
+    Alert.alert(t('auth.signUp.unavailableTitle'), t('auth.signUp.unavailableMessage', { provider }));
   };
 
   return (
@@ -52,10 +54,16 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Катталуу</Text>
+      <Text style={styles.title}>{t('auth.signUp.title')}</Text>
 
       <View style={styles.form}>
-        <TextField label="Аты-жөнү" value={name} onChangeText={setName} error={errors.name} placeholder="Бек Асанов" />
+        <TextField
+          label={t('auth.signUp.nameLabel')}
+          value={name}
+          onChangeText={setName}
+          error={errors.name}
+          placeholder={t('auth.signUp.namePlaceholder')}
+        />
         <TextField
           label="Email"
           value={email}
@@ -65,9 +73,16 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
           keyboardType="email-address"
           autoComplete="email"
         />
-        <TextField label="Сырсөз" value={password} onChangeText={setPassword} error={errors.password} secure autoComplete="password-new" />
         <TextField
-          label="Сырсөздү ырастоо"
+          label={t('auth.signIn.passwordLabel')}
+          value={password}
+          onChangeText={setPassword}
+          error={errors.password}
+          secure
+          autoComplete="password-new"
+        />
+        <TextField
+          label={t('auth.signUp.confirmPasswordLabel')}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           error={errors.confirmPassword}
@@ -76,22 +91,22 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
 
         {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
 
-        <Button label="Катталуу" onPress={handleSubmit} loading={isSubmitting} />
+        <Button label={t('auth.signUp.submit')} onPress={handleSubmit} loading={isSubmitting} />
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>же</Text>
+          <Text style={styles.dividerText}>{t('auth.signIn.or')}</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        <Button label="Google менен улантуу" variant="secondary" onPress={() => handleUnavailableProvider('Google')} />
-        <Button label="Apple менен улантуу" variant="secondary" onPress={() => handleUnavailableProvider('Apple')} />
+        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={() => handleUnavailableProvider('Google')} />
+        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={() => handleUnavailableProvider('Apple')} />
       </View>
 
       <View style={styles.footerRow}>
-        <Text style={styles.footerText}>Аккаунтуңуз барбы?</Text>
+        <Text style={styles.footerText}>{t('auth.signUp.hasAccount')}</Text>
         <Text style={styles.footerLink} onPress={onPressSignIn}>
-          Кирүү
+          {t('auth.signUp.signInLink')}
         </Text>
       </View>
     </ScrollView>

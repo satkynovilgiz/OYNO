@@ -1,4 +1,5 @@
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,14 +9,6 @@ import { colors, radii, shadows, spacing, typography } from '@/theme';
 import { mockNotifications } from './data';
 import type { AppNotification } from './types';
 
-const CATEGORY_LABELS: Record<AppNotification['category'], string> = {
-  rewards: 'Сыйлыктар',
-  achievements: 'Жетишкендиктер',
-  dailyTasks: 'Күнүмдүк тапшырмалар',
-  system: 'Тутум',
-  friends: 'Достор',
-};
-
 type NotificationsScreenProps = {
   readIds: string[];
   onPressBack?: () => void;
@@ -24,13 +17,19 @@ type NotificationsScreenProps = {
 };
 
 export function NotificationsScreen({ readIds, onPressBack, onPressNotification, onMarkAllAsRead }: NotificationsScreenProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel="Артка" onPress={onPressBack} />
-        <Text style={styles.title}>Билдирүүлөр</Text>
+        <IconButton
+          icon={ChevronLeft}
+          shape="roundedSquare"
+          accessibilityLabel={t('notificationsScreen.backLabel')}
+          onPress={onPressBack}
+        />
+        <Text style={styles.title}>{t('notificationsScreen.title')}</Text>
         <View style={{ width: 44 }} />
       </View>
 
@@ -38,14 +37,14 @@ export function NotificationsScreen({ readIds, onPressBack, onPressNotification,
         style={styles.markAllRow}
         onPress={onMarkAllAsRead}
         accessibilityRole="button"
-        accessibilityLabel="Баарын окулган деп белгилөө"
+        accessibilityLabel={t('notificationsScreen.markAllAsRead')}
       >
-        <Text style={styles.markAllText}>Баарын окулган деп белгилөө</Text>
+        <Text style={styles.markAllText}>{t('notificationsScreen.markAllAsRead')}</Text>
       </AnimatedPressable>
 
       {mockNotifications.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Жаңы билдирүү жок.</Text>
+          <Text style={styles.emptyText}>{t('notificationsScreen.empty')}</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
@@ -64,7 +63,7 @@ export function NotificationsScreen({ readIds, onPressBack, onPressNotification,
                   {isUnread ? <View style={styles.unreadDot} /> : null}
                 </View>
                 <View style={styles.itemBody}>
-                  <Text style={styles.category}>{CATEGORY_LABELS[notification.category]}</Text>
+                  <Text style={styles.category}>{t(`notificationsScreen.categories.${notification.category}`)}</Text>
                   <Text style={styles.itemTitle}>{notification.title}</Text>
                   <Text style={styles.itemDescription}>{notification.description}</Text>
                   <Text style={styles.itemTime}>{notification.timeLabel}</Text>

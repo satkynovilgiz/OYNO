@@ -32,7 +32,7 @@ export function DailyActivitySummaryCard({ profile, activity, completed, total }
           {activity.map(({ id, icon: Icon, label }) => (
             <View key={id} style={styles.item}>
               <Icon size={16} color={colors.primary} strokeWidth={1.75} />
-              <Text style={styles.itemLabel} numberOfLines={1}>
+              <Text style={styles.itemLabel} numberOfLines={2}>
                 {label}
               </Text>
             </View>
@@ -51,7 +51,7 @@ export function DailyActivitySummaryCard({ profile, activity, completed, total }
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    flex: 1.3,
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.sm,
@@ -93,13 +93,14 @@ const styles = StyleSheet.create({
   },
   item: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.xxs,
   },
   itemLabel: {
     ...typography.small,
     color: colors.textSecondary,
     flexShrink: 1,
+    lineHeight: 14,
   },
   ringValue: {
     ...typography.caption,

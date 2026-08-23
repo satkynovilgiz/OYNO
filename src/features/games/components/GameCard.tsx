@@ -1,5 +1,6 @@
 import { Award, Clock, Signal, Users } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Button, Card } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -11,12 +12,8 @@ type GameCardProps = {
   onPress?: (game: GameListItem) => void;
 };
 
-const DIFFICULTY_LABEL: Record<GameListItem['difficulty'], string> = {
-  easy: 'Жеңил',
-  medium: 'Орточо',
-};
-
 export function GameCard({ game, onPress }: GameCardProps) {
+  const { t } = useTranslation();
   const isPlayable = !!game.route;
 
   return (
@@ -31,7 +28,7 @@ export function GameCard({ game, onPress }: GameCardProps) {
           ) : null}
           {!isPlayable ? (
             <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>Жакында</Text>
+              <Text style={styles.comingSoonText}>{t('games.comingSoonBadge')}</Text>
             </View>
           ) : null}
         </View>
@@ -44,7 +41,7 @@ export function GameCard({ game, onPress }: GameCardProps) {
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Signal size={12} color={colors.textSecondary} strokeWidth={2} />
-              <Text style={styles.metaText}>{DIFFICULTY_LABEL[game.difficulty]}</Text>
+              <Text style={styles.metaText}>{t(`games.difficulty.${game.difficulty}`)}</Text>
             </View>
             <View style={styles.metaDot} />
             <View style={styles.metaItem}>
@@ -59,7 +56,7 @@ export function GameCard({ game, onPress }: GameCardProps) {
             <Text style={styles.metaText}>{game.duration}</Text>
           </View>
 
-          {isPlayable && <Button label="Ойноо" onPress={() => onPress?.(game)} />}
+          {isPlayable && <Button label={t('games.play')} onPress={() => onPress?.(game)} />}
         </View>
       </Card>
     </View>

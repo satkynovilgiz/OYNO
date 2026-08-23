@@ -1,4 +1,5 @@
 import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -33,6 +34,7 @@ const MAX_SCALE = 3;
 const TAP_TARGET_SIZE = { width: 15, height: 14 }; // percent of card
 
 export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }: KyrgyzstanMapProps) {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translateX = useSharedValue(0);
@@ -118,7 +120,7 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
                 onPressLocate?.();
               }}
               accessibilityRole="button"
-              accessibilityLabel="Ортого келтирүү"
+              accessibilityLabel={t('explore.map.recenterLabel')}
               style={styles.tapTargetFill}
             />
           </View>
@@ -126,7 +128,7 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
             <Pressable
               onPress={onPressFilter}
               accessibilityRole="button"
-              accessibilityLabel="Чыпкалоо"
+              accessibilityLabel={t('explore.map.filterLabel')}
               style={styles.tapTargetFill}
             />
           </View>

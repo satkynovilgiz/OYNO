@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Toggle } from '@/components/ui';
 import type { NotificationPreferenceId, NotificationPreferences } from '@/store/useSettingsStore';
@@ -6,14 +7,14 @@ import { colors, radii, spacing, typography } from '@/theme';
 
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
 
-const ROWS: { id: NotificationPreferenceId; label: string }[] = [
-  { id: 'dailyChallenge', label: 'Күнүмдүк тапшырма' },
-  { id: 'rewards', label: 'Сыйлыктар' },
-  { id: 'achievements', label: 'Жетишкендиктер' },
-  { id: 'friendRequests', label: 'Досторго кошуу сунуштары' },
-  { id: 'gameInvitations', label: 'Оюнга чакыруулар' },
-  { id: 'events', label: 'Иш-чаралар' },
-  { id: 'news', label: 'Жаңылыктар' },
+const ROW_IDS: NotificationPreferenceId[] = [
+  'dailyChallenge',
+  'rewards',
+  'achievements',
+  'friendRequests',
+  'gameInvitations',
+  'events',
+  'news',
 ];
 
 type NotificationSettingsScreenProps = {
@@ -23,19 +24,20 @@ type NotificationSettingsScreenProps = {
 };
 
 export function NotificationSettingsScreen({ preferences, onChange, onPressBack }: NotificationSettingsScreenProps) {
+  const { t } = useTranslation();
+
   return (
-    <SettingsScreenLayout title="Билдирүүлөр" onPressBack={onPressBack}>
+    <SettingsScreenLayout title={t('settings.notifications.title')} onPressBack={onPressBack}>
       <View style={styles.group}>
-        {ROWS.map((row, index) => (
-          <View key={row.id} style={[styles.row, index === ROWS.length - 1 && styles.rowLast]}>
-            <Text style={styles.label}>{row.label}</Text>
-            <Toggle
-              value={preferences[row.id]}
-              onValueChange={(value) => onChange(row.id, value)}
-              accessibilityLabel={row.label}
-            />
-          </View>
-        ))}
+        {ROW_IDS.map((id, index) => {
+          const label = t(`settings.notifications.${id}`);
+          return (
+            <View key={id} style={[styles.row, index === ROW_IDS.length - 1 && styles.rowLast]}>
+              <Text style={styles.label}>{label}</Text>
+              <Toggle value={preferences[id]} onValueChange={(value) => onChange(id, value)} accessibilityLabel={label} />
+            </View>
+          );
+        })}
       </View>
     </SettingsScreenLayout>
   );
