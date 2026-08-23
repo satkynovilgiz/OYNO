@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text } from 'react-native';
 
 import { colors, radii, shadows, spacing, typography } from '@/theme';
@@ -16,6 +16,7 @@ type ButtonProps = {
 
 /** Labeled pill button (e.g. "Сыйлыкты ал"). For icon-only actions, use IconButton. */
 export function Button({ label, onPress, icon, disabled = false, loading = false, variant = 'primary' }: ButtonProps) {
+  const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
   const isOutlined = variant === 'secondary';
 
@@ -25,9 +26,14 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
         styles.button,
         isOutlined && styles.buttonSecondary,
         variant === 'danger' && styles.buttonDanger,
+        pressed && !isDisabled && styles.buttonPressed,
         isDisabled && styles.buttonDisabled,
       ]}
       onPress={isDisabled ? undefined : onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      haptic={isDisabled ? false : variant === 'primary' ? 'medium' : 'light'}
+      disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
@@ -50,6 +56,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xxs,
+    minHeight: 44,
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -65,6 +72,9 @@ const styles = StyleSheet.create({
   },
   buttonDanger: {
     backgroundColor: colors.danger,
+  },
+  buttonPressed: {
+    opacity: 0.85,
   },
   buttonDisabled: {
     opacity: 0.5,

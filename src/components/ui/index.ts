@@ -9,5 +9,6 @@ export * from './OtpCodeInput';
 export * from './Pill';
 export * from './ProgressBar';
 export * from './ProgressRing';
+export * from './TextButton';
 export * from './TextField';
 export * from './Toggle';

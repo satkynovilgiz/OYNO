@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AnimatedPressable, Badge } from '@/components/ui';
+import { AnimatedPressable, Badge, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ExploreDiscovery } from '../types';
@@ -24,10 +24,11 @@ export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscove
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>{t('explore.discoveries.title')}</Text>
-        <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
-          <Text style={styles.seeAllText}>{t('explore.discoveries.seeAll')}</Text>
-          <ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />
-        </AnimatedPressable>
+        <TextButton
+          label={t('explore.discoveries.seeAll')}
+          onPress={onPressSeeAll}
+          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
+        />
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
@@ -80,16 +81,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.h1,
     color: colors.textPrimary,
-  },
-  seeAll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  seeAllText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
   },
   list: {
     paddingHorizontal: spacing.md,

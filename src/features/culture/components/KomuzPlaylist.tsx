@@ -42,36 +42,35 @@ export function KomuzPlaylist({ tracks }: KomuzPlaylistProps) {
             key={track.id}
             style={[styles.row, isActive && styles.rowActive]}
             onPress={() => handlePressTrack(index)}
+            haptic="light"
             accessibilityRole="button"
             accessibilityLabel={track.title}
           >
-            <View style={[styles.iconWrap, isActive && styles.iconWrapActive]}>
+            <View style={[styles.iconWrap, isPlaying && styles.iconWrapPlaying]}>
               {isPlaying ? (
                 <Pause size={16} color={colors.textOnPrimary} strokeWidth={2} fill={colors.textOnPrimary} />
               ) : (
-                <Play
-                  size={16}
-                  color={isActive ? colors.textOnPrimary : colors.primary}
-                  strokeWidth={2}
-                  fill={isActive ? colors.textOnPrimary : 'none'}
-                />
+                <Play size={16} color={colors.primary} strokeWidth={2} fill="none" />
               )}
             </View>
             <View style={styles.trackBody}>
-              <Text style={[styles.trackTitle, isActive && styles.textOnActive]} numberOfLines={1}>
+              <Text style={styles.trackTitle} numberOfLines={1}>
                 {track.title}
               </Text>
               {track.performer ? (
-                <Text style={[styles.trackMeta, isActive && styles.textOnActive]} numberOfLines={1}>
+                <Text style={styles.trackMeta} numberOfLines={1}>
                   {track.performer}
                 </Text>
               ) : null}
               {!track.titleConfirmed ? (
-                <Text style={[styles.unconfirmed, isActive && styles.textOnActive]}>
-                  {t('culture.item.titleUnconfirmed')}
-                </Text>
+                <Text style={styles.unconfirmed}>{t('culture.item.titleUnconfirmed')}</Text>
               ) : null}
             </View>
+            {isPlaying ? (
+              <View style={styles.nowPlayingBadge}>
+                <Text style={styles.nowPlayingText}>{t('culture.item.nowPlaying')}</Text>
+              </View>
+            ) : null}
           </AnimatedPressable>
         );
       })}
@@ -89,11 +88,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
   },
   rowActive: {
-    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   iconWrap: {
     width: 32,
@@ -103,11 +104,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapActive: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  textOnActive: {
-    color: colors.textOnPrimary,
+  iconWrapPlaying: {
+    backgroundColor: colors.primary,
   },
   trackBody: {
     flex: 1,
@@ -126,5 +124,16 @@ const styles = StyleSheet.create({
     ...typography.small,
     color: colors.textMuted,
     fontStyle: 'italic',
+  },
+  nowPlayingBadge: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 3,
+  },
+  nowPlayingText: {
+    ...typography.small,
+    color: colors.primary,
+    fontWeight: '700',
   },
 });

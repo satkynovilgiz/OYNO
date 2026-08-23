@@ -3,7 +3,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, TextField } from '@/components/ui';
+import { Button, TextButton, TextField } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type FieldErrors = Partial<Record<'name' | 'email' | 'password' | 'confirmPassword', string>>;
@@ -105,9 +105,7 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
 
       <View style={styles.footerRow}>
         <Text style={styles.footerText}>{t('auth.signUp.hasAccount')}</Text>
-        <Text style={styles.footerLink} onPress={onPressSignIn}>
-          {t('auth.signUp.signInLink')}
-        </Text>
+        <TextButton label={t('auth.signUp.signInLink')} onPress={onPressSignIn} />
       </View>
     </ScrollView>
   );
@@ -159,10 +157,5 @@ const styles = StyleSheet.create({
   footerText: {
     ...typography.caption,
     color: colors.textSecondary,
-  },
-  footerLink: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
   },
 });

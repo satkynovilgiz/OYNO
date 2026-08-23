@@ -395,6 +395,7 @@
       "sourcesLabel": "Источники",
       "tracksLabel": "Треки",
       "titleUnconfirmed": "Название пока не подтверждено",
+      "nowPlaying": "Сейчас играет",
       "pendingResearch": "Подробности по этой записи ещё не исследованы.",
       "accuracy": {
         "verified": "Проверено",

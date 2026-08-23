@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
+import { TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
@@ -24,9 +24,12 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
         <Text style={styles.title} numberOfLines={2}>
           {t('profile.achievements.title')}
         </Text>
-        <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
-          <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
-        </AnimatedPressable>
+        <TextButton
+          label={t('common.seeAll')}
+          hideLabel
+          onPress={onPressSeeAll}
+          trailingIcon={<ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />}
+        />
       </View>
       <Text style={styles.unlocked}>{t('profile.achievements.unlocked', { unlocked, total })}</Text>
 
@@ -67,9 +70,6 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.textPrimary,
     flexShrink: 1,
-  },
-  seeAll: {
-    padding: 2,
   },
   unlocked: {
     ...typography.small,

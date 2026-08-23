@@ -3,7 +3,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, TextField } from '@/components/ui';
+import { Button, TextButton, TextField } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
 type SignInScreenProps = {
@@ -65,9 +65,11 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
           autoComplete="password"
         />
 
-        <Text style={styles.forgotLink} onPress={onPressForgotPassword}>
-          {t('auth.signIn.forgotPassword')}
-        </Text>
+        <TextButton
+          label={t('auth.signIn.forgotPassword')}
+          onPress={onPressForgotPassword}
+          style={styles.forgotLink}
+        />
 
         {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
 
@@ -85,9 +87,7 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
 
       <View style={styles.footerRow}>
         <Text style={styles.footerText}>{t('auth.signIn.noAccount')}</Text>
-        <Text style={styles.footerLink} onPress={onPressSignUp}>
-          {t('auth.signIn.signUpLink')}
-        </Text>
+        <TextButton label={t('auth.signIn.signUpLink')} onPress={onPressSignUp} />
       </View>
     </ScrollView>
   );
@@ -110,10 +110,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   forgotLink: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
-    textAlign: 'right',
+    alignSelf: 'flex-end',
   },
   serverError: {
     ...typography.caption,
@@ -145,10 +142,5 @@ const styles = StyleSheet.create({
   footerText: {
     ...typography.caption,
     color: colors.textSecondary,
-  },
-  footerLink: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
   },
 });

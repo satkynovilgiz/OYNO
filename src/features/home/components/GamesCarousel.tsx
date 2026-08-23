@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, TextButton } from '@/components/ui';
 import type { GameListItem } from '@/features/games/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
@@ -21,10 +21,11 @@ export function GamesCarousel({ games, onPressGame, onPressSeeAll }: GamesCarous
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>{t('home.games.sectionTitle')}</Text>
-        <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
-          <Text style={styles.seeAllText}>{t('common.seeAll')}</Text>
-          <ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />
-        </AnimatedPressable>
+        <TextButton
+          label={t('common.seeAll')}
+          onPress={onPressSeeAll}
+          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
+        />
       </View>
 
       <ScrollView
@@ -70,16 +71,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.h1,
     color: colors.textPrimary,
-  },
-  seeAll: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  seeAllText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
   },
   list: {
     paddingHorizontal: spacing.md,

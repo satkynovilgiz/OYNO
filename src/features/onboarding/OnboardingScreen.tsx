@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, Button } from '@/components/ui';
+import { Button, TextButton } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { onboardingSlideImages } from './data';
@@ -52,14 +52,7 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
   return (
     <View style={styles.root}>
       <View style={[styles.skipRow, { paddingTop: insets.top + spacing.sm }]}>
-        <AnimatedPressable
-          onPress={onFinish}
-          accessibilityRole="button"
-          accessibilityLabel={t('onboarding.skip')}
-          style={styles.skipButton}
-        >
-          <Text style={styles.skipLabel}>{t('onboarding.skip')}</Text>
-        </AnimatedPressable>
+        <TextButton label={t('onboarding.skip')} onPress={onFinish} tone="muted" />
       </View>
 
       <ScrollView
@@ -91,14 +84,7 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         {isLastSlide ? (
           <>
             <Button label={t('onboarding.start')} onPress={handleContinue} />
-            <AnimatedPressable
-              onPress={onContinueAsGuest}
-              accessibilityRole="button"
-              accessibilityLabel={t('onboarding.later')}
-              style={styles.laterButton}
-            >
-              <Text style={styles.laterLabel}>{t('onboarding.later')}</Text>
-            </AnimatedPressable>
+            <TextButton label={t('onboarding.later')} onPress={onContinueAsGuest} tone="muted" />
           </>
         ) : (
           <Button label={t('onboarding.next')} onPress={handleContinue} />
@@ -116,15 +102,6 @@ const styles = StyleSheet.create({
   skipRow: {
     alignItems: 'flex-end',
     paddingHorizontal: spacing.md,
-  },
-  skipButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  skipLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '700',
   },
   slide: {
     flex: 1,
@@ -175,13 +152,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     gap: spacing.sm,
     alignItems: 'center',
-  },
-  laterButton: {
-    paddingVertical: spacing.xs,
-  },
-  laterLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '700',
   },
 });

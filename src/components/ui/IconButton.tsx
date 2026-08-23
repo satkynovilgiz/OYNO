@@ -1,4 +1,5 @@
 import { type LucideIcon } from 'lucide-react-native';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { colors, radii, shadows } from '@/theme';
@@ -17,6 +18,7 @@ type IconButtonProps = {
   variant?: Variant;
   shape?: Shape;
   showBadge?: boolean;
+  disabled?: boolean;
 };
 
 export function IconButton({
@@ -28,14 +30,26 @@ export function IconButton({
   variant = 'surface',
   shape = 'circle',
   showBadge = false,
+  disabled = false,
 }: IconButtonProps) {
+  const [pressed, setPressed] = useState(false);
   const isPrimary = variant === 'primary';
+  // Visual size can be smaller than the 44pt accessibility minimum touch
+  // target (e.g. the 32px card arrow) - hitSlop makes up the difference
+  // rather than forcing every icon button to look 44px.
+  const hitSlopAmount = Math.max(0, Math.ceil((44 - size) / 2));
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
+      haptic={disabled ? false : 'light'}
+      disabled={disabled}
+      hitSlop={hitSlopAmount}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
       style={[
         styles.base,
         shadows.card,
@@ -45,6 +59,8 @@ export function IconButton({
           borderRadius: shape === 'circle' ? size / 2 : radii.lg,
           backgroundColor: isPrimary ? colors.primary : colors.surface,
         },
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
       ]}
     >
       <Icon
@@ -61,6 +77,12 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.85,
+  },
+  disabled: {
+    opacity: 0.4,
   },
   badge: {
     position: 'absolute',

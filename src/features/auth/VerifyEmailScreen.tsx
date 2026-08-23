@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, IconChip, OtpCodeInput } from '@/components/ui';
+import { AnimatedPressable, Button, IconChip, OtpCodeInput, TextButton } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -107,21 +107,27 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
             {resendConfirmed && !shownError ? (
               <Text style={styles.confirmedText}>{t('auth.verifyEmail.resendConfirmed')}</Text>
             ) : null}
-            <Text style={[styles.resendLink, (cooldown > 0 || isResending) && styles.resendLinkDisabled]} onPress={handleResend}>
-              {cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend')}
-            </Text>
+            <AnimatedPressable
+              style={styles.resendPill}
+              onPress={handleResend}
+              disabled={cooldown > 0 || isResending}
+              haptic={cooldown > 0 || isResending ? false : 'light'}
+              accessibilityRole="button"
+              accessibilityLabel={cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend')}
+              accessibilityState={{ disabled: cooldown > 0 || isResending }}
+            >
+              <Text style={[styles.resendLink, (cooldown > 0 || isResending) && styles.resendLinkDisabled]}>
+                {cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend')}
+              </Text>
+            </AnimatedPressable>
           </View>
         </View>
 
         <View style={styles.footer}>
           <Button label={t('auth.verifyEmail.submit')} onPress={handleSubmit} loading={isSubmitting} />
           <View style={styles.linksRow}>
-            <Text style={styles.linkText} onPress={onChangeEmail}>
-              {t('auth.verifyEmail.changeEmail')}
-            </Text>
-            <Text style={styles.linkText} onPress={onBackToSignIn}>
-              {t('auth.verifyEmail.backToSignIn')}
-            </Text>
+            <TextButton label={t('auth.verifyEmail.changeEmail')} onPress={onChangeEmail} tone="muted" />
+            <TextButton label={t('auth.verifyEmail.backToSignIn')} onPress={onBackToSignIn} tone="muted" />
           </View>
         </View>
       </ScrollView>
@@ -179,15 +185,17 @@ const styles = StyleSheet.create({
     ...typography.small,
     color: colors.primary,
   },
-  resendLink: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
+  resendPill: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     overflow: 'hidden',
+  },
+  resendLink: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '700',
   },
   resendLinkDisabled: {
     color: colors.textMuted,
@@ -198,10 +206,5 @@ const styles = StyleSheet.create({
   linksRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  linkText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '700',
   },
 });

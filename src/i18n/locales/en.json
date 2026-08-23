@@ -395,6 +395,7 @@
       "sourcesLabel": "Sources",
       "tracksLabel": "Tracks",
       "titleUnconfirmed": "Title not yet confirmed",
+      "nowPlaying": "Now playing",
       "pendingResearch": "Full details for this entry haven't been researched yet.",
       "accuracy": {
         "verified": "Verified",

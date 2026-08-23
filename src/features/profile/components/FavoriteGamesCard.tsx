@@ -2,7 +2,7 @@ import { ChevronRight, Trophy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { FavoriteGame } from '../types';
@@ -22,9 +22,12 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
         <Text style={styles.title} numberOfLines={2}>
           {t('profile.favoriteGames.title')}
         </Text>
-        <AnimatedPressable style={styles.seeAll} onPress={onPressSeeAll} accessibilityRole="button">
-          <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
-        </AnimatedPressable>
+        <TextButton
+          label={t('common.seeAll')}
+          hideLabel
+          onPress={onPressSeeAll}
+          trailingIcon={<ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />}
+        />
       </View>
 
       {games.length === 0 ? (
@@ -75,9 +78,6 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.textPrimary,
     flexShrink: 1,
-  },
-  seeAll: {
-    padding: 2,
   },
   list: {
     flexDirection: 'row',
