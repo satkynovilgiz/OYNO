@@ -121,17 +121,16 @@ export function CultureScreen() {
               <CultureProgressCard progress={cultureProgress} />
             </View>
 
-            <View style={[styles.horizontalPad, styles.row]}>
-              <View style={styles.quizCol}>
-                <QuizTeaserCard onPress={() => console.log('navigate: culture quiz')} />
-              </View>
-              <View style={styles.materialsCol}>
-                <NewMaterialsRow
-                  materials={materials}
-                  onPressMaterial={(material) => console.log('navigate: material detail', material.id)}
-                  onPressSeeAll={() => console.log('navigate: all materials')}
-                />
-              </View>
+            <View style={styles.horizontalPad}>
+              <QuizTeaserCard onPress={() => console.log('navigate: culture quiz')} />
+            </View>
+
+            <View style={styles.horizontalPad}>
+              <NewMaterialsRow
+                materials={materials}
+                onPressMaterial={(material) => console.log('navigate: material detail', material.id)}
+                onPressSeeAll={() => console.log('navigate: all materials')}
+              />
             </View>
           </>
         )}
@@ -167,12 +166,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  quizCol: {
-    flex: 0.4,
-  },
-  materialsCol: {
-    flex: 0.6,
   },
   stateBlock: {
     paddingVertical: spacing.xxl,

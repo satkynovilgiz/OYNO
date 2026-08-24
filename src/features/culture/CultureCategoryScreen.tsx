@@ -1,19 +1,41 @@
+import { BookOpen, Flame, PartyPopper, Repeat, Users, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
-import type { CultureItemRow } from '@/services/content/types';
+import type { CultureItemRow, CultureItemTypeLabel } from '@/services/content/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 type CultureCategoryScreenProps = {
   categoryTitle: string;
-  categoryImage?: ImageSourcePropType;
   items: CultureItemRow[];
   isLoading: boolean;
   hasError: boolean;
   onPressBack: () => void;
   onPressItem: (item: CultureItemRow) => void;
+};
+
+/** Per-item photography doesn't exist yet (only one image per whole
+ * category), so item cards can't show a real photo without every card in a
+ * category looking identical. A colored icon tile keyed off `type_label`
+ * instead - distinct, meaningful, and doesn't fake photography we don't
+ * have. */
+const TYPE_ICON: Record<CultureItemTypeLabel, LucideIcon> = {
+  custom: BookOpen,
+  practice: Repeat,
+  ritual: Flame,
+  ceremony: Users,
+  festival: PartyPopper,
+};
+
+const TYPE_COLOR: Record<CultureItemTypeLabel, string> = {
+  custom: colors.accentBrown,
+  practice: colors.primary,
+  ritual: colors.danger,
+  ceremony: colors.accentGold,
+  festival: colors.discovery.animals,
 };
 
 /** Groups items by subgroup only when there's more than one distinct
@@ -22,7 +44,6 @@ type CultureCategoryScreenProps = {
  * header. */
 export function CultureCategoryScreen({
   categoryTitle,
-  categoryImage,
   items,
   isLoading,
   hasError,
@@ -58,33 +79,43 @@ export function CultureCategoryScreen({
                   <Text style={styles.groupTitle}>{t(`culture.subgroups.${subgroup}`)}</Text>
                 ) : null}
                 <View style={styles.itemGrid}>
-                  {groupItems.map((item) => (
-                    <AnimatedPressable
-                      key={item.id}
-                      style={styles.card}
-                      onPress={() => onPressItem(item)}
-                      pressScale={1}
-                      hoverEffect
-                      accessibilityRole="button"
-                      accessibilityLabel={item.title}
-                    >
-                      <View style={styles.cardInner}>
-                        {categoryImage ? (
-                          <Image source={categoryImage} style={styles.cardImage} resizeMode="cover" />
-                        ) : (
-                          <View style={styles.cardImagePlaceholder} />
-                        )}
-                        <View style={styles.cardBody}>
-                          <Text style={styles.cardTitle} numberOfLines={2}>
-                            {item.title}
-                          </Text>
-                          {item.type_label ? (
-                            <Text style={styles.cardType}>{t(`culture.item.type.${item.type_label}`)}</Text>
-                          ) : null}
+                  {groupItems.map((item) => {
+                    const TileIcon = item.type_label ? TYPE_ICON[item.type_label] : null;
+                    const tileColor = item.type_label ? TYPE_COLOR[item.type_label] : colors.textMuted;
+
+                    return (
+                      <AnimatedPressable
+                        key={item.id}
+                        style={styles.card}
+                        onPress={() => onPressItem(item)}
+                        pressScale={1}
+                        hoverEffect
+                        accessibilityRole="button"
+                        accessibilityLabel={item.title}
+                      >
+                        <View style={styles.cardInner}>
+                          <View style={styles.cardTile}>
+                            {TileIcon ? (
+                              <TileIcon size={28} color={tileColor} strokeWidth={1.75} />
+                            ) : (
+                              <OymoOrnament size={24} color={tileColor} strokeWidth={1.5} />
+                            )}
+                            <View style={[styles.cardTileAccent, { backgroundColor: tileColor }]} />
+                          </View>
+                          <View style={styles.cardBody}>
+                            <Text style={styles.cardTitle} numberOfLines={2}>
+                              {item.title}
+                            </Text>
+                            {item.type_label ? (
+                              <Text style={styles.cardType} numberOfLines={1}>
+                                {t(`culture.item.type.${item.type_label}`)}
+                              </Text>
+                            ) : null}
+                          </View>
                         </View>
-                      </View>
-                    </AnimatedPressable>
-                  ))}
+                      </AnimatedPressable>
+                    );
+                  })}
                 </View>
               </View>
             );
@@ -133,19 +164,24 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     overflow: 'hidden',
   },
-  cardImage: {
+  cardTile: {
     width: '100%',
     aspectRatio: 4 / 3,
     backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cardImagePlaceholder: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    backgroundColor: colors.surfaceAlt,
+  cardTileAccent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 3,
   },
   cardBody: {
     padding: spacing.xs,
     gap: 2,
+    minHeight: 58,
   },
   cardType: {
     ...typography.small,
@@ -155,5 +191,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     fontWeight: '600',
+    lineHeight: 18,
   },
 });

@@ -14,30 +14,35 @@ export function QuizTeaserCard({ onPress }: QuizTeaserCardProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{t('culture.quiz.title')}</Text>
-      <Text style={styles.description}>{t('culture.quiz.description')}</Text>
+      <View style={styles.textCol}>
+        <Text style={styles.title}>{t('culture.quiz.title')}</Text>
+        <Text style={styles.description}>{t('culture.quiz.description')}</Text>
 
-      <View style={styles.footer}>
         <AnimatedPressable style={styles.cta} onPress={onPress} accessibilityRole="button" accessibilityLabel={t('culture.quiz.cta')}>
           <Text style={styles.ctaLabel}>{t('culture.quiz.cta')}</Text>
           <ArrowRight size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
         </AnimatedPressable>
-        <IconChip icon={GraduationCap} size={44} iconSize={22} color={colors.primary} />
       </View>
+      <IconChip icon={GraduationCap} size={56} iconSize={26} color={colors.primary} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
     padding: spacing.sm,
-    gap: spacing.xxs,
+    gap: spacing.sm,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     ...shadows.card,
+  },
+  textCol: {
+    flex: 1,
+    gap: spacing.xxs,
   },
   title: {
     ...typography.h1,
@@ -47,22 +52,17 @@ const styles = StyleSheet.create({
     ...typography.small,
     color: colors.textSecondary,
     lineHeight: 15,
-    flex: 1,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.xxs,
   },
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: spacing.xxs,
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radii.pill,
+    marginTop: spacing.xxs,
   },
   ctaLabel: {
     ...typography.caption,
