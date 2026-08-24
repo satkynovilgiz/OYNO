@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CharacterId } from '@/components/character';
@@ -46,22 +46,24 @@ export function ProfileSetupScreen({ defaultName, onComplete }: ProfileSetupScre
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}>
-      <View style={styles.content}>
-        <Text style={styles.title}>{t('profileSetup.title')}</Text>
-        <Text style={styles.description}>{t('profileSetup.description')}</Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.title}>{t('profileSetup.title')}</Text>
+      <Text style={styles.description}>{t('profileSetup.description')}</Text>
 
-        <TextField
-          label={t('profileSetup.nameLabel')}
-          value={name}
-          onChangeText={setName}
-          error={error ?? undefined}
-          placeholder={t('profileSetup.namePlaceholder')}
-        />
-      </View>
+      <TextField
+        label={t('profileSetup.nameLabel')}
+        value={name}
+        onChangeText={setName}
+        error={error ?? undefined}
+        placeholder={t('profileSetup.namePlaceholder')}
+      />
 
       <Button label={t('profileSetup.continue')} onPress={handleContinue} />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -69,10 +71,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
   },
   content: {
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
   title: {

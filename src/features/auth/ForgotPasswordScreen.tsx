@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,26 +28,28 @@ export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: Fo
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}>
-      <View style={styles.content}>
-        <Text style={styles.title}>{t('auth.forgotPassword.title')}</Text>
-        <Text style={styles.description}>{t('auth.forgotPassword.description')}</Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.title}>{t('auth.forgotPassword.title')}</Text>
+      <Text style={styles.description}>{t('auth.forgotPassword.description')}</Text>
 
-        <TextField
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          error={error ?? undefined}
-          placeholder="you@example.com"
-          keyboardType="email-address"
-          autoComplete="email"
-        />
+      <TextField
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        error={error ?? undefined}
+        placeholder="you@example.com"
+        keyboardType="email-address"
+        autoComplete="email"
+      />
 
-        {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
-      </View>
+      {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
 
       <Button label={t('auth.forgotPassword.submit')} onPress={handleSubmit} loading={isSubmitting} />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -55,10 +57,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
   },
   content: {
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
   title: {

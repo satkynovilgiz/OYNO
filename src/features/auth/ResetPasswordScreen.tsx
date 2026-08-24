@@ -1,6 +1,6 @@
 import { CheckCircle2 } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -52,30 +52,32 @@ export function ResetPasswordScreen({ onSubmit, isSubmitting, serverError, onPre
   }
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}>
-      <View style={styles.content}>
-        <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
 
-        <TextField
-          label={t('auth.resetPassword.newPasswordLabel')}
-          value={password}
-          onChangeText={setPassword}
-          error={errors.password}
-          secure
-        />
-        <TextField
-          label={t('auth.resetPassword.confirmPasswordLabel')}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          error={errors.confirmPassword}
-          secure
-        />
+      <TextField
+        label={t('auth.resetPassword.newPasswordLabel')}
+        value={password}
+        onChangeText={setPassword}
+        error={errors.password}
+        secure
+      />
+      <TextField
+        label={t('auth.resetPassword.confirmPasswordLabel')}
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        error={errors.confirmPassword}
+        secure
+      />
 
-        {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
-      </View>
+      {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
 
       <Button label={t('auth.resetPassword.submit')} onPress={handleSubmit} loading={isSubmitting} />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -83,10 +85,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
   },
   content: {
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
   title: {
@@ -103,6 +104,7 @@ const styles = StyleSheet.create({
   },
   successRoot: {
     alignItems: 'center',
+    paddingHorizontal: spacing.xl,
   },
   successContent: {
     flex: 1,
