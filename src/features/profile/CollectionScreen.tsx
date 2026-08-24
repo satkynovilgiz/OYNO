@@ -55,6 +55,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   image: {

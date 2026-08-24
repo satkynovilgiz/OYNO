@@ -108,6 +108,8 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: radii.lg,
     backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   pending: {

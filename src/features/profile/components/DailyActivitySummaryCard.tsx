@@ -56,6 +56,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     padding: spacing.sm,
     gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   header: {

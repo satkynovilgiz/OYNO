@@ -85,6 +85,8 @@ const styles = StyleSheet.create({
   cardInner: {
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   image: {

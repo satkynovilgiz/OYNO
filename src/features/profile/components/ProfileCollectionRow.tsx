@@ -74,6 +74,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     padding: spacing.xxs,
     gap: 2,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   image: {

@@ -86,6 +86,8 @@ const styles = StyleSheet.create({
     height: 92,
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   name: {

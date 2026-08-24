@@ -47,6 +47,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: spacing.sm,
     justifyContent: 'flex-start',
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   image: {

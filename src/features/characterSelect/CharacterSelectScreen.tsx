@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radii.xl,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: colors.surfaceBorder,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xs,
     ...shadows.card,
