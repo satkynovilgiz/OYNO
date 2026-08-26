@@ -1,8 +1,10 @@
+import { Filter, Locate } from 'lucide-react-native';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { IconButton } from '@/components/ui/IconButton';
 import { radii } from '@/theme';
 import mapTerrain from '@assets/img/OYNO_design/explore/map_terrain.png';
 
@@ -24,13 +26,16 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 
 // map_terrain.png is sliced straight from the design reference (docs:
-// "Explore Kyrgyzstan Learning Map.png") - it already has pins, labels, and
-// the locate/filter buttons painted in, so this renders that art as-is and
-// overlays invisible, accessible tap targets at the same coordinates rather
-// than drawing a second set of pins/buttons on top of the baked ones. Once
-// a clean pin-free map illustration exists, swap this for a background-only
-// image and restore visible MapPin markers (component kept in this folder,
-// unused here, for exactly that).
+// "Illustrated Kyrgyzstan Adventure Map.png") - it already has the pins and
+// labels painted in, so this renders that art as-is and overlays invisible,
+// accessible tap targets at the same coordinates rather than drawing a
+// second set of pins on top of the baked ones. Once a clean pin-free map
+// illustration exists, swap this for a background-only image and restore
+// visible MapPin markers (component kept in this folder, unused here, for
+// exactly that). The source reference bakes its locate/filter controls into
+// a 4-button stack (zoom in/out too) that can't be cleanly cropped down to
+// just the 2 this app uses, so those are real IconButtons drawn on top
+// instead of baked-in art.
 const TAP_TARGET_SIZE = { width: 15, height: 14 }; // percent of card
 
 export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }: KyrgyzstanMapProps) {
@@ -113,23 +118,23 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
             </View>
           ))}
 
-          <View style={[styles.tapTargetWrap, styles.locateTarget]}>
-            <Pressable
+          <View style={[styles.controlWrap, styles.locateControl]}>
+            <IconButton
+              icon={Locate}
               onPress={() => {
                 recenter();
                 onPressLocate?.();
               }}
-              accessibilityRole="button"
               accessibilityLabel={t('explore.map.recenterLabel')}
-              style={styles.tapTargetFill}
+              shape="roundedSquare"
             />
           </View>
-          <View style={[styles.tapTargetWrap, styles.filterTarget]}>
-            <Pressable
+          <View style={[styles.controlWrap, styles.filterControl]}>
+            <IconButton
+              icon={Filter}
               onPress={onPressFilter}
-              accessibilityRole="button"
               accessibilityLabel={t('explore.map.filterLabel')}
-              style={styles.tapTargetFill}
+              shape="roundedSquare"
             />
           </View>
         </Animated.View>
@@ -140,7 +145,7 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 819 / 544,
+    aspectRatio: 1290 / 750,
     borderRadius: radii.xl,
     overflow: 'hidden',
   },
@@ -157,16 +162,14 @@ const styles = StyleSheet.create({
   tapTargetFill: {
     flex: 1,
   },
-  locateTarget: {
-    left: '88%',
-    top: '73%',
-    width: '11%',
-    height: '13%',
+  controlWrap: {
+    position: 'absolute',
+    right: 12,
   },
-  filterTarget: {
-    left: '88%',
-    top: '86%',
-    width: '11%',
-    height: '13%',
+  locateControl: {
+    bottom: 66,
+  },
+  filterControl: {
+    bottom: 12,
   },
 });
