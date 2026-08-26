@@ -7,6 +7,8 @@ export {
   type AuthService,
   type AuthSession,
   type AuthUser,
+  type OAuthProvider,
+  type OAuthSignInResult,
   type SignInInput,
   type SignUpInput,
   type SignUpResult,

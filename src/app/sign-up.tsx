@@ -5,9 +5,16 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 export default function SignUpRoute() {
   const signUp = useAuthStore((state) => state.signUp);
+  const signInWithOAuth = useAuthStore((state) => state.signInWithOAuth);
   const isSubmitting = useAuthStore((state) => state.isSubmitting);
   const error = useAuthStore((state) => state.error);
   const clearError = useAuthStore((state) => state.clearError);
+
+  const handleOAuth = async (provider: 'google' | 'apple') => {
+    const outcome = await signInWithOAuth(provider);
+    if (outcome === 'new-user') router.replace('/profile-setup');
+    else if (outcome === 'signed-in') router.replace('/home');
+  };
 
   return (
     <SignUpScreen
@@ -27,6 +34,8 @@ export default function SignUpRoute() {
         clearError();
         router.push('/sign-in');
       }}
+      onPressGoogle={() => handleOAuth('google')}
+      onPressApple={() => handleOAuth('apple')}
     />
   );
 }

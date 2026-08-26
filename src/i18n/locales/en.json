@@ -18,8 +18,7 @@
       "continueWithApple": "Continue with Apple",
       "noAccount": "Don't have an account?",
       "signUpLink": "Sign up",
-      "unavailableTitle": "Not available",
-      "unavailableMessage": "Signing in with {{provider}} isn't available yet."
+      "completingSignIn": "Completing sign-in..."
     },
     "signUp": {
       "title": "Sign up",
@@ -32,9 +31,7 @@
       "confirmPasswordError": "Passwords don't match.",
       "submit": "Sign up",
       "hasAccount": "Already have an account?",
-      "signInLink": "Sign in",
-      "unavailableTitle": "Not available",
-      "unavailableMessage": "Signing up with {{provider}} isn't available yet."
+      "signInLink": "Sign in"
     },
     "forgotPassword": {
       "title": "Reset password",
@@ -561,6 +558,102 @@
       "title": "Daily reward",
       "cta": "Claim",
       "claimedLabel": "Claimed"
+    }
+  },
+  "legal": {
+    "privacyPolicy": {
+      "title": "Privacy policy",
+      "updated": "Last updated: August 25, 2026",
+      "intro": "This Privacy Policy explains what information OYNO collects, how we use it, and the choices you have. By using OYNO, you agree to the practices described here.",
+      "sections": [
+        {
+          "heading": "Information we collect",
+          "body": "When you create an account, we collect the name and email address you provide, or — if you sign in with Google or Apple — the name and email those providers share with us. We also store your in-app progress: XP, level, coins, gems, streaks, achievements, and the cultural content you've unlocked. We do not collect payment details, government ID, or precise location."
+        },
+        {
+          "heading": "How we use your information",
+          "body": "We use this information to create and secure your account, save and sync your progress across devices, show your rank on leaderboards (unless you set your profile to private in Settings > Privacy), send you notifications you've opted into, and improve OYNO based on how the app is used."
+        },
+        {
+          "heading": "Signing in with Google or Apple",
+          "body": "When you continue with Google or Apple, we receive only your name, email address, and a unique identifier for your account — never your password. Apple may provide a private relay email address if you choose to hide your email; we treat it the same as any other email on file."
+        },
+        {
+          "heading": "Sharing your information",
+          "body": "We do not sell your personal information. It is stored with Supabase, our database and authentication provider, under a data processing agreement. We share information with Google or Apple only as part of the sign-in flow you initiate. We may disclose information if required by law."
+        },
+        {
+          "heading": "Data retention and deletion",
+          "body": "We keep your account data for as long as your account is active. You can permanently delete your account and its data at any time from Settings > Account > Delete account. Some records may be retained briefly afterward where required for security or legal reasons."
+        },
+        {
+          "heading": "Children's privacy",
+          "body": "OYNO is designed to be family-friendly, but it is not directed at children under 13, and we do not knowingly collect personal information from children under 13 without a parent or guardian's consent. If you believe a child has created an account without consent, contact us and we will delete it."
+        },
+        {
+          "heading": "Your rights",
+          "body": "You can review and update your name and email in Settings > Account, control who sees your profile and activity in Settings > Privacy, and request a copy or deletion of your data by contacting us."
+        },
+        {
+          "heading": "Security",
+          "body": "We use industry-standard measures, including encrypted connections and Supabase's row-level security, to protect your data. No method of transmission or storage is completely secure, so we can't guarantee absolute security."
+        },
+        {
+          "heading": "Changes to this policy",
+          "body": "We may update this policy as OYNO grows. If we make material changes, we'll let you know in the app before they take effect."
+        },
+        {
+          "heading": "Contact us",
+          "body": "Questions about this policy? Email us at support@oyno.app."
+        }
+      ]
+    },
+    "termsOfUse": {
+      "title": "Terms of use",
+      "updated": "Last updated: August 25, 2026",
+      "intro": "These Terms of Use govern your access to and use of OYNO. By creating an account or using the app, you agree to these terms.",
+      "sections": [
+        {
+          "heading": "Eligibility",
+          "body": "You must be able to form a binding agreement to use OYNO. If you are under 13, please use OYNO together with a parent or guardian."
+        },
+        {
+          "heading": "Your account",
+          "body": "You're responsible for the activity on your account and for keeping your password confidential. Guest mode lets you explore without an account, but your progress won't be saved."
+        },
+        {
+          "heading": "Acceptable use",
+          "body": "Don't use OYNO to harass others, cheat, exploit bugs, attempt to access another user's account, or interfere with the app's normal operation."
+        },
+        {
+          "heading": "Content and cultural material",
+          "body": "OYNO's illustrations, games, and cultural content are provided for learning and entertainment. We aim for cultural accuracy, but OYNO is not a substitute for academic or historical sources."
+        },
+        {
+          "heading": "In-app currencies",
+          "body": "Coins, gems, and XP are virtual items with no real-world monetary value. They cannot be exchanged for cash and may be adjusted, reset, or removed as the app evolves."
+        },
+        {
+          "heading": "Intellectual property",
+          "body": "OYNO's design, artwork, and code belong to us or our licensors. You may not copy, redistribute, or reuse them outside the app without permission."
+        },
+        {
+          "heading": "Termination",
+          "body": "You may delete your account at any time in Settings. We may suspend or terminate accounts that violate these terms."
+        },
+        {
+          "heading": "Disclaimer",
+          "body": "OYNO is provided \"as is.\" We work hard to keep it accurate and available, but we don't guarantee it will be error-free or uninterrupted."
+        },
+        {
+          "heading": "Changes to these terms",
+          "body": "We may update these terms as OYNO changes. Continued use after an update means you accept the revised terms."
+        },
+        {
+          "heading": "Contact us",
+          "body": "Questions about these terms? Email us at support@oyno.app."
+        }
+      ]
     }
   }
 }

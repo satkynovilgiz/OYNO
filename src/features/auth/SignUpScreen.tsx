@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,9 +16,11 @@ type SignUpScreenProps = {
   isSubmitting: boolean;
   serverError: string | null;
   onPressSignIn: () => void;
+  onPressGoogle: () => Promise<void>;
+  onPressApple: () => Promise<void>;
 };
 
-export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignIn }: SignUpScreenProps) {
+export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignIn, onPressGoogle, onPressApple }: SignUpScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
@@ -42,10 +44,6 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
   const handleSubmit = async () => {
     if (!validate()) return;
     await onSubmit({ name: name.trim(), email: email.trim(), password });
-  };
-
-  const handleUnavailableProvider = (provider: string) => {
-    Alert.alert(t('auth.signUp.unavailableTitle'), t('auth.signUp.unavailableMessage', { provider }));
   };
 
   return (
@@ -99,8 +97,8 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
           <View style={styles.dividerLine} />
         </View>
 
-        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={() => handleUnavailableProvider('Google')} />
-        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={() => handleUnavailableProvider('Apple')} />
+        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={onPressGoogle} disabled={isSubmitting} />
+        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={onPressApple} disabled={isSubmitting} />
       </View>
 
       <View style={styles.footerRow}>

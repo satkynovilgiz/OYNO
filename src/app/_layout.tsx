@@ -33,6 +33,7 @@ const UNGATED_ROUTES = [
   '/forgot-password',
   '/verify-reset-code',
   '/reset-password',
+  '/auth-callback',
 ];
 
 /**

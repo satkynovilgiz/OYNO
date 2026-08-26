@@ -1,7 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
-import { AuthError, authService, type AuthUser, type SignInInput, type SignUpInput, type SignUpResult } from '@/services/auth';
+import {
+  AuthError,
+  authService,
+  type AuthUser,
+  type OAuthProvider,
+  type SignInInput,
+  type SignUpInput,
+  type SignUpResult,
+} from '@/services/auth';
 import { track } from '@/services/analytics/analytics';
 import { supabase } from '@/services/supabase/client';
 
@@ -26,6 +34,10 @@ type AuthState = {
    * the caller routes to /verify-email or /home based on which it is. */
   signUp: (input: SignUpInput) => Promise<SignUpResult | false>;
   signIn: (input: SignInInput) => Promise<boolean>;
+  /** 'cancelled' when the user closed the provider sheet without finishing -
+   * not an error, the caller should just do nothing. Otherwise the caller
+   * routes to /profile-setup ('new-user') or /home ('signed-in'). */
+  signInWithOAuth: (provider: OAuthProvider) => Promise<'new-user' | 'signed-in' | 'cancelled' | false>;
   signOut: () => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<boolean>;
   resendVerificationEmail: (email: string) => Promise<boolean>;
@@ -92,6 +104,24 @@ export const useAuthStore = create<AuthState>((set) => ({
       track('sign_in');
       return true;
     } catch (error) {
+      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      return false;
+    }
+  },
+
+  signInWithOAuth: async (provider) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const { session, isNewUser } = await authService.signInWithOAuth(provider);
+      await AsyncStorage.removeItem(GUEST_MODE_KEY);
+      set({ status: 'authenticated', user: session.user, isSubmitting: false });
+      track(isNewUser ? 'sign_up' : 'sign_in');
+      return isNewUser ? 'new-user' : 'signed-in';
+    } catch (error) {
+      if (error instanceof AuthError && error.code === 'cancelled') {
+        set({ isSubmitting: false });
+        return 'cancelled';
+      }
       set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
       return false;
     }

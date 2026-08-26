@@ -160,7 +160,10 @@ site_url = "http://127.0.0.1:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# "oyno://auth-callback" is the app's own deep link (see SupabaseAuthService.signInWithOAuth) -
+# it also needs adding under the hosted project's Dashboard -> Authentication -> URL Configuration
+# -> Redirect URLs, since that's a separate allow-list from this local one.
+additional_redirect_urls = ["https://127.0.0.1:3000", "oyno://auth-callback"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -319,6 +322,12 @@ max_frequency = "5s"
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
 # `twitter`, `x`, `slack`, `spotify`, `workos`, `zoom`.
+#
+# "Continue with Apple" - client_id/secret come from an Apple Developer
+# Services ID + Sign in with Apple key (Supabase's docs walk through minting
+# the secret JWT from that key). Same caveat as Google below: this local
+# block only affects `supabase start` - enable the provider on the hosted
+# project's own Dashboard too.
 [auth.external.apple]
 enabled = false
 client_id = ""
@@ -333,6 +342,23 @@ url = ""
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
+
+# "Continue with Google" - client_id/secret come from a Google Cloud Console
+# OAuth 2.0 Client ID (Web application type; add
+# https://<project-ref>.supabase.co/auth/v1/callback as an authorized
+# redirect URI there). This local block only affects `supabase start`; the
+# hosted project OYNO's app actually talks to (see EXPO_PUBLIC_SUPABASE_URL
+# in .env) needs the same provider enabled from its own Dashboard ->
+# Authentication -> Sign In / Providers -> Google, since config.toml isn't
+# pushed there automatically.
+[auth.external.google]
+enabled = false
+client_id = ""
+# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+redirect_uri = ""
+url = ""
+skip_nonce_check = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.

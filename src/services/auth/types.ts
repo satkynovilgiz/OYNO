@@ -22,6 +22,9 @@ export type AuthErrorCode =
   | 'not-verified'
   | 'rate-limited'
   | 'network-error'
+  /** The user closed the OAuth browser sheet before finishing - not a
+   * real error, callers should treat this as a silent no-op. */
+  | 'cancelled'
   | 'unknown';
 
 export class AuthError extends Error {
@@ -52,6 +55,17 @@ export type SignUpResult =
   /** Only happens if the project has email confirmation turned off. */
   | { status: 'signed-in'; session: AuthSession };
 
+export type OAuthProvider = 'google' | 'apple';
+
+export type OAuthSignInResult = {
+  session: AuthSession;
+  /** True when this is the account's first-ever sign-in (its auth.users
+   * row was just created by this call) - callers use this to route to
+   * profile setup (name + character) instead of straight to /home,
+   * matching what email signUp already does before its first /home. */
+  isNewUser: boolean;
+};
+
 /**
  * Backend-agnostic auth contract. `SupabaseAuthService` is the only
  * implementation (see its own doc comment) - screens/the store were built
@@ -71,6 +85,10 @@ export type AuthService = {
   getSession(): Promise<AuthSession | null>;
   signUp(input: SignUpInput): Promise<SignUpResult>;
   signIn(input: SignInInput): Promise<AuthSession>;
+  /** Opens the provider's own sign-in page in an in-app browser sheet and
+   * exchanges the resulting redirect for a session. Throws AuthError with
+   * code 'cancelled' (not a real error) if the user closes the sheet. */
+  signInWithOAuth(provider: OAuthProvider): Promise<OAuthSignInResult>;
   signOut(): Promise<void>;
   /** Confirms the code emailed after signUp() and returns the now-active session. */
   verifyEmail(email: string, code: string): Promise<AuthSession>;

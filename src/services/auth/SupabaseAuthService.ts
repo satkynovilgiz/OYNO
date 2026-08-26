@@ -1,4 +1,7 @@
 import type { AuthError as SupabaseAuthErrorType, Session, User } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 
 import { supabase } from '@/services/supabase/client';
 
@@ -8,6 +11,8 @@ import {
   type AuthService,
   type AuthSession,
   type AuthUser,
+  type OAuthProvider,
+  type OAuthSignInResult,
   type SignInInput,
   type SignUpInput,
   type SignUpResult,
@@ -125,6 +130,56 @@ export const supabaseAuthService: AuthService = {
     if (error) throw mapSupabaseError(error);
     if (!data.session) throw new AuthError('unknown', 'Белгисиз ката кетти.');
     return toAuthSession(data.session, data.user);
+  },
+
+  async signInWithOAuth(provider: OAuthProvider): Promise<OAuthSignInResult> {
+    // `skipBrowserRedirect` gets back the provider URL instead of Supabase
+    // trying (and failing) to redirect a React Native environment there
+    // itself - WebBrowser opens it in an in-app sheet/popup and hands the
+    // final redirect back to us once the provider is done. A custom
+    // scheme (oyno://auth-callback) is what a native build needs, but a
+    // browser can't navigate a popup to one at all - on web this has to
+    // be a same-origin http(s) URL instead so the opener can read it back.
+    const redirectTo =
+      Platform.OS === 'web' ? `${window.location.origin}/auth-callback` : Linking.createURL('auth-callback');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error || !data.url) throw mapSupabaseError(error);
+
+    // A popup blocked by the browser, or a provider redirect that can
+    // never resolve, must not hang this promise forever - that would
+    // leave the sign-in screen's buttons disabled until a hard refresh.
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new AuthError('cancelled', '')), 3 * 60 * 1000);
+    });
+    const result = await Promise.race([WebBrowser.openAuthSessionAsync(data.url, redirectTo), timeout]);
+    if (result.type === 'cancel' || result.type === 'dismiss') {
+      throw new AuthError('cancelled', '');
+    }
+    if (result.type !== 'success' || !result.url) {
+      throw new AuthError('unknown', 'Белгисиз ката кетти.');
+    }
+
+    const redirectUrl = new URL(result.url);
+    const code = redirectUrl.searchParams.get('code');
+    if (!code) {
+      throw new AuthError('unknown', redirectUrl.searchParams.get('error_description') ?? 'Белгисиз ката кетти.');
+    }
+
+    const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError || !sessionData.session) throw mapSupabaseError(exchangeError);
+
+    const { user } = sessionData.session;
+    // No auth.users column marks "just created" directly - a fresh account's
+    // created_at and last_sign_in_at land within the same request, while a
+    // returning user's last_sign_in_at is from a prior session, seconds/
+    // days earlier. 10s comfortably covers request latency without ever
+    // matching a real prior sign-in.
+    const isNewUser = Math.abs(new Date(user.last_sign_in_at ?? user.created_at).getTime() - new Date(user.created_at).getTime()) < 10_000;
+
+    return { session: await toAuthSession(sessionData.session, user), isNewUser };
   },
 
   async signOut() {

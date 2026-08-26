@@ -32,6 +32,8 @@ export function CharacterAvatar({ characterId, emotion, size = 96 }: CharacterAv
 const styles = StyleSheet.create({
   image: {
     backgroundColor: colors.surfaceAlt,
+    borderWidth: 2,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   placeholder: {

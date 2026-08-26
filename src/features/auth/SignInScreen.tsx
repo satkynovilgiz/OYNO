@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,9 +12,19 @@ type SignInScreenProps = {
   serverError: string | null;
   onPressSignUp: () => void;
   onPressForgotPassword: () => void;
+  onPressGoogle: () => Promise<void>;
+  onPressApple: () => Promise<void>;
 };
 
-export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignUp, onPressForgotPassword }: SignInScreenProps) {
+export function SignInScreen({
+  onSubmit,
+  isSubmitting,
+  serverError,
+  onPressSignUp,
+  onPressForgotPassword,
+  onPressGoogle,
+  onPressApple,
+}: SignInScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
@@ -32,10 +42,6 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
   const handleSubmit = async () => {
     if (!validate()) return;
     await onSubmit({ email: email.trim(), password });
-  };
-
-  const handleUnavailableProvider = (provider: string) => {
-    Alert.alert(t('auth.signIn.unavailableTitle'), t('auth.signIn.unavailableMessage', { provider }));
   };
 
   return (
@@ -81,8 +87,8 @@ export function SignInScreen({ onSubmit, isSubmitting, serverError, onPressSignU
           <View style={styles.dividerLine} />
         </View>
 
-        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={() => handleUnavailableProvider('Google')} />
-        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={() => handleUnavailableProvider('Apple')} />
+        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={onPressGoogle} disabled={isSubmitting} />
+        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={onPressApple} disabled={isSubmitting} />
       </View>
 
       <View style={styles.footerRow}>
