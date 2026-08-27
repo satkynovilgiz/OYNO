@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 
 import { CollectionScreen } from '@/features/profile/CollectionScreen';
+import { useProgressStore } from '@/store/useProgressStore';
 
 export default function CollectionRoute() {
-  return <CollectionScreen onPressBack={() => router.back()} />;
+  const discoveredExploreIds = useProgressStore((state) => state.discoveredExploreIds);
+  return <CollectionScreen discoveredExploreIds={discoveredExploreIds} onPressBack={() => router.back()} />;
 }

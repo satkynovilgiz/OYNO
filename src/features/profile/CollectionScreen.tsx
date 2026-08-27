@@ -5,25 +5,27 @@ import { ProgressBar } from '@/components/ui';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
-import { collectionTotal, collectionUnlocked, profileCollection } from './data';
+import { getCollectionCounts, getCollectionItems } from './data';
 
 type CollectionScreenProps = {
+  discoveredExploreIds: string[];
   onPressBack: () => void;
 };
 
-/** Full collection catalog (same 6 categories shown in the Profile preview
- * row). Per-item current/total counts are still a content-catalog mock -
- * they need the full discovery/lesson system to become real; see
- * PROGRESS_AUDIT.md. */
-export function CollectionScreen({ onPressBack }: CollectionScreenProps) {
+/** Same real discovery catalog as the Profile preview row - see the doc
+ * comment on getCollectionItems in ./data.ts for why this is narrower than
+ * the design's eventual full collection. */
+export function CollectionScreen({ discoveredExploreIds, onPressBack }: CollectionScreenProps) {
   const { t } = useTranslation();
+  const items = getCollectionItems(discoveredExploreIds);
+  const { unlocked, total } = getCollectionCounts(discoveredExploreIds);
 
   return (
     <SettingsScreenLayout title={t('profile.collection.title')} onPressBack={onPressBack}>
-      <Text style={styles.subtitle}>{collectionUnlocked} / {collectionTotal}</Text>
+      <Text style={styles.subtitle}>{unlocked} / {total}</Text>
 
       <View style={styles.list}>
-        {profileCollection.map((item) => (
+        {items.map((item) => (
           <View key={item.id} style={styles.row}>
             <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
             <View style={styles.body}>

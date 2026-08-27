@@ -93,6 +93,14 @@ export default function RootLayout() {
     void useSettingsStore.getState().load();
   }, [authStatus]);
 
+  // Same race, same reason: characterId now persists (previously reset to
+  // the default character on every reopen), and loadCharacterId() also
+  // checks auth status to decide server vs local-cache.
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    void useAppStore.getState().loadCharacterId();
+  }, [authStatus]);
+
   useEffect(() => {
     // The Splash/index route also calls these, but _layout mounts first and
     // every screen under RouteGuard needs the flags loaded to make a

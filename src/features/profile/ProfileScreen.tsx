@@ -26,13 +26,7 @@ import {
   ProfileStatsGrid,
   XpProgressCard,
 } from './components';
-import {
-  achievementsTotal,
-  collectionTotal,
-  collectionUnlocked,
-  profileAchievements,
-  profileCollection,
-} from './data';
+import { achievementsTotal, getCollectionCounts, getCollectionItems, profileAchievements } from './data';
 import type { DailyActivityItem, FavoriteGame, ProfileStat, ProfileSummary } from './types';
 
 const QUEST_TOTAL = 5;
@@ -65,13 +59,15 @@ export function ProfileScreen() {
 
   const explorePercent = Math.round((progress.questFoundCount / QUEST_TOTAL) * 100);
   const cultureRatio = ((progress.cultureDiscoveryCount >= 1 ? 1 : 0) + (progress.bozUyVisited ? 1 : 0)) / 2;
+  const collectionItems = getCollectionItems(progress.discoveredExploreIds);
+  const { unlocked: collectionUnlocked, total: collectionTotal } = getCollectionCounts(progress.discoveredExploreIds);
 
   const profileStats: ProfileStat[] = [
     { id: 'games', icon: Gamepad2, label: t('profile.stats.games'), valueLabel: String(progress.gamesPlayed), captionKey: 'count', ringProgress: Math.min(1, progress.gamesPlayed / 20) },
     { id: 'explore', icon: Compass, label: t('profile.stats.explore'), valueLabel: `${explorePercent}%`, captionKey: 'percent', ringProgress: progress.questFoundCount / QUEST_TOTAL },
     { id: 'culture', icon: Diamond, label: t('profile.stats.culture'), valueLabel: `${Math.round(cultureRatio * 100)}%`, captionKey: 'percent', ringProgress: cultureRatio },
     { id: 'quests', icon: Target, label: t('profile.stats.quests'), valueLabel: `${progress.questFoundCount} / ${QUEST_TOTAL}`, captionKey: 'fraction', ringProgress: progress.questFoundCount / QUEST_TOTAL },
-    { id: 'collection', icon: Backpack, label: t('profile.stats.collection'), valueLabel: `${collectionUnlocked} / ${collectionTotal}`, captionKey: 'fraction', ringProgress: collectionUnlocked / collectionTotal },
+    { id: 'collection', icon: Backpack, label: t('profile.stats.collection'), valueLabel: `${collectionUnlocked} / ${collectionTotal}`, captionKey: 'fraction', ringProgress: collectionTotal > 0 ? collectionUnlocked / collectionTotal : 0 },
   ];
 
   const favoriteGames: FavoriteGame[] = mockGamesList
@@ -171,7 +167,7 @@ export function ProfileScreen() {
         </View>
 
         <ProfileCollectionRow
-          items={profileCollection}
+          items={collectionItems}
           onPressItem={() => router.push('/collection' as never)}
           onPressSeeAll={() => router.push('/collection' as never)}
         />

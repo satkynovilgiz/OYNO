@@ -229,16 +229,16 @@ export const supabaseAuthService: AuthService = {
     const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password });
     if (verifyError) throw new AuthError('invalid-credentials', 'Сырсөз туура эмес.');
 
-    // The client can delete its own profile row (RLS allows it), but
-    // cannot delete the underlying auth.users record - that requires the
-    // service role, which never runs on-device. See BACKEND_PLAN.md: full
-    // hard-deletion needs a service-role Edge Function (not built this
-    // pass). This still removes the user's actual app data and signs them
-    // out; it's the honest subset of "delete account" this client can do
-    // on its own.
-    if (userData.user) {
-      await supabase.from('profiles').delete().eq('id', userData.user.id);
-    }
+    // Hard-deletes the actual auth.users row via delete_own_account()
+    // (supabase/migrations/20260829000002_delete_own_account.sql), a
+    // security-definer function - not a client-side profiles-row delete
+    // that left the real account (and the ability to log back into it)
+    // behind, which is what this used to do. Every user-owned table
+    // cascades from auth.users, so this removes profile, progress,
+    // achievements, discoveries, and settings in the same statement.
+    const { error: deleteError } = await supabase.rpc('delete_own_account');
+    if (deleteError) throw new AuthError('unknown', 'Аккаунтту өчүрүү мүмкүн болгон жок. Кайра аракет кылыңыз.');
+
     await supabase.auth.signOut();
   },
 
