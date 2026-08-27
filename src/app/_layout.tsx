@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { colors } from '@/theme';
 import { track } from '@/services/analytics/analytics';
 import { initSentry } from '@/services/monitoring/sentry';
+import { decideRouteGuardRedirect } from '@/services/navigation/routeGuard';
 import { registerForPushNotifications } from '@/services/notifications/pushRegistration';
 import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
@@ -56,20 +57,15 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
 
   useEffect(() => {
-    if (!flagsReady || authStatus === 'loading' || pathname === '/') return;
-
-    const isAuthenticatedOrGuest = authStatus === 'authenticated' || authStatus === 'guest';
-    const isUngatedRoute = UNGATED_ROUTES.includes(pathname);
-
-    if (!hasChosenLanguage && pathname !== '/language') {
-      router.replace('/language');
-    } else if (hasChosenLanguage && !hasCompletedOnboarding && pathname !== '/onboarding') {
-      router.replace('/onboarding');
-    } else if (hasCompletedOnboarding && !isAuthenticatedOrGuest && !isUngatedRoute) {
-      router.replace('/sign-in');
-    } else if (isAuthenticatedOrGuest && (pathname === '/sign-in' || pathname === '/sign-up')) {
-      router.replace('/home');
-    }
+    if (!flagsReady) return;
+    const redirect = decideRouteGuardRedirect({
+      authStatus,
+      hasChosenLanguage,
+      hasCompletedOnboarding,
+      pathname,
+      ungatedRoutes: UNGATED_ROUTES,
+    });
+    if (redirect) router.replace(redirect as never);
   }, [pathname, authStatus, hasChosenLanguage, hasCompletedOnboarding, flagsReady]);
 
   return children;
