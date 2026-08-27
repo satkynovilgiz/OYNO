@@ -9,18 +9,24 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
 import { track } from '@/services/analytics/analytics';
+import { initSentry } from '@/services/monitoring/sentry';
+import { registerForPushNotifications } from '@/services/notifications/pushRegistration';
 import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
 import { ErrorBoundary } from '@/components/system/ErrorBoundary';
 import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
-import { registerForPushNotifications } from '@/services/notifications/pushRegistration';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
+
+// Must run before anything else in this module (route arrays, component
+// bodies) so a crash during boot is still reported, not just crashes that
+// happen after RootLayout mounts.
+initSentry();
 
 // Routes reachable without a session (the auth flow itself, plus the splash
 // gate which does its own one-time redirect).

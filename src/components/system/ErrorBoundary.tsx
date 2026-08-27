@@ -3,6 +3,7 @@ import { Component, type ReactNode } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui';
+import { captureException } from '@/services/monitoring/sentry';
 import { colors, spacing, typography } from '@/theme';
 
 type ErrorBoundaryProps = {
@@ -33,6 +34,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
     if (__DEV__) console.error('[ErrorBoundary] caught a render crash:', error, info.componentStack);
+    captureException(error, { componentStack: info.componentStack });
   }
 
   handleRetry = async () => {
