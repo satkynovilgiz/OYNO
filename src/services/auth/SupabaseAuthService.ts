@@ -36,7 +36,7 @@ import {
 const MIN_PASSWORD_LENGTH = 8;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function mapSupabaseError(error: SupabaseAuthErrorType | { message: string; code?: string } | null): AuthError {
+export function mapSupabaseError(error: SupabaseAuthErrorType | { message: string; code?: string } | null): AuthError {
   const code = (error as { code?: string } | null)?.code;
   const message = error?.message ?? '';
 
