@@ -68,6 +68,11 @@ export type CultureItemRow = {
   accuracy_level: CultureAccuracyLevel;
   sources: string[] | null;
   sort_order: number;
+  /** Storage-backed (content-media bucket), set via
+   * admin_set_culture_item_image - null until an admin uploads one, in
+   * which case the bundled cultureItemImages lookup (data.ts) is still
+   * used as the fallback. */
+  image_url: string | null;
 };
 
 export function mapExploreRegionName(row: ExploreRegionRow): LocalizedText {

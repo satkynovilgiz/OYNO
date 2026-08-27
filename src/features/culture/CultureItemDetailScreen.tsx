@@ -1,3 +1,4 @@
+import { Image as ExpoImage } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -45,9 +46,16 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         <Badge label={t(`culture.item.accuracy.${item.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
       </View>
 
-      {images && images.length > 0 ? (
+      {(item.image_url || (images && images.length > 0)) ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>
-          {images.map((source, index) => (
+          {item.image_url ? (
+            // Storage-backed (admin-uploaded, see admin_set_culture_item_image)
+            // - expo-image gives this one real disk/memory caching, unlike
+            // the bundled images below which are already local and don't
+            // need it.
+            <ExpoImage source={{ uri: item.image_url }} style={styles.galleryImage} contentFit="cover" cachePolicy="disk" />
+          ) : null}
+          {images?.map((source, index) => (
             <Image key={index} source={source} style={styles.galleryImage} resizeMode="cover" />
           ))}
         </ScrollView>

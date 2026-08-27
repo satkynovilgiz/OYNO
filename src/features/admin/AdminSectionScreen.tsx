@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { ChevronLeft, Plus, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -6,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, Button, ConfirmationModal, IconButton, TextField } from '@/components/ui';
 import { callAdminRpc } from '@/services/admin/adminService';
+import { pickAndUploadCultureItemImage } from '@/services/admin/mediaUpload';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { rowToFormValues, type AdminFieldConfig, type AdminRow, type AdminSectionConfig } from './sections';
@@ -62,6 +64,9 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const { data: rows, isLoading, error } = useQuery({
     queryKey: ['admin_section', section.id],
@@ -90,12 +95,33 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
     setEditingRow(row);
     setFormValues(rowToFormValues(section, row));
     setSaveError(null);
+    setImageUrl((row.image_url as string | null) ?? null);
+    setImageError(null);
   }
 
   function openCreate() {
     setEditingRow('new');
     setFormValues(rowToFormValues(section, null));
     setSaveError(null);
+    setImageUrl(null);
+    setImageError(null);
+  }
+
+  async function handleUploadImage() {
+    if (editingRow === 'new' || !editingRow) return;
+    setIsUploadingImage(true);
+    setImageError(null);
+    try {
+      const url = await pickAndUploadCultureItemImage(String(editingRow[section.idField]));
+      if (url) {
+        setImageUrl(url);
+        queryClient.invalidateQueries({ queryKey: ['admin_section', section.id] });
+      }
+    } catch (err) {
+      setImageError((err as Error).message);
+    } finally {
+      setIsUploadingImage(false);
+    }
   }
 
   if (editingRow) {
@@ -109,6 +135,20 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {section.id === 'culture_items' && !isNew && (
+            <View style={styles.imageBlock}>
+              <Text style={styles.selectLabel}>Photo (content-media)</Text>
+              {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.imagePreview} contentFit="cover" /> : null}
+              {imageError && <Text style={styles.error}>{imageError}</Text>}
+              <Button
+                label={imageUrl ? 'Replace photo' : 'Upload photo'}
+                variant="secondary"
+                onPress={handleUploadImage}
+                loading={isUploadingImage}
+              />
+            </View>
+          )}
+
           {section.fields.map((field) => (
             <FieldInput
               key={field.key}
@@ -240,6 +280,15 @@ const styles = StyleSheet.create({
   error: {
     ...typography.body,
     color: colors.danger,
+  },
+  imageBlock: {
+    gap: spacing.xs,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 160,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceAlt,
   },
   selectWrap: {
     gap: spacing.xxs,

@@ -34,7 +34,13 @@
       "expo-web-browser",
       "expo-localization",
       "expo-secure-store",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "OYNO админ панелине сүрөт жүктөө үчүн сүрөт китепканаңызга кирүү керек."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
