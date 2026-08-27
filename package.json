@@ -60,9 +60,13 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ],
     "testMatch": [
       "<rootDir>/games/**/*.test.ts",
-      "<rootDir>/src/services/**/*.test.ts"
+      "<rootDir>/src/services/**/*.test.ts",
+      "<rootDir>/src/store/**/*.test.ts"
     ]
   },
   "private": true
