@@ -4,4 +4,5 @@ export * from './DiscoveriesRow';
 export * from './ExploreHeader';
 export * from './KyrgyzstanMap';
 export * from './MapPin';
+export * from './NatureSitesRow';
 export * from './RegionProgressCard';

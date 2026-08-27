@@ -456,6 +456,9 @@
         "food": "Food"
       }
     },
+    "natureSites": {
+      "title": "Nature sites"
+    },
     "categories": {
       "nature": "Nature",
       "games": "Games",

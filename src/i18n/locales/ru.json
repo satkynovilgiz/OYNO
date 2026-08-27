@@ -456,6 +456,9 @@
         "food": "Кухня"
       }
     },
+    "natureSites": {
+      "title": "Природные места"
+    },
     "categories": {
       "nature": "Природа",
       "games": "Игры",

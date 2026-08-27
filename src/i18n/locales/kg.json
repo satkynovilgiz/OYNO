@@ -456,6 +456,9 @@
         "food": "Ашкана"
       }
     },
+    "natureSites": {
+      "title": "Табигый жерлер"
+    },
     "categories": {
       "nature": "Жаратылыш",
       "games": "Оюндар",

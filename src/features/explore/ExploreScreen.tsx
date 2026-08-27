@@ -5,8 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import type { SupportedLanguage } from '@/i18n';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
+import { mapExploreRegionName } from '@/services/content/types';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
@@ -15,6 +17,7 @@ import {
   DiscoveriesRow,
   ExploreHeader,
   KyrgyzstanMap,
+  NatureSitesRow,
   RegionProgressCard,
 } from './components';
 import { exploreDiscoveries, exploreMapPins, exploreProgress } from './data';
@@ -22,7 +25,7 @@ import type { ExploreDiscovery } from './types';
 
 export function ExploreScreen() {
   useTrackScreenView('explore');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const progress = useProgressStore();
   const { data: regions, isLoading: regionsLoading, error: regionsError } = useExploreRegions();
@@ -50,6 +53,14 @@ export function ExploreScreen() {
         };
       })
     : [];
+
+  const natureSites = (regions ?? [])
+    .filter((region) => region.kind === 'nature')
+    .map((region) => ({
+      id: region.id,
+      name: mapExploreRegionName(region)[i18n.language as SupportedLanguage] ?? region.name_kg,
+      tagline: region.tagline,
+    }));
 
   const quest = questRow
     ? {
@@ -102,6 +113,11 @@ export function ExploreScreen() {
                 <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
               </View>
             )}
+
+            <NatureSitesRow
+              sites={natureSites}
+              onPressSite={(id) => router.push(`/explore/${id}` as never)}
+            />
 
             <DiscoveriesRow
               discoveries={exploreDiscoveries}
