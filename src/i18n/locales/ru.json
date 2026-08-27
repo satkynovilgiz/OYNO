@@ -365,6 +365,7 @@
     "materials": {
       "title": "Новые материалы",
       "duration": "{{count}} мин",
+      "unavailable": "Этот материал пока не готов.",
       "types": {
         "reading": "Чтение",
         "video": "Видео",

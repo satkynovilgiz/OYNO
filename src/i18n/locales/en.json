@@ -365,6 +365,7 @@
     "materials": {
       "title": "New materials",
       "duration": "{{count}} min",
+      "unavailable": "This material isn't ready yet.",
       "types": {
         "reading": "Reading",
         "video": "Video",

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -128,8 +128,8 @@ export function CultureScreen() {
             <View style={styles.horizontalPad}>
               <NewMaterialsRow
                 materials={materials}
-                onPressMaterial={(material) => console.log('navigate: material detail', material.id)}
-                onPressSeeAll={() => console.log('navigate: all materials')}
+                onPressMaterial={(material) => Alert.alert(material.title, t('culture.materials.unavailable'))}
+                onPressSeeAll={() => Alert.alert(t('culture.materials.title'), t('culture.materials.unavailable'))}
               />
             </View>
           </>

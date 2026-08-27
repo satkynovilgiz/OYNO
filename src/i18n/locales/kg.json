@@ -365,6 +365,7 @@
     "materials": {
       "title": "Жаңы материалдар",
       "duration": "{{count}} мин",
+      "unavailable": "Бул материал азырынча даяр эмес.",
       "types": {
         "reading": "Окуу",
         "video": "Видео",
