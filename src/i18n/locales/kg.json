@@ -265,6 +265,14 @@
     "comingSoonBadge": "Жакында",
     "play": "Ойноо",
     "addFunds": "Толуктоо",
+    "players": {
+      "team": "Команда",
+      "exact": "{{count}} оюнчу",
+      "open": "{{min}}+ оюнчу"
+    },
+    "duration": {
+      "range": "{{min}}–{{max}} мүнөт"
+    },
     "invite": {
       "title": "Досторуңду чакыр!",
       "subtitle": "Досторуң менен ойногондо көбүрөөк сыйлыктарды ал!",

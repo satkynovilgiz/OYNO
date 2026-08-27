@@ -12,6 +12,12 @@ type GameCardProps = {
   onPress?: (game: GameListItem) => void;
 };
 
+function playersLabel(t: (key: string, options?: Record<string, unknown>) => string, players: GameListItem['players']): string {
+  if (players.kind === 'team') return t('games.players.team');
+  if (players.kind === 'exact') return t('games.players.exact', { count: players.count });
+  return t('games.players.open', { min: players.min });
+}
+
 export function GameCard({ game, onPress }: GameCardProps) {
   const { t } = useTranslation();
   const isPlayable = !!game.route;
@@ -47,13 +53,15 @@ export function GameCard({ game, onPress }: GameCardProps) {
             <View style={styles.metaItem}>
               <Users size={12} color={colors.textSecondary} strokeWidth={2} />
               <Text style={styles.metaText} numberOfLines={1}>
-                {game.players}
+                {playersLabel(t, game.players)}
               </Text>
             </View>
           </View>
           <View style={styles.metaRow}>
             <Clock size={12} color={colors.textSecondary} strokeWidth={2} />
-            <Text style={styles.metaText}>{game.duration}</Text>
+            <Text style={styles.metaText}>
+              {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })}
+            </Text>
           </View>
 
           {isPlayable && <Button label={t('games.play')} onPress={() => onPress?.(game)} />}

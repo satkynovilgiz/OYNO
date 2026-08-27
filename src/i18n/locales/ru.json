@@ -265,6 +265,14 @@
     "comingSoonBadge": "Скоро",
     "play": "Играть",
     "addFunds": "Пополнить",
+    "players": {
+      "team": "Команда",
+      "exact": "Игроков: {{count}}",
+      "open": "Игроков: {{min}}+"
+    },
+    "duration": {
+      "range": "{{min}}–{{max}} мин"
+    },
     "invite": {
       "title": "Пригласи друзей!",
       "subtitle": "Получай больше наград, играя с друзьями!",

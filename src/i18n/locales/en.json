@@ -265,6 +265,14 @@
     "comingSoonBadge": "Coming soon",
     "play": "Play",
     "addFunds": "Add funds",
+    "players": {
+      "team": "Team",
+      "exact": "{{count}} players",
+      "open": "{{min}}+ players"
+    },
+    "duration": {
+      "range": "{{min}}–{{max}} min"
+    },
     "invite": {
       "title": "Invite your friends!",
       "subtitle": "Get more rewards when you play with friends!",
