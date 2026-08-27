@@ -122,7 +122,7 @@ export function CultureScreen() {
             </View>
 
             <View style={styles.horizontalPad}>
-              <QuizTeaserCard onPress={() => console.log('navigate: culture quiz')} />
+              <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
             </View>
 
             <View style={styles.horizontalPad}>

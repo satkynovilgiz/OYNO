@@ -22,6 +22,8 @@ export const DAILY_PLAY_REWARD = { xp: 30, coins: 20 };
 export const QUEST_REWARD = { xp: 80, coins: 40 };
 export const BOZ_UY_REWARD = { xp: 15, coins: 0 };
 export const CULTURE_DISCOVERY_REWARD = { xp: 15, coins: 0 };
+export const DAILY_QUIZ_REWARD = { xp: 40, coins: 25 };
+export const QUIZ_PASS_RATIO = 0.7;
 
 export type GameStat = { played: number; won: number };
 
@@ -37,6 +39,7 @@ type ProgressRow = {
   daily_challenge_claimed_date: string | null;
   daily_gift_claimed_date: string | null;
   daily_play_claimed_date: string | null;
+  quiz_claimed_date: string | null;
   quest_found_count: number;
   quest_completed: boolean;
   boz_uy_visited: boolean;
@@ -55,6 +58,7 @@ type ProgressFields = {
   dailyChallengeClaimedDateISO: string | null;
   dailyGiftClaimedDateISO: string | null;
   dailyPlayClaimedDateISO: string | null;
+  quizClaimedDateISO: string | null;
   questFoundCount: number;
   questCompleted: boolean;
   bozUyVisited: boolean;
@@ -79,6 +83,7 @@ const DEFAULT_FIELDS: ProgressFields = {
   dailyChallengeClaimedDateISO: null,
   dailyGiftClaimedDateISO: null,
   dailyPlayClaimedDateISO: null,
+  quizClaimedDateISO: null,
   questFoundCount: 0,
   questCompleted: false,
   bozUyVisited: false,
@@ -98,6 +103,7 @@ function mapRow(row: ProgressRow): ProgressFields {
     dailyChallengeClaimedDateISO: row.daily_challenge_claimed_date,
     dailyGiftClaimedDateISO: row.daily_gift_claimed_date,
     dailyPlayClaimedDateISO: row.daily_play_claimed_date,
+    quizClaimedDateISO: row.quiz_claimed_date,
     questFoundCount: row.quest_found_count,
     questCompleted: row.quest_completed,
     bozUyVisited: row.boz_uy_visited,
@@ -123,7 +129,7 @@ function isRealUser(): boolean {
   return useAuthStore.getState().status === 'authenticated';
 }
 
-type RpcResult = { progress: ProgressRow; newlyUnlocked?: AchievementId[] };
+type RpcResult = { progress: ProgressRow; newlyUnlocked?: AchievementId[]; correct?: number; total?: number; rewarded?: boolean };
 
 type ProgressState = ProgressFields & {
   isLoaded: boolean;
@@ -142,6 +148,7 @@ type ProgressState = ProgressFields & {
   claimDailyChallenge: () => Promise<boolean>;
   claimDailyGift: () => Promise<boolean>;
   claimDailyPlay: () => Promise<boolean>;
+  claimDailyQuiz: (answers: { question_id: string; choice_index: number }[]) => Promise<{ correct: number; total: number; rewarded: boolean } | null>;
   acknowledgeAchievement: () => void;
 };
 
@@ -305,6 +312,15 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       applyProgress(result.progress);
       track('reward_claimed', { source: 'daily_play' });
       return true;
+    },
+
+    claimDailyQuiz: async (answers) => {
+      const result = await callAction('claim_daily_quiz', { p_answers: answers });
+      if (!result) return null;
+      applyProgress(result.progress);
+      const rewarded = !!result.rewarded;
+      if (rewarded) track('reward_claimed', { source: 'daily_quiz' });
+      return { correct: result.correct ?? 0, total: result.total ?? answers.length, rewarded };
     },
 
     acknowledgeAchievement: () => set({ lastUnlockedAchievementId: null }),

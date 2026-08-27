@@ -352,7 +352,15 @@
     "quiz": {
       "title": "Test your knowledge!",
       "description": "Take quizzes to reinforce what you've learned.",
-      "cta": "Start"
+      "cta": "Start",
+      "screenTitle": "Knowledge quiz",
+      "stepLabel": "Question {{current}} / {{total}}",
+      "passedTitle": "Great job!",
+      "failedTitle": "Try again!",
+      "rewardedBody": "You earned +{{xp}} XP and +{{coins}} coins!",
+      "notRewardedBody": "You need 70% correct to earn a reward. Try again tomorrow!",
+      "alreadyDoneTitle": "Quiz already done today",
+      "alreadyDoneBody": "The next quiz will be available tomorrow."
     },
     "materials": {
       "title": "New materials",
