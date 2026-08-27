@@ -11,13 +11,14 @@ import { ADMIN_SECTIONS } from './sections';
 type AdminHomeScreenProps = {
   onPressBack: () => void;
   onPressSection: (sectionId: string) => void;
+  onPressPush: () => void;
 };
 
 /** Internal tooling, not part of the app's localized surface - kept in
  * English deliberately (same reasoning as the rest of this file: it's for
  * whoever has an admin_roles row, not end users) rather than adding a
  * fourth i18n surface nobody but an admin will ever see. */
-export function AdminHomeScreen({ onPressBack, onPressSection }: AdminHomeScreenProps) {
+export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush }: AdminHomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { data: role, isLoading } = useAdminRole();
 
@@ -40,6 +41,12 @@ export function AdminHomeScreen({ onPressBack, onPressSection }: AdminHomeScreen
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.roleLabel}>Signed in as: {role}</Text>
+
+          <AnimatedPressable style={styles.row} onPress={onPressPush} accessibilityRole="button" accessibilityLabel="Push broadcast">
+            <Text style={styles.rowLabel}>Push notifications (broadcast)</Text>
+            <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+          </AnimatedPressable>
+
           {ADMIN_SECTIONS.map((section) => (
             <AnimatedPressable
               key={section.id}

@@ -7,6 +7,7 @@ export default function AdminRoute() {
     <AdminHomeScreen
       onPressBack={() => router.back()}
       onPressSection={(sectionId) => router.push(`/admin/${sectionId}` as never)}
+      onPressPush={() => router.push('/admin/push' as never)}
     />
   );
 }

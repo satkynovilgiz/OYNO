@@ -15,6 +15,7 @@ import { ErrorBoundary } from '@/components/system/ErrorBoundary';
 import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
+import { registerForPushNotifications } from '@/services/notifications/pushRegistration';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
@@ -99,6 +100,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (authStatus === 'loading') return;
     void useAppStore.getState().loadCharacterId();
+  }, [authStatus]);
+
+  // Guests have no server row for register_push_token to attach to (it
+  // derives auth.uid(), which is null for a guest session) - only worth
+  // asking for the permission/token once there's somewhere real to store
+  // it, same "guests don't get server state" rule the rest of this file
+  // already follows for progress/settings/character.
+  useEffect(() => {
+    if (authStatus === 'authenticated') void registerForPushNotifications();
   }, [authStatus]);
 
   useEffect(() => {
