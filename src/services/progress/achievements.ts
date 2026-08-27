@@ -3,8 +3,10 @@ import type { AchievementCheckState, AchievementDefinition, AchievementId } from
 /**
  * Real, checkable conditions only - matches the 4 achievements that already
  * have badge art in the Profile design (badge_first_win, badge_traveler,
- * badge_boz_uy_guest, badge_komuzchu). The wider 50-achievement catalog
- * shown as a total in Profile is not implemented yet; see PROGRESS_AUDIT.md.
+ * badge_boz_uy_guest, badge_komuzchu). Profile's `achievementsTotal` is
+ * derived from this same list (src/features/profile/data.ts), not a fixed
+ * larger catalog size - it grows only when a new achievement with a real,
+ * checkable condition is added here.
  *
  * As of Phase 6b, `useProgressStore` no longer calls this directly - the
  * authoritative check now happens server-side in Postgres
