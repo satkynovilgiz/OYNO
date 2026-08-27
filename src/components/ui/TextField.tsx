@@ -24,6 +24,10 @@ type TextFieldProps = {
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: TextInputProps['autoCapitalize'];
   autoComplete?: TextInputProps['autoComplete'];
+  /** Multi-line input (e.g. admin content-editor long-text fields) - grows
+   * to numberOfLines instead of the single-line input row. */
+  multiline?: boolean;
+  numberOfLines?: number;
 };
 
 /** Shared labeled input with inline validation error, used across Sign Up /
@@ -39,13 +43,15 @@ export function TextField({
   keyboardType = 'default',
   autoCapitalize = 'none',
   autoComplete,
+  multiline = false,
+  numberOfLines = 4,
 }: TextFieldProps) {
   const [isObscured, setIsObscured] = useState(secure);
 
   return (
     <View style={styles.wrap}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputRow, !!error && styles.inputRowError]}>
+      <View style={[styles.inputRow, multiline && styles.inputRowMultiline, !!error && styles.inputRowError]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -55,7 +61,9 @@ export function TextField({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoComplete={autoComplete}
-          style={styles.input}
+          multiline={multiline}
+          numberOfLines={multiline ? numberOfLines : undefined}
+          style={[styles.input, multiline && styles.inputMultiline]}
           accessibilityLabel={label}
         />
         {secure ? (
@@ -99,11 +107,18 @@ const styles = StyleSheet.create({
   inputRowError: {
     borderColor: colors.danger,
   },
+  inputRowMultiline: {
+    alignItems: 'flex-start',
+  },
   input: {
     flex: 1,
     paddingVertical: spacing.sm,
     ...typography.body,
     color: colors.textPrimary,
+  },
+  inputMultiline: {
+    minHeight: 90,
+    textAlignVertical: 'top',
   },
   toggle: {
     padding: spacing.xxs,

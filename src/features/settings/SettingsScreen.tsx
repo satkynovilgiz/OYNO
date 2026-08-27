@@ -10,6 +10,7 @@ import {
   LogOut,
   Lock,
   ShieldCheck,
+  Wrench,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -17,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ConfirmationModal, IconButton } from '@/components/ui';
+import { useAdminRole } from '@/services/admin/adminService';
 import { colors, spacing, typography } from '@/theme';
 
 import { SettingsRow } from './components/SettingsRow';
@@ -24,12 +26,14 @@ import { SettingsRow } from './components/SettingsRow';
 type SettingsScreenProps = {
   onPressBack: () => void;
   onNavigate: (section: 'account' | 'language' | 'notifications' | 'privacy' | 'security' | 'game' | 'data' | 'help' | 'about') => void;
+  onPressAdmin: () => void;
   onSignOut: () => Promise<void>;
 };
 
-export function SettingsScreen({ onPressBack, onNavigate, onSignOut }: SettingsScreenProps) {
+export function SettingsScreen({ onPressBack, onNavigate, onPressAdmin, onSignOut }: SettingsScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { data: adminRole } = useAdminRole();
   const [signOutVisible, setSignOutVisible] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -69,6 +73,15 @@ export function SettingsScreen({ onPressBack, onNavigate, onSignOut }: SettingsS
           <SettingsRow icon={HelpCircle} label={t('settings.rows.help')} onPress={() => onNavigate('help')} />
           <SettingsRow icon={Info} label={t('settings.rows.about')} onPress={() => onNavigate('about')} />
         </View>
+
+        {adminRole && (
+          <>
+            <Text style={styles.sectionLabel}>Admin</Text>
+            <View style={styles.group}>
+              <SettingsRow icon={Wrench} label="Admin panel" onPress={onPressAdmin} />
+            </View>
+          </>
+        )}
 
         <View style={styles.group}>
           <SettingsRow

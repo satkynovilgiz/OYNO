@@ -19,6 +19,7 @@ export default function SettingsRoute() {
         }
         router.push(`/settings/${section}` as never);
       }}
+      onPressAdmin={() => router.push('/admin' as never)}
       onSignOut={signOut}
     />
   );
