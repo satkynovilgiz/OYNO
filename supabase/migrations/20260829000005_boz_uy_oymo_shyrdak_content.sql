@@ -48,7 +48,7 @@ on conflict (id) do update set
   accuracy_level = excluded.accuracy_level, sources = excluded.sources;
 
 insert into public.culture_items (
-  id, category_id, subgroup, title, type_label, origin, history, cultural_meaning,
+  id, category_id, subgroup, title, type_label, origin, history,
   traditional_method, modern_status, fun_facts, accuracy_level, sources, sort_order
 ) values (
   'shyrdak-craft', 'shyrdak', null, 'Шырдак', 'custom',
@@ -66,6 +66,6 @@ insert into public.culture_items (
 )
 on conflict (id) do update set
   title = excluded.title, type_label = excluded.type_label, origin = excluded.origin,
-  history = excluded.history, cultural_meaning = excluded.cultural_meaning,
+  history = excluded.history,
   traditional_method = excluded.traditional_method, modern_status = excluded.modern_status,
   fun_facts = excluded.fun_facts, accuracy_level = excluded.accuracy_level, sources = excluded.sources;
