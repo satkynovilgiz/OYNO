@@ -43,7 +43,9 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
       ) : (
         <>
           {icon}
-          <Text style={[styles.label, isOutlined && styles.labelSecondary]}>{label}</Text>
+          <Text style={[styles.label, isOutlined && styles.labelSecondary]} numberOfLines={1}>
+            {label}
+          </Text>
         </>
       )}
     </AnimatedPressable>

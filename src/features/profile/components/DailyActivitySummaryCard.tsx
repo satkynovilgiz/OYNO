@@ -20,7 +20,9 @@ export function DailyActivitySummaryCard({ profile, activity, completed, total }
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('profile.dailyActivity.title')}</Text>
+        <Text style={styles.title} numberOfLines={1}>
+          {t('profile.dailyActivity.title')}
+        </Text>
         <View style={styles.streakChip}>
           <Flame size={13} color={colors.danger} strokeWidth={2.25} />
           <Text style={styles.streakText}>{t('profile.dailyActivity.streak', { count: profile.streakDays })}</Text>

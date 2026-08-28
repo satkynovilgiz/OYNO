@@ -70,6 +70,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: 92,
+    alignSelf: 'flex-start',
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.xxs,
@@ -79,8 +80,8 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   image: {
-    width: '100%',
-    aspectRatio: 1,
+    width: 84,
+    height: 84,
     borderRadius: radii.md,
     backgroundColor: colors.surfaceAlt,
   },

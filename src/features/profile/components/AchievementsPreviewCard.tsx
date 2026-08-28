@@ -21,7 +21,7 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={1}>
           {t('profile.achievements.title')}
         </Text>
         <TextButton

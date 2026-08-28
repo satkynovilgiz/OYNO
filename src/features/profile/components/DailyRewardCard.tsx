@@ -19,7 +19,9 @@ export function DailyRewardCard({ reward, claimed = false, onPressClaim }: Daily
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{t('profile.reward.title')}</Text>
+      <Text style={styles.title} numberOfLines={1}>
+        {t('profile.reward.title')}
+      </Text>
 
       <View style={styles.body}>
         <Image source={chestImage} style={styles.chest} resizeMode="contain" />
@@ -33,15 +35,15 @@ export function DailyRewardCard({ reward, claimed = false, onPressClaim }: Daily
             <Coins size={16} color={colors.accentGold} strokeWidth={2} />
             <Text style={styles.rewardText}>+{reward.coins}</Text>
           </View>
-
-          <View style={styles.ctaWrap}>
-            <Button
-              label={t(claimed ? 'profile.reward.claimedLabel' : 'profile.reward.cta')}
-              onPress={onPressClaim}
-              disabled={claimed}
-            />
-          </View>
         </View>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <Button
+          label={t(claimed ? 'profile.reward.claimedLabel' : 'profile.reward.cta')}
+          onPress={onPressClaim}
+          disabled={claimed}
+        />
       </View>
     </View>
   );
