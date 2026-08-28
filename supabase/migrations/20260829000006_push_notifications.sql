@@ -18,7 +18,6 @@
 -- for when to fire, which is a separate decision, not just infrastructure.
 
 create extension if not exists pg_net with schema extensions;
-
 create table public.push_tokens (
   user_id uuid not null references auth.users(id) on delete cascade,
   token text not null,
