@@ -28,6 +28,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // (SupabaseAuthService.verifyEmail/verifyPasswordResetCode), not
     // links - there's no auth URL for this client to ever detect.
     detectSessionInUrl: false,
+    // SupabaseAuthService.signInWithOAuth reads a `?code=` param from the
+    // redirect and calls exchangeCodeForSession() - that's the PKCE flow.
+    // Without this, the client defaults to 'implicit' and Supabase
+    // returns tokens in a #access_token= hash fragment instead, which the
+    // callback parsing never matches.
+    flowType: 'pkce',
   },
 });
 

@@ -1,18 +1,27 @@
+import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import * as WebBrowser from 'expo-web-browser';
 
 import { colors, spacing, typography } from '@/theme';
 
 /**
  * Landing target for the Google/Apple OAuth redirect (see
- * SupabaseAuthService.signInWithOAuth). The tab/sheet that lands here is
- * read directly by WebBrowser.openAuthSessionAsync back in the tab that
- * opened it - this screen never has to do anything with the URL itself,
- * it just needs to exist so the redirect has somewhere to land instead of
- * a 404 while that happens.
+ * SupabaseAuthService.signInWithOAuth). On native, the OS-level auth
+ * session (ASWebAuthenticationSession/Custom Tabs) intercepts the
+ * oyno:// redirect directly and this screen never even mounts. On web,
+ * WebBrowser.openAuthSessionAsync in the opener tab only resolves once
+ * *this* popup calls maybeCompleteAuthSession() - that's what postMessages
+ * the final URL back to the opener (see expo-web-browser's web source);
+ * without it the popup just sits here and the opener hangs until its own
+ * 3-minute timeout. maybeCompleteAuthSession() is a no-op on native.
  */
 export default function AuthCallbackRoute() {
   const { t } = useTranslation();
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
 
   return (
     <View style={styles.root}>
