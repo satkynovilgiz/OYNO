@@ -1,8 +1,8 @@
-import { Sparkles, UserRound } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 import { Image, StyleSheet, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { skinToneHex } from '@/services/avatar/avatarColors';
+import { AVATAR_BUST_ART } from '@/services/avatar/avatarArt';
 import type { AvatarConfig } from '@/services/avatar/avatarConfig';
 import { colors, radii, shadows } from '@/theme';
 import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
@@ -18,9 +18,17 @@ const PREVIEW_SIZE = 176;
  * warm mountains/yurt background art (the same asset ProfileHero already
  * uses) rather than inventing new art for this - a real, finished OYNO
  * background, just not yet a *composited* rendering of the selected
- * parts (see UserAvatar's own doc comment on why: no layered artwork
- * exists yet). The circle in front is the same honest work-in-progress
- * treatment UserAvatar shows elsewhere, just larger.
+ * parts.
+ *
+ * The circle shows AVATAR_BUST_ART[config.base] - one static illustrated
+ * portrait per base (see avatarArt.ts's provenance note). IMPORTANT
+ * caveat, same one UserAvatar documents: that portrait bakes in its own
+ * fixed hairstyle/headwear/clothing, so it does NOT yet visually reflect
+ * the user's actual hair/headwear/clothing/accessory selections - only
+ * `base` and (via the tint below) `skinTone` change what's shown here.
+ * Replacing this with a true per-part composite requires layered art
+ * that doesn't exist yet (see the implementation plan's art-requirements
+ * appendix).
  */
 export function AvatarPreview({ config }: AvatarPreviewProps) {
   return (
@@ -40,13 +48,13 @@ export function AvatarPreview({ config }: AvatarPreviewProps) {
       </View>
 
       <View
-        style={[
-          styles.avatarCircle,
-          { width: PREVIEW_SIZE, height: PREVIEW_SIZE, borderRadius: PREVIEW_SIZE / 2 },
-          { backgroundColor: skinToneHex(config.skinTone) },
-        ]}
+        style={[styles.avatarCircle, { width: PREVIEW_SIZE, height: PREVIEW_SIZE, borderRadius: PREVIEW_SIZE / 2 }]}
       >
-        <UserRound size={PREVIEW_SIZE * 0.6} color={colors.surface} strokeWidth={1.5} />
+        <Image
+          source={AVATAR_BUST_ART[config.base]}
+          style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE, borderRadius: PREVIEW_SIZE / 2 }}
+          resizeMode="cover"
+        />
         <View style={styles.sparkleBadge}>
           <Sparkles size={20} color={colors.textOnPrimary} strokeWidth={2.25} />
         </View>

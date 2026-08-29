@@ -3,7 +3,7 @@ import { AVATAR_CATEGORY_IDS } from './avatarConfig';
 import { DEFAULT_AVATAR_CONFIG } from './defaultAvatar';
 
 // Hard product requirement: these must NEVER contain a locked item.
-const ALWAYS_FREE_CATEGORIES = ['faceShape', 'eyebrows', 'nose', 'mouth', 'body', 'eyes'] as const;
+const ALWAYS_FREE_CATEGORIES = ['base', 'faceShape', 'eyebrows', 'nose', 'mouth', 'body', 'eyes'] as const;
 
 describe('AVATAR_CATALOG', () => {
   it('has at least one item in every category', () => {

@@ -6,6 +6,12 @@
  * characterAssets.ts).
  */
 
+/** The base illustrated portrait (spec section 1's "gender / base
+ * character") - purely which bust illustration renders in the preview,
+ * not a restriction on any other category: every hairstyle/clothing/
+ * headwear item remains selectable regardless of base (spec section 10's
+ * "do not lock by gender" principle applied consistently here too). */
+export type BaseId = 'male' | 'female';
 export type SkinToneId = 'skin_01' | 'skin_02' | 'skin_03' | 'skin_04' | 'skin_05' | 'skin_06';
 export type FaceShapeId = 'oval' | 'round' | 'square' | 'long' | 'softAngular' | 'wide' | 'heart';
 export type BodyId = 'slim' | 'average' | 'athletic' | 'broad' | 'tall' | 'compact';
@@ -97,6 +103,7 @@ export type BackgroundId =
  * grouping. This list is the data-layer source of truth every catalog/
  * unlock/compatibility function operates on. */
 export const AVATAR_CATEGORY_IDS = [
+  'base',
   'faceShape',
   'eyebrows',
   'nose',
@@ -114,6 +121,7 @@ export type AvatarCategoryId = (typeof AVATAR_CATEGORY_IDS)[number];
 
 export type AvatarConfig = {
   version: number;
+  base: BaseId;
   skinTone: SkinToneId;
   faceShape: FaceShapeId;
   body: BodyId;
@@ -136,6 +144,7 @@ export type AvatarConfig = {
  * swatches instead, see avatarColors.ts) so they're outside
  * AVATAR_CATEGORY_IDS but still real AvatarConfig fields. */
 export const AVATAR_CONFIG_FIELDS = [
+  'base',
   'skinTone',
   'faceShape',
   'body',

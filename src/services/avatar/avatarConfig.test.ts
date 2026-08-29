@@ -2,6 +2,7 @@ import { isValidAvatarConfig, sanitizeAvatarConfig } from './avatarConfig';
 import { DEFAULT_AVATAR_CONFIG } from './defaultAvatar';
 
 const VALID_IDS = {
+  base: new Set(['male', 'female']),
   skinTone: new Set(['skin_01', 'skin_03']),
   hairColor: new Set(['black']),
   eyeColor: new Set(['brown']),

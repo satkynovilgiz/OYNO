@@ -50,6 +50,7 @@ function items(categoryId: AvatarCategoryId, ids: string[], gatedIds: ReadonlySe
  * anywhere in this file or in copy shown to users.
  */
 export const AVATAR_CATALOG: Record<AvatarCategoryId, AvatarItem[]> = {
+  base: items('base', ['male', 'female']),
   faceShape: items('faceShape', ['oval', 'round', 'square', 'long', 'softAngular', 'wide', 'heart']),
   eyebrows: items('eyebrows', ['straight', 'arched', 'soft', 'thick', 'angled', 'bushy']),
   nose: items('nose', ['default', 'narrow', 'wide', 'upturned', 'straight', 'rounded']),
@@ -151,6 +152,7 @@ AVATAR_CATALOG.accessory[0].isPlaceholder = false;
 // Real illustrated art now exists for these (sliced from the reference
 // mockups - see avatarArt.ts) - every other item stays a placeholder.
 const ITEMS_WITH_REAL_ART: Record<string, ReadonlySet<string>> = {
+  base: new Set(['male', 'female']),
   faceShape: new Set(['oval', 'round', 'square', 'long', 'softAngular', 'wide']),
   hair: new Set(['hair_01', 'hair_02', 'hair_03', 'hair_04', 'hair_05', 'hair_06']),
   eyebrows: new Set(['straight', 'arched', 'soft', 'thick', 'angled', 'bushy']),

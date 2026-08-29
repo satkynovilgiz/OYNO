@@ -10,6 +10,7 @@ import type { AvatarConfig } from './avatarConfig';
  */
 export const DEFAULT_AVATAR_CONFIG: AvatarConfig = {
   version: 1,
+  base: 'male',
   skinTone: 'skin_03',
   faceShape: 'oval',
   body: 'average',

@@ -340,6 +340,7 @@
       "background": "Background"
     },
     "sections": {
+      "base": "Base",
       "skinTone": "Skin tone",
       "faceShape": "Face shape",
       "eyebrows": "Eyebrows",

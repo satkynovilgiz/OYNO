@@ -1,9 +1,9 @@
-import { Sparkles, UserRound } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { CharacterAvatar, type CharacterId } from '@/components/character';
-import { skinToneHex } from '@/services/avatar/avatarColors';
+import { AVATAR_BUST_ART } from '@/services/avatar/avatarArt';
 import type { AvatarConfig } from '@/services/avatar/avatarConfig';
 import { colors } from '@/theme';
 
@@ -30,12 +30,15 @@ type UserAvatarProps = {
 /**
  * The single reusable "this is the player" avatar, used everywhere the
  * app shows the signed-in user (Profile, Home, Explore, Culture headers).
- * No layered/illustrated avatar rendering exists yet (see the Avatar
- * Creator implementation plan's art-requirements appendix) - once a user
- * *has* customized, this renders an honestly-labeled work-in-progress
- * placeholder (their chosen skin tone + a generic person icon + a small
- * "customized" badge), never a fake illustration pretending to be
- * finished art.
+ * Once a user *has* customized, this renders AVATAR_BUST_ART[base] - one
+ * static illustrated portrait per base (see avatarArt.ts's provenance
+ * note). IMPORTANT: that portrait bakes in its own fixed hairstyle/
+ * headwear/clothing, so it does NOT yet reflect the user's actual
+ * hair/headwear/clothing/accessory selections - only `base` changes what
+ * renders here. A true per-part composite needs layered art that doesn't
+ * exist yet (see the Avatar Creator implementation plan's art-
+ * requirements appendix); this is an honest one-portrait-per-base
+ * placeholder, not a finished composited illustration.
  */
 export function UserAvatar({ characterId, avatarConfig, size = 'medium' }: UserAvatarProps) {
   const { t } = useTranslation();
@@ -49,11 +52,8 @@ export function UserAvatar({ characterId, avatarConfig, size = 'medium' }: UserA
   const badgeSize = Math.max(16, Math.round(px * 0.3));
 
   return (
-    <View
-      style={[styles.wrap, dimensionStyle, { backgroundColor: skinToneHex(avatarConfig.skinTone) }]}
-      accessibilityLabel={t('avatar.wipAvatarLabel')}
-    >
-      <UserRound size={px * 0.6} color={colors.surface} strokeWidth={1.75} />
+    <View style={[styles.wrap, dimensionStyle]} accessibilityLabel={t('avatar.wipAvatarLabel')}>
+      <Image source={AVATAR_BUST_ART[avatarConfig.base]} style={dimensionStyle} resizeMode="cover" />
       <View style={[styles.badge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
         <Sparkles size={badgeSize * 0.6} color={colors.textOnPrimary} strokeWidth={2.25} />
       </View>

@@ -33,7 +33,7 @@ import mouthSoft from '@assets/img/OYNO_design/avatar/mouth_soft.png';
 import mouthSmirk from '@assets/img/OYNO_design/avatar/mouth_smirk.png';
 import mouthOpenSmile from '@assets/img/OYNO_design/avatar/mouth_openSmile.png';
 
-import type { AvatarCategoryId } from './avatarConfig';
+import type { AvatarCategoryId, BaseId } from './avatarConfig';
 
 /**
  * Real (non-placeholder) illustrated art, sliced from the two reference
@@ -44,11 +44,14 @@ import type { AvatarCategoryId } from './avatarConfig';
  * picker grid, the same limited scope avatarCatalog.ts's `isPlaceholder`
  * flag already documents. Every id below has isPlaceholder:false set in
  * avatarCatalog.ts to match. `bust_boy`/`bust_girl` are not wired into the
- * live AvatarPreview/UserAvatar - there is no gender/base field in
- * AvatarConfig to select between them (see conversation with product
- * owner); they're exported here for whenever that's decided.
+ * live AvatarPreview/UserAvatar via AvatarConfig's `base` field - see
+ * those two components for the important caveat that this is one static
+ * baked portrait (with its own fixed hat/clothing), not a composite of
+ * the user's actual headwear/clothing/hair selections.
  */
 const ITEM_ART: Partial<Record<string, ImageSourcePropType>> = {
+  base_male: bustBoy,
+  base_female: bustGirl,
   faceShape_oval: faceshapeOval,
   faceShape_round: faceshapeRound,
   faceShape_square: faceshapeSquare,
@@ -81,7 +84,10 @@ const ITEM_ART: Partial<Record<string, ImageSourcePropType>> = {
   mouth_openSmile: mouthOpenSmile,
 };
 
-export const AVATAR_BUST_ART = { boy: bustBoy, girl: bustGirl } as const;
+/** Direct, typed lookup for the two base portraits - used by
+ * AvatarPreview/UserAvatar, which key off AvatarConfig['base'] directly
+ * rather than going through the generic category/item-id lookup below. */
+export const AVATAR_BUST_ART: Record<BaseId, ImageSourcePropType> = { male: bustBoy, female: bustGirl };
 
 export function getAvatarItemArt(categoryId: AvatarCategoryId, itemId: string): ImageSourcePropType | null {
   return ITEM_ART[`${categoryId}_${itemId}`] ?? null;

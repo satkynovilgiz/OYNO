@@ -16,6 +16,7 @@ export const AVATAR_TABS: AvatarTab[] = [
     icon: Smile,
     labelKey: 'avatar.categories.face',
     sections: [
+      { kind: 'items', categoryId: 'base', titleKey: 'avatar.sections.base' },
       { kind: 'colors', fieldId: 'skinTone', titleKey: 'avatar.sections.skinTone' },
       { kind: 'items', categoryId: 'faceShape', titleKey: 'avatar.sections.faceShape' },
       { kind: 'items', categoryId: 'eyebrows', titleKey: 'avatar.sections.eyebrows' },
