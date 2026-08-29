@@ -10,6 +10,7 @@ import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAvatarStore } from '@/store/useAvatarStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { DAILY_GIFT_REWARD, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
@@ -38,6 +39,7 @@ export function ProfileScreen() {
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
+  const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
   const progress = useProgressStore();
 
   const today = new Date().toISOString().slice(0, 10);
@@ -46,6 +48,7 @@ export function ProfileScreen() {
   const { level, xpCurrent, xpMax } = xpProgress(progress.xp);
   const profile: ProfileSummary = {
     characterId,
+    avatarConfig,
     name: user?.name ?? t('common.guestName'),
     level,
     title: t('profile.rankTitle'),
@@ -134,7 +137,7 @@ export function ProfileScreen() {
         <View style={styles.horizontalPad}>
           <ProfileHero
             profile={profile}
-            onPressAvatar={() => router.push('/character-select' as never)}
+            onPressAvatar={() => router.push('/avatar-editor' as never)}
             onPressEdit={() => router.push('/settings/account' as never)}
           />
         </View>

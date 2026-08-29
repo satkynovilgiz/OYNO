@@ -2,10 +2,11 @@ import { Bell, Coins, Flame, Search } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { CharacterAvatar } from '@/components/character';
+import { UserAvatar } from '@/components/avatar';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, IconButton } from '@/components/ui';
 import { useAppStore } from '@/store/useAppStore';
+import { useAvatarStore } from '@/store/useAvatarStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type CultureHeaderProps = {
@@ -27,6 +28,7 @@ export function CultureHeader({
 }: CultureHeaderProps) {
   const { t } = useTranslation();
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
+  const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
 
   return (
     <View style={styles.wrap}>
@@ -38,7 +40,7 @@ export function CultureHeader({
             accessibilityRole="button"
             accessibilityLabel={t('culture.profileLabel')}
           >
-            <CharacterAvatar characterId={characterId} emotion="happy" size={40} />
+            <UserAvatar characterId={characterId} avatarConfig={avatarConfig} size="small" />
           </AnimatedPressable>
           <View style={styles.statChip}>
             <Flame size={14} color={colors.danger} strokeWidth={2} />

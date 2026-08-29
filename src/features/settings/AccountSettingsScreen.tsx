@@ -1,4 +1,4 @@
-import { KeyRound, ShieldAlert, Trash2 } from 'lucide-react-native';
+import { KeyRound, ShieldAlert, Sparkles, Trash2, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,8 @@ type AccountSettingsScreenProps = {
   onSaveProfile: (input: { name: string; email: string }) => Promise<boolean>;
   onPressChangePassword: () => void;
   onDeleteAccount: (password: string) => Promise<boolean>;
+  onPressCustomizeAvatar: () => void;
+  onPressStoryCompanion: () => void;
 };
 
 export function AccountSettingsScreen({
@@ -28,6 +30,8 @@ export function AccountSettingsScreen({
   onSaveProfile,
   onPressChangePassword,
   onDeleteAccount,
+  onPressCustomizeAvatar,
+  onPressStoryCompanion,
 }: AccountSettingsScreenProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(user.name);
@@ -80,6 +84,8 @@ export function AccountSettingsScreen({
       </View>
 
       <View style={styles.group}>
+        <SettingsRow icon={Sparkles} label={t('settings.account.customizeAvatar')} onPress={onPressCustomizeAvatar} />
+        <SettingsRow icon={Users} label={t('settings.account.storyCompanion')} onPress={onPressStoryCompanion} />
         <SettingsRow icon={KeyRound} label={t('settings.account.changePassword')} onPress={onPressChangePassword} />
         <SettingsRow
           icon={Trash2}

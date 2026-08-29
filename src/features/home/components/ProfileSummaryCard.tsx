@@ -2,7 +2,7 @@ import { Award, Coins, Pencil } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { CharacterAvatar } from '@/components/character';
+import { UserAvatar } from '@/components/avatar';
 import { Card, Pill, ProgressBar } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -20,7 +20,7 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
     <Card style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.avatar}>
-          <CharacterAvatar characterId={player.characterId} emotion="happy" size={44} />
+          <UserAvatar characterId={player.characterId} avatarConfig={player.avatarConfig} size="small" />
         </View>
 
         <View style={styles.identity}>

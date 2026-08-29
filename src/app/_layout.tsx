@@ -20,6 +20,7 @@ import { AchievementUnlockedModal } from '@/features/profile/components/Achievem
 import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAvatarStore } from '@/store/useAvatarStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -102,6 +103,16 @@ export default function RootLayout() {
   useEffect(() => {
     if (authStatus === 'loading') return;
     void useAppStore.getState().loadCharacterId();
+  }, [authStatus]);
+
+  // Same race, same reason: UserAvatar renders on Home/Explore/Culture/
+  // Profile headers, which mount long before anyone opens the avatar
+  // editor, so the config (and hasEverSaved, which decides whether those
+  // headers show the story-character portrait or the custom-avatar
+  // placeholder) must already be loaded by then.
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    void useAvatarStore.getState().load();
   }, [authStatus]);
 
   // Guests have no server row for register_push_token to attach to (it

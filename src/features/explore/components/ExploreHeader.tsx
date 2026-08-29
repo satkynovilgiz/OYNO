@@ -2,10 +2,11 @@ import { Backpack, Search } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { CharacterAvatar } from '@/components/character';
+import { UserAvatar } from '@/components/avatar';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, IconButton } from '@/components/ui';
 import { useAppStore } from '@/store/useAppStore';
+import { useAvatarStore } from '@/store/useAvatarStore';
 import { colors, spacing, typography } from '@/theme';
 
 type ExploreHeaderProps = {
@@ -17,6 +18,7 @@ type ExploreHeaderProps = {
 export function ExploreHeader({ onPressAvatar, onPressSearch, onPressCollection }: ExploreHeaderProps) {
   const { t } = useTranslation();
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
+  const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
 
   return (
     <View style={styles.row}>
@@ -26,7 +28,7 @@ export function ExploreHeader({ onPressAvatar, onPressSearch, onPressCollection 
         accessibilityRole="button"
         accessibilityLabel={t('explore.header.profileLabel')}
       >
-        <CharacterAvatar characterId={characterId} emotion="happy" size={56} />
+        <UserAvatar characterId={characterId} avatarConfig={avatarConfig} size="medium" />
       </AnimatedPressable>
 
       <View style={styles.center}>

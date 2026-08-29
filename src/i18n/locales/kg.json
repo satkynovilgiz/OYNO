@@ -110,7 +110,9 @@
       "deleteConfirm": "Өчүрүү",
       "deleteCancel": "Жок",
       "deleteConfirmHint": "Ырастоо үчүн сырсөзүңүздү жазыңыз.",
-      "passwordLabel": "Сырсөз"
+      "passwordLabel": "Сырсөз",
+      "customizeAvatar": "Аватарды өзгөртүү",
+      "storyCompanion": "Окуя каарманы"
     },
     "about": {
       "title": "OYNO жөнүндө",
@@ -305,6 +307,47 @@
     "continue": "Улантуу",
     "guestHint": "Прогрессиңизди сактоо үчүн аккаунт түзүңүз",
     "comingSoon": "Жакында"
+  },
+  "avatar": {
+    "title": "Аватар түзүү",
+    "done": "Даяр",
+    "skip": "Азыр эмес",
+    "continue": "Улантуу",
+    "closeLabel": "Жабуу",
+    "wipAvatarLabel": "Инсандаштырылган аватар (даярдалууда)",
+    "unsavedChangesTitle": "Өзгөртүүлөрдү сактабай чыгасызбы?",
+    "unsavedChangesMessage": "Аватарга киргизген өзгөртүүлөрүңүз сакталбайт.",
+    "unsavedChangesConfirm": "Чыгуу",
+    "unsavedChangesCancel": "Улантуу",
+    "randomize": "Кокус тандоо",
+    "reset": "Баштапкы абалга келтирүү",
+    "resetConfirmTitle": "Аватарды баштапкы абалга келтиресизби?",
+    "resetConfirmMessage": "Бардык тандоолоруңуз баштапкы абалына кайтат.",
+    "resetConfirm": "Баштапкы абалга келтирүү",
+    "resetCancel": "Жок",
+    "itemLocked": "Кулпуланган",
+    "newBadge": "Жаңы",
+    "saveErrorTitle": "Сактоо мүмкүн болгон жок.",
+    "saveErrorRetry": "Кайра аракет кылуу",
+    "categories": {
+      "face": "Жүз",
+      "body": "Дене",
+      "eyes": "Көз",
+      "hair": "Чач",
+      "headwear": "Баш кийим",
+      "clothing": "Кийим",
+      "accessory": "Аксессуарлар",
+      "background": "Фон"
+    },
+    "sections": {
+      "skinTone": "Тери түсү",
+      "faceShape": "Жүз формасы",
+      "eyebrows": "Каш",
+      "nose": "Мурун",
+      "mouth": "Ооз",
+      "eyeColor": "Көз түсү",
+      "hairColor": "Чач түсү"
+    }
   },
   "language": {
     "title": "Тилди тандаңыз",
@@ -521,7 +564,7 @@
     "settingsLabel": "Жөндөөлөр",
     "notificationsLabel": "Билдирүүлөр",
     "editLabel": "Профилди оңдоо",
-    "changePhotoLabel": "Сүрөттү алмаштыруу",
+    "editAvatarLabel": "Аватарды өзгөртүү",
     "level": "Деңгээл {{level}}",
     "xpRemaining": "{{count}} XP калды",
     "rankTitle": "Кыргыз маданиятын изилдөөчү",

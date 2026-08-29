@@ -1,11 +1,13 @@
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CharacterId } from '@/components/character';
+import type { AvatarConfig } from '@/services/avatar/avatarConfig';
 
 export type PlayerSummary = {
   name: string;
   rank: string;
   characterId: CharacterId;
+  avatarConfig: AvatarConfig | null;
   level: number;
   xpCurrent: number;
   xpMax: number;

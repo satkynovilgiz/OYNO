@@ -110,7 +110,9 @@
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel",
       "deleteConfirmHint": "Enter your password to confirm.",
-      "passwordLabel": "Password"
+      "passwordLabel": "Password",
+      "customizeAvatar": "Customize Avatar",
+      "storyCompanion": "Story companion"
     },
     "about": {
       "title": "About OYNO",
@@ -305,6 +307,47 @@
     "continue": "Continue",
     "guestHint": "Create an account to save your progress",
     "comingSoon": "Coming soon"
+  },
+  "avatar": {
+    "title": "Create Avatar",
+    "done": "Done",
+    "skip": "Not now",
+    "continue": "Continue",
+    "closeLabel": "Close",
+    "wipAvatarLabel": "Custom avatar (illustration coming soon)",
+    "unsavedChangesTitle": "Discard changes?",
+    "unsavedChangesMessage": "Your avatar edits won't be saved.",
+    "unsavedChangesConfirm": "Discard",
+    "unsavedChangesCancel": "Keep editing",
+    "randomize": "Randomize",
+    "reset": "Reset avatar",
+    "resetConfirmTitle": "Reset your avatar?",
+    "resetConfirmMessage": "All your choices will go back to the defaults.",
+    "resetConfirm": "Reset",
+    "resetCancel": "Cancel",
+    "itemLocked": "Locked",
+    "newBadge": "New",
+    "saveErrorTitle": "Could not save.",
+    "saveErrorRetry": "Retry",
+    "categories": {
+      "face": "Face",
+      "body": "Body",
+      "eyes": "Eyes",
+      "hair": "Hair",
+      "headwear": "Headwear",
+      "clothing": "Clothing",
+      "accessory": "Accessories",
+      "background": "Background"
+    },
+    "sections": {
+      "skinTone": "Skin tone",
+      "faceShape": "Face shape",
+      "eyebrows": "Eyebrows",
+      "nose": "Nose",
+      "mouth": "Mouth",
+      "eyeColor": "Eye color",
+      "hairColor": "Hair color"
+    }
   },
   "language": {
     "title": "Choose your language",
@@ -521,7 +564,7 @@
     "settingsLabel": "Settings",
     "notificationsLabel": "Notifications",
     "editLabel": "Edit profile",
-    "changePhotoLabel": "Change photo",
+    "editAvatarLabel": "Edit avatar",
     "level": "Level {{level}}",
     "xpRemaining": "{{count}} XP left",
     "rankTitle": "Explorer of Kyrgyz culture",

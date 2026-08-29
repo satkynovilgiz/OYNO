@@ -2,9 +2,11 @@ import type { LucideIcon } from 'lucide-react-native';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CharacterId } from '@/components/character';
+import type { AvatarConfig } from '@/services/avatar/avatarConfig';
 
 export type ProfileSummary = {
   characterId: CharacterId;
+  avatarConfig: AvatarConfig | null;
   name: string;
   level: number;
   title: string;

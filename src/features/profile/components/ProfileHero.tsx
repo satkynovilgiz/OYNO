@@ -1,9 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Camera, Pencil } from 'lucide-react-native';
+import { Pencil, Wand2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { CharacterAvatar } from '@/components/character';
+import { UserAvatar } from '@/components/avatar';
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
@@ -38,11 +38,11 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
           style={styles.avatarWrap}
           onPress={onPressAvatar}
           accessibilityRole="button"
-          accessibilityLabel={t('profile.changePhotoLabel')}
+          accessibilityLabel={t('profile.editAvatarLabel')}
         >
-          <CharacterAvatar characterId={profile.characterId} emotion="happy" size={92} />
+          <UserAvatar characterId={profile.characterId} avatarConfig={profile.avatarConfig} size="profile" />
           <View style={styles.cameraBadge}>
-            <Camera size={14} color={colors.textOnPrimary} strokeWidth={2.25} />
+            <Wand2 size={14} color={colors.textOnPrimary} strokeWidth={2.25} />
           </View>
         </AnimatedPressable>
 

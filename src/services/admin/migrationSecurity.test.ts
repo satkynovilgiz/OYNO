@@ -20,9 +20,10 @@ function readAllMigrations(): string {
 }
 
 // Tables that are allowed a direct client-facing RLS write policy (insert/
-// update/delete) because there's nothing to cheat: user preferences and
-// append-only client analytics, not economy/progress/security state.
-const ALLOWED_CLIENT_WRITE_TABLES = new Set(['user_settings', 'analytics_events']);
+// update/delete) because there's nothing to cheat: user preferences,
+// append-only client analytics, and the purely cosmetic avatar config -
+// not economy/progress/security state.
+const ALLOWED_CLIENT_WRITE_TABLES = new Set(['user_settings', 'analytics_events', 'user_avatars']);
 
 // Tables where a client write policy would be a real security hole -
 // every mutation must go through a SECURITY DEFINER function instead.

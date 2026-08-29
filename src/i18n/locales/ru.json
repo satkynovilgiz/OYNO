@@ -110,7 +110,9 @@
       "deleteConfirm": "Удалить",
       "deleteCancel": "Отмена",
       "deleteConfirmHint": "Введите пароль для подтверждения.",
-      "passwordLabel": "Пароль"
+      "passwordLabel": "Пароль",
+      "customizeAvatar": "Изменить аватар",
+      "storyCompanion": "Персонаж-компаньон"
     },
     "about": {
       "title": "Об OYNO",
@@ -305,6 +307,47 @@
     "continue": "Продолжить",
     "guestHint": "Создай аккаунт, чтобы сохранить прогресс",
     "comingSoon": "Скоро"
+  },
+  "avatar": {
+    "title": "Создать аватар",
+    "done": "Готово",
+    "skip": "Не сейчас",
+    "continue": "Продолжить",
+    "closeLabel": "Закрыть",
+    "wipAvatarLabel": "Свой аватар (иллюстрация скоро появится)",
+    "unsavedChangesTitle": "Отменить изменения?",
+    "unsavedChangesMessage": "Изменения в аватаре не будут сохранены.",
+    "unsavedChangesConfirm": "Отменить",
+    "unsavedChangesCancel": "Продолжить редактирование",
+    "randomize": "Случайный выбор",
+    "reset": "Сбросить аватар",
+    "resetConfirmTitle": "Сбросить аватар?",
+    "resetConfirmMessage": "Все ваши настройки вернутся к значениям по умолчанию.",
+    "resetConfirm": "Сбросить",
+    "resetCancel": "Отмена",
+    "itemLocked": "Заблокировано",
+    "newBadge": "Новое",
+    "saveErrorTitle": "Не удалось сохранить.",
+    "saveErrorRetry": "Повторить",
+    "categories": {
+      "face": "Лицо",
+      "body": "Тело",
+      "eyes": "Глаза",
+      "hair": "Волосы",
+      "headwear": "Головной убор",
+      "clothing": "Одежда",
+      "accessory": "Аксессуары",
+      "background": "Фон"
+    },
+    "sections": {
+      "skinTone": "Тон кожи",
+      "faceShape": "Форма лица",
+      "eyebrows": "Брови",
+      "nose": "Нос",
+      "mouth": "Рот",
+      "eyeColor": "Цвет глаз",
+      "hairColor": "Цвет волос"
+    }
   },
   "language": {
     "title": "Выберите язык",
@@ -521,7 +564,7 @@
     "settingsLabel": "Настройки",
     "notificationsLabel": "Уведомления",
     "editLabel": "Редактировать профиль",
-    "changePhotoLabel": "Сменить фото",
+    "editAvatarLabel": "Изменить аватар",
     "level": "Уровень {{level}}",
     "xpRemaining": "Осталось {{count}} XP",
     "rankTitle": "Исследователь кыргызской культуры",

@@ -8,6 +8,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useAvatarStore } from '@/store/useAvatarStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
@@ -47,6 +48,7 @@ export function HomeScreen() {
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
+  const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
   const progress = useProgressStore();
 
   const today = new Date().toISOString().slice(0, 10);
@@ -61,6 +63,7 @@ export function HomeScreen() {
     name: user?.name ?? t('common.guestName'),
     rank: t('home.profile.rank'),
     characterId,
+    avatarConfig,
     level,
     xpCurrent,
     xpMax,
