@@ -234,6 +234,12 @@
     "culture": {
       "openLabel": "Open section"
     },
+    "cultureTiles": {
+      "culture": { "title": "Culture", "subtitle": "Yurt, ornament, shyrdak" },
+      "food": { "title": "Cuisine", "subtitle": "National dishes" },
+      "music": { "title": "Music", "subtitle": "Komuz, songs, melodies" },
+      "map": { "title": "World Map", "subtitle": "Explore the regions" }
+    },
     "nav": {
       "home": "Home",
       "games": "Games",
@@ -278,7 +284,8 @@
     "invite": {
       "title": "Invite your friends!",
       "subtitle": "Get more rewards when you play with friends!",
-      "cta": "Invite"
+      "cta": "Invite",
+      "shareMessage": "Come play OYNO with me - a game about Kyrgyz culture and traditions!"
     }
   },
   "beshTash": {
@@ -300,6 +307,21 @@
     "skip": "Skip",
     "next": "Next",
     "start": "Let's start!"
+  },
+  "character": {
+    "names": {
+      "bek": "Bek",
+      "aidana": "Aidana",
+      "aiana": "Aiana",
+      "boru": "Boru",
+      "tulpar": "Tulpar",
+      "elchi": "Elchi"
+    },
+    "descriptors": {
+      "bek": "energetic, fearless",
+      "aidana": "clever, calm",
+      "aiana": "warm, creative"
+    }
   },
   "characterSelect": {
     "title": "Choose your character",

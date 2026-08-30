@@ -6,8 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   ALL_CHARACTER_IDS,
-  CHARACTER_DESCRIPTORS,
-  CHARACTER_NAMES,
   CHARACTERS_WITH_FULL_SHEET,
   CharacterAvatar,
   type CharacterId,
@@ -50,17 +48,19 @@ export function CharacterSelectScreen({ isGuest = false, initialCharacterId, onC
             const isComplete = CHARACTERS_WITH_FULL_SHEET.includes(characterId);
             const isSelected = isComplete && selected === characterId;
 
+            const name = t(`character.names.${characterId}`);
+
             if (!isComplete) {
               return (
                 <View
                   key={characterId}
-                  accessibilityLabel={`${CHARACTER_NAMES[characterId]} - ${t('characterSelect.comingSoon')}`}
+                  accessibilityLabel={`${name} - ${t('characterSelect.comingSoon')}`}
                   style={[styles.card, styles.cardDisabled]}
                 >
                   <View style={styles.avatarWrap}>
                     <CharacterAvatar characterId={characterId} emotion="happy" size={88} />
                   </View>
-                  <Text style={styles.name}>{CHARACTER_NAMES[characterId]}</Text>
+                  <Text style={styles.name}>{name}</Text>
                   <View style={styles.comingSoonBadge}>
                     <Text style={styles.comingSoonLabel}>{t('characterSelect.comingSoon')}</Text>
                   </View>
@@ -73,7 +73,7 @@ export function CharacterSelectScreen({ isGuest = false, initialCharacterId, onC
                 key={characterId}
                 onPress={() => setSelected(characterId)}
                 accessibilityRole="button"
-                accessibilityLabel={CHARACTER_NAMES[characterId]}
+                accessibilityLabel={name}
                 style={[styles.card, isSelected && styles.cardSelected]}
               >
                 <View style={styles.avatarWrap}>
@@ -84,8 +84,8 @@ export function CharacterSelectScreen({ isGuest = false, initialCharacterId, onC
                     </View>
                   )}
                 </View>
-                <Text style={styles.name}>{CHARACTER_NAMES[characterId]}</Text>
-                <Text style={styles.descriptor}>{CHARACTER_DESCRIPTORS[characterId]}</Text>
+                <Text style={styles.name}>{name}</Text>
+                <Text style={styles.descriptor}>{t(`character.descriptors.${characterId}`)}</Text>
               </AnimatedPressable>
             );
           })}

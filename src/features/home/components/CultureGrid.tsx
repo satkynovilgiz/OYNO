@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { IconButton } from '@/components/ui';
+import { AnimatedPressable, IconButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { CultureTile } from '../types';
@@ -19,7 +19,14 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
   return (
     <View style={styles.grid}>
       {tiles.map((tile) => (
-        <View key={tile.id} style={styles.tile}>
+        <AnimatedPressable
+          key={tile.id}
+          style={styles.tile}
+          onPress={() => onPressTile?.(tile)}
+          hoverEffect
+          accessibilityRole="button"
+          accessibilityLabel={tile.title}
+        >
           {tile.imageSource ? (
             <Image source={tile.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : tile.imageUri ? (
@@ -50,7 +57,7 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
               onPress={() => onPressTile?.(tile)}
             />
           </View>
-        </View>
+        </AnimatedPressable>
       ))}
     </View>
   );

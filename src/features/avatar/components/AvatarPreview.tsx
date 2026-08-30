@@ -3,6 +3,7 @@ import { Image, StyleSheet, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AVATAR_BUST_ART } from '@/services/avatar/avatarArt';
+import { skinToneHex } from '@/services/avatar/avatarColors';
 import type { AvatarConfig } from '@/services/avatar/avatarConfig';
 import { colors, radii, shadows } from '@/theme';
 import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
@@ -48,7 +49,11 @@ export function AvatarPreview({ config }: AvatarPreviewProps) {
       </View>
 
       <View
-        style={[styles.avatarCircle, { width: PREVIEW_SIZE, height: PREVIEW_SIZE, borderRadius: PREVIEW_SIZE / 2 }]}
+        style={[
+          styles.avatarCircle,
+          { width: PREVIEW_SIZE, height: PREVIEW_SIZE, borderRadius: PREVIEW_SIZE / 2 },
+          { borderColor: skinToneHex(config.skinTone) },
+        ]}
       >
         <Image
           source={AVATAR_BUST_ART[config.base]}

@@ -23,8 +23,16 @@ import {
   HomeHeader,
   ProfileSummaryCard,
 } from './components';
-import { mockCultureTiles, mockGames } from './mockData';
-import type { DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
+import { cultureTileAssets, mockGames } from './mockData';
+import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
+
+/** Home's own tile ids map onto Culture's category routes 1:1, except
+ * "culture" (the hub itself) and "map" (a different feature entirely). */
+function routeForCultureTile(tileId: string): string {
+  if (tileId === 'culture') return '/culture';
+  if (tileId === 'map') return '/explore';
+  return `/culture/${tileId}`;
+}
 
 function handlePressTab(tab: TabId) {
   if (tab === 'games') {
@@ -89,6 +97,14 @@ export function HomeScreen() {
     progressMax: DAILY_PLAY_GOAL,
   };
 
+  const cultureTiles: CultureTile[] = cultureTileAssets.map((asset) => ({
+    id: asset.id,
+    tone: asset.tone,
+    imageSource: asset.imageSource,
+    title: t(`home.cultureTiles.${asset.id}.title`),
+    subtitle: t(`home.cultureTiles.${asset.id}.subtitle`),
+  }));
+
   function handlePressDailyChallenge() {
     if (challengeComplete && !challengeClaimed) {
       useProgressStore.getState().claimDailyChallenge();
@@ -132,7 +148,7 @@ export function HomeScreen() {
           onPressSeeAll={() => router.push('/games' as never)}
         />
 
-        <CultureGrid tiles={mockCultureTiles} />
+        <CultureGrid tiles={cultureTiles} onPressTile={(tile) => router.push(routeForCultureTile(tile.id) as never)} />
 
         <View style={styles.horizontalPad}>
           <DailyProgressCard

@@ -8,7 +8,6 @@ import { colors, radii, spacing, typography } from '@/theme';
 import { getGameHostConfig } from '@games/gameHostCharacters';
 
 import { CharacterAvatar } from './CharacterAvatar';
-import { CHARACTER_NAMES } from './characterAssets';
 
 type GameIntroScreenProps = {
   gameId: string;
@@ -86,7 +85,7 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
         <Animated.View style={[styles.card, animatedStyle]}>
           <CharacterAvatar characterId={host.characterId} emotion={currentLine?.emotion ?? 'happy'} size={140} />
 
-          <Text style={styles.name}>{CHARACTER_NAMES[host.characterId]}</Text>
+          <Text style={styles.name}>{t(`character.names.${host.characterId}`)}</Text>
 
           {step.kind === 'line' && currentLine ? (
             <Text style={styles.line}>{currentLine.text}</Text>

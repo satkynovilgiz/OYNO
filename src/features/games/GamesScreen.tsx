@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
@@ -21,6 +22,7 @@ import type { GameListItem } from './types';
 
 export function GamesScreen() {
   useTrackScreenView('games');
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const coins = useProgressStore((state) => state.coins);
   const gems = useProgressStore((state) => state.gems);
@@ -40,6 +42,13 @@ export function GamesScreen() {
     if (game.route) {
       router.push(game.route as never);
     }
+  };
+
+  const handlePressInvite = () => {
+    // Rejects on web when the browser has no Web Share API, and on native
+    // when the user backs out of the sheet without picking an app -
+    // neither is a real error worth surfacing.
+    Share.share({ message: t('games.invite.shareMessage') }).catch(() => {});
   };
 
   return (
@@ -62,7 +71,7 @@ export function GamesScreen() {
         </View>
 
         <View style={styles.horizontalPad}>
-          <InviteFriendsBanner />
+          <InviteFriendsBanner onPressInvite={handlePressInvite} />
         </View>
       </ScrollView>
 
