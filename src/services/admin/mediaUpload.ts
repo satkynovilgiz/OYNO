@@ -44,3 +44,36 @@ export async function pickAndUploadCultureItemImage(itemId: string): Promise<str
 
   return data.publicUrl;
 }
+
+/** Same flow as pickAndUploadCultureItemImage, for culture_materials rows
+ * via admin_set_culture_material_image
+ * (20260831000001_culture_materials_content.sql). */
+export async function pickAndUploadCultureMaterialImage(materialId: string): Promise<string | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) return null;
+
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+  const asset = result.canceled ? null : result.assets[0];
+  if (!asset) return null;
+
+  const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+  const path = `culture-materials/${materialId}-${Date.now()}.${ext}`;
+
+  const response = await fetch(asset.uri);
+  const arrayBuffer = await response.arrayBuffer();
+
+  const { error: uploadError } = await supabase.storage
+    .from('content-media')
+    .upload(path, arrayBuffer, { contentType: asset.mimeType ?? 'image/jpeg', upsert: true });
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('content-media').getPublicUrl(path);
+
+  const { error: rpcError } = await supabase.rpc('admin_set_culture_material_image', {
+    p_id: materialId,
+    p_image_url: data.publicUrl,
+  });
+  if (rpcError) throw rpcError;
+
+  return data.publicUrl;
+}

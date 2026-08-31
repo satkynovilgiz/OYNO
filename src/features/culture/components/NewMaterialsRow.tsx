@@ -20,11 +20,13 @@ export function NewMaterialsRow({ materials, onPressMaterial, onPressSeeAll }: N
     <View style={styles.section}>
       <View style={styles.header}>
         <Text style={styles.sectionTitle}>{t('culture.materials.title')}</Text>
-        <TextButton
-          label={t('common.seeAll')}
-          onPress={onPressSeeAll}
-          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
-        />
+        {onPressSeeAll ? (
+          <TextButton
+            label={t('common.seeAll')}
+            onPress={onPressSeeAll}
+            trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
+          />
+        ) : null}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>

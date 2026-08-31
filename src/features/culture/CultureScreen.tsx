@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Alert, ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,12 +16,24 @@ import {
   CultureHero,
   CultureProgressCard,
   EnterBozUyCard,
+  InteractiveExperiencesRow,
   NewMaterialsRow,
   QuizTeaserCard,
   TodayDiscoveryCard,
 } from './components';
+import type { InteractiveExperience } from './components';
 import { cultureCategoryImages, cultureCategoryMockProgress, cultureMaterialImages, cultureProgress } from './data';
 import type { CultureCategory, CultureCategoryId, CultureDiscovery, CultureMaterial } from './types';
+
+const INTERACTIVE_EXPERIENCES: InteractiveExperience[] = [
+  { id: 'oymo', titleKey: 'culture.interactive.oymo', imageSource: cultureCategoryImages.oymo },
+  { id: 'boz-uy', titleKey: 'culture.interactive.bozUy', imageSource: cultureCategoryImages['boz-uy'] },
+];
+
+function handlePressExperience(id: string) {
+  if (id === 'oymo') router.push('/culture/oymo/create' as never);
+  if (id === 'boz-uy') router.push('/culture/boz-uy/build' as never);
+}
 
 function handlePressCategory(category: CultureCategory) {
   if (category.id === 'games') {
@@ -107,6 +119,10 @@ export function CultureScreen() {
               onPressSeeAll={() => router.push('/collection' as never)}
             />
 
+            <View style={styles.horizontalPad}>
+              <InteractiveExperiencesRow experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
+            </View>
+
             <View style={[styles.horizontalPad, styles.row]}>
               {todayDiscovery && (
                 <TodayDiscoveryCard
@@ -114,7 +130,7 @@ export function CultureScreen() {
                   onPress={() => useProgressStore.getState().discoverCulture()}
                 />
               )}
-              <EnterBozUyCard onPress={() => useProgressStore.getState().visitBozUy()} />
+              <EnterBozUyCard onPress={() => router.push('/culture/boz-uy/build' as never)} />
             </View>
 
             <View style={styles.horizontalPad}>
@@ -128,8 +144,7 @@ export function CultureScreen() {
             <View style={styles.horizontalPad}>
               <NewMaterialsRow
                 materials={materials}
-                onPressMaterial={(material) => Alert.alert(material.title, t('culture.materials.unavailable'))}
-                onPressSeeAll={() => Alert.alert(t('culture.materials.title'), t('culture.materials.unavailable'))}
+                onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
               />
             </View>
           </>

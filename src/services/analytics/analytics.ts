@@ -24,7 +24,10 @@ export type AnalyticsEventName =
   | 'achievement_unlocked'
   | 'reward_claimed'
   | 'collection_item_discovered'
-  | 'profile_updated';
+  | 'profile_updated'
+  | 'culture_material_open'
+  | 'oymo_creator_open'
+  | 'boz_uy_build_completed';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

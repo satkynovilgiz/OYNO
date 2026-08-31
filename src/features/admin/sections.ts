@@ -74,6 +74,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       { key: 'description', label: 'Description', type: 'textarea' },
       { key: 'duration_minutes', label: 'Duration (minutes)', type: 'number' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
+      { key: 'body', label: 'Body (reading content)', type: 'textarea' },
+      { key: 'accuracy_level', label: 'Accuracy level', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
+      { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
     ],
     toParams: (v) => ({
       p_id: v.id,
@@ -82,6 +85,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       p_description: v.description.trim() || null,
       p_duration_minutes: toIntOrNull(v.duration_minutes),
       p_sort_order: toIntOrNull(v.sort_order) ?? 0,
+      p_body: v.body.trim() || null,
+      p_accuracy_level: v.accuracy_level || 'unverified',
+      p_sources: toArray(v.sources),
     }),
   },
   {

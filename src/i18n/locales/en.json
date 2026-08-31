@@ -3,7 +3,9 @@
     "appName": "OYNO",
     "loading": "Loading...",
     "seeAll": "See all",
-    "guestName": "Guest"
+    "guestName": "Guest",
+    "back": "Back",
+    "cancel": "Cancel"
   },
   "auth": {
     "signIn": {
@@ -496,6 +498,100 @@
         "ritual": "Ritual",
         "ceremony": "Rite of passage",
         "festival": "Festival"
+      }
+    },
+    "interactive": {
+      "title": "Try it yourself",
+      "oymo": "Create an oymo",
+      "bozUy": "Build a boz üy"
+    },
+    "bozUy": {
+      "title": "Building a boz üy",
+      "subtitle": "Place each part correctly to assemble the boz üy!",
+      "tipsButton": "Tips",
+      "next": "Next step",
+      "restart": "Restart",
+      "pronounce": "Pronounce",
+      "audioComingSoon": "Audio coming soon",
+      "tipLabel": "Tip",
+      "restartConfirm": {
+        "title": "Restart?",
+        "message": "Your current build progress will be reset.",
+        "confirm": "Restart"
+      },
+      "tipsModal": {
+        "title": "Tips",
+        "items": [
+          "At each step, learn the part and tap \"Next step\".",
+          "Tap \"Pronounce\" to hear the part's name.",
+          "You can restart the build at any time with \"Restart\"."
+        ],
+        "close": "Close"
+      },
+      "learnCard": {
+        "title": "Did you know",
+        "body": "The tunduk (roof crown) is a symbol of Kyrgyz national identity - it's depicted on the state flag of Kyrgyzstan."
+      },
+      "streakCard": {
+        "title": "Streak",
+        "days": "{{count}} days",
+        "reward": "On completion: +{{xp}} XP"
+      },
+      "steps": {
+        "kerege": {
+          "name": "Kerege",
+          "description": "The wall frame.",
+          "tip": "First the **kerege** lattice wall is set up and spread out."
+        },
+        "uuk": {
+          "name": "Uuk",
+          "description": "The roof poles.",
+          "tip": "The uuk poles are tied to the top edge of the kerege by their **pointed end**."
+        },
+        "tunduk": {
+          "name": "Tunduk",
+          "description": "The upper roof ring.",
+          "tip": "The tunduk is raised with support poles, and the uuk ends are **fitted into it**."
+        },
+        "bosogo": {
+          "name": "Bosogo",
+          "description": "The door frame and door.",
+          "tip": "After that, reed screens, felt covers, and the **door** are hung."
+        }
+      },
+      "completion": {
+        "title": "Boz üy built!",
+        "reward": "+{{xp}} XP",
+        "continue": "Continue"
+      }
+    },
+    "oymo": {
+      "title": "Create an oymo",
+      "subtitle": "Create your own unique oymo pattern and save it!",
+      "canvasLabel": "Oymo canvas",
+      "removeMotifLabel": "Remove motif",
+      "placeAtCenter": "Place at center",
+      "reset": "Clear",
+      "motifSection": "Motif",
+      "colorSection": "Color",
+      "symmetrySection": "Symmetry",
+      "colorLabel": "Choose color",
+      "resetConfirm": {
+        "title": "Clear the canvas?",
+        "message": "All placed motifs will be removed.",
+        "confirm": "Clear"
+      },
+      "symmetry": {
+        "none": "None",
+        "mirror": "Mirror",
+        "fourWay": "4-way"
+      },
+      "motifs": {
+        "muyuz": "Müyüz (horn)",
+        "kargaTyrmak": "Karga tyrmak (crow's claw)",
+        "kyal": "Kyal (wave)",
+        "jalbyrak": "Jalbyrak (leaf)",
+        "gul": "Gül (flower)"
       }
     }
   },

@@ -15,6 +15,14 @@ export type CultureMaterialRow = {
   description: string | null;
   duration_minutes: number | null;
   sort_order: number;
+  /** Reading content for the /culture/material/[materialId] detail route
+   * (20260831000001_culture_materials_content.sql) - null until an admin
+   * fills it in, in which case the detail screen shows a "pending
+   * research" state rather than a fake empty page. */
+  body: string | null;
+  accuracy_level: CultureAccuracyLevel;
+  sources: string[] | null;
+  image_url: string | null;
 };
 
 export type ExploreRegionRow = {

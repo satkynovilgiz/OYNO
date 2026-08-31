@@ -7,8 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, Button, ConfirmationModal, IconButton, TextField } from '@/components/ui';
 import { callAdminRpc } from '@/services/admin/adminService';
-import { pickAndUploadCultureItemImage } from '@/services/admin/mediaUpload';
+import { pickAndUploadCultureItemImage, pickAndUploadCultureMaterialImage } from '@/services/admin/mediaUpload';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
+
+const IMAGE_UPLOAD_SECTIONS = {
+  culture_items: pickAndUploadCultureItemImage,
+  culture_materials: pickAndUploadCultureMaterialImage,
+} as const;
 
 import { rowToFormValues, type AdminFieldConfig, type AdminRow, type AdminSectionConfig } from './sections';
 
@@ -109,10 +114,12 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
 
   async function handleUploadImage() {
     if (editingRow === 'new' || !editingRow) return;
+    const uploader = IMAGE_UPLOAD_SECTIONS[section.id as keyof typeof IMAGE_UPLOAD_SECTIONS];
+    if (!uploader) return;
     setIsUploadingImage(true);
     setImageError(null);
     try {
-      const url = await pickAndUploadCultureItemImage(String(editingRow[section.idField]));
+      const url = await uploader(String(editingRow[section.idField]));
       if (url) {
         setImageUrl(url);
         queryClient.invalidateQueries({ queryKey: ['admin_section', section.id] });
@@ -135,7 +142,7 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {section.id === 'culture_items' && !isNew && (
+          {section.id in IMAGE_UPLOAD_SECTIONS && !isNew && (
             <View style={styles.imageBlock}>
               <Text style={styles.selectLabel}>Photo (content-media)</Text>
               {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.imagePreview} contentFit="cover" /> : null}
