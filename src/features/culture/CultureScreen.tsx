@@ -28,11 +28,15 @@ import type { CultureCategory, CultureCategoryId, CultureDiscovery, CultureMater
 const INTERACTIVE_EXPERIENCES: InteractiveExperience[] = [
   { id: 'oymo', titleKey: 'culture.interactive.oymo', imageSource: cultureCategoryImages.oymo },
   { id: 'boz-uy', titleKey: 'culture.interactive.bozUy', imageSource: cultureCategoryImages['boz-uy'] },
+  { id: 'shyrdak', titleKey: 'culture.interactive.shyrdak', imageSource: cultureCategoryImages.shyrdak },
+  { id: 'komuz', titleKey: 'culture.interactive.komuz', imageSource: cultureCategoryImages.komuz },
 ];
 
 function handlePressExperience(id: string) {
   if (id === 'oymo') router.push('/culture/oymo/create' as never);
   if (id === 'boz-uy') router.push('/culture/boz-uy/build' as never);
+  if (id === 'shyrdak') router.push('/culture/shyrdak/create' as never);
+  if (id === 'komuz') router.push('/culture/komuz/learn' as never);
 }
 
 function handlePressCategory(category: CultureCategory) {

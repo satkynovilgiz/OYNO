@@ -1,6 +1,6 @@
 import { Play } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
@@ -16,10 +16,11 @@ type InteractiveExperiencesRowProps = {
   onPressExperience: (id: string) => void;
 };
 
-/** "Өзүң жасап көр" - real interactive modules only (Оймо Creator, Boz Үй
- * Builder). Deliberately doesn't list Shyrdak/Komuz tiles since those
- * modules don't exist yet - a tile that opens nothing would be exactly the
- * kind of dead button the task explicitly calls out. */
+/** "Өзүң жасап көр" - real interactive modules only. A tile is only ever
+ * added here once its module actually exists and opens something - a tile
+ * leading nowhere would be exactly the kind of dead button the task
+ * explicitly calls out. Horizontal scroll (not a fixed flex row) so the
+ * list can keep growing without every tile getting squeezed. */
 export function InteractiveExperiencesRow({ experiences, onPressExperience }: InteractiveExperiencesRowProps) {
   const { t } = useTranslation();
 
@@ -28,7 +29,7 @@ export function InteractiveExperiencesRow({ experiences, onPressExperience }: In
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('culture.interactive.title')}</Text>
-      <View style={styles.row}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {experiences.map((experience) => (
           <AnimatedPressable
             key={experience.id}
@@ -49,7 +50,7 @@ export function InteractiveExperiencesRow({ experiences, onPressExperience }: In
             </View>
           </AnimatedPressable>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   tile: {
-    flex: 1,
+    width: 150,
     height: 120,
     borderRadius: radii.xl,
     overflow: 'hidden',

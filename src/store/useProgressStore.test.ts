@@ -46,6 +46,9 @@ const BASE_ROW = {
   quest_completed: false,
   boz_uy_visited: false,
   culture_discovery_count: 0,
+  oymo_created: false,
+  shyrdak_created: false,
+  komuz_lesson_completed: false,
 };
 
 function resetStore() {

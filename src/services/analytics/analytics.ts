@@ -27,7 +27,10 @@ export type AnalyticsEventName =
   | 'profile_updated'
   | 'culture_material_open'
   | 'oymo_creator_open'
-  | 'boz_uy_build_completed';
+  | 'boz_uy_build_completed'
+  | 'shyrdak_creator_open'
+  | 'komuz_lesson_open'
+  | 'komuz_lesson_completed';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

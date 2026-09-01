@@ -24,6 +24,9 @@ export const BOZ_UY_REWARD = { xp: 15, coins: 0 };
 export const CULTURE_DISCOVERY_REWARD = { xp: 15, coins: 0 };
 export const DAILY_QUIZ_REWARD = { xp: 40, coins: 25 };
 export const QUIZ_PASS_RATIO = 0.7;
+export const OYMO_REWARD = { xp: 20, coins: 10 };
+export const SHYRDAK_REWARD = { xp: 20, coins: 10 };
+export const KOMUZ_LESSON_REWARD = { xp: 15, coins: 0 };
 
 export type GameStat = { played: number; won: number };
 
@@ -44,6 +47,9 @@ type ProgressRow = {
   quest_completed: boolean;
   boz_uy_visited: boolean;
   culture_discovery_count: number;
+  oymo_created: boolean;
+  shyrdak_created: boolean;
+  komuz_lesson_completed: boolean;
 };
 
 type ProgressFields = {
@@ -63,6 +69,9 @@ type ProgressFields = {
   questCompleted: boolean;
   bozUyVisited: boolean;
   cultureDiscoveryCount: number;
+  oymoCreated: boolean;
+  shyrdakCreated: boolean;
+  komuzLessonCompleted: boolean;
 };
 
 type CachedShape = ProgressFields & {
@@ -88,6 +97,9 @@ const DEFAULT_FIELDS: ProgressFields = {
   questCompleted: false,
   bozUyVisited: false,
   cultureDiscoveryCount: 0,
+  oymoCreated: false,
+  shyrdakCreated: false,
+  komuzLessonCompleted: false,
 };
 
 function mapRow(row: ProgressRow): ProgressFields {
@@ -108,6 +120,9 @@ function mapRow(row: ProgressRow): ProgressFields {
     questCompleted: row.quest_completed,
     bozUyVisited: row.boz_uy_visited,
     cultureDiscoveryCount: row.culture_discovery_count,
+    oymoCreated: row.oymo_created,
+    shyrdakCreated: row.shyrdak_created,
+    komuzLessonCompleted: row.komuz_lesson_completed,
   };
 }
 
@@ -149,6 +164,16 @@ type ProgressState = ProgressFields & {
   claimDailyGift: () => Promise<boolean>;
   claimDailyPlay: () => Promise<boolean>;
   claimDailyQuiz: (answers: { question_id: string; choice_index: number }[]) => Promise<{ correct: number; total: number; rewarded: boolean } | null>;
+  saveOymoCreation: (params: { name: string; layers: unknown; backgroundColor: string; symmetryMode: string }) => Promise<boolean>;
+  deleteOymoCreation: (id: string) => Promise<boolean>;
+  saveShyrdakCreation: (params: {
+    baseColor: string;
+    secondaryColor: string;
+    patternId: string;
+    borderEnabled: boolean;
+    symmetryMode: string;
+  }) => Promise<boolean>;
+  completeKomuzLesson: () => Promise<boolean>;
   acknowledgeAchievement: () => void;
 };
 
@@ -321,6 +346,46 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       const rewarded = !!result.rewarded;
       if (rewarded) track('reward_claimed', { source: 'daily_quiz' });
       return { correct: result.correct ?? 0, total: result.total ?? answers.length, rewarded };
+    },
+
+    saveOymoCreation: async ({ name, layers, backgroundColor, symmetryMode }) => {
+      const result = await callAction('save_oymo_creation', {
+        p_name: name,
+        p_layers: layers,
+        p_background_color: backgroundColor,
+        p_symmetry_mode: symmetryMode,
+      });
+      if (!result) return false;
+      applyProgress(result.progress);
+      track('reward_claimed', { source: 'oymo_creation' });
+      return true;
+    },
+
+    deleteOymoCreation: async (id) => {
+      const result = await callAction('delete_oymo_creation', { p_id: id });
+      return !!result;
+    },
+
+    saveShyrdakCreation: async ({ baseColor, secondaryColor, patternId, borderEnabled, symmetryMode }) => {
+      const result = await callAction('save_shyrdak_creation', {
+        p_base_color: baseColor,
+        p_secondary_color: secondaryColor,
+        p_pattern_id: patternId,
+        p_border_enabled: borderEnabled,
+        p_symmetry_mode: symmetryMode,
+      });
+      if (!result) return false;
+      applyProgress(result.progress);
+      track('reward_claimed', { source: 'shyrdak_creation' });
+      return true;
+    },
+
+    completeKomuzLesson: async () => {
+      const result = await callAction('complete_komuz_lesson');
+      if (!result) return false;
+      applyProgress(result.progress, result.newlyUnlocked);
+      track('reward_claimed', { source: 'komuz_lesson' });
+      return true;
     },
 
     acknowledgeAchievement: () => set({ lastUnlockedAchievementId: null }),

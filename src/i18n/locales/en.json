@@ -503,7 +503,9 @@
     "interactive": {
       "title": "Try it yourself",
       "oymo": "Create an oymo",
-      "bozUy": "Build a boz üy"
+      "bozUy": "Build a boz üy",
+      "shyrdak": "Create a shyrdak",
+      "komuz": "Learn the komuz"
     },
     "bozUy": {
       "title": "Building a boz üy",
@@ -570,8 +572,11 @@
       "subtitle": "Create your own unique oymo pattern and save it!",
       "canvasLabel": "Oymo canvas",
       "removeMotifLabel": "Remove motif",
+      "selectMotifLabel": "Select motif",
       "placeAtCenter": "Place at center",
       "reset": "Clear",
+      "undo": "Undo",
+      "redo": "Redo",
       "motifSection": "Motif",
       "colorSection": "Color",
       "symmetrySection": "Symmetry",
@@ -592,6 +597,98 @@
         "kyal": "Kyal (wave)",
         "jalbyrak": "Jalbyrak (leaf)",
         "gul": "Gül (flower)"
+      },
+      "layers": {
+        "title": "Layers",
+        "layerLabel": "Motif {{index}}",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "toggleVisibility": "Toggle visibility",
+        "background": "Background"
+      },
+      "transform": {
+        "rotate": "Rotate",
+        "scaleUp": "Scale up",
+        "scaleDown": "Scale down",
+        "duplicate": "Duplicate",
+        "delete": "Delete"
+      },
+      "save": {
+        "title": "Save oymo",
+        "nameLabel": "Name",
+        "confirm": "Save",
+        "defaultName": "Oymo #{{count}}",
+        "guestHint": "Sign up or log in to save your work.",
+        "error": "Couldn't save. Please try again."
+      },
+      "gallery": {
+        "title": "My saved oymo patterns",
+        "new": "New oymo",
+        "delete": "Delete",
+        "deleteConfirm": {
+          "title": "Delete this oymo?",
+          "message": "This action can't be undone."
+        }
+      }
+    },
+    "shyrdak": {
+      "title": "Create a shyrdak",
+      "subtitle": "Choose your shyrdak's color, pattern, and border!",
+      "whatIsThis": "What's this?",
+      "canvasLabel": "Shyrdak canvas",
+      "patternSection": "Choose pattern",
+      "baseColorSection": "Base color",
+      "secondaryColorSection": "Secondary color",
+      "borderSection": "Border (black-and-white)",
+      "saved": "Saved ✓",
+      "patterns": {
+        "itKuiruk": "It kuiruk (dog's tail)",
+        "tooTekeMuyuzu": "Too teke müyüzü (mountain goat horn)",
+        "kushTyrmagy": "Kush tyrmagy (bird's claw)"
+      }
+    },
+    "komuz": {
+      "title": "Learn the komuz",
+      "stepLabel": "Step {{current}} / {{total}}",
+      "finish": "Finish",
+      "steps": {
+        "introduction": {
+          "title": "What is a komuz?"
+        },
+        "parts": {
+          "title": "Parts"
+        },
+        "strings": {
+          "title": "Try the strings",
+          "hint": "Tap each string.",
+          "melodiesTitle": "Listen to real melodies"
+        },
+        "quiz": {
+          "title": "Test yourself"
+        }
+      },
+      "strings": {
+        "stringLabel": "String {{index}}"
+      },
+      "quiz": {
+        "q1": {
+          "question": "How many strings does a komuz have?",
+          "choices": ["Three", "Four", "Five", "Two"]
+        },
+        "q2": {
+          "question": "Which century's written source first mentions the komuz?",
+          "choices": ["9th century", "11th century", "15th century", "20th century"]
+        },
+        "q3": {
+          "question": "Which of these is a real part of a komuz?",
+          "choices": ["Neck", "String tailpiece", "Wing", "Fin"]
+        },
+        "failed": "{{correct}} / {{total}} correct. Try again!",
+        "retry": "Try again"
+      },
+      "completion": {
+        "title": "Lesson complete!",
+        "reward": "+{{xp}} XP"
       }
     }
   },

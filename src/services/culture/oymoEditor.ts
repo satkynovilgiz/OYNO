@@ -1,86 +1,110 @@
+import { computeMirroredPoints, type Point, type SymmetryMode } from './symmetry';
+
+export type { SymmetryMode, Point } from './symmetry';
+export { computeMirroredPoints } from './symmetry';
+
 /**
- * Pure state/logic for the Oymo Creator Phase 1 canvas: single-motif
- * placement + symmetry mirroring only. No layer stack, no
- * rotate/resize/duplicate transforms, no undo/redo - those are Phase 2/3
- * (see docs/plan for the confirmed phasing). Kept free of React/RN so it's
- * trivially unit-testable and reusable if the canvas rendering approach
- * changes later.
+ * Oymo Creator V2: a real layer stack (V1's Phase 1 flat "one placement per
+ * mirrored copy" model is gone). Each layer stores only its ORIGINAL
+ * (pre-mirror) point - mirrored render points are recomputed fresh from
+ * the current symmetry mode every render (computeMirroredPoints), not
+ * baked in at placement time. That's what makes changing symmetry mode
+ * re-mirror every existing layer instantly, and makes select/delete act on
+ * the whole motif rather than one mirrored copy of it.
+ *
+ * Rotation is uniform across a layer's mirrored copies, not
+ * mirror-reflected per copy - true kaleidoscopic rotation would rotate
+ * each copy by a reflected angle, which is real geometry work for
+ * marginal visible benefit at this motif scale (see the V2 plan).
  */
-export type SymmetryMode = 'none' | 'mirror' | 'fourWay';
-
-export type Point = { x: number; y: number };
-
-export type MotifPlacement = {
+export type MotifLayer = {
   id: string;
-  x: number;
-  y: number;
   motifId: string;
   color: string;
+  point: Point;
+  rotation: number;
+  scale: number;
+  visible: boolean;
 };
 
 export type OymoEditorState = {
-  placements: MotifPlacement[];
+  layers: MotifLayer[];
+  backgroundColor: string;
   nextId: number;
 };
 
-export const EMPTY_OYMO_STATE: OymoEditorState = { placements: [], nextId: 0 };
+const DEFAULT_BACKGROUND = '#EADCC0';
 
-/** Rounds to avoid float-precision near-duplicates (e.g. tapping dead
- * center in fourWay mode should collapse to one point, not four). */
-function dedupePoints(points: Point[]): Point[] {
-  const seen = new Map<string, Point>();
-  for (const point of points) {
-    const rounded = { x: Math.round(point.x), y: Math.round(point.y) };
-    seen.set(`${rounded.x},${rounded.y}`, rounded);
-  }
-  return Array.from(seen.values());
+export const EMPTY_OYMO_STATE: OymoEditorState = { layers: [], backgroundColor: DEFAULT_BACKGROUND, nextId: 0 };
+
+const MIN_SCALE = 0.4;
+const MAX_SCALE = 2.5;
+const ROTATION_STEP = 15;
+const SCALE_STEP = 0.15;
+
+export function addLayer(state: OymoEditorState, point: Point, motifId: string, color: string): OymoEditorState {
+  const layer: MotifLayer = { id: `layer${state.nextId}`, motifId, color, point, rotation: 0, scale: 1, visible: true };
+  return { ...state, layers: [...state.layers, layer], nextId: state.nextId + 1 };
 }
 
-/**
- * None -> the tapped point only.
- * Mirror -> also reflected across the vertical center axis.
- * FourWay -> reflected across both axes (4 quadrants).
- */
-export function computeMirroredPoints(point: Point, mode: SymmetryMode, canvasSize: number): Point[] {
-  const mirroredX = canvasSize - point.x;
-  const mirroredY = canvasSize - point.y;
-
-  if (mode === 'none') return [point];
-  if (mode === 'mirror') return dedupePoints([point, { x: mirroredX, y: point.y }]);
-  return dedupePoints([
-    point,
-    { x: mirroredX, y: point.y },
-    { x: point.x, y: mirroredY },
-    { x: mirroredX, y: mirroredY },
-  ]);
+export function removeLayer(state: OymoEditorState, layerId: string): OymoEditorState {
+  return { ...state, layers: state.layers.filter((l) => l.id !== layerId) };
 }
 
-export function placeMotif(
-  state: OymoEditorState,
-  point: Point,
-  motifId: string,
-  color: string,
-  symmetryMode: SymmetryMode,
-  canvasSize: number,
-): OymoEditorState {
-  const points = computeMirroredPoints(point, symmetryMode, canvasSize);
-  const newPlacements: MotifPlacement[] = points.map((p, index) => ({
-    id: `p${state.nextId + index}`,
-    x: p.x,
-    y: p.y,
-    motifId,
-    color,
-  }));
+export function duplicateLayer(state: OymoEditorState, layerId: string): OymoEditorState {
+  const source = state.layers.find((l) => l.id === layerId);
+  if (!source) return state;
+  const copy: MotifLayer = { ...source, id: `layer${state.nextId}`, point: { x: source.point.x + 12, y: source.point.y + 12 } };
+  return { ...state, layers: [...state.layers, copy], nextId: state.nextId + 1 };
+}
+
+export function rotateLayer(state: OymoEditorState, layerId: string, deltaDeg: number = ROTATION_STEP): OymoEditorState {
   return {
-    placements: [...state.placements, ...newPlacements],
-    nextId: state.nextId + points.length,
+    ...state,
+    layers: state.layers.map((l) => (l.id === layerId ? { ...l, rotation: (l.rotation + deltaDeg + 360) % 360 } : l)),
   };
 }
 
-export function removeMotif(state: OymoEditorState, placementId: string): OymoEditorState {
-  return { ...state, placements: state.placements.filter((p) => p.id !== placementId) };
+export function scaleLayer(state: OymoEditorState, layerId: string, deltaScale: number = SCALE_STEP): OymoEditorState {
+  return {
+    ...state,
+    layers: state.layers.map((l) =>
+      l.id === layerId ? { ...l, scale: Math.min(MAX_SCALE, Math.max(MIN_SCALE, roundScale(l.scale + deltaScale))) } : l,
+    ),
+  };
+}
+
+function roundScale(scale: number): number {
+  return Math.round(scale * 100) / 100;
+}
+
+export function reorderLayer(state: OymoEditorState, layerId: string, direction: 'up' | 'down'): OymoEditorState {
+  const index = state.layers.findIndex((l) => l.id === layerId);
+  if (index === -1) return state;
+  const targetIndex = direction === 'up' ? index + 1 : index - 1;
+  if (targetIndex < 0 || targetIndex >= state.layers.length) return state;
+
+  const layers = [...state.layers];
+  [layers[index], layers[targetIndex]] = [layers[targetIndex], layers[index]];
+  return { ...state, layers };
+}
+
+export function toggleLayerVisibility(state: OymoEditorState, layerId: string): OymoEditorState {
+  return {
+    ...state,
+    layers: state.layers.map((l) => (l.id === layerId ? { ...l, visible: !l.visible } : l)),
+  };
+}
+
+export function setBackgroundColor(state: OymoEditorState, color: string): OymoEditorState {
+  return { ...state, backgroundColor: color };
 }
 
 export function resetCanvas(): OymoEditorState {
   return EMPTY_OYMO_STATE;
+}
+
+/** A visible layer's mirrored render points for the current symmetry mode. */
+export function getLayerRenderPoints(layer: MotifLayer, symmetryMode: SymmetryMode, canvasSize: number): Point[] {
+  return computeMirroredPoints(layer.point, symmetryMode, canvasSize);
 }

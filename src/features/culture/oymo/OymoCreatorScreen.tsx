@@ -1,6 +1,7 @@
-import { ChevronLeft, Palette, Shapes, Wand2 } from 'lucide-react-native';
+import { ChevronLeft, Layers, Palette, Redo2, Shapes, Undo2, Wand2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,66 +10,144 @@ import { useIsTablet } from '@/hooks/useIsTablet';
 import { track } from '@/services/analytics/analytics';
 import {
   EMPTY_OYMO_STATE,
-  placeMotif,
-  removeMotif,
+  addLayer,
+  duplicateLayer,
+  removeLayer,
+  reorderLayer,
   resetCanvas,
-  type SymmetryMode,
+  rotateLayer,
+  scaleLayer,
+  setBackgroundColor,
+  toggleLayerVisibility,
+  type OymoEditorState,
 } from '@/services/culture/oymoEditor';
+import type { SymmetryMode } from '@/services/culture/symmetry';
+import { useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
+import { useAuthStore } from '@/store/useAuthStore';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
 import { ColorSwatches } from './components/ColorSwatches';
+import { LayersPanel } from './components/LayersPanel';
 import { MotifGrid } from './components/MotifGrid';
+import { SaveModal } from './components/SaveModal';
+import { SavedPatternsGallery } from './components/SavedPatternsGallery';
 import { SymmetryControl } from './components/SymmetryControl';
+import { TransformToolbar } from './components/TransformToolbar';
 import { OYMO_MOTIFS, type OymoMotifId } from './motifs';
 
 type OymoCreatorScreenProps = {
   onPressBack: () => void;
 };
 
-type PanelTab = 'motif' | 'color' | 'symmetry';
+type PanelTab = 'motif' | 'color' | 'symmetry' | 'layers';
 
-/**
- * Oymo Creator Phase 1: canvas + single-motif placement + symmetry
- * mirroring only. Layers, transform tools (rotate/resize/duplicate/select
- * handles), undo/redo, and save/load + saved-patterns gallery are Phase
- * 2-4 - explicitly out of scope for this pass (see the plan). No
- * "Сактоо"/"Жаңыдан баштоо" header buttons this phase since there's
- * nothing to save yet - only Reset, which is real and functional.
- */
 export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
+  const queryClient = useQueryClient();
+  const { data: creations } = useOymoCreations();
+  const isGuest = useAuthStore((state) => state.status === 'guest');
 
-  const [editorState, setEditorState] = useState(EMPTY_OYMO_STATE);
+  const [history, setHistory] = useState<OymoEditorState[]>([EMPTY_OYMO_STATE]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const editorState = history[historyIndex];
+
   const [selectedMotifId, setSelectedMotifId] = useState<OymoMotifId>(OYMO_MOTIFS[0].id);
   const [selectedColor, setSelectedColor] = useState<string>(colors.primary);
+  const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [symmetryMode, setSymmetryMode] = useState<SymmetryMode>('fourWay');
   const [activeTab, setActiveTab] = useState<PanelTab>('motif');
+  const [showBackgroundColors, setShowBackgroundColors] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [pendingDeleteCreation, setPendingDeleteCreation] = useState<OymoCreationRow | null>(null);
 
   useEffect(() => {
     track('oymo_creator_open');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function applyMutation(mutate: (state: OymoEditorState) => OymoEditorState) {
+    const next = mutate(editorState);
+    const truncated = history.slice(0, historyIndex + 1);
+    setHistory([...truncated, next]);
+    setHistoryIndex(truncated.length);
+  }
+
+  function handleUndo() {
+    if (historyIndex === 0) return;
+    setHistoryIndex(historyIndex - 1);
+    setSelectedLayerId(null);
+  }
+
+  function handleRedo() {
+    if (historyIndex >= history.length - 1) return;
+    setHistoryIndex(historyIndex + 1);
+    setSelectedLayerId(null);
+  }
+
   function handlePlace(point: { x: number; y: number }) {
-    setEditorState((state) => placeMotif(state, point, selectedMotifId, selectedColor, symmetryMode, CANVAS_SIZE));
+    applyMutation((state) => addLayer(state, point, selectedMotifId, selectedColor));
   }
 
   function handlePlaceAtCenter() {
     handlePlace({ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 });
   }
 
-  function handleRemove(placementId: string) {
-    setEditorState((state) => removeMotif(state, placementId));
+  function handleSelectLayer(layerId: string) {
+    setSelectedLayerId((current) => (current === layerId ? null : layerId));
   }
 
   function handleReset() {
-    setEditorState(resetCanvas());
+    setHistory([EMPTY_OYMO_STATE]);
+    setHistoryIndex(0);
+    setSelectedLayerId(null);
     setShowResetConfirm(false);
   }
+
+  function loadCreation(creation: OymoCreationRow) {
+    const loaded: OymoEditorState = {
+      layers: creation.layers,
+      backgroundColor: creation.background_color,
+      nextId: creation.layers.length,
+    };
+    setHistory([loaded]);
+    setHistoryIndex(0);
+    setSymmetryMode(creation.symmetry_mode);
+    setSelectedLayerId(null);
+  }
+
+  async function handleSave(name: string) {
+    setIsSaving(true);
+    setSaveError(false);
+    const success = await useProgressStore.getState().saveOymoCreation({
+      name,
+      layers: editorState.layers,
+      backgroundColor: editorState.backgroundColor,
+      symmetryMode,
+    });
+    setIsSaving(false);
+    if (success) {
+      queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
+      setShowSaveModal(false);
+    } else if (!isGuest) {
+      setSaveError(true);
+    }
+  }
+
+  async function handleConfirmDelete() {
+    if (!pendingDeleteCreation) return;
+    const success = await useProgressStore.getState().deleteOymoCreation(pendingDeleteCreation.id);
+    if (success) queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
+    setPendingDeleteCreation(null);
+  }
+
+  const selectedLayer = editorState.layers.find((l) => l.id === selectedLayerId) ?? null;
 
   const panel = (
     <View style={styles.panel}>
@@ -90,6 +169,28 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           <SymmetryControl mode={symmetryMode} onChangeMode={setSymmetryMode} />
         </View>
       )}
+      {(isTablet || activeTab === 'layers') && (
+        <View style={styles.panelSection}>
+          {isTablet && <Text style={styles.panelLabel}>{t('culture.oymo.layers.title')}</Text>}
+          <LayersPanel
+            layers={editorState.layers}
+            selectedLayerId={selectedLayerId}
+            backgroundColor={editorState.backgroundColor}
+            onSelectLayer={handleSelectLayer}
+            onToggleVisibility={(id) => applyMutation((state) => toggleLayerVisibility(state, id))}
+            onReorder={(id, direction) => applyMutation((state) => reorderLayer(state, id, direction))}
+            onSelectBackground={() => setShowBackgroundColors((v) => !v)}
+          />
+          {showBackgroundColors && (
+            <View style={styles.backgroundPicker}>
+              <ColorSwatches
+                selectedColor={editorState.backgroundColor}
+                onSelectColor={(color) => applyMutation((state) => setBackgroundColor(state, color))}
+              />
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 
@@ -101,7 +202,16 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           <Text style={styles.headerTitle}>{t('culture.oymo.title')}</Text>
           <Text style={styles.headerSubtitle}>{t('culture.oymo.subtitle')}</Text>
         </View>
-        <View style={{ width: 44 }} />
+        <View style={styles.headerActions}>
+          <Button
+            label={t('culture.oymo.save.confirm')}
+            onPress={() => {
+              setSaveError(false);
+              setShowSaveModal(true);
+            }}
+            disabled={editorState.layers.length === 0}
+          />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
@@ -109,12 +219,32 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           {isTablet && panel}
 
           <View style={styles.canvasColumn}>
+            <View style={styles.historyRow}>
+              <IconButton icon={Undo2} shape="roundedSquare" accessibilityLabel={t('culture.oymo.undo')} onPress={handleUndo} disabled={historyIndex === 0} />
+              <IconButton icon={Redo2} shape="roundedSquare" accessibilityLabel={t('culture.oymo.redo')} onPress={handleRedo} disabled={historyIndex >= history.length - 1} />
+            </View>
+
             <OymoCanvas
-              placements={editorState.placements}
+              layers={editorState.layers}
+              backgroundColor={editorState.backgroundColor}
               symmetryMode={symmetryMode}
+              selectedLayerId={selectedLayerId}
               onTapCanvas={handlePlace}
-              onTapPlacement={handleRemove}
+              onSelectLayer={handleSelectLayer}
             />
+
+            {selectedLayer && (
+              <TransformToolbar
+                onRotate={() => applyMutation((state) => rotateLayer(state, selectedLayer.id))}
+                onScaleUp={() => applyMutation((state) => scaleLayer(state, selectedLayer.id))}
+                onScaleDown={() => applyMutation((state) => scaleLayer(state, selectedLayer.id, -0.15))}
+                onDuplicate={() => applyMutation((state) => duplicateLayer(state, selectedLayer.id))}
+                onDelete={() => {
+                  applyMutation((state) => removeLayer(state, selectedLayer.id));
+                  setSelectedLayerId(null);
+                }}
+              />
+            )}
 
             <View style={styles.canvasActions}>
               <Button label={t('culture.oymo.placeAtCenter')} variant="secondary" onPress={handlePlaceAtCenter} />
@@ -126,41 +256,32 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         {!isTablet && (
           <>
             <View style={styles.tabRow}>
-              <AnimatedPressable
-                style={[styles.tab, activeTab === 'motif' && styles.tabActive]}
-                onPress={() => setActiveTab('motif')}
-                accessibilityRole="button"
-                accessibilityLabel={t('culture.oymo.motifSection')}
-                accessibilityState={{ selected: activeTab === 'motif' }}
-              >
-                <Shapes size={18} color={activeTab === 'motif' ? colors.primary : colors.textMuted} strokeWidth={2.25} />
-                <Text style={[styles.tabLabel, activeTab === 'motif' && styles.tabLabelActive]}>{t('culture.oymo.motifSection')}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={[styles.tab, activeTab === 'color' && styles.tabActive]}
-                onPress={() => setActiveTab('color')}
-                accessibilityRole="button"
-                accessibilityLabel={t('culture.oymo.colorSection')}
-                accessibilityState={{ selected: activeTab === 'color' }}
-              >
-                <Palette size={18} color={activeTab === 'color' ? colors.primary : colors.textMuted} strokeWidth={2.25} />
-                <Text style={[styles.tabLabel, activeTab === 'color' && styles.tabLabelActive]}>{t('culture.oymo.colorSection')}</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={[styles.tab, activeTab === 'symmetry' && styles.tabActive]}
-                onPress={() => setActiveTab('symmetry')}
-                accessibilityRole="button"
-                accessibilityLabel={t('culture.oymo.symmetrySection')}
-                accessibilityState={{ selected: activeTab === 'symmetry' }}
-              >
-                <Wand2 size={18} color={activeTab === 'symmetry' ? colors.primary : colors.textMuted} strokeWidth={2.25} />
-                <Text style={[styles.tabLabel, activeTab === 'symmetry' && styles.tabLabelActive]}>{t('culture.oymo.symmetrySection')}</Text>
-              </AnimatedPressable>
+              <TabButton icon={Shapes} label={t('culture.oymo.motifSection')} active={activeTab === 'motif'} onPress={() => setActiveTab('motif')} />
+              <TabButton icon={Palette} label={t('culture.oymo.colorSection')} active={activeTab === 'color'} onPress={() => setActiveTab('color')} />
+              <TabButton icon={Wand2} label={t('culture.oymo.symmetrySection')} active={activeTab === 'symmetry'} onPress={() => setActiveTab('symmetry')} />
+              <TabButton icon={Layers} label={t('culture.oymo.layers.title')} active={activeTab === 'layers'} onPress={() => setActiveTab('layers')} />
             </View>
             {panel}
           </>
         )}
+
+        <SavedPatternsGallery
+          creations={creations ?? []}
+          onLoad={loadCreation}
+          onDelete={setPendingDeleteCreation}
+          onNew={() => setShowResetConfirm(true)}
+        />
       </ScrollView>
+
+      <SaveModal
+        visible={showSaveModal}
+        defaultName={t('culture.oymo.save.defaultName', { count: (creations?.length ?? 0) + 1 })}
+        isSaving={isSaving}
+        isGuest={isGuest}
+        hasError={saveError}
+        onSave={handleSave}
+        onCancel={() => setShowSaveModal(false)}
+      />
 
       <ConfirmationModal
         visible={showResetConfirm}
@@ -172,7 +293,33 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         onConfirm={handleReset}
         onCancel={() => setShowResetConfirm(false)}
       />
+
+      <ConfirmationModal
+        visible={!!pendingDeleteCreation}
+        title={t('culture.oymo.gallery.deleteConfirm.title')}
+        message={t('culture.oymo.gallery.deleteConfirm.message')}
+        confirmLabel={t('culture.oymo.gallery.delete')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDeleteCreation(null)}
+      />
     </View>
+  );
+}
+
+function TabButton({ icon: Icon, label, active, onPress }: { icon: typeof Shapes; label: string; active: boolean; onPress: () => void }) {
+  return (
+    <AnimatedPressable
+      style={[styles.tab, active && styles.tabActive]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
+    >
+      <Icon size={18} color={active ? colors.primary : colors.textMuted} strokeWidth={2.25} />
+      <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
+    </AnimatedPressable>
   );
 }
 
@@ -202,6 +349,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
   },
+  headerActions: {
+    flexShrink: 0,
+  },
   content: {
     paddingHorizontal: spacing.md,
     gap: spacing.md,
@@ -214,6 +364,11 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.sm,
     alignItems: 'center',
+  },
+  historyRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignSelf: 'flex-start',
   },
   canvasActions: {
     flexDirection: 'row',
@@ -229,6 +384,9 @@ const styles = StyleSheet.create({
   panelLabel: {
     ...typography.overline,
     color: colors.textSecondary,
+  },
+  backgroundPicker: {
+    marginTop: spacing.xs,
   },
   tabRow: {
     flexDirection: 'row',

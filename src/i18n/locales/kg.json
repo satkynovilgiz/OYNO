@@ -503,7 +503,9 @@
     "interactive": {
       "title": "Өзүң жасап көр",
       "oymo": "Оймо түз",
-      "bozUy": "Боз үйдү кур"
+      "bozUy": "Боз үйдү кур",
+      "shyrdak": "Шырдак жаса",
+      "komuz": "Комузду үйрөн"
     },
     "bozUy": {
       "title": "Боз үйдү куруу",
@@ -570,8 +572,11 @@
       "subtitle": "Өзүндүн уникалдуу оймоңду түз жана сактап кой!",
       "canvasLabel": "Оймо холсту",
       "removeMotifLabel": "Мотивди өчүрүү",
+      "selectMotifLabel": "Мотивди тандоо",
       "placeAtCenter": "Ортого кой",
       "reset": "Тазалоо",
+      "undo": "Артка",
+      "redo": "Алга",
       "motifSection": "Мотив",
       "colorSection": "Түс",
       "symmetrySection": "Симметрия",
@@ -592,6 +597,98 @@
         "kyal": "Кыял",
         "jalbyrak": "Жалбырак",
         "gul": "Гүл"
+      },
+      "layers": {
+        "title": "Катмарлар",
+        "layerLabel": "Мотив {{index}}",
+        "moveUp": "Жогору жылдыруу",
+        "moveDown": "Төмөн жылдыруу",
+        "toggleVisibility": "Көрүнүүнү которуу",
+        "background": "Фон"
+      },
+      "transform": {
+        "rotate": "Айлантуу",
+        "scaleUp": "Чоңойтуу",
+        "scaleDown": "Кичирейтүү",
+        "duplicate": "Кайталоо",
+        "delete": "Өчүрүү"
+      },
+      "save": {
+        "title": "Оймону сактоо",
+        "nameLabel": "Аталышы",
+        "confirm": "Сактоо",
+        "defaultName": "Оймо #{{count}}",
+        "guestHint": "Сактоо үчүн катталуу же кирүү керек.",
+        "error": "Сакталган жок. Кайра аракет кылыңыз."
+      },
+      "gallery": {
+        "title": "Менин сакталган оймолорум",
+        "new": "Жаңы оймо",
+        "delete": "Өчүрүү",
+        "deleteConfirm": {
+          "title": "Оймону өчүрөсүзбү?",
+          "message": "Бул аракетти артка кайтаруу мүмкүн эмес."
+        }
+      }
+    },
+    "shyrdak": {
+      "title": "Шырдак жасоо",
+      "subtitle": "Өз шырдагыңдын түсүн, оймосун жана чегин тандап жаса!",
+      "whatIsThis": "Бул эмне?",
+      "canvasLabel": "Шырдак холсту",
+      "patternSection": "Оймо тандоо",
+      "baseColorSection": "Негизги түс",
+      "secondaryColorSection": "Кошумча түс",
+      "borderSection": "Чети (ак-кара)",
+      "saved": "Сакталды ✓",
+      "patterns": {
+        "itKuiruk": "Ит куйругу",
+        "tooTekeMuyuzu": "Тоо теке мүйүзү",
+        "kushTyrmagy": "Куш тырмагы"
+      }
+    },
+    "komuz": {
+      "title": "Комузду үйрөн",
+      "stepLabel": "Кадам {{current}} / {{total}}",
+      "finish": "Аяктоо",
+      "steps": {
+        "introduction": {
+          "title": "Комуз деген эмне?"
+        },
+        "parts": {
+          "title": "Бөлүктөрү"
+        },
+        "strings": {
+          "title": "Кылдарды сынап көр",
+          "hint": "Ар бир кылды басып көр.",
+          "melodiesTitle": "Чыныгы күүлөрдү угуу"
+        },
+        "quiz": {
+          "title": "Билимиңди сына"
+        }
+      },
+      "strings": {
+        "stringLabel": "{{index}}-кыл"
+      },
+      "quiz": {
+        "q1": {
+          "question": "Комуз канча кылдуу аспап?",
+          "choices": ["Үч", "Төрт", "Беш", "Эки"]
+        },
+        "q2": {
+          "question": "Комуз кайсы кылымдагы жазма булакта эскерилет?",
+          "choices": ["IX кылым", "XI кылым", "XV кылым", "XX кылым"]
+        },
+        "q3": {
+          "question": "Комуздун негизги бөлүктөрүнүн бири эмне?",
+          "choices": ["Моюн", "Дүмүрчөк", "Канат", "Дал"]
+        },
+        "failed": "{{correct}} / {{total}} туура. Дагы бир жолу аракет кыл!",
+        "retry": "Кайра аракет кылуу"
+      },
+      "completion": {
+        "title": "Сабак аякталды!",
+        "reward": "+{{xp}} XP"
       }
     }
   },
