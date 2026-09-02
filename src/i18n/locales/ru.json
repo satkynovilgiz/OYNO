@@ -708,11 +708,9 @@
     "progress": {
       "title": "Прогресс исследования Кыргызстана",
       "stats": {
-        "locations": "Локации",
+        "regions": "Регионы",
         "nature": "Природа",
-        "culture": "Культура",
-        "animals": "Животные",
-        "food": "Кухня",
+        "discoveries": "Открытия",
         "quests": "Квесты"
       }
     },
@@ -735,22 +733,45 @@
     "natureSites": {
       "title": "Природные места"
     },
-    "categories": {
-      "nature": "Природа",
-      "games": "Игры",
-      "food": "Кухня",
-      "music": "Музыка",
-      "culture": "Культура",
-      "history": "История",
-      "crafts": "Ремёсла",
-      "animals": "Животные",
-      "quests": "Квесты"
+    "search": {
+      "placeholder": "Поиск региона, места или открытия",
+      "emptyState": "Ничего не найдено.",
+      "sectionRegions": "Регионы",
+      "sectionNature": "Природные места",
+      "sectionDiscoveries": "Открытия"
+    },
+    "filters": {
+      "title": "Фильтры",
+      "apply": "Применить",
+      "clear": "Сбросить",
+      "resultsTitle": "Отфильтрованные результаты",
+      "noResults": "Нет мест, соответствующих этим фильтрам.",
+      "options": {
+        "regions": "Регионы",
+        "nature": "Природные места",
+        "discovered": "Изучено",
+        "undiscovered": "Не изучено"
+      }
     },
     "locationDetail": {
       "backLabel": "Назад",
       "progressLabel": "Этот регион исследован на {{percent}}%",
-      "sectionsTitle": "Разделы",
-      "factsTitle": "Знаете ли вы?"
+      "factsTitle": "Знаете ли вы?",
+      "discoveriesTitle": "Открытия",
+      "noDiscoveries": "Здесь пока нет открытий.",
+      "favoriteLabel": "Добавить в избранное",
+      "unfavoriteLabel": "Убрать из избранного",
+      "shareLabel": "Поделиться",
+      "shareMessage": "Я узнал(а) про {{name}} в приложении OYNO!",
+      "loadError": "Не удалось загрузить регион. Попробуйте снова.",
+      "notFound": "Регион не найден.",
+      "state": {
+        "locked": "Заблокировано",
+        "available": "Не изучено",
+        "started": "Начато",
+        "explored": "Изучено",
+        "completed": "Завершено"
+      }
     }
   },
   "profileSetup": {

@@ -47,7 +47,11 @@ export type FavoriteGame = {
 export type ProfileCollectionItem = {
   id: string;
   title: string;
-  imageSource: ImageSourcePropType;
+  /** Flat fallback color (from colors.discovery[category]) for discoveries
+   * with no bundled art - not every discovery has one, unlike before when
+   * all 4 hardcoded items did. */
+  color: string;
+  imageSource?: ImageSourcePropType;
   current: number;
   total: number;
 };

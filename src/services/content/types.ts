@@ -1,4 +1,4 @@
-import type { LocalizedText, VerificationStatus } from '@/features/explore/types';
+import type { ExploreDiscoveryCategory, LocalizedText, VerificationStatus } from '@/features/explore/types';
 
 export type CultureCategoryRow = {
   id: string;
@@ -85,4 +85,40 @@ export type CultureItemRow = {
 
 export function mapExploreRegionName(row: ExploreRegionRow): LocalizedText {
   return { kg: row.name_kg, ru: row.name_ru, en: row.name_en };
+}
+
+export type DiscoveryRow = {
+  id: string;
+  region_id: string | null;
+  category: ExploreDiscoveryCategory;
+  title_kg: string;
+  title_ru: string;
+  title_en: string;
+  xp_reward: number;
+  accuracy_level: CultureAccuracyLevel;
+  sources: string[] | null;
+  published: boolean;
+  sort_order: number;
+};
+
+export function mapDiscoveryTitle(row: DiscoveryRow): LocalizedText {
+  return { kg: row.title_kg, ru: row.title_ru, en: row.title_en };
+}
+
+export type QuestStepTypeRow = 'VISIT_LOCATION' | 'DISCOVER_ITEM' | 'OPEN_CULTURE_ITEM' | 'COMPLETE_QUIZ';
+
+export type QuestStepRow = {
+  id: string;
+  quest_id: string;
+  step_order: number;
+  step_type: QuestStepTypeRow;
+  target_id: string;
+  title_kg: string;
+  title_ru: string;
+  title_en: string;
+  sort_order: number;
+};
+
+export function mapQuestStepTitle(row: QuestStepRow): LocalizedText {
+  return { kg: row.title_kg, ru: row.title_ru, en: row.title_en };
 }

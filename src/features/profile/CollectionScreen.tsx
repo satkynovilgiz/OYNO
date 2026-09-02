@@ -3,6 +3,8 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ui';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
+import type { SupportedLanguage } from '@/i18n';
+import { useDiscoveries } from '@/services/content/discoveriesService';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { getCollectionCounts, getCollectionItems } from './data';
@@ -16,9 +18,10 @@ type CollectionScreenProps = {
  * comment on getCollectionItems in ./data.ts for why this is narrower than
  * the design's eventual full collection. */
 export function CollectionScreen({ discoveredExploreIds, onPressBack }: CollectionScreenProps) {
-  const { t } = useTranslation();
-  const items = getCollectionItems(discoveredExploreIds);
-  const { unlocked, total } = getCollectionCounts(discoveredExploreIds);
+  const { t, i18n } = useTranslation();
+  const { data: discoveries } = useDiscoveries();
+  const items = getCollectionItems(discoveries ?? [], discoveredExploreIds, i18n.language as SupportedLanguage);
+  const { unlocked, total } = getCollectionCounts(discoveries ?? [], discoveredExploreIds);
 
   return (
     <SettingsScreenLayout title={t('profile.collection.title')} onPressBack={onPressBack}>
@@ -27,7 +30,11 @@ export function CollectionScreen({ discoveredExploreIds, onPressBack }: Collecti
       <View style={styles.list}>
         {items.map((item) => (
           <View key={item.id} style={styles.row}>
-            <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
+            {item.imageSource ? (
+              <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
+            ) : (
+              <View style={[styles.image, { backgroundColor: item.color }]} />
+            )}
             <View style={styles.body}>
               <Text style={styles.title}>{item.title}</Text>
               <ProgressBar progress={item.total > 0 ? item.current / item.total : 0} height={6} />

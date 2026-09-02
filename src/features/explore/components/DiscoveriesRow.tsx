@@ -13,22 +13,29 @@ type DiscoveriesRowProps = {
   discoveredIds?: string[];
   onPressDiscovery?: (discovery: ExploreDiscovery) => void;
   onPressSeeAll?: () => void;
+  /** Overrides the default "New discoveries" home-screen title - used by
+   * LocationDetailScreen to show "Discoveries" for this region instead. */
+  title?: string;
 };
 
 /** Falls back to a flat category color when a discovery has no imageSource
- * yet (same convention used elsewhere on this screen for missing art). */
-export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscovery, onPressSeeAll }: DiscoveriesRowProps) {
+ * yet (same convention used elsewhere on this screen for missing art). The
+ * "see all" link only renders when a real destination is provided, so this
+ * never ships a tappable-looking button with nothing behind it. */
+export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscovery, onPressSeeAll, title }: DiscoveriesRowProps) {
   const { t } = useTranslation();
 
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={styles.sectionTitle}>{t('explore.discoveries.title')}</Text>
-        <TextButton
-          label={t('explore.discoveries.seeAll')}
-          onPress={onPressSeeAll}
-          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
-        />
+        <Text style={styles.sectionTitle}>{title ?? t('explore.discoveries.title')}</Text>
+        {onPressSeeAll && (
+          <TextButton
+            label={t('explore.discoveries.seeAll')}
+            onPress={onPressSeeAll}
+            trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
+          />
+        )}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>

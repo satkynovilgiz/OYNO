@@ -3,7 +3,11 @@ import badgeFirstWin from '@assets/img/OYNO_design/profile/badge_first_win.png';
 import badgeKomuzchu from '@assets/img/OYNO_design/profile/badge_komuzchu.png';
 import badgeTraveler from '@assets/img/OYNO_design/profile/badge_traveler.png';
 
-import { exploreDiscoveries } from '@/features/explore/data';
+import { discoveryImages } from '@/features/explore/data';
+import type { SupportedLanguage } from '@/i18n';
+import type { DiscoveryRow } from '@/services/content/types';
+import { mapDiscoveryTitle } from '@/services/content/types';
+import { colors } from '@/theme';
 
 import type { ProfileAchievement, ProfileCollectionItem } from './types';
 
@@ -34,25 +38,29 @@ export function getAchievement(id: string): ProfileAchievement | undefined {
  * The Collection screen used to show 6 hardcoded categories (Комуз,
  * Боз үй буюмдары, Оймо, ...) with invented current/total counts - none of
  * that catalog exists server-side. Rather than keep presenting fabricated
- * numbers, this reuses the one real, safely-tracked discovery catalog that
- * does exist (explore/data.ts's exploreDiscoveries + useProgressStore's
- * discoveredExploreIds, the same data the Explore screen's DiscoveriesRow
- * already renders) so every number here is real, just narrower in scope
- * than the eventual full collection. Widen this once Culture's own
- * discoverable items (komuz melodies, boz-uy items, etc.) are real.
+ * numbers, this reuses the real, server-driven discoveries table (the same
+ * data Explore's LocationDetailScreen/DiscoveriesRow render) so every
+ * number here is real, just narrower in scope than the eventual full
+ * collection. Widen this once Culture's own discoverable items (komuz
+ * melodies, boz-uy items, etc.) are real.
  */
-export function getCollectionItems(discoveredExploreIds: string[]): ProfileCollectionItem[] {
-  return exploreDiscoveries.map((discovery) => ({
+export function getCollectionItems(
+  discoveries: DiscoveryRow[],
+  discoveredExploreIds: string[],
+  language: SupportedLanguage,
+): ProfileCollectionItem[] {
+  return discoveries.map((discovery) => ({
     id: discovery.id,
-    title: discovery.title,
-    imageSource: discovery.imageSource as ProfileCollectionItem['imageSource'],
+    title: mapDiscoveryTitle(discovery)[language] ?? discovery.title_kg,
+    color: colors.discovery[discovery.category],
+    imageSource: discoveryImages[discovery.id],
     current: discoveredExploreIds.includes(discovery.id) ? 1 : 0,
     total: 1,
   }));
 }
 
-export function getCollectionCounts(discoveredExploreIds: string[]): { unlocked: number; total: number } {
-  const total = exploreDiscoveries.length;
-  const unlocked = exploreDiscoveries.filter((discovery) => discoveredExploreIds.includes(discovery.id)).length;
+export function getCollectionCounts(discoveries: DiscoveryRow[], discoveredExploreIds: string[]): { unlocked: number; total: number } {
+  const total = discoveries.length;
+  const unlocked = discoveries.filter((discovery) => discoveredExploreIds.includes(discovery.id)).length;
   return { unlocked, total };
 }

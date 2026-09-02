@@ -36,7 +36,11 @@ export function ProfileCollectionRow({ items, onPressItem, onPressSeeAll }: Prof
             accessibilityRole="button"
             accessibilityLabel={item.title}
           >
-            <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
+            {item.imageSource ? (
+              <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
+            ) : (
+              <View style={[styles.image, { backgroundColor: item.color }]} />
+            )}
             <Text style={styles.title} numberOfLines={1}>
               {item.title}
             </Text>

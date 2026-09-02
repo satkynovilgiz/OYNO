@@ -30,7 +30,13 @@ export type AnalyticsEventName =
   | 'boz_uy_build_completed'
   | 'shyrdak_creator_open'
   | 'komuz_lesson_open'
-  | 'komuz_lesson_completed';
+  | 'komuz_lesson_completed'
+  | 'explore_opened'
+  | 'region_opened'
+  | 'discovery_found'
+  | 'quest_step_completed'
+  | 'explore_search'
+  | 'explore_filter_used';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

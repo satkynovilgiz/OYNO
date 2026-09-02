@@ -708,11 +708,9 @@
     "progress": {
       "title": "Kyrgyzstan exploration progress",
       "stats": {
-        "locations": "Locations",
+        "regions": "Regions",
         "nature": "Nature",
-        "culture": "Culture",
-        "animals": "Animals",
-        "food": "Food",
+        "discoveries": "Discoveries",
         "quests": "Quests"
       }
     },
@@ -735,22 +733,45 @@
     "natureSites": {
       "title": "Nature sites"
     },
-    "categories": {
-      "nature": "Nature",
-      "games": "Games",
-      "food": "Food",
-      "music": "Music",
-      "culture": "Culture",
-      "history": "History",
-      "crafts": "Crafts",
-      "animals": "Animals",
-      "quests": "Quests"
+    "search": {
+      "placeholder": "Search a region, place, or discovery",
+      "emptyState": "No results found.",
+      "sectionRegions": "Regions",
+      "sectionNature": "Nature sites",
+      "sectionDiscoveries": "Discoveries"
+    },
+    "filters": {
+      "title": "Filters",
+      "apply": "Apply",
+      "clear": "Clear",
+      "resultsTitle": "Filtered results",
+      "noResults": "No places match these filters.",
+      "options": {
+        "regions": "Regions",
+        "nature": "Nature sites",
+        "discovered": "Discovered",
+        "undiscovered": "Undiscovered"
+      }
     },
     "locationDetail": {
       "backLabel": "Back",
       "progressLabel": "This region is {{percent}}% explored",
-      "sectionsTitle": "Sections",
-      "factsTitle": "Did you know?"
+      "factsTitle": "Did you know?",
+      "discoveriesTitle": "Discoveries",
+      "noDiscoveries": "No discoveries here yet.",
+      "favoriteLabel": "Add to favorites",
+      "unfavoriteLabel": "Remove from favorites",
+      "shareLabel": "Share",
+      "shareMessage": "I just learned about {{name}} in OYNO!",
+      "loadError": "The region failed to load. Please try again.",
+      "notFound": "Region not found.",
+      "state": {
+        "locked": "Locked",
+        "available": "Not explored",
+        "started": "Started",
+        "explored": "Explored",
+        "completed": "Completed"
+      }
     }
   },
   "profileSetup": {

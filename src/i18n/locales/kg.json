@@ -708,11 +708,9 @@
     "progress": {
       "title": "Кыргызстанды изилдөө прогресси",
       "stats": {
-        "locations": "Локациялар",
+        "regions": "Аймактар",
         "nature": "Жаратылыш",
-        "culture": "Маданият",
-        "animals": "Жаныбарлар",
-        "food": "Ашкана",
+        "discoveries": "Ачылыштар",
         "quests": "Квесттер"
       }
     },
@@ -735,22 +733,45 @@
     "natureSites": {
       "title": "Табигый жерлер"
     },
-    "categories": {
-      "nature": "Жаратылыш",
-      "games": "Оюндар",
-      "food": "Ашкана",
-      "music": "Музыка",
-      "culture": "Маданият",
-      "history": "Тарых",
-      "crafts": "Кол өнөрчүлүк",
-      "animals": "Жаныбарлар",
-      "quests": "Квесттер"
+    "search": {
+      "placeholder": "Аймак, жер же ачылыш издөө",
+      "emptyState": "Эч нерсе табылган жок.",
+      "sectionRegions": "Аймактар",
+      "sectionNature": "Табигый жерлер",
+      "sectionDiscoveries": "Ачылыштар"
+    },
+    "filters": {
+      "title": "Чыпкалар",
+      "apply": "Колдонуу",
+      "clear": "Тазалоо",
+      "resultsTitle": "Чыпкаланган жыйынтыктар",
+      "noResults": "Бул чыпкаларга дал келген жер жок.",
+      "options": {
+        "regions": "Аймактар",
+        "nature": "Табигый жерлер",
+        "discovered": "Изилденген",
+        "undiscovered": "Изилденбеген"
+      }
     },
     "locationDetail": {
       "backLabel": "Артка",
       "progressLabel": "Бул аймак {{percent}}% изилденди",
-      "sectionsTitle": "Бөлүмдөр",
-      "factsTitle": "Билесиңби?"
+      "factsTitle": "Билесиңби?",
+      "discoveriesTitle": "Ачылыштар",
+      "noDiscoveries": "Бул жерде азырынча ачылыш жок.",
+      "favoriteLabel": "Тандалмаларга кошуу",
+      "unfavoriteLabel": "Тандалмалардан алып салуу",
+      "shareLabel": "Бөлүшүү",
+      "shareMessage": "Мен OYNO колдонмосунда {{name}} жөнүндө билдим!",
+      "loadError": "Аймак жүктөлгөн жок. Кайра аракет кылыңыз.",
+      "notFound": "Аймак табылган жок.",
+      "state": {
+        "locked": "Кулпуланган",
+        "available": "Изилдене элек",
+        "started": "Башталды",
+        "explored": "Изилденди",
+        "completed": "Аяктады"
+      }
     }
   },
   "profileSetup": {

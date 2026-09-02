@@ -21,22 +21,9 @@ export type ExploreLocation = {
   /** Sourced, kg-language facts. See content/explore/{id}.md for citations. */
   facts: string[];
   status: VerificationStatus;
-  /** Mock discovery progress (0-100) - not wired to real user progress yet. */
+  /** Real per-user completion percent, from calculateRegionCompletion. */
   discoveredPercent: number;
-  locked?: boolean;
-  unlockRequirement?: string;
 };
-
-export type ExploreCategoryId =
-  | 'nature'
-  | 'games'
-  | 'food'
-  | 'music'
-  | 'culture'
-  | 'history'
-  | 'crafts'
-  | 'animals'
-  | 'quests';
 
 export type MapPinVariant = 'default' | 'landmark';
 
@@ -51,7 +38,12 @@ export type ExploreMapPin = {
   variant: MapPinVariant;
 };
 
-export type ExploreStatId = 'locations' | 'nature' | 'culture' | 'animals' | 'food' | 'quests';
+/** The 4 real, honestly-countable progress axes - Regions/Nature (visited
+ * out of the 8/6 real explore_regions rows), Discoveries (found out of
+ * the real discoveries table), Quest steps (completed out of the active
+ * quest's real step count). Replaces the old 6-stat mock
+ * (locations/nature/culture/animals/food/quests with invented totals). */
+export type ExploreStatId = 'regions' | 'nature' | 'discoveries' | 'quests';
 
 export type ExploreProgress = {
   overallPercent: number;

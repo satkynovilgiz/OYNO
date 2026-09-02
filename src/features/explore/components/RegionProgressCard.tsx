@@ -1,4 +1,4 @@
-import { Compass, Diamond, Mountain, PawPrint, Soup, TreePine, type LucideIcon } from 'lucide-react-native';
+import { Compass, Diamond, Mountain, TreePine, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -10,11 +10,9 @@ import type { ExploreProgress, ExploreStatId } from '../types';
 type StatDef = { id: ExploreStatId; icon: LucideIcon };
 
 const STATS: StatDef[] = [
-  { id: 'locations', icon: Mountain },
+  { id: 'regions', icon: Mountain },
   { id: 'nature', icon: TreePine },
-  { id: 'culture', icon: Diamond },
-  { id: 'animals', icon: PawPrint },
-  { id: 'food', icon: Soup },
+  { id: 'discoveries', icon: Diamond },
   { id: 'quests', icon: Compass },
 ];
 
@@ -80,7 +78,7 @@ const styles = StyleSheet.create({
     rowGap: spacing.sm,
   },
   statItem: {
-    width: '33.33%',
+    width: '50%',
     alignItems: 'center',
     gap: 2,
   },

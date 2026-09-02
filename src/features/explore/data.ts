@@ -1,18 +1,20 @@
 /**
- * Region/quest content itself (name, tagline, facts) is now server-driven
- * (Phase 6c, see src/services/content/exploreService.ts) - this file only
- * keeps what's genuinely UI/layout data (map pin coordinates) or still
- * mock (overall exploration progress, never wired to a real per-user
- * count) or already real via Phase 6b (the 4 discoverable items, whose
- * XP rewards are enforced server-side in discover_explore_item).
+ * Region/quest/discovery content itself is now fully server-driven
+ * (explore_regions, quests, discoveries - see src/services/content/) -
+ * this file only keeps genuine UI/layout data: map pin coordinates, and a
+ * bundled-image fallback keyed by discovery id (a discovery row has no
+ * image_url column yet, same "require() needs a static path" reasoning
+ * as cultureItemImages in features/culture/data.ts).
  */
+import type { ImageSourcePropType } from 'react-native';
+
 import { colors } from '@/theme';
 import discoveryBeshbarmak from '@assets/img/OYNO_design/explore/discovery_beshbarmak.png';
 import discoveryBozUy from '@assets/img/OYNO_design/explore/discovery_boz_uy.png';
 import discoveryTooTeke from '@assets/img/OYNO_design/explore/discovery_too_teke.png';
 import discoveryYsykKol from '@assets/img/OYNO_design/explore/discovery_ysyk_kol.png';
 
-import type { ExploreDiscovery, ExploreMapPin, ExploreProgress } from './types';
+import type { ExploreMapPin } from './types';
 
 /**
  * Pin tap-target placement on KyrgyzstanMap, measured directly against the
@@ -36,23 +38,9 @@ export const exploreMapPins: ExploreMapPin[] = [
   { locationId: 'batken', xPercent: 17.1, yPercent: 76.8, color: colors.discovery.animals, variant: 'default' },
 ];
 
-/** Mock exploration progress - matches the numbers given in the Explore
- * screen design spec, not wired to real user progress yet. */
-export const exploreProgress: ExploreProgress = {
-  overallPercent: 37,
-  stats: {
-    locations: { current: 12, total: 40 },
-    nature: { current: 15, total: 30 },
-    culture: { current: 20, total: 50 },
-    animals: { current: 8, total: 20 },
-    food: { current: 7, total: 20 },
-    quests: { current: 18, total: 60 },
-  },
+export const discoveryImages: Record<string, ImageSourcePropType> = {
+  'ysyk-kol-shore': discoveryYsykKol,
+  'boz-uy': discoveryBozUy,
+  'too-teke': discoveryTooTeke,
+  'beshbarmak-dish': discoveryBeshbarmak,
 };
-
-export const exploreDiscoveries: ExploreDiscovery[] = [
-  { id: 'ysyk-kol-shore', title: 'Ысык-Көлдүн жээги', category: 'nature', xpReward: 50, imageSource: discoveryYsykKol },
-  { id: 'boz-uy', title: 'Боз үй', category: 'culture', xpReward: 60, imageSource: discoveryBozUy },
-  { id: 'too-teke', title: 'Тоо теке', category: 'animals', xpReward: 40, imageSource: discoveryTooTeke },
-  { id: 'beshbarmak-dish', title: 'Бешбармак', category: 'food', xpReward: 50, imageSource: discoveryBeshbarmak },
-];

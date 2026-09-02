@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { mockGamesList } from '@/features/games/mockData';
+import type { SupportedLanguage } from '@/i18n';
+import { useDiscoveries } from '@/services/content/discoveriesService';
 import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
@@ -34,13 +36,14 @@ const QUEST_TOTAL = 5;
 
 export function ProfileScreen() {
   useTrackScreenView('profile');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
   const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
   const progress = useProgressStore();
+  const { data: discoveries } = useDiscoveries();
 
   const today = new Date().toISOString().slice(0, 10);
   const giftClaimed = progress.dailyGiftClaimedDateISO === today;
@@ -62,8 +65,8 @@ export function ProfileScreen() {
 
   const explorePercent = Math.round((progress.questFoundCount / QUEST_TOTAL) * 100);
   const cultureRatio = ((progress.cultureDiscoveryCount >= 1 ? 1 : 0) + (progress.bozUyVisited ? 1 : 0)) / 2;
-  const collectionItems = getCollectionItems(progress.discoveredExploreIds);
-  const { unlocked: collectionUnlocked, total: collectionTotal } = getCollectionCounts(progress.discoveredExploreIds);
+  const collectionItems = getCollectionItems(discoveries ?? [], progress.discoveredExploreIds, i18n.language as SupportedLanguage);
+  const { unlocked: collectionUnlocked, total: collectionTotal } = getCollectionCounts(discoveries ?? [], progress.discoveredExploreIds);
 
   const profileStats: ProfileStat[] = [
     { id: 'games', icon: Gamepad2, label: t('profile.stats.games'), valueLabel: String(progress.gamesPlayed), captionKey: 'count', ringProgress: Math.min(1, progress.gamesPlayed / 20) },

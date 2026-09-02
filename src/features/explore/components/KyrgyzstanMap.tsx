@@ -5,14 +5,18 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { IconButton } from '@/components/ui/IconButton';
+import type { RegionState } from '@/services/explore/regionState';
 import { radii } from '@/theme';
 import mapTerrain from '@assets/img/OYNO_design/explore/map_terrain.png';
+
+import { RegionStateBadge } from './RegionStateBadge';
 
 export type KyrgyzstanMapPin = {
   id: string;
   label: string;
   xPercent: number;
   yPercent: number;
+  state?: RegionState;
 };
 
 type KyrgyzstanMapProps = {
@@ -115,6 +119,11 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
                 accessibilityLabel={pin.label}
                 style={styles.tapTargetFill}
               />
+              {pin.state ? (
+                <View style={[styles.stateBadgeWrap, { pointerEvents: 'none' }]}>
+                  <RegionStateBadge state={pin.state} />
+                </View>
+              ) : null}
             </View>
           ))}
 
@@ -161,6 +170,11 @@ const styles = StyleSheet.create({
   },
   tapTargetFill: {
     flex: 1,
+  },
+  stateBadgeWrap: {
+    position: 'absolute',
+    top: -2,
+    right: '30%',
   },
   controlWrap: {
     position: 'absolute',

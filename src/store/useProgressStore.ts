@@ -78,6 +78,9 @@ type CachedShape = ProgressFields & {
   gameStats: Record<string, GameStat>;
   discoveredExploreIds: string[];
   unlockedAchievementIds: AchievementId[];
+  visitedRegionIds: string[];
+  completedQuestStepIds: string[];
+  favoriteIds: string[];
 };
 
 const DEFAULT_FIELDS: ProgressFields = {
@@ -153,10 +156,16 @@ type ProgressState = ProgressFields & {
   discoveredExploreIds: string[];
   unlockedAchievementIds: AchievementId[];
   lastUnlockedAchievementId: AchievementId | null;
+  visitedRegionIds: string[];
+  completedQuestStepIds: string[];
+  favoriteIds: string[];
   load: () => Promise<void>;
   recordGamePlayed: (gameId: string) => Promise<void>;
   recordGameWon: (gameId: string) => Promise<void>;
   advanceQuest: () => Promise<void>;
+  advanceQuestStep: (stepType: string, targetId: string) => Promise<void>;
+  visitExploreRegion: (regionId: string) => Promise<void>;
+  toggleFavorite: (targetType: 'region' | 'nature', targetId: string) => Promise<boolean | null>;
   discoverExploreItem: (id: string) => Promise<void>;
   visitBozUy: () => Promise<void>;
   discoverCulture: () => Promise<void>;
@@ -178,6 +187,19 @@ type ProgressState = ProgressFields & {
 };
 
 export const useProgressStore = create<ProgressState>((set, get) => {
+  function cacheSnapshot(fields: ProgressFields, unlockedAchievementIds: AchievementId[]): CachedShape {
+    const current = get();
+    return {
+      ...fields,
+      gameStats: current.gameStats,
+      discoveredExploreIds: current.discoveredExploreIds,
+      unlockedAchievementIds,
+      visitedRegionIds: current.visitedRegionIds,
+      completedQuestStepIds: current.completedQuestStepIds,
+      favoriteIds: current.favoriteIds,
+    };
+  }
+
   function applyProgress(row: ProgressRow, newlyUnlocked?: AchievementId[]) {
     const fields = mapRow(row);
     const current = get();
@@ -194,12 +216,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       error: null,
     });
 
-    void writeCache({
-      ...fields,
-      gameStats: get().gameStats,
-      discoveredExploreIds: get().discoveredExploreIds,
-      unlockedAchievementIds,
-    });
+    void writeCache(cacheSnapshot(fields, unlockedAchievementIds));
   }
 
   // Duplicate-claim/eligibility guards on the server (ALREADY_CLAIMED,
@@ -228,18 +245,34 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     discoveredExploreIds: [],
     unlockedAchievementIds: [],
     lastUnlockedAchievementId: null,
+    visitedRegionIds: [],
+    completedQuestStepIds: [],
+    favoriteIds: [],
 
     load: async () => {
       if (!isRealUser()) {
-        set({ ...DEFAULT_FIELDS, gameStats: {}, discoveredExploreIds: [], unlockedAchievementIds: [], isLoaded: true, error: null });
+        set({
+          ...DEFAULT_FIELDS,
+          gameStats: {},
+          discoveredExploreIds: [],
+          unlockedAchievementIds: [],
+          visitedRegionIds: [],
+          completedQuestStepIds: [],
+          favoriteIds: [],
+          isLoaded: true,
+          error: null,
+        });
         return;
       }
       try {
-        const [progressRes, gameStatsRes, achievementsRes, discoveriesRes] = await Promise.all([
+        const [progressRes, gameStatsRes, achievementsRes, discoveriesRes, regionVisitsRes, questStepsRes, favoritesRes] = await Promise.all([
           supabase.from('user_progress').select('*').single(),
           supabase.from('user_game_stats').select('game_id, played, won'),
           supabase.from('user_achievements').select('achievement_id'),
           supabase.from('user_discoveries').select('discovery_id'),
+          supabase.from('user_region_visits').select('region_id'),
+          supabase.from('user_quest_steps').select('step_id'),
+          supabase.from('user_favorites').select('target_type, target_id'),
         ]);
         if (progressRes.error) throw progressRes.error;
 
@@ -249,10 +282,23 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         }
         const unlockedAchievementIds = (achievementsRes.data ?? []).map((r) => r.achievement_id as AchievementId);
         const discoveredExploreIds = (discoveriesRes.data ?? []).map((r) => r.discovery_id as string);
+        const visitedRegionIds = (regionVisitsRes.data ?? []).map((r) => r.region_id as string);
+        const completedQuestStepIds = (questStepsRes.data ?? []).map((r) => r.step_id as string);
+        const favoriteIds = (favoritesRes.data ?? []).map((r) => `${r.target_type}:${r.target_id}`);
         const fields = mapRow(progressRes.data as ProgressRow);
 
-        set({ ...fields, gameStats, unlockedAchievementIds, discoveredExploreIds, isLoaded: true, error: null });
-        void writeCache({ ...fields, gameStats, unlockedAchievementIds, discoveredExploreIds });
+        set({
+          ...fields,
+          gameStats,
+          unlockedAchievementIds,
+          discoveredExploreIds,
+          visitedRegionIds,
+          completedQuestStepIds,
+          favoriteIds,
+          isLoaded: true,
+          error: null,
+        });
+        void writeCache({ ...fields, gameStats, unlockedAchievementIds, discoveredExploreIds, visitedRegionIds, completedQuestStepIds, favoriteIds });
       } catch {
         // Offline or a real failure - fall back to the last successful
         // fetch so the UI shows real (if stale) numbers instead of
@@ -290,6 +336,51 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       if (result.progress.quest_completed) track('quest_completed');
     },
 
+    // Event-driven replacement for advanceQuest(): reports "this step-type/
+    // target event just happened" (region opened, item discovered, culture
+    // item read) rather than a bare "advance" tap. The server only actually
+    // advances if this matches the caller's real next incomplete step, so
+    // reporting an event that isn't the next step is a harmless no-op.
+    advanceQuestStep: async (stepType, targetId) => {
+      const wasNotStarted = get().questFoundCount === 0;
+      const wasCompleted = get().questCompleted;
+      const foundCountBefore = get().questFoundCount;
+      const result = await callAction('advance_quest_step', { p_step_type: stepType, p_target_id: targetId });
+      if (!result) return;
+      applyProgress(result.progress, result.newlyUnlocked);
+      if (result.progress.quest_found_count > foundCountBefore) {
+        track('quest_step_completed', { stepType, targetId });
+      }
+      if (wasNotStarted && result.progress.quest_found_count > 0) track('quest_started');
+      if (!wasCompleted && result.progress.quest_completed) track('quest_completed');
+    },
+
+    // No progress reward here (visiting isn't itself XP-earning), so this
+    // doesn't go through callAction/applyProgress like the reward actions -
+    // it just records the visit and updates the local id list on success.
+    visitExploreRegion: async (regionId) => {
+      if (!isRealUser()) return;
+      const isNew = !get().visitedRegionIds.includes(regionId);
+      const { error } = await supabase.rpc('visit_explore_region', { p_region_id: regionId });
+      if (error) return;
+      if (isNew) {
+        set({ visitedRegionIds: [...get().visitedRegionIds, regionId] });
+        void writeCache(cacheSnapshot(get(), get().unlockedAchievementIds));
+        track('region_opened', { regionId });
+      }
+    },
+
+    toggleFavorite: async (targetType, targetId) => {
+      if (!isRealUser()) return null;
+      const { data, error } = await supabase.rpc('toggle_favorite', { p_target_type: targetType, p_target_id: targetId });
+      if (error) return null;
+      const key = `${targetType}:${targetId}`;
+      const favorited = !!data;
+      const current = get().favoriteIds;
+      set({ favoriteIds: favorited ? [...current, key] : current.filter((id) => id !== key) });
+      return favorited;
+    },
+
     discoverExploreItem: async (id) => {
       const isNew = !get().discoveredExploreIds.includes(id);
       const result = await callAction('discover_explore_item', { p_discovery_id: id });
@@ -299,6 +390,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         set({ discoveredExploreIds: [...get().discoveredExploreIds, id] });
         track('location_discovered', { locationId: id });
         track('collection_item_discovered', { itemId: id });
+        track('discovery_found', { discoveryId: id });
+        void get().advanceQuestStep('DISCOVER_ITEM', id);
       }
     },
 
