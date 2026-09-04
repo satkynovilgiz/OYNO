@@ -19,6 +19,7 @@ export function useKokBoruGame() {
   const [possession, setPossession] = useState<KokBoruPossession>('FREE');
   const [summary, setSummary] = useState<KokBoruResultSummary>({ scored: false, elapsedSeconds: 0, topSpeed: 0 });
   const [canPickUp, setCanPickUp] = useState(false);
+  const [liveElapsedSeconds, setLiveElapsedSeconds] = useState(0);
 
   const prevPhaseRef = useRef<KokBoruPhase>('PLAYING');
   const playerHorseRef = useRef(new HorseController(DEFAULT_HORSE_CONFIG, PLAYER_START.x, PLAYER_START.z, Math.PI));
@@ -26,6 +27,7 @@ export function useKokBoruGame() {
   const possessionRef = useRef<KokBoruPossession>('FREE');
   const elapsedRef = useRef(0);
   const topSpeedRef = useRef(0);
+  const hudThrottleRef = useRef(0);
 
   useEffect(() => {
     if (phase === 'LOADING') setPhase('INTRO');
@@ -56,6 +58,12 @@ export function useKokBoruGame() {
     elapsedRef.current += dt;
     const player = playerHorseRef.current;
     topSpeedRef.current = Math.max(topSpeedRef.current, player.speed);
+
+    hudThrottleRef.current += dt;
+    if (hudThrottleRef.current > 0.1) {
+      hudThrottleRef.current = 0;
+      setLiveElapsedSeconds(elapsedRef.current);
+    }
 
     if (possessionRef.current === 'PLAYER') {
       objectPositionRef.current = { x: player.x, z: player.z };
@@ -101,6 +109,7 @@ export function useKokBoruGame() {
     topSpeedRef.current = 0;
     setPossession('FREE');
     setCanPickUp(false);
+    setLiveElapsedSeconds(0);
     setSummary({ scored: false, elapsedSeconds: 0, topSpeed: 0 });
     setPhase('READY');
   }, []);
@@ -111,6 +120,7 @@ export function useKokBoruGame() {
     canPickUp,
     playerHorseRef,
     objectPositionRef,
+    liveElapsedSeconds,
     summary,
     finishIntro,
     finishTutorial,

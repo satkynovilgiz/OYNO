@@ -85,7 +85,7 @@ export function KyzKuumaiGame() {
           title={t('games3d.titles.kyzKuumai')}
           onPause={game.pause}
           primaryStat={{ label: t('games3d.kyzKuumai.distance'), value: `${game.liveDistance.toFixed(1)}m` }}
-          secondaryStat={{ label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(0)}s` }}
+          secondaryStat={{ label: t('games3d.kyzKuumai.time'), value: `${game.liveElapsedSeconds.toFixed(0)}s` }}
         />
       ) : null}
 

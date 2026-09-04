@@ -93,7 +93,7 @@ export function KokBoruGame() {
           title={t('games3d.titles.kokBoru')}
           onPause={game.pause}
           primaryStat={{ label: t('games3d.kokBoru.possession'), value: game.possession === 'PLAYER' ? t('games3d.kokBoru.you') : t('games3d.kokBoru.free') }}
-          secondaryStat={{ label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(0)}s` }}
+          secondaryStat={{ label: t('games3d.kyzKuumai.time'), value: `${game.liveElapsedSeconds.toFixed(0)}s` }}
         />
       ) : null}
 

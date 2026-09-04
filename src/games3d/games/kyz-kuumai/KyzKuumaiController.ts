@@ -24,6 +24,7 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
     closestDistance: Infinity,
   });
   const [liveDistance, setLiveDistance] = useState(0);
+  const [liveElapsedSeconds, setLiveElapsedSeconds] = useState(0);
 
   const prevPhaseRef = useRef<KyzKuumaiPhase>('PLAYING');
   const elapsedRef = useRef(0);
@@ -70,6 +71,7 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
     if (hudThrottleRef.current > 0.1) {
       hudThrottleRef.current = 0;
       setLiveDistance(distance);
+      setLiveElapsedSeconds(elapsedRef.current);
     }
 
     if (distance <= CATCH_RADIUS_M) {
@@ -110,6 +112,7 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
     topSpeedRef.current = 0;
     closestDistanceRef.current = Infinity;
     setLiveDistance(0);
+    setLiveElapsedSeconds(0);
     setSummary({ caught: false, elapsedSeconds: 0, topSpeed: 0, closestDistance: Infinity });
     setPhase('READY');
   }, [aiConfig]);
@@ -119,6 +122,7 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
     playerHorseRef,
     aiHorseRef,
     liveDistance,
+    liveElapsedSeconds,
     summary,
     finishIntro,
     finishTutorial,
