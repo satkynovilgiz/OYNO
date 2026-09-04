@@ -31,6 +31,7 @@ export const mockGamesList: GameListItem[] = [
     difficulty: 'easy',
     players: { kind: 'open', min: 1 },
     duration: { minMinutes: 5, maxMinutes: 10 },
+    route: '/games/chuko',
   },
   {
     id: 'ordo',
@@ -40,6 +41,7 @@ export const mockGamesList: GameListItem[] = [
     difficulty: 'medium',
     players: { kind: 'exact', count: 2 },
     duration: { minMinutes: 5, maxMinutes: 25 },
+    route: '/games/ordo',
   },
   {
     id: 'besh-tash',
@@ -87,6 +89,7 @@ export const mockGamesList: GameListItem[] = [
     difficulty: 'medium',
     players: { kind: 'exact', count: 1 },
     duration: { minMinutes: 5, maxMinutes: 10 },
+    route: '/games/jaa-atuu',
   },
   {
     id: 'kyz-kuumay',
@@ -96,6 +99,7 @@ export const mockGamesList: GameListItem[] = [
     difficulty: 'medium',
     players: { kind: 'open', min: 2 },
     duration: { minMinutes: 15, maxMinutes: 20 },
+    route: '/games/kyz-kuumai',
   },
   {
     id: 'beshbarmak-challenge',

@@ -94,10 +94,12 @@ Expo Go).
   straight into whichever has a route, skipping the production Games hub.
 - **Direct routes**: `/games/jaa-atuu`, `/games/ordo`, `/games/chuko`,
   `/games/kyz-kuumai`, `/games/kok-boru`.
-- The production Games hub (`src/features/games/mockData.ts`) intentionally
-  still has **no** `route` set on any of the corresponding entries, so they
-  keep showing as "Coming soon" there until each has been verified on a
-  real device - see Section 6/95 of the build brief this was built against.
+- The production Games hub (`src/features/games/mockData.ts`) now also links
+  directly to Jaa Atuu, Ordo, Chuko, and Kyz Kuumai (their existing cards'
+  `route` was set once each had been verified running - via browser, not yet
+  on a real device - see the final report for this phase). Kok Boru has no
+  card there yet since it has no `games/kokBoru` thumbnail asset - reach it
+  via `/games/kok-boru` directly or the 3D Game Lab.
 
 ## Game state machine
 
