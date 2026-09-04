@@ -40,7 +40,10 @@
         {
           "photosPermission": "OYNO админ панелине сүрөт жүктөө үчүн сүрөт китепканаңызга кирүү керек."
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-screen-orientation",
+      "expo-dev-client"
     ],
     "experiments": {
       "typedRoutes": true

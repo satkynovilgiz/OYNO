@@ -237,10 +237,22 @@
       "openLabel": "Open section"
     },
     "cultureTiles": {
-      "culture": { "title": "Culture", "subtitle": "Yurt, ornament, shyrdak" },
-      "food": { "title": "Cuisine", "subtitle": "National dishes" },
-      "music": { "title": "Music", "subtitle": "Komuz, songs, melodies" },
-      "map": { "title": "World Map", "subtitle": "Explore the regions" }
+      "culture": {
+        "title": "Culture",
+        "subtitle": "Yurt, ornament, shyrdak"
+      },
+      "food": {
+        "title": "Cuisine",
+        "subtitle": "National dishes"
+      },
+      "music": {
+        "title": "Music",
+        "subtitle": "Komuz, songs, melodies"
+      },
+      "map": {
+        "title": "World Map",
+        "subtitle": "Explore the regions"
+      }
     },
     "nav": {
       "home": "Home",
@@ -673,15 +685,30 @@
       "quiz": {
         "q1": {
           "question": "How many strings does a komuz have?",
-          "choices": ["Three", "Four", "Five", "Two"]
+          "choices": [
+            "Three",
+            "Four",
+            "Five",
+            "Two"
+          ]
         },
         "q2": {
           "question": "Which century's written source first mentions the komuz?",
-          "choices": ["9th century", "11th century", "15th century", "20th century"]
+          "choices": [
+            "9th century",
+            "11th century",
+            "15th century",
+            "20th century"
+          ]
         },
         "q3": {
           "question": "Which of these is a real part of a komuz?",
-          "choices": ["Neck", "String tailpiece", "Wing", "Fin"]
+          "choices": [
+            "Neck",
+            "String tailpiece",
+            "Wing",
+            "Fin"
+          ]
         },
         "failed": "{{correct}} / {{total}} correct. Try again!",
         "retry": "Try again"
@@ -954,6 +981,106 @@
           "body": "Questions about these terms? Email us at support@oyno.app."
         }
       ]
+    }
+  },
+  "games3d": {
+    "lab": {
+      "title": "3D Game Lab",
+      "subtitle": "Development test bench for the 5 3D games."
+    },
+    "status": {
+      "COMING_SOON": "Coming soon",
+      "VISUAL_ONLY": "Visual only",
+      "PARTIAL": "In progress",
+      "PLAYABLE": "Playable"
+    },
+    "titles": {
+      "jaaAtuu": "Archery",
+      "ordo": "Ordo",
+      "chuko": "Chuko",
+      "kyzKuumai": "Kyz Kuumai",
+      "kokBoru": "Kok Boru"
+    },
+    "hud": {
+      "score": "Score",
+      "arrows": "Arrows"
+    },
+    "pause": {
+      "title": "Paused",
+      "resume": "Resume",
+      "restart": "Restart",
+      "exit": "Exit"
+    },
+    "loading": {
+      "title": "Loading the game..."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "message": "The 3D scene couldn't load.",
+      "retry": "Retry",
+      "exit": "Exit"
+    },
+    "result": {
+      "title": "Result",
+      "score": "Score",
+      "bestShot": "Best shot",
+      "accuracy": "Accuracy",
+      "replay": "Replay",
+      "exit": "Exit",
+      "bullseyes": "Bullseyes",
+      "win": "YOU WIN!",
+      "lose": "YOU LOSE",
+      "draw": "DRAW"
+    },
+    "jaaAtuu": {
+      "tutorial1": "Drag to aim at the target",
+      "tutorial2": "Hold to draw the bow",
+      "tutorial3": "Release to shoot!",
+      "miss": "MISS"
+    },
+    "intro": {
+      "start": "START!"
+    },
+    "ordo": {
+      "tutorial1": "Drag back to aim and set power",
+      "tutorial2": "Knock the pieces out of the circle",
+      "tutorial3": "Clear 3 pieces before you can hit the khan!",
+      "yourTurn": "YOUR TURN",
+      "aiTurn": "OPPONENT'S TURN",
+      "you": "You",
+      "ai": "Opponent",
+      "captures": "Captures"
+    },
+    "chuko": {
+      "tutorial1": "This is one variant of chuko - drag back to throw",
+      "tutorial2": "Knock the pieces out of the circle to collect them",
+      "tutorial3": "Whoever collects the most when the circle is empty wins"
+    },
+    "controls": {
+      "sprint": "SPRINT"
+    },
+    "kyzKuumai": {
+      "tutorial1": "Left stick to ride, right button to sprint",
+      "tutorial2": "Catch up to the lead rider before the course ends",
+      "tutorial3": "Sprint drains stamina - use it wisely!",
+      "distance": "Distance",
+      "time": "Time",
+      "topSpeed": "Top speed",
+      "closest": "Closest",
+      "caughtTitle": "YOU CAUGHT UP!",
+      "notCaughtTitle": "NOT QUITE THERE"
+    },
+    "kokBoru": {
+      "tutorial1": "Ride up to the object and press \"PICK UP\"",
+      "tutorial2": "Carry it into the gold circle to score",
+      "tutorial3": "This is a 1-player slice for now - no opponent yet",
+      "pickUp": "PICK UP",
+      "throw": "DROP",
+      "possession": "Object",
+      "you": "You",
+      "free": "Free",
+      "scoredTitle": "SCORED!",
+      "notScoredTitle": "TIME'S UP"
     }
   }
 }
