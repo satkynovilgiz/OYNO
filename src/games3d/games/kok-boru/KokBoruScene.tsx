@@ -4,9 +4,9 @@ import type { SharedValue } from 'react-native-reanimated';
 import * as THREE from 'three';
 
 import { ChaseCamera, type ChaseCameraTarget } from '../../camera/ChaseCamera';
+import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import type { HorseController } from '../../shared/horse/HorseController';
 import { HorseModel, type HorseVisualState } from '../../shared/horse/HorseModel';
-import { scenePalette } from '../../shared/scenePalette';
 import { KokBoruArena } from './KokBoruArena';
 import { KokBoruObject } from './KokBoruObject';
 import type { KokBoruPhase, KokBoruPossession } from './KokBoruTypes';
@@ -79,7 +79,7 @@ export function KokBoruScene({ phase, possession, playerHorseRef, objectPosition
 
       <KokBoruArena />
 
-      <HorseModel ref={horseGroupRef} visualStateRef={visualStateRef} riderColor={scenePalette.terracotta} />
+      <HorseModel ref={horseGroupRef} visualStateRef={visualStateRef} riderVariant={CHARACTER_PRESETS.kokBoruPlayer} />
       <KokBoruObject ref={objectGroupRef} />
     </>
   );

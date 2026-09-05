@@ -4,7 +4,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import * as THREE from 'three';
 
 import { ChaseCamera, type ChaseCameraTarget } from '../../camera/ChaseCamera';
-import { scenePalette } from '../../shared/scenePalette';
+import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { HorseModel, type HorseVisualState } from '../../shared/horse/HorseModel';
 import type { HorseController } from '../../shared/horse/HorseController';
 import { KyzKuumaiCourse } from './KyzKuumaiCourse';
@@ -75,8 +75,8 @@ export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, moveX, moveZ
 
       <KyzKuumaiCourse />
 
-      <HorseModel ref={playerGroupRef} visualStateRef={playerVisualRef} riderColor={scenePalette.terracotta} />
-      <HorseModel ref={aiGroupRef} visualStateRef={aiVisualRef} riderColor={scenePalette.gold} />
+      <HorseModel ref={playerGroupRef} visualStateRef={playerVisualRef} riderVariant={CHARACTER_PRESETS.kyzKuumaiPlayer} coatColor="#5C4326" />
+      <HorseModel ref={aiGroupRef} visualStateRef={aiVisualRef} riderVariant={CHARACTER_PRESETS.kyzKuumaiRival} coatColor="#2B2019" />
     </>
   );
 }

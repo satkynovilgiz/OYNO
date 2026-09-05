@@ -1009,7 +1009,8 @@
       "title": "Paused",
       "resume": "Resume",
       "restart": "Restart",
-      "exit": "Exit"
+      "exit": "Exit",
+      "howToPlay": "How to play"
     },
     "loading": {
       "title": "Loading the game..."
@@ -1036,7 +1037,9 @@
       "tutorial1": "Drag to aim at the target",
       "tutorial2": "Hold to draw the bow",
       "tutorial3": "Release to shoot!",
-      "miss": "MISS"
+      "miss": "MISS",
+      "aboutDescription": "Жаа атуу is Kyrgyz archery. This is a mobile-adapted target round, not a historical reconstruction.",
+      "aboutObjective": "Hit the center of the target with all 5 arrows."
     },
     "intro": {
       "start": "START!"
@@ -1081,6 +1084,10 @@
       "free": "Free",
       "scoredTitle": "SCORED!",
       "notScoredTitle": "TIME'S UP"
+    },
+    "about": {
+      "objectiveLabel": "GOAL",
+      "continue": "Got it"
     }
   }
 }

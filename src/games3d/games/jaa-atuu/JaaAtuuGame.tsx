@@ -11,7 +11,9 @@ import { useAimController } from '../../controls/AimController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
+import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
+import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
@@ -25,6 +27,7 @@ import type { ArrowShot } from './JaaAtuuTypes';
 import { JAA_ATUU_DIFFICULTY, TOTAL_ARROWS } from './JaaAtuuTypes';
 
 const TUTORIAL_STEPS = ['games3d.jaaAtuu.tutorial1', 'games3d.jaaAtuu.tutorial2', 'games3d.jaaAtuu.tutorial3'];
+const GAME_ID = 'jaa_atuu';
 
 function hapticForScore(score: number) {
   if (score >= 100) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -47,6 +50,35 @@ export function JaaAtuuGame() {
   const [shotFeedback, setShotFeedback] = useState<ShotFeedbackEvent | null>(null);
   const [bullseyeSignalMs, setBullseyeSignalMs] = useState<number | undefined>(undefined);
   const shotKeyRef = useRef(0);
+
+  // First-time "what is this / how to play" flow (Section 18/20/21) -
+  // decoupled from game.phase so the pause menu can re-open it later
+  // (Section 58) without re-driving the phase machine.
+  const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
+
+  useEffect(() => {
+    if (game.phase !== 'TUTORIAL') return;
+    let cancelled = false;
+    hasSeenTutorial(GAME_ID).then((seen) => {
+      if (cancelled) return;
+      if (seen) game.finishTutorial();
+      else setHelpStage('about');
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
+  const handleAboutDone = useCallback(() => setHelpStage('controls'), []);
+
+  const handleTutorialDone = useCallback(() => {
+    setHelpStage(null);
+    void markTutorialSeen(GAME_ID);
+    if (game.phase === 'TUTORIAL') game.finishTutorial();
+  }, [game]);
+
+  const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
   // Backgrounding always pauses (Section 17); resuming gameplay is always
   // an explicit tap on the pause menu, never automatic on foreground.
@@ -162,9 +194,23 @@ export function JaaAtuuGame() {
 
       <GameIntroCard visible={game.phase === 'INTRO'} title={t('games3d.titles.jaaAtuu')} onDone={game.finishIntro} />
 
-      <TutorialOverlay visible={game.phase === 'TUTORIAL'} stepKeys={TUTORIAL_STEPS} onDone={game.finishTutorial} />
+      <GameAboutCard
+        visible={helpStage === 'about'}
+        title={t('games3d.titles.jaaAtuu')}
+        description={t('games3d.jaaAtuu.aboutDescription')}
+        objective={t('games3d.jaaAtuu.aboutObjective')}
+        onDone={handleAboutDone}
+      />
 
-      <PauseMenu visible={game.phase === 'PAUSED'} onResume={game.resume} onRestart={handleRestart} onExit={handleExit} />
+      <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
+
+      <PauseMenu
+        visible={game.phase === 'PAUSED' && helpStage === null}
+        onResume={game.resume}
+        onRestart={handleRestart}
+        onExit={handleExit}
+        onHowToPlay={handleHowToPlay}
+      />
 
       <ResultScreen
         visible={game.phase === 'RESULT'}

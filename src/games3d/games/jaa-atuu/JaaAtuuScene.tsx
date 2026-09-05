@@ -5,6 +5,9 @@ import * as THREE from 'three';
 
 import { AIM_CAMERA_OFFSET, AimCamera } from '../../camera/AimCamera';
 import { IntroCameraSweep } from '../../camera/IntroCameraSweep';
+import { applyDrawPose } from '../../shared/characters/CharacterAnimator';
+import { CharacterModel, type CharacterHandle } from '../../shared/characters/CharacterModel';
+import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { GAME_INTRO_DURATION_MS } from '../../ui/GameIntroCard';
 import { ArcheryRange } from './ArcheryRange';
 import type { PendingShot } from './JaaAtuuController';
@@ -17,6 +20,10 @@ import type { ArrowShot, JaaAtuuDifficultyConfig, JaaAtuuPhase } from './JaaAtuu
 const GROUND_Y = 0;
 const MAX_FLIGHT_SECONDS = 4;
 const INTRO_START_OFFSET = new THREE.Vector3(5, 5.5, 9);
+/** The archer character faces +Z locally (CharacterHead's face features are
+ * built at positive Z) but the target is at negative Z from the archer, so
+ * the whole character is turned to face it. */
+const ARCHER_FACING = Math.PI;
 
 type JaaAtuuSceneProps = {
   phase: JaaAtuuPhase;
@@ -47,6 +54,7 @@ export function JaaAtuuScene({
 }: JaaAtuuSceneProps) {
   const arrowGroupRef = useRef<THREE.Group>(null);
   const bowStringRef = useRef<THREE.Group>(null);
+  const archerRef = useRef<CharacterHandle>(null);
   const flightElapsedRef = useRef(0);
   const resolvedRef = useRef(false);
 
@@ -54,13 +62,17 @@ export function JaaAtuuScene({
 
   useFrame((_state, delta) => {
     // Live bow-draw feedback (Section 26) - mutated directly, never via
-    // React state, so holding a shot doesn't re-render at 60fps.
-    if (bowStringRef.current) {
-      const pull = isDrawing.value
-        ? THREE.MathUtils.clamp((Date.now() - drawStartedAtMs.value - minDrawMs) / (maxDrawMs - minDrawMs), 0, 1)
-        : 0;
-      bowStringRef.current.position.z = pull * 0.18;
-    }
+    // React state, so holding a shot doesn't re-render at 60fps. The same
+    // `pull` value also poses the archer's arms so the bow and body read
+    // as one connected action, not a floating bow.
+    const pull = isDrawing.value
+      ? THREE.MathUtils.clamp((Date.now() - drawStartedAtMs.value - minDrawMs) / (maxDrawMs - minDrawMs), 0, 1)
+      : 0;
+    if (bowStringRef.current) bowStringRef.current.position.z = pull * 0.18;
+
+    const archer = archerRef.current;
+    if (archer?.rightShoulder) applyDrawPose(archer.rightShoulder, pull, true);
+    if (archer?.leftShoulder) applyDrawPose(archer.leftShoulder, pull, false);
 
     if (phase !== 'PLAYING' || !pendingShot || !arrowGroupRef.current) return;
 
@@ -108,6 +120,10 @@ export function JaaAtuuScene({
       <ArcheryRange targetDistance={config.targetDistance} />
 
       <JaaAtuuTarget center={targetCenter} />
+
+      <group position={[ARCHER_POSITION.x, 0, ARCHER_POSITION.z]} rotation={[0, ARCHER_FACING, 0]}>
+        <CharacterModel ref={archerRef} variant={CHARACTER_PRESETS.playerArcher} />
+      </group>
       <JaaAtuuBow ref={bowStringRef} />
 
       {showIdleArrow || phase === 'PLAYING' ? (

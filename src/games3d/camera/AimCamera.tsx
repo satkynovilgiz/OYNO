@@ -23,8 +23,11 @@ type AimCameraProps = {
 };
 
 /** Exported so IntroCameraSweep can land the intro's final frame exactly
- * where AimCamera picks up, avoiding a visible pop. */
-export const AIM_CAMERA_OFFSET = new THREE.Vector3(0, 0.15, 0.9);
+ * where AimCamera picks up, avoiding a visible pop. Third-person - far/high
+ * enough that the archer's whole body and face are visible while aiming
+ * (Section 3/25: "real player archer, real face... visible hands"), not
+ * the old near-first-person offset that showed only a floating bow. */
+export const AIM_CAMERA_OFFSET = new THREE.Vector3(1.05, 0.5, 1.5);
 const OFFSET = AIM_CAMERA_OFFSET;
 const LOOK_SHIFT_MAX = 0.6;
 const FOCUS_DURATION_MS = 900;

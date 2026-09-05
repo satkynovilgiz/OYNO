@@ -9,12 +9,16 @@ type PauseMenuProps = {
   onResume: () => void;
   onRestart: () => void;
   onExit: () => void;
+  /** Section 58: "Add pause-menu help: HOW TO PLAY... lets users relearn
+   * without restarting tutorial." Optional so games that haven't wired a
+   * re-playable tutorial/about flow yet don't show a dead button. */
+  onHowToPlay?: () => void;
 };
 
 /** Shared pause menu (Section 21) for every 3D game - landscape-friendly
  * centered sheet rather than a bottom sheet, since these games lock to
  * landscape. */
-export function PauseMenu({ visible, onResume, onRestart, onExit }: PauseMenuProps) {
+export function PauseMenu({ visible, onResume, onRestart, onExit, onHowToPlay }: PauseMenuProps) {
   const { t } = useTranslation();
 
   return (
@@ -24,6 +28,7 @@ export function PauseMenu({ visible, onResume, onRestart, onExit }: PauseMenuPro
           <Text style={styles.title}>{t('games3d.pause.title')}</Text>
           <View style={styles.actions}>
             <Button label={t('games3d.pause.resume')} onPress={onResume} />
+            {onHowToPlay ? <Button label={t('games3d.pause.howToPlay')} variant="secondary" onPress={onHowToPlay} /> : null}
             <Button label={t('games3d.pause.restart')} variant="secondary" onPress={onRestart} />
             <Button label={t('games3d.pause.exit')} variant="danger" onPress={onExit} />
           </View>
