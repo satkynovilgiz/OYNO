@@ -15,6 +15,8 @@ import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png'
 import materialBoorsok from '@assets/img/OYNO_design/culture/material_boorsok.png';
 import materialKalpak from '@assets/img/OYNO_design/culture/material_kalpak.png';
 import materialKyzKuumai from '@assets/img/OYNO_design/culture/material_kyz_kuumai.png';
+import oymoBalykOyuu from '@assets/img/OYNO_design/culture/oymo/balyk_oyuu.jpg';
+import oymoUmaiEne from '@assets/img/OYNO_design/culture/oymo/umai_ene.jpg';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CultureCategoryId, CultureProgress, CultureStatId } from './types';
@@ -64,6 +66,8 @@ export const cultureCategoryMockProgress: Record<CultureCategoryId, { current: n
  * backed images exist (Phase 6g). */
 export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'boz-uy-overview': [bozUyTushKiyiz, bozUyTunduk, bozUyWallHanging],
+  'oymo-umai-ene': [oymoUmaiEne],
+  'oymo-balyk-oyuu': [oymoBalykOyuu],
 };
 
 export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
