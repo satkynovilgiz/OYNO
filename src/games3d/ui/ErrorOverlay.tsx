@@ -30,7 +30,7 @@ export function ErrorOverlay({ onRetry, onExit }: ErrorOverlayProps) {
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',

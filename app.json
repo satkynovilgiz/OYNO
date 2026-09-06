@@ -43,7 +43,10 @@
       ],
       "expo-asset",
       "expo-screen-orientation",
-      "expo-dev-client"
+      "expo-dev-client",
+      "@sentry/react-native",
+      "expo-image",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

@@ -54,7 +54,7 @@ export function GameAboutCard({ visible, title, description, objective, onDone }
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 30,
     justifyContent: 'flex-end',
   },

@@ -25,7 +25,7 @@ export function LoadingOverlay({ progress }: LoadingOverlayProps) {
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',

@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   background: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.tiles.culture,
   },
   artwork: {

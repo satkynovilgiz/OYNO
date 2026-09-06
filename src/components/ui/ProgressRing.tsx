@@ -60,7 +60,7 @@ export function ProgressRing({
 
 const styles = StyleSheet.create({
   content: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

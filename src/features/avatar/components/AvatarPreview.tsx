@@ -36,7 +36,7 @@ export function AvatarPreview({ config }: AvatarPreviewProps) {
     <View style={styles.card}>
       <Image
         source={heroBackground}
-        style={[StyleSheet.absoluteFillObject, styles.backgroundImage]}
+        style={[StyleSheet.absoluteFill, styles.backgroundImage]}
         resizeMode="cover"
       />
       <View style={styles.scrim} />
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(39,28,18,0.28)',
   },
   ornamentTopLeft: {

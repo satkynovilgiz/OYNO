@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
   },
   lockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: radii.pill,
     backgroundColor: 'rgba(20,14,8,0.35)',
     alignItems: 'center',

@@ -47,7 +47,7 @@ export function TutorialOverlay({ visible, stepKeys, onDone }: TutorialOverlayPr
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'flex-end',
     padding: spacing.lg,

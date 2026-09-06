@@ -70,7 +70,7 @@ export function GameIntroCard({ visible, title, onDone }: GameIntroCardProps) {
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 20,
