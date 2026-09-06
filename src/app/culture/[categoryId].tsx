@@ -17,7 +17,7 @@ export default function CultureCategoryRoute() {
       items={items ?? []}
       isLoading={isLoading}
       hasError={!!error}
-      onPressBack={() => router.back()}
+      onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/culture'))}
       onPressItem={(item) => router.push(`/culture/item/${item.id}` as never)}
     />
   );

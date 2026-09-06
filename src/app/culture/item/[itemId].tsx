@@ -42,7 +42,7 @@ export default function CultureItemRoute() {
       item={item}
       images={cultureItemImages[item.id]}
       audioTracks={cultureItemAudio[item.id]}
-      onPressBack={() => router.back()}
+      onPressBack={() => (router.canGoBack() ? router.back() : router.replace(`/culture/${item.category_id}`))}
     />
   );
 }
