@@ -15,8 +15,17 @@ import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png'
 import materialBoorsok from '@assets/img/OYNO_design/culture/material_boorsok.png';
 import materialKalpak from '@assets/img/OYNO_design/culture/material_kalpak.png';
 import materialKyzKuumai from '@assets/img/OYNO_design/culture/material_kyz_kuumai.png';
+import oymoAdamdynJuzu from '@assets/img/OYNO_design/culture/oymo/adamdyn_juzu.jpg';
 import oymoBalykOyuu from '@assets/img/OYNO_design/culture/oymo/balyk_oyuu.jpg';
+import oymoBulak from '@assets/img/OYNO_design/culture/oymo/bulak.jpg';
+import oymoItKuiruk from '@assets/img/OYNO_design/culture/oymo/it_kuiruk.jpg';
+import oymoKazMoyun from '@assets/img/OYNO_design/culture/oymo/kaz_moyun.jpg';
+import oymoKochkorMuyuz from '@assets/img/OYNO_design/culture/oymo/kochkor_muyuz.jpg';
+import oymoMuyuzKyal from '@assets/img/OYNO_design/culture/oymo/muyuz_kyal.jpg';
+import oymoTekeMuyuz from '@assets/img/OYNO_design/culture/oymo/teke_muyuz.jpg';
+import oymoTortKulak from '@assets/img/OYNO_design/culture/oymo/tort_kulak.jpg';
 import oymoUmaiEne from '@assets/img/OYNO_design/culture/oymo/umai_ene.jpg';
+import oymoUmaiOyumu from '@assets/img/OYNO_design/culture/oymo/umai_oyumu.jpg';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CultureCategoryId, CultureProgress, CultureStatId } from './types';
@@ -68,6 +77,15 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'boz-uy-overview': [bozUyTushKiyiz, bozUyTunduk, bozUyWallHanging],
   'oymo-umai-ene': [oymoUmaiEne],
   'oymo-balyk-oyuu': [oymoBalykOyuu],
+  'oymo-it-kuiruk': [oymoItKuiruk],
+  'oymo-kochkor-muyuz': [oymoKochkorMuyuz],
+  'oymo-teke-muyuz': [oymoTekeMuyuz],
+  'oymo-kaz-moyun': [oymoKazMoyun],
+  'oymo-bulak': [oymoBulak],
+  'oymo-umai-oyumu': [oymoUmaiOyumu],
+  'oymo-adamdyn-juzu': [oymoAdamdynJuzu],
+  'oymo-muyuz-kyal': [oymoMuyuzKyal],
+  'oymo-tort-kulak': [oymoTortKulak],
 };
 
 export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
