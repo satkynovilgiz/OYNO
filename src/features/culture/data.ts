@@ -34,6 +34,11 @@ import oymoTekeMuyuz from '@assets/img/OYNO_design/culture/oymo/teke_muyuz.jpg';
 import oymoTortKulak from '@assets/img/OYNO_design/culture/oymo/tort_kulak.jpg';
 import oymoUmaiEne from '@assets/img/OYNO_design/culture/oymo/umai_ene.jpg';
 import oymoUmaiOyumu from '@assets/img/OYNO_design/culture/oymo/umai_oyumu.jpg';
+import shyrdakAlaKiyizMaking from '@assets/img/OYNO_design/culture/shyrdak/ala_kiyiz_making.jpg';
+import shyrdakAlaKiyizMaking2 from '@assets/img/OYNO_design/culture/shyrdak/ala_kiyiz_making2.jpg';
+import shyrdakColorsPattern from '@assets/img/OYNO_design/culture/shyrdak/colors_pattern.jpg';
+import shyrdakInsideBozUy from '@assets/img/OYNO_design/culture/shyrdak/inside_boz_uy.jpg';
+import shyrdakMosaicCloseup from '@assets/img/OYNO_design/culture/shyrdak/mosaic_closeup.jpg';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CultureCategoryId, CultureProgress, CultureStatId } from './types';
@@ -101,6 +106,9 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'horse-at-chabysh': [horseAtChabysh],
   'horse-kyz-kuumai': [horseKyzKuumai],
   'horse-oodarysh': [horseOodarysh],
+  'shyrdak-craft': [shyrdakMosaicCloseup, shyrdakInsideBozUy],
+  'shyrdak-ala-kiyiz': [shyrdakAlaKiyizMaking, shyrdakAlaKiyizMaking2],
+  'shyrdak-tustor': [shyrdakColorsPattern],
 };
 
 export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
