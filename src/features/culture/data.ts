@@ -11,6 +11,18 @@ import catTradition from '@assets/img/OYNO_design/culture/cat_tradition.png';
 import bozUyTunduk from '@assets/img/OYNO_design/culture/boz_uy/tunduk_roof_crown.jpg';
 import bozUyTushKiyiz from '@assets/img/OYNO_design/culture/boz_uy/tush_kiyiz_and_souvenirs.jpg';
 import bozUyWallHanging from '@assets/img/OYNO_design/culture/boz_uy/wall_hanging_and_komuz.jpg';
+import clothingBeldemchiChyptama from '@assets/img/OYNO_design/culture/clothing/beldemchi_chyptama.jpg';
+import clothingChapanNooruz from '@assets/img/OYNO_design/culture/clothing/chapan_nooruz.png';
+import clothingElechekCloseup from '@assets/img/OYNO_design/culture/clothing/elechek_closeup.jpg';
+import clothingExhibitHallWide from '@assets/img/OYNO_design/culture/clothing/exhibit_hall_wide.jpg';
+import clothingHeadwearPanel from '@assets/img/OYNO_design/culture/clothing/headwear_panel.jpg';
+import clothingJewelryNecklaces from '@assets/img/OYNO_design/culture/clothing/jewelry_necklaces.jpg';
+import clothingJewelryPendants from '@assets/img/OYNO_design/culture/clothing/jewelry_pendants.jpg';
+import clothingJoolukKemsel from '@assets/img/OYNO_design/culture/clothing/jooluk_kemsel.jpg';
+import clothingKalpakTebeteyCoat from '@assets/img/OYNO_design/culture/clothing/kalpak_tebetey_coat.jpg';
+import clothingMensOuterwearCase from '@assets/img/OYNO_design/culture/clothing/mens_outerwear_case.jpg';
+import clothingMensWomensCase from '@assets/img/OYNO_design/culture/clothing/mens_womens_case.jpg';
+import clothingShokuloElechek from '@assets/img/OYNO_design/culture/clothing/shokulo_elechek.jpg';
 import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png';
 import horseAtChabysh from '@assets/img/OYNO_design/culture/horse/at_chabysh_1870s.png';
 import horseEer from '@assets/img/OYNO_design/culture/horse/eer_saddle.jpg';
@@ -109,6 +121,29 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'shyrdak-craft': [shyrdakMosaicCloseup, shyrdakInsideBozUy],
   'shyrdak-ala-kiyiz': [shyrdakAlaKiyizMaking, shyrdakAlaKiyizMaking2],
   'shyrdak-tustor': [shyrdakColorsPattern],
+  'clothing-ak-kalpak': [clothingKalpakTebeteyCoat],
+  'clothing-tebetey': [clothingKalpakTebeteyCoat, clothingMensWomensCase],
+  'clothing-topu': [clothingHeadwearPanel],
+  'clothing-malakai': [clothingHeadwearPanel],
+  'clothing-tumak': [clothingMensOuterwearCase],
+  'clothing-takyya': [clothingHeadwearPanel],
+  'clothing-shokulo': [clothingShokuloElechek],
+  'clothing-elechek': [clothingElechekCloseup, clothingShokuloElechek],
+  'clothing-jooluk': [clothingJoolukKemsel],
+  'clothing-chapan': [clothingChapanNooruz, clothingMensWomensCase],
+  'clothing-ton': [clothingMensOuterwearCase],
+  'clothing-ichik': [clothingMensWomensCase],
+  'clothing-beshmant': [clothingMensOuterwearCase],
+  'clothing-kemsel': [clothingJoolukKemsel],
+  'clothing-chyptama': [clothingBeldemchiChyptama],
+  'clothing-chepken': [clothingExhibitHallWide],
+  'clothing-beldemchi': [clothingBeldemchiChyptama],
+  'clothing-solkobay': [clothingJewelryPendants],
+  'clothing-boy-tumar': [clothingJewelryNecklaces],
+  'clothing-ala-tamak': [clothingJewelryNecklaces],
+  'clothing-soyko': [clothingJewelryNecklaces],
+  'clothing-chachpak': [clothingElechekCloseup],
+  'clothing-monchok': [clothingJewelryNecklaces],
 };
 
 export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
