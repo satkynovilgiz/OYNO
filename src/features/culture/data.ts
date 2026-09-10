@@ -12,6 +12,14 @@ import bozUyTunduk from '@assets/img/OYNO_design/culture/boz_uy/tunduk_roof_crow
 import bozUyTushKiyiz from '@assets/img/OYNO_design/culture/boz_uy/tush_kiyiz_and_souvenirs.jpg';
 import bozUyWallHanging from '@assets/img/OYNO_design/culture/boz_uy/wall_hanging_and_komuz.jpg';
 import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png';
+import horseAtChabysh from '@assets/img/OYNO_design/culture/horse/at_chabysh_1870s.png';
+import horseEer from '@assets/img/OYNO_design/culture/horse/eer_saddle.jpg';
+import horseHorsemanSteppe from '@assets/img/OYNO_design/culture/horse/horseman_steppe.jpg';
+import horseJylkyHerd from '@assets/img/OYNO_design/culture/horse/jylky_herd.jpg';
+import horseKokBoruFlag from '@assets/img/OYNO_design/culture/horse/kok_boru_flag.jpg';
+import horseKokBoruKazan from '@assets/img/OYNO_design/culture/horse/kok_boru_kazan.jpg';
+import horseKyzKuumai from '@assets/img/OYNO_design/culture/horse/kyz_kuumai.jpg';
+import horseOodarysh from '@assets/img/OYNO_design/culture/horse/oodarysh.jpg';
 import materialBoorsok from '@assets/img/OYNO_design/culture/material_boorsok.png';
 import materialKalpak from '@assets/img/OYNO_design/culture/material_kalpak.png';
 import materialKyzKuumai from '@assets/img/OYNO_design/culture/material_kyz_kuumai.png';
@@ -86,6 +94,13 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'oymo-adamdyn-juzu': [oymoAdamdynJuzu],
   'oymo-muyuz-kyal': [oymoMuyuzKyal],
   'oymo-tort-kulak': [oymoTortKulak],
+  'horse-overview': [horseHorsemanSteppe],
+  'horse-jylky': [horseJylkyHerd],
+  'horse-eer': [horseEer],
+  'horse-kok-boru': [horseKokBoruFlag, horseKokBoruKazan],
+  'horse-at-chabysh': [horseAtChabysh],
+  'horse-kyz-kuumai': [horseKyzKuumai],
+  'horse-oodarysh': [horseOodarysh],
 };
 
 export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
