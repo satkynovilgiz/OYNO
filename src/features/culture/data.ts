@@ -8,9 +8,15 @@ import catMusic from '@assets/img/OYNO_design/culture/cat_music.png';
 import catOymo from '@assets/img/OYNO_design/culture/cat_oymo.png';
 import catShyrdak from '@assets/img/OYNO_design/culture/cat_shyrdak.png';
 import catTradition from '@assets/img/OYNO_design/culture/cat_tradition.png';
+import bozUyFeltCovering from '@assets/img/OYNO_design/culture/boz_uy/felt_covering.jpg';
+import bozUyFeltCovering2 from '@assets/img/OYNO_design/culture/boz_uy/felt_covering2.jpg';
+import bozUyInteriorWide from '@assets/img/OYNO_design/culture/boz_uy/interior_wide.jpg';
 import bozUyTunduk from '@assets/img/OYNO_design/culture/boz_uy/tunduk_roof_crown.jpg';
+import bozUyTunduqFromInside from '@assets/img/OYNO_design/culture/boz_uy/tunduk_from_inside.jpg';
 import bozUyTushKiyiz from '@assets/img/OYNO_design/culture/boz_uy/tush_kiyiz_and_souvenirs.jpg';
 import bozUyWallHanging from '@assets/img/OYNO_design/culture/boz_uy/wall_hanging_and_komuz.jpg';
+import bozUyWoodenFrame from '@assets/img/OYNO_design/culture/boz_uy/wooden_frame.jpg';
+import bozUyYurtCamp from '@assets/img/OYNO_design/culture/boz_uy/yurt_camp.jpg';
 import clothingBeldemchiChyptama from '@assets/img/OYNO_design/culture/clothing/beldemchi_chyptama.jpg';
 import clothingChapanNooruz from '@assets/img/OYNO_design/culture/clothing/chapan_nooruz.png';
 import clothingElechekCloseup from '@assets/img/OYNO_design/culture/clothing/elechek_closeup.jpg';
@@ -99,7 +105,11 @@ export const cultureCategoryMockProgress: Record<CultureCategoryId, { current: n
  * images); real photo uploads live here as a lookup map until Storage-
  * backed images exist (Phase 6g). */
 export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
-  'boz-uy-overview': [bozUyTushKiyiz, bozUyTunduk, bozUyWallHanging],
+  'boz-uy-overview': [bozUyTushKiyiz, bozUyTunduk, bozUyWallHanging, bozUyYurtCamp],
+  'boz-uy-tunduk': [bozUyTunduqFromInside, bozUyTunduk],
+  'boz-uy-karkas': [bozUyWoodenFrame],
+  'boz-uy-kiyiz-jabuu': [bozUyFeltCovering, bozUyFeltCovering2],
+  'boz-uy-ichki-jasalga': [bozUyInteriorWide, bozUyTushKiyiz, bozUyWallHanging],
   'oymo-umai-ene': [oymoUmaiEne],
   'oymo-balyk-oyuu': [oymoBalykOyuu],
   'oymo-it-kuiruk': [oymoItKuiruk],
