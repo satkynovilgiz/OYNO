@@ -6,11 +6,13 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, typography } from '@/theme';
 
 import { useDragPowerController } from '../../controls/DragPowerController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
+import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameHUD } from '../../ui/GameHUD';
@@ -20,8 +22,10 @@ import { ResultScreen } from '../../ui/ResultScreen';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useChukoGame } from './ChukoController';
 import { ChukoScene } from './ChukoScene';
+import type { ChukoDifficulty } from './ChukoTypes';
 
 const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3'];
+const GAME_ID = 'chuko';
 
 function hapticFor(scoreDelta: number) {
   if (scoreDelta > 1) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -29,17 +33,33 @@ function hapticFor(scoreDelta: number) {
   return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 }
 
-export function ChukoGame() {
+type ChukoGameProps = {
+  difficulty?: ChukoDifficulty;
+};
+
+export function ChukoGame({ difficulty = 'normal' }: ChukoGameProps) {
   useTrackScreenView('games3d_chuko');
   const { t } = useTranslation();
   const { isBackgrounded } = useGameLifecycle('landscape');
-  const game = useChukoGame('normal');
+  const game = useChukoGame(difficulty);
   const lastOutcomeKeyRef = useRef(0);
+  const recordedResultRef = useRef(false);
 
   useEffect(() => {
     if (isBackgrounded) game.pause();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBackgrounded]);
+
+  useEffect(() => {
+    if (game.phase !== 'RESULT') {
+      recordedResultRef.current = false;
+      return;
+    }
+    if (recordedResultRef.current) return;
+    recordedResultRef.current = true;
+    void useProgressStore.getState().recordGamePlayed(GAME_ID);
+    void setBestScoreIfHigher(GAME_ID, game.summary.playerScore);
+  }, [game.phase, game.summary.playerScore]);
 
   useEffect(() => {
     if (!game.lastOutcome || game.lastOutcome.key === lastOutcomeKeyRef.current) return;

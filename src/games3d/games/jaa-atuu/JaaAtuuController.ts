@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { ArrowShot, JaaAtuuDifficulty, JaaAtuuPhase } from './JaaAtuuTypes';
-import { TOTAL_ARROWS } from './JaaAtuuTypes';
+import type { ArrowShot, JaaAtuuDifficulty, JaaAtuuMode, JaaAtuuPhase } from './JaaAtuuTypes';
+import { PRACTICE_ARROWS, TOTAL_ARROWS } from './JaaAtuuTypes';
 
 export type PendingShot = { aimX: number; aimY: number; power: number };
 
@@ -11,12 +11,14 @@ export type PendingShot = { aimX: number; aimY: number; power: number };
  * refs, so a flying arrow never triggers a React re-render (Section 87).
  * This hook only decides *when* a shot starts and records its outcome once
  * the scene resolves it. */
-export function useJaaAtuuGame(difficulty: JaaAtuuDifficulty = 'normal') {
+export function useJaaAtuuGame(difficulty: JaaAtuuDifficulty = 'normal', mode: JaaAtuuMode = 'normal') {
   const [phase, setPhase] = useState<JaaAtuuPhase>('LOADING');
   const [shots, setShots] = useState<ArrowShot[]>([]);
   const [pendingShot, setPendingShot] = useState<PendingShot | null>(null);
   // What to return to on resume() - pause can interrupt INTRO/TUTORIAL/READY/PLAYING.
   const prevPhaseRef = useRef<JaaAtuuPhase>('READY');
+
+  const totalArrows = mode === 'practice' ? PRACTICE_ARROWS : TOTAL_ARROWS;
 
   // Nothing async to load for this prototype yet (no GLTF models) - this
   // still goes through a real LOADING phase rather than skipping it, so a
@@ -26,7 +28,7 @@ export function useJaaAtuuGame(difficulty: JaaAtuuDifficulty = 'normal') {
     if (phase === 'LOADING') setPhase('INTRO');
   }, [phase]);
 
-  const arrowsRemaining = TOTAL_ARROWS - shots.length;
+  const arrowsRemaining = totalArrows - shots.length;
 
   const finishIntro = useCallback(() => setPhase('TUTORIAL'), []);
   const finishTutorial = useCallback(() => setPhase('READY'), []);
@@ -44,7 +46,7 @@ export function useJaaAtuuGame(difficulty: JaaAtuuDifficulty = 'normal') {
     setPendingShot(null);
     setShots((prev) => {
       const next = [...prev, shot];
-      setPhase(next.length >= TOTAL_ARROWS ? 'RESULT' : 'READY');
+      setPhase(next.length >= totalArrows ? 'RESULT' : 'READY');
       return next;
     });
   }, []);
@@ -81,6 +83,8 @@ export function useJaaAtuuGame(difficulty: JaaAtuuDifficulty = 'normal') {
   return {
     phase,
     difficulty,
+    mode,
+    totalArrows,
     shots,
     pendingShot,
     arrowsRemaining,

@@ -6,11 +6,13 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { StyleSheet, View } from 'react-native';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useProgressStore } from '@/store/useProgressStore';
 
 import { useAimController } from '../../controls/AimController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
+import { getBestScore, setBestScoreIfHigher } from '../../core/gameBestScore';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
@@ -23,8 +25,8 @@ import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useJaaAtuuGame } from './JaaAtuuController';
 import { createJaaAtuuAudio } from './jaaAtuuAudio';
 import { JaaAtuuScene } from './JaaAtuuScene';
-import type { ArrowShot } from './JaaAtuuTypes';
-import { JAA_ATUU_DIFFICULTY, TOTAL_ARROWS } from './JaaAtuuTypes';
+import type { ArrowShot, JaaAtuuDifficulty, JaaAtuuMode } from './JaaAtuuTypes';
+import { JAA_ATUU_DIFFICULTY } from './JaaAtuuTypes';
 
 const TUTORIAL_STEPS = ['games3d.jaaAtuu.tutorial1', 'games3d.jaaAtuu.tutorial2', 'games3d.jaaAtuu.tutorial3'];
 const GAME_ID = 'jaa_atuu';
@@ -35,14 +37,21 @@ function hapticForScore(score: number) {
   return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 }
 
-export function JaaAtuuGame() {
+type JaaAtuuGameProps = {
+  mode?: JaaAtuuMode;
+  difficulty?: JaaAtuuDifficulty;
+};
+
+export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuGameProps) {
   useTrackScreenView('games3d_jaa_atuu');
   const { t } = useTranslation();
   const { isBackgrounded } = useGameLifecycle('landscape');
-  // No difficulty picker yet (see docs/3D_GAMES.md known limitations) -
-  // 'normal' is the only selectable value for this pass.
-  const game = useJaaAtuuGame('normal');
+  const game = useJaaAtuuGame(difficulty, mode);
   const config = JAA_ATUU_DIFFICULTY[game.difficulty];
+
+  const [bestScore, setBestScore] = useState<number | null>(null);
+  const [isNewBest, setIsNewBest] = useState(false);
+  const recordedResultRef = useRef(false);
 
   const audioRef = useRef(createJaaAtuuAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
@@ -139,20 +148,46 @@ export function JaaAtuuGame() {
   const handleRestart = useCallback(() => {
     setShotFeedback(null);
     setBullseyeSignalMs(undefined);
+    recordedResultRef.current = false;
+    setIsNewBest(false);
     game.restart();
   }, [game]);
 
+  // Fires once per completed round (not per render/phase-check) - a round
+  // played counts toward Games-hub stats regardless of mode, but personal
+  // best is 'normal'-only: practice's arrow count differs, so its totals
+  // aren't comparable to a normal round's score.
+  useEffect(() => {
+    if (game.phase !== 'RESULT' || recordedResultRef.current) return;
+    recordedResultRef.current = true;
+
+    void useProgressStore.getState().recordGamePlayed(GAME_ID);
+
+    if (mode !== 'normal') return;
+    const score = game.summary.totalScore;
+    void (async () => {
+      const previous = await getBestScore(GAME_ID);
+      const becameNewBest = await setBestScoreIfHigher(GAME_ID, score);
+      setBestScore(becameNewBest ? score : previous);
+      setIsNewBest(becameNewBest);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
   const hudVisible = game.phase === 'READY' || game.phase === 'PLAYING' || game.phase === 'PAUSED';
 
-  const resultStats = useMemo(
-    () => [
+  const resultStats = useMemo(() => {
+    const stats = [
       { label: t('games3d.result.score'), value: String(game.summary.totalScore) },
       { label: t('games3d.result.bestShot'), value: String(game.summary.bestShot) },
       { label: t('games3d.result.accuracy'), value: `${game.summary.accuracyPercent}%` },
       { label: t('games3d.result.bullseyes'), value: String(game.summary.bullseyes) },
-    ],
-    [game.summary, t],
-  );
+    ];
+    if (mode === 'normal' && bestScore !== null) {
+      stats.push({ label: t('games3d.result.personalBest'), value: String(bestScore) });
+    }
+    return stats;
+  }, [game.summary, mode, bestScore, t]);
 
   return (
     <View style={styles.root}>
@@ -183,7 +218,7 @@ export function JaaAtuuGame() {
           title={t('games3d.titles.jaaAtuu')}
           onPause={game.pause}
           primaryStat={{ label: t('games3d.hud.score'), value: String(game.summary.totalScore) }}
-          secondaryStat={{ label: t('games3d.hud.arrows'), value: `${game.arrowsRemaining}/${TOTAL_ARROWS}` }}
+          secondaryStat={{ label: t('games3d.hud.arrows'), value: `${game.arrowsRemaining}/${game.totalArrows}` }}
         />
       ) : null}
 
@@ -215,6 +250,7 @@ export function JaaAtuuGame() {
       <ResultScreen
         visible={game.phase === 'RESULT'}
         title={t('games3d.result.title')}
+        banner={isNewBest ? t('games3d.result.newBest') : undefined}
         stats={resultStats}
         onReplay={handleRestart}
         onExit={handleExit}

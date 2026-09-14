@@ -1,12 +1,13 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useProgressStore } from '@/store/useProgressStore';
 import { spacing } from '@/theme';
 
 import { SprintButtonView, useSprintButton } from '../../controls/SprintButton';
@@ -23,17 +24,24 @@ import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKyzKuumaiGame } from './KyzKuumaiController';
 import { KyzKuumaiScene } from './KyzKuumaiScene';
+import type { KyzKuumaiDifficulty } from './KyzKuumaiTypes';
 
 const TUTORIAL_STEPS = ['games3d.kyzKuumai.tutorial1', 'games3d.kyzKuumai.tutorial2', 'games3d.kyzKuumai.tutorial3'];
+const GAME_ID = 'kyz_kuumai';
 
-export function KyzKuumaiGame() {
+type KyzKuumaiGameProps = {
+  difficulty?: KyzKuumaiDifficulty;
+};
+
+export function KyzKuumaiGame({ difficulty = 'normal' }: KyzKuumaiGameProps) {
   useTrackScreenView('games3d_kyz_kuumai');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isBackgrounded } = useGameLifecycle('landscape');
-  const game = useKyzKuumaiGame('normal');
+  const game = useKyzKuumaiGame(difficulty);
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
+  const recordedResultRef = useRef(false);
 
   useEffect(() => {
     if (isBackgrounded) game.pause();
@@ -44,6 +52,21 @@ export function KyzKuumaiGame() {
     if (game.phase !== 'RESULT') return;
     void Haptics.notificationAsync(game.summary.caught ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
   }, [game.phase, game.summary.caught]);
+
+  // No single "higher is better" score exists for a time-based chase (a
+  // faster catch is *better* despite a *lower* number) - tracked here as
+  // games played only; not force-fit into the higher-is-better
+  // gameBestScore helper used by the scored games (Section: honest scoping,
+  // don't fake a metric that doesn't fit).
+  useEffect(() => {
+    if (game.phase !== 'RESULT') {
+      recordedResultRef.current = false;
+      return;
+    }
+    if (recordedResultRef.current) return;
+    recordedResultRef.current = true;
+    void useProgressStore.getState().recordGamePlayed(GAME_ID);
+  }, [game.phase]);
 
   const handleExit = useCallback(() => {
     if (router.canGoBack()) router.back();

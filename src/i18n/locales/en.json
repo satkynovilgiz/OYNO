@@ -994,6 +994,18 @@
       ]
     }
   },
+  "gameDetail": {
+    "whatIsThis": "What is this game?",
+    "howToPlay": "How to play",
+    "difficulty": "Difficulty",
+    "easy": "Easy",
+    "normal": "Normal",
+    "hard": "Hard",
+    "bestScore": "Best score",
+    "gamesPlayed": "Games played",
+    "learnTradition": "Learn about the tradition",
+    "practice": "Practice"
+  },
   "games3d": {
     "lab": {
       "title": "3D Game Lab",
@@ -1040,6 +1052,8 @@
       "replay": "Replay",
       "exit": "Exit",
       "bullseyes": "Bullseyes",
+      "personalBest": "Personal best",
+      "newBest": "New personal best!",
       "win": "YOU WIN!",
       "lose": "YOU LOSE",
       "draw": "DRAW"
@@ -1063,12 +1077,16 @@
       "aiTurn": "OPPONENT'S TURN",
       "you": "You",
       "ai": "Opponent",
-      "captures": "Captures"
+      "captures": "Captures",
+      "aboutDescription": "Ордо is a Kyrgyz circle game - knock pieces out of the ring from outside it, then capture the khan in the center.",
+      "aboutObjective": "Clear 3 pieces, then capture the khan before your opponent does."
     },
     "chuko": {
       "tutorial1": "This is one variant of chuko - drag back to throw",
       "tutorial2": "Knock the pieces out of the circle to collect them",
-      "tutorial3": "Whoever collects the most when the circle is empty wins"
+      "tutorial3": "Whoever collects the most when the circle is empty wins",
+      "aboutDescription": "Chuko is a family of Kyrgyz throwing games played with astragalus bones - this builds one simplified variant (throw-and-collect).",
+      "aboutObjective": "Collect the most pieces before the circle empties."
     },
     "controls": {
       "sprint": "SPRINT"
@@ -1082,7 +1100,9 @@
       "topSpeed": "Top speed",
       "closest": "Closest",
       "caughtTitle": "YOU CAUGHT UP!",
-      "notCaughtTitle": "NOT QUITE THERE"
+      "notCaughtTitle": "NOT QUITE THERE",
+      "aboutDescription": "Kyz Kuumai is a traditional Kyrgyz horseback chase - this mobile build is the chase phase, roles named generically.",
+      "aboutObjective": "Close the gap and catch the lead rider before the course ends."
     },
     "kokBoru": {
       "tutorial1": "Ride up to the object and press \"PICK UP\"",
@@ -1094,7 +1114,9 @@
       "you": "You",
       "free": "Free",
       "scoredTitle": "SCORED!",
-      "notScoredTitle": "TIME'S UP"
+      "notScoredTitle": "TIME'S UP",
+      "aboutDescription": "Kok Boru is Kyrgyz horseback polo - this is an early solo slice (ride, pick up, carry, score), no opponent yet.",
+      "aboutObjective": "Pick up the object and carry it into the goal circle."
     },
     "about": {
       "objectiveLabel": "GOAL",

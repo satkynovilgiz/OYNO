@@ -211,28 +211,45 @@ FPS/performance claim.
 
 ## Known limitations - Jaa Atuu specifically
 
-- No GLB models - see `docs/GAME_ASSETS.md`.
+- No GLB models - see `docs/GAME_ASSETS.md` (the loading pipeline itself is
+  now built - `CharacterLoader`/`HorseLoader` - but unexercised, since no
+  real `.glb` has been added).
 - Bullseye feedback is a brief (~900ms) camera zoom-in/out toward the
   target, not literal slow motion (no time-dilation of the physics/render
   loop) - a simplification of the "small slow-motion moment" ask.
 - No SFX assets - see "Audio" above. Haptics only.
-- No difficulty-picker UI - `'normal'` is hardcoded even though all three
-  presets exist and work.
 - No LOW/MEDIUM/HIGH quality-mode switch yet (Section 16) - there's only one
   quality level right now, tuned conservatively (no postprocessing, capped
   shadow map size, capped `dpr`).
 - Not yet verified on a real iOS or Android device - see the final report.
+- Practice mode extends the round (more arrows) rather than removing
+  scoring - personal best (AsyncStorage-only, no leaderboard) is tracked for
+  'normal' rounds only, since practice's arrow count isn't comparable.
 
-## Cross-cutting limitations (all 5 games)
+## Known limitations - all 5 games
 
 - No GLB models anywhere - every game is primitive geometry (see
   `docs/GAME_ASSETS.md`).
 - No SFX assets anywhere - haptics only.
 - No LOW/MEDIUM/HIGH quality-mode switch.
-- No difficulty-picker UI in any game, even where difficulty presets exist
-  and work (Jaa Atuu, Ordo, Chuko, Kyz Kuumai).
 - **None of the 5 games have been run on a real device yet** - "PARTIAL" on
   every registry entry, not "PLAYABLE", pending that verification.
+- A pre-entry `GameDetailScreen` (What is this / how to play / difficulty /
+  best score / games played / achievements / a Culture link) now gates
+  every game's route (`src/app/games/<id>.tsx`, same state-gate shape
+  `besh-tash.tsx` already used) - but its in-game equivalents
+  (`GameAboutCard`/`TutorialOverlay`) still play too on first entry, so a
+  first-time player currently sees "how to play" twice. Only Jaa Atuu has a
+  real Practice-vs-Play behavior split; the other 4 games' Practice button
+  starts the same match as Play (noted at each route file). Difficulty
+  presets are wired for Jaa Atuu/Ordo/Chuko/Kyz Kuumai; Kok Boru has none
+  (Phase A has no AI to scale). "Best score" only shows for games with a
+  single higher-is-better number (Jaa Atuu/Ordo/Chuko) - Kyz Kuumai/Kok Boru
+  show games-played only (a time-based chase and a score-or-don't slice
+  don't have one).
+- All 5 games now call `useProgressStore().recordGamePlayed(gameId)` on
+  reaching `RESULT` - Games-hub `gamesPlayed` stats were previously
+  disconnected from every 3D game.
 
 ## Ordo
 

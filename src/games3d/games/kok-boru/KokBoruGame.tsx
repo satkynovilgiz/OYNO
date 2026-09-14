@@ -1,11 +1,12 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useProgressStore } from '@/store/useProgressStore';
 import { spacing } from '@/theme';
 
 import { ContextActionButton } from '../../ui/ContextActionButton';
@@ -25,6 +26,7 @@ import { useKokBoruGame } from './KokBoruController';
 import { KokBoruScene } from './KokBoruScene';
 
 const TUTORIAL_STEPS = ['games3d.kokBoru.tutorial1', 'games3d.kokBoru.tutorial2', 'games3d.kokBoru.tutorial3'];
+const GAME_ID = 'kok_boru';
 
 export function KokBoruGame() {
   useTrackScreenView('games3d_kok_boru');
@@ -34,6 +36,7 @@ export function KokBoruGame() {
   const game = useKokBoruGame();
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
+  const recordedResultRef = useRef(false);
 
   useEffect(() => {
     if (isBackgrounded) game.pause();
@@ -44,6 +47,18 @@ export function KokBoruGame() {
     if (game.phase !== 'RESULT') return;
     void Haptics.notificationAsync(game.summary.scored ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
   }, [game.phase, game.summary.scored]);
+
+  // No scored/higher-is-better metric exists (Phase A: score or don't -
+  // see KokBoruTypes.ts) - games played only, same reasoning as Kyz Kuumai.
+  useEffect(() => {
+    if (game.phase !== 'RESULT') {
+      recordedResultRef.current = false;
+      return;
+    }
+    if (recordedResultRef.current) return;
+    recordedResultRef.current = true;
+    void useProgressStore.getState().recordGamePlayed(GAME_ID);
+  }, [game.phase]);
 
   useEffect(() => {
     if (game.possession === 'PLAYER') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

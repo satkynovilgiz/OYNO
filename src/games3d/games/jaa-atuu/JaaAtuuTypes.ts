@@ -30,6 +30,12 @@ export const JAA_ATUU_RINGS: { id: JaaAtuuRingId; radius: number; score: number;
 ];
 
 export const TOTAL_ARROWS = 5;
+/** Practice extends the round instead of removing scoring entirely - still
+ * a real round with real feedback, just more arrows and no personal-best
+ * pressure (JaaAtuuGame.tsx skips the "new best!" banner in this mode). */
+export const PRACTICE_ARROWS = 15;
+
+export type JaaAtuuMode = 'practice' | 'normal';
 
 export type JaaAtuuDifficulty = 'easy' | 'normal' | 'hard';
 

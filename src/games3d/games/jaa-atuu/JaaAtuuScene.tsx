@@ -6,24 +6,55 @@ import * as THREE from 'three';
 import { AIM_CAMERA_OFFSET, AimCamera } from '../../camera/AimCamera';
 import { IntroCameraSweep } from '../../camera/IntroCameraSweep';
 import { applyDrawPose } from '../../shared/characters/CharacterAnimator';
-import { CharacterModel, type CharacterHandle } from '../../shared/characters/CharacterModel';
+import { CharacterLoader } from '../../shared/characters/CharacterLoader';
+import type { CharacterHandle } from '../../shared/characters/CharacterModel';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { GAME_INTRO_DURATION_MS } from '../../ui/GameIntroCard';
 import { ArcheryRange } from './ArcheryRange';
 import type { PendingShot } from './JaaAtuuController';
 import { ARCHER_POSITION, arrowPositionAt, arrowVelocityAt, getTargetCenter, resolveImpact } from './JaaAtuuBallistics';
 import { ARROW_FORWARD, JaaAtuuArrow } from './JaaAtuuArrow';
-import { JaaAtuuBow } from './JaaAtuuBow';
+import { BOW_STRING_TIP_Y, BOW_STRING_TIP_Z, JaaAtuuBow, type JaaAtuuBowHandle } from './JaaAtuuBow';
 import { JaaAtuuTarget } from './JaaAtuuTarget';
 import type { ArrowShot, JaaAtuuDifficultyConfig, JaaAtuuPhase } from './JaaAtuuTypes';
 
 const GROUND_Y = 0;
 const MAX_FLIGHT_SECONDS = 4;
 const INTRO_START_OFFSET = new THREE.Vector3(5, 5.5, 9);
+/** A short dolly out from the gameplay aim-camera position to a wider 3/4
+ * hero angle when a round ends (Section: "camera cinematics" benchmark
+ * item) - distinct from AimCamera's own gameplay framing and its separate
+ * bullseye zoom (which stays as-is; this only plays once, at RESULT). */
+const RESULT_HERO_OFFSET = new THREE.Vector3(3.2, 2.6, 4.2);
+const RESULT_CAMERA_DURATION_MS = 1400;
 /** The archer character faces +Z locally (CharacterHead's face features are
  * built at positive Z) but the target is at negative Z from the archer, so
  * the whole character is turned to face it. */
 const ARCHER_FACING = Math.PI;
+
+const STRING_UP = new THREE.Vector3(0, 1, 0);
+const stringDirection = new THREE.Vector3();
+const stringMidpoint = new THREE.Vector3();
+const stringQuaternion = new THREE.Quaternion();
+const topTip = new THREE.Vector3(0, BOW_STRING_TIP_Y, BOW_STRING_TIP_Z);
+const bottomTip = new THREE.Vector3(0, -BOW_STRING_TIP_Y, BOW_STRING_TIP_Z);
+const nockPoint = new THREE.Vector3();
+
+/** Re-poses a unit-height string-segment cylinder to run from a fixed limb
+ * tip to the shared moving nock point, instead of letting the whole string
+ * translate as one rigid unit (which would visually detach it from the
+ * limb tips while drawing - see JaaAtuuBow.tsx). */
+function poseStringSegment(mesh: THREE.Mesh, from: THREE.Vector3, to: THREE.Vector3) {
+  stringDirection.subVectors(to, from);
+  const length = stringDirection.length();
+  stringMidpoint.addVectors(from, to).multiplyScalar(0.5);
+  mesh.position.copy(stringMidpoint);
+  mesh.scale.set(1, length, 1);
+  if (length > 1e-5) {
+    stringQuaternion.setFromUnitVectors(STRING_UP, stringDirection.normalize());
+    mesh.quaternion.copy(stringQuaternion);
+  }
+}
 
 type JaaAtuuSceneProps = {
   phase: JaaAtuuPhase;
@@ -53,7 +84,7 @@ export function JaaAtuuScene({
   bullseyeSignalMs,
 }: JaaAtuuSceneProps) {
   const arrowGroupRef = useRef<THREE.Group>(null);
-  const bowStringRef = useRef<THREE.Group>(null);
+  const bowRef = useRef<JaaAtuuBowHandle>(null);
   const archerRef = useRef<CharacterHandle>(null);
   const flightElapsedRef = useRef(0);
   const resolvedRef = useRef(false);
@@ -68,7 +99,12 @@ export function JaaAtuuScene({
     const pull = isDrawing.value
       ? THREE.MathUtils.clamp((Date.now() - drawStartedAtMs.value - minDrawMs) / (maxDrawMs - minDrawMs), 0, 1)
       : 0;
-    if (bowStringRef.current) bowStringRef.current.position.z = pull * 0.18;
+    const bow = bowRef.current;
+    if (bow?.topString && bow?.bottomString) {
+      nockPoint.set(0, 0, BOW_STRING_TIP_Z + pull * 0.18);
+      poseStringSegment(bow.topString, topTip, nockPoint);
+      poseStringSegment(bow.bottomString, bottomTip, nockPoint);
+    }
 
     const archer = archerRef.current;
     if (archer?.rightShoulder) applyDrawPose(archer.rightShoulder, pull, true);
@@ -113,6 +149,14 @@ export function JaaAtuuScene({
           lookAt={targetCenter}
           durationMs={GAME_INTRO_DURATION_MS}
         />
+      ) : phase === 'RESULT' ? (
+        <IntroCameraSweep
+          positionAnchor={ARCHER_POSITION}
+          startOffset={AIM_CAMERA_OFFSET}
+          endOffset={RESULT_HERO_OFFSET}
+          lookAt={targetCenter}
+          durationMs={RESULT_CAMERA_DURATION_MS}
+        />
       ) : (
         <AimCamera aimX={aimX} aimY={aimY} anchor={ARCHER_POSITION} lookAt={targetCenter} bullseyeSignalMs={bullseyeSignalMs} />
       )}
@@ -122,9 +166,9 @@ export function JaaAtuuScene({
       <JaaAtuuTarget center={targetCenter} />
 
       <group position={[ARCHER_POSITION.x, 0, ARCHER_POSITION.z]} rotation={[0, ARCHER_FACING, 0]}>
-        <CharacterModel ref={archerRef} variant={CHARACTER_PRESETS.playerArcher} />
+        <CharacterLoader ref={archerRef} variant={CHARACTER_PRESETS.playerArcher} />
       </group>
-      <JaaAtuuBow ref={bowStringRef} />
+      <JaaAtuuBow ref={bowRef} />
 
       {showIdleArrow || phase === 'PLAYING' ? (
         <group ref={arrowGroupRef} position={phase === 'PLAYING' ? undefined : idlePosition}>

@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import * as THREE from 'three';
 
+import { scenePalette } from '../scenePalette';
 import { CharacterHair } from './CharacterHair';
 import { CharacterHead } from './CharacterHead';
 import type { CharacterExpression, CharacterVariant } from './CharacterTypes';
@@ -166,6 +167,32 @@ export const CharacterModel = forwardRef<CharacterHandle, CharacterModelProps>(f
         <group ref={headRef} position={[0, 0.37, 0]}>
           <CharacterHead variant={variant} expression={expression} />
           <CharacterHair variant={variant} />
+        </group>
+
+        {/* Quiver - back-mounted (the character faces +Z locally, so -Z is
+            the back), with a few arrow shafts peeking out so an archer
+            preset reads as equipped even before a shot is nocked. Every
+            CharacterModel consumer gets one today because the only current
+            consumer is Jaa Atuu's archer (Section: "STATUS:
+            STYLIZED_PROTOTYPE") - gate this behind a prop if a non-archer
+            preset ever reuses this component. */}
+        <group position={[-0.06, 0.04, -0.13]} rotation={[0.22, 0, 0.12]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.045, 0.055, 0.42, 8]} />
+            <meshStandardMaterial color={secondary} roughness={0.85} />
+          </mesh>
+          {[-0.02, 0, 0.022].map((offset, i) => (
+            <mesh key={i} position={[offset, 0.24, offset * 0.4]} rotation={[0, 0, offset * 2]} castShadow>
+              <cylinderGeometry args={[0.007, 0.007, 0.2, 6]} />
+              <meshStandardMaterial color={scenePalette.wood} roughness={0.7} />
+            </mesh>
+          ))}
+          {[-0.02, 0, 0.022].map((offset, i) => (
+            <mesh key={`fletch-${i}`} position={[offset, 0.34, offset * 0.4]} rotation={[0, 0, offset * 2]}>
+              <coneGeometry args={[0.018, 0.05, 4]} />
+              <meshStandardMaterial color={scenePalette.fletching} roughness={0.8} />
+            </mesh>
+          ))}
         </group>
       </group>
     </group>

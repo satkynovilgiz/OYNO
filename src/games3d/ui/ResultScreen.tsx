@@ -9,6 +9,10 @@ export type ResultStat = { label: string; value: string };
 type ResultScreenProps = {
   visible: boolean;
   title: string;
+  /** A short celebratory line above the stats grid (e.g. "New personal
+   * best!") - optional, and deliberately not tied to any one game's idea
+   * of what's worth celebrating. */
+  banner?: string;
   stats: ResultStat[];
   onReplay: () => void;
   onExit: () => void;
@@ -16,7 +20,7 @@ type ResultScreenProps = {
 
 /** Shared result screen (Section 22) - each game supplies its own stat
  * list; this component doesn't assume every game has the same fields. */
-export function ResultScreen({ visible, title, stats, onReplay, onExit }: ResultScreenProps) {
+export function ResultScreen({ visible, title, banner, stats, onReplay, onExit }: ResultScreenProps) {
   const { t } = useTranslation();
 
   return (
@@ -24,6 +28,7 @@ export function ResultScreen({ visible, title, stats, onReplay, onExit }: Result
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <Text style={styles.title}>{title}</Text>
+          {banner ? <Text style={styles.banner}>{banner}</Text> : null}
 
           <View style={styles.statsGrid}>
             {stats.map((stat) => (
@@ -63,6 +68,13 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.textPrimary,
     textAlign: 'center',
+  },
+  banner: {
+    ...typography.small,
+    color: colors.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: -spacing.sm,
   },
   statsGrid: {
     flexDirection: 'row',

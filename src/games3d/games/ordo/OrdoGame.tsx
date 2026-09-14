@@ -6,11 +6,13 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useProgressStore } from '@/store/useProgressStore';
 import { colors, typography } from '@/theme';
 
 import { useDragPowerController } from '../../controls/DragPowerController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
+import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameHUD } from '../../ui/GameHUD';
@@ -20,8 +22,10 @@ import { ResultScreen } from '../../ui/ResultScreen';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useOrdoGame } from './OrdoController';
 import { OrdoScene } from './OrdoScene';
+import type { OrdoDifficulty } from './OrdoTypes';
 
 const TUTORIAL_STEPS = ['games3d.ordo.tutorial1', 'games3d.ordo.tutorial2', 'games3d.ordo.tutorial3'];
+const GAME_ID = 'ordo';
 
 function hapticFor(scoreDelta: number, khan: boolean) {
   if (khan) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -29,12 +33,31 @@ function hapticFor(scoreDelta: number, khan: boolean) {
   return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 }
 
-export function OrdoGame() {
+type OrdoGameProps = {
+  difficulty?: OrdoDifficulty;
+};
+
+export function OrdoGame({ difficulty = 'normal' }: OrdoGameProps) {
   useTrackScreenView('games3d_ordo');
   const { t } = useTranslation();
   const { isBackgrounded } = useGameLifecycle('landscape');
-  const game = useOrdoGame('normal');
+  const game = useOrdoGame(difficulty);
   const lastOutcomeKeyRef = useRef(0);
+  const recordedResultRef = useRef(false);
+
+  // Fires once per completed match. Resets when leaving RESULT (e.g. after
+  // restart) rather than needing every onRestart/onReplay call site to
+  // reset it - PauseMenu/ResultScreen both call `game.restart` directly.
+  useEffect(() => {
+    if (game.phase !== 'RESULT') {
+      recordedResultRef.current = false;
+      return;
+    }
+    if (recordedResultRef.current) return;
+    recordedResultRef.current = true;
+    void useProgressStore.getState().recordGamePlayed(GAME_ID);
+    void setBestScoreIfHigher(GAME_ID, game.summary.playerScore);
+  }, [game.phase, game.summary.playerScore]);
 
   useEffect(() => {
     if (isBackgrounded) game.pause();
