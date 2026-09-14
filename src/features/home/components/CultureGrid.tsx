@@ -1,9 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, IconButton } from '@/components/ui';
+import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { CultureTile } from '../types';
@@ -14,8 +13,6 @@ type CultureGridProps = {
 };
 
 export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
-  const { t } = useTranslation();
-
   return (
     <View style={styles.grid}>
       {tiles.map((tile) => (
@@ -50,12 +47,14 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
                 {tile.subtitle}
               </Text>
             </View>
-            <IconButton
-              icon={ChevronRight}
-              size={32}
-              accessibilityLabel={t('home.culture.openLabel')}
-              onPress={() => onPressTile?.(tile)}
-            />
+            {/* Decorative only - the whole tile is already the tap target
+                (accessibilityRole/Label live on the outer AnimatedPressable
+                above), so this must not be its own Pressable: a Pressable
+                nested inside a Pressable triggers a web a11y warning and
+                double-fires the identical onPress on native. */}
+            <View style={styles.chevronBadge}>
+              <ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />
+            </View>
           </View>
         </AnimatedPressable>
       ))}
@@ -99,5 +98,14 @@ const styles = StyleSheet.create({
     ...typography.small,
     color: colors.textOnDark,
     opacity: 0.9,
+  },
+  chevronBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    ...shadows.card,
   },
 });

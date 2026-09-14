@@ -132,7 +132,7 @@ export function ProfileScreen() {
       >
         <ProfileHeader
           hasUnreadNotifications={hasUnreadNotifications}
-          onPressBack={() => router.back()}
+          onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
           onPressSettings={() => router.push('/settings' as never)}
           onPressNotifications={() => router.push('/notifications' as never)}
         />

@@ -33,9 +33,12 @@ export default function AvatarEditorRoute() {
       saveError={lastSyncError}
       onComplete={async (next) => {
         const ok = await save(next);
-        if (ok) router.back();
+        if (ok) {
+          if (router.canGoBack()) router.back();
+          else router.replace('/profile');
+        }
       }}
-      onCancel={() => router.back()}
+      onCancel={() => (router.canGoBack() ? router.back() : router.replace('/profile'))}
     />
   );
 }

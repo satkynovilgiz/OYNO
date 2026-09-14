@@ -17,5 +17,5 @@ export default function BeshTashRoute() {
     );
   }
 
-  return <BeshTashScreen onPressBack={() => router.back()} />;
+  return <BeshTashScreen onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/games'))} />;
 }

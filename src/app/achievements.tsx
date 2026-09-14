@@ -5,5 +5,10 @@ import { useProgressStore } from '@/store/useProgressStore';
 
 export default function AchievementsRoute() {
   const unlockedIds = useProgressStore((state) => state.unlockedAchievementIds);
-  return <AchievementsScreen unlockedIds={unlockedIds} onPressBack={() => router.back()} />;
+  return (
+    <AchievementsScreen
+      unlockedIds={unlockedIds}
+      onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/profile'))}
+    />
+  );
 }

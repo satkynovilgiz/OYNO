@@ -5,5 +5,10 @@ import { useProgressStore } from '@/store/useProgressStore';
 
 export default function CollectionRoute() {
   const discoveredExploreIds = useProgressStore((state) => state.discoveredExploreIds);
-  return <CollectionScreen discoveredExploreIds={discoveredExploreIds} onPressBack={() => router.back()} />;
+  return (
+    <CollectionScreen
+      discoveredExploreIds={discoveredExploreIds}
+      onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/profile'))}
+    />
+  );
 }

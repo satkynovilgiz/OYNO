@@ -13,7 +13,8 @@ export default function CharacterSelectRoute() {
       initialCharacterId={characterId}
       onConfirm={(id) => {
         setCharacterId(id);
-        router.back();
+        if (router.canGoBack()) router.back();
+        else router.replace('/home');
       }}
     />
   );

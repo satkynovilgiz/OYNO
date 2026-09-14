@@ -111,7 +111,7 @@ export default function ExploreLocationRoute() {
       discoveries={localizedDiscoveries}
       discoveredIds={progress.discoveredExploreIds}
       isFavorite={progress.favoriteIds.includes(`${row.kind}:${row.id}`)}
-      onPressBack={() => router.back()}
+      onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       onPressDiscovery={(discoveryId) => useProgressStore.getState().discoverExploreItem(discoveryId)}
       onToggleFavorite={() => useProgressStore.getState().toggleFavorite(row.kind, row.id)}
     />

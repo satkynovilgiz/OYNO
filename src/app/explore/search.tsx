@@ -16,5 +16,10 @@ export default function ExploreSearchRoute() {
     router.push(`/explore/${item.id}` as never);
   }
 
-  return <SearchScreen onPressBack={() => router.back()} onPressResult={handlePressResult} />;
+  return (
+    <SearchScreen
+      onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
+      onPressResult={handlePressResult}
+    />
+  );
 }
