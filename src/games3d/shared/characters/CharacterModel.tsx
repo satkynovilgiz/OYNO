@@ -72,15 +72,36 @@ export const CharacterModel = forwardRef<CharacterHandle, CharacterModelProps>(f
 
   return (
     <group ref={rootRef}>
-      {/* Legs + shoes */}
+      {/* Legs + boots - a thigh/knee/shin split (not one straight cylinder)
+          so the silhouette reads as a jointed leg even though nothing here
+          actually bends it yet; a riding-boot shaft cuff in `secondary`
+          ties the leg to the same trim color as the belt. */}
       {[-1, 1].map((side) => (
         <group key={side} position={[0.07 * side, 0, 0]}>
-          <mesh position={[0, 0.43, 0]} castShadow>
-            <cylinderGeometry args={[0.055, 0.048, 0.75, 8]} />
+          <mesh position={[0, 0.615, 0]} castShadow>
+            <cylinderGeometry args={[0.056, 0.05, 0.38, 8]} />
             <meshStandardMaterial color={secondary} roughness={0.9} />
           </mesh>
+          <mesh position={[0, 0.425, 0]} castShadow>
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshStandardMaterial color={secondary} roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 0.255, 0]} castShadow>
+            <cylinderGeometry args={[0.046, 0.04, 0.34, 8]} />
+            <meshStandardMaterial color={secondary} roughness={0.9} />
+          </mesh>
+          {/* Boot shaft cuff, then the foot itself with a rounded toe cap
+              instead of a bare box (Section: "not a Roblox block body"). */}
+          <mesh position={[0, 0.11, 0]} castShadow>
+            <cylinderGeometry args={[0.048, 0.044, 0.09, 8]} />
+            <meshStandardMaterial color="#2B2019" roughness={0.8} />
+          </mesh>
           <mesh position={[0, 0.05, 0.02]} castShadow>
-            <boxGeometry args={[0.09, 0.07, 0.17]} />
+            <boxGeometry args={[0.09, 0.06, 0.15]} />
+            <meshStandardMaterial color="#2B2019" roughness={0.8} />
+          </mesh>
+          <mesh position={[0, 0.05, 0.095]} castShadow>
+            <sphereGeometry args={[0.045, 8, 8]} />
             <meshStandardMaterial color="#2B2019" roughness={0.8} />
           </mesh>
         </group>
@@ -96,34 +117,43 @@ export const CharacterModel = forwardRef<CharacterHandle, CharacterModelProps>(f
           <cylinderGeometry args={[0.16, 0.155, 0.05, 10]} />
           <meshStandardMaterial color={secondary} roughness={0.8} />
         </mesh>
+        {/* Belt buckle - a small dark accent so the hem band reads as a
+            belt, not just a color change in the cylinder. */}
+        <mesh position={[0, -0.24, 0.155]} castShadow>
+          <boxGeometry args={[0.045, 0.035, 0.018]} />
+          <meshStandardMaterial color="#2B2019" roughness={0.4} metalness={0.3} />
+        </mesh>
 
         {/* Arms - each a rotatable shoulder group so callers can animate a
-            draw/throw/wave without this component knowing why. */}
+            draw/throw/wave without this component knowing why. Sleeve runs
+            the full arm to a trim cuff at the wrist (matching the belt's
+            `secondary` color) rather than stopping bare-skinned at the
+            elbow, so the chapan reads as a full garment. */}
         <group ref={leftShoulderRef} position={[0.16, 0.2, 0]}>
-          <mesh position={[0, -0.11, 0]} castShadow>
-            <cylinderGeometry args={[0.035, 0.032, 0.22, 8]} />
+          <mesh position={[0, -0.15, 0]} castShadow>
+            <cylinderGeometry args={[0.035, 0.028, 0.3, 8]} />
             <meshStandardMaterial color={primary} roughness={0.8} />
           </mesh>
-          <mesh position={[0, -0.24, 0]} castShadow>
-            <cylinderGeometry args={[0.03, 0.026, 0.2, 8]} />
-            <meshStandardMaterial color={skin} roughness={SKIN_ROUGHNESS} />
+          <mesh position={[0, -0.305, 0]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.02, 8]} />
+            <meshStandardMaterial color={secondary} roughness={0.8} />
           </mesh>
-          <mesh position={[0, -0.36, 0]} castShadow>
-            <sphereGeometry args={[0.032, 8, 8]} />
+          <mesh position={[0, -0.34, 0]} castShadow>
+            <sphereGeometry args={[0.028, 8, 8]} />
             <meshStandardMaterial color={skin} roughness={SKIN_ROUGHNESS} />
           </mesh>
         </group>
         <group ref={rightShoulderRef} position={[-0.16, 0.2, 0]}>
-          <mesh position={[0, -0.11, 0]} castShadow>
-            <cylinderGeometry args={[0.035, 0.032, 0.22, 8]} />
+          <mesh position={[0, -0.15, 0]} castShadow>
+            <cylinderGeometry args={[0.035, 0.028, 0.3, 8]} />
             <meshStandardMaterial color={primary} roughness={0.8} />
           </mesh>
-          <mesh position={[0, -0.24, 0]} castShadow>
-            <cylinderGeometry args={[0.03, 0.026, 0.2, 8]} />
-            <meshStandardMaterial color={skin} roughness={SKIN_ROUGHNESS} />
+          <mesh position={[0, -0.305, 0]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.02, 8]} />
+            <meshStandardMaterial color={secondary} roughness={0.8} />
           </mesh>
-          <mesh position={[0, -0.36, 0]} castShadow>
-            <sphereGeometry args={[0.032, 8, 8]} />
+          <mesh position={[0, -0.34, 0]} castShadow>
+            <sphereGeometry args={[0.028, 8, 8]} />
             <meshStandardMaterial color={skin} roughness={SKIN_ROUGHNESS} />
           </mesh>
         </group>

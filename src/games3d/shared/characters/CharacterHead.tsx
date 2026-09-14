@@ -109,9 +109,10 @@ export const CharacterHead = forwardRef<THREE.Group, CharacterHeadProps>(functio
       </mesh>
 
       {/* Mouth - expression swaps geometry rather than blending (no morph
-          targets available); a wider/raised box reads as a small smile. */}
-      <mesh position={[0, -0.058, 0.098]} scale={isSmiling ? [1.3, 1, 1] : [1, 1, 1]}>
-        <boxGeometry args={[0.032, 0.008, 0.008]} />
+          targets available); a capsule reads softer than a hard-edged box,
+          and a wider/raised scale reads as a small smile. */}
+      <mesh position={[0, -0.058, 0.098]} rotation={[0, 0, Math.PI / 2]} scale={isSmiling ? [1, 1.3, 1] : [1, 1, 1]}>
+        <capsuleGeometry args={[0.004, 0.024, 4, 8]} />
         <meshStandardMaterial color="#8C4A42" roughness={0.7} />
       </mesh>
     </group>
