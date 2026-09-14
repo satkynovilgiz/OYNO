@@ -7,6 +7,7 @@ import {
   OBJECT_SPAWN,
   PICKUP_RADIUS_M,
   PLAYER_START,
+  type KokBoruMode,
   type KokBoruPhase,
   type KokBoruPossession,
   type KokBoruResultSummary,
@@ -14,12 +15,13 @@ import {
 
 const MAX_ROUND_SECONDS = 90;
 
-export function useKokBoruGame() {
+export function useKokBoruGame(mode: KokBoruMode = 'normal') {
   const [phase, setPhase] = useState<KokBoruPhase>('LOADING');
   const [possession, setPossession] = useState<KokBoruPossession>('FREE');
   const [summary, setSummary] = useState<KokBoruResultSummary>({ scored: false, elapsedSeconds: 0, topSpeed: 0 });
   const [canPickUp, setCanPickUp] = useState(false);
   const [liveElapsedSeconds, setLiveElapsedSeconds] = useState(0);
+  const [practiceScoreCount, setPracticeScoreCount] = useState(0);
 
   const prevPhaseRef = useRef<KokBoruPhase>('PLAYING');
   const playerHorseRef = useRef(new HorseController(DEFAULT_HORSE_CONFIG, PLAYER_START.x, PLAYER_START.z, Math.PI));
@@ -51,6 +53,15 @@ export function useKokBoruGame() {
     setPossession('FREE');
   }, []);
 
+  /** Practice-only: puts the object back at its spawn point without
+   * ending the session (Section "KOK BORU PRACTICE": "reset object"). */
+  const resetObject = useCallback(() => {
+    objectPositionRef.current = { ...OBJECT_SPAWN };
+    possessionRef.current = 'FREE';
+    setPossession('FREE');
+    setCanPickUp(false);
+  }, []);
+
   /** Called every frame from KokBoruScene's useFrame while phase is
    * PLAYING (Section 86/87 - per-frame numbers stay in refs; only
    * `canPickUp` crosses into React state, and only on actual transitions). */
@@ -71,6 +82,16 @@ export function useKokBoruGame() {
       const dx = player.x - GOAL_POSITION.x;
       const dz = player.z - GOAL_POSITION.z;
       if (Math.hypot(dx, dz) < GOAL_RADIUS_M) {
+        if (mode === 'practice') {
+          // No win/loss in practice - scoring resets the object so the
+          // player can immediately go again, instead of a result screen.
+          setPracticeScoreCount((count) => count + 1);
+          objectPositionRef.current = { ...OBJECT_SPAWN };
+          possessionRef.current = 'FREE';
+          setPossession('FREE');
+          setCanPickUp(false);
+          return;
+        }
         setSummary({ scored: true, elapsedSeconds: elapsedRef.current, topSpeed: topSpeedRef.current });
         setPhase('RESULT');
         return;
@@ -83,11 +104,12 @@ export function useKokBoruGame() {
       if (near !== canPickUp) setCanPickUp(near);
     }
 
-    if (elapsedRef.current > MAX_ROUND_SECONDS) {
+    if (mode !== 'practice' && elapsedRef.current > MAX_ROUND_SECONDS) {
       setSummary({ scored: false, elapsedSeconds: elapsedRef.current, topSpeed: topSpeedRef.current });
       setPhase('RESULT');
     }
-  }, [canPickUp]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canPickUp, mode]);
 
   const pause = useCallback(() => {
     setPhase((current) => {
@@ -110,23 +132,27 @@ export function useKokBoruGame() {
     setPossession('FREE');
     setCanPickUp(false);
     setLiveElapsedSeconds(0);
+    setPracticeScoreCount(0);
     setSummary({ scored: false, elapsedSeconds: 0, topSpeed: 0 });
     setPhase('READY');
   }, []);
 
   return {
     phase,
+    mode,
     possession,
     canPickUp,
     playerHorseRef,
     objectPositionRef,
     liveElapsedSeconds,
+    practiceScoreCount,
     summary,
     finishIntro,
     finishTutorial,
     start,
     pickUp,
     drop,
+    resetObject,
     onTick,
     pause,
     resume,

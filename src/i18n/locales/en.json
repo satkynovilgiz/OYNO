@@ -1079,14 +1079,20 @@
       "ai": "Opponent",
       "captures": "Captures",
       "aboutDescription": "Ордо is a Kyrgyz circle game - knock pieces out of the ring from outside it, then capture the khan in the center.",
-      "aboutObjective": "Clear 3 pieces, then capture the khan before your opponent does."
+      "aboutObjective": "Clear 3 pieces, then capture the khan before your opponent does.",
+      "practiceLabel": "PRACTICE",
+      "practiceGuidance": "Drag back to aim, release to throw",
+      "resetPieces": "Reset pieces"
     },
     "chuko": {
       "tutorial1": "This is one variant of chuko - drag back to throw",
       "tutorial2": "Knock the pieces out of the circle to collect them",
       "tutorial3": "Whoever collects the most when the circle is empty wins",
+      "tutorial4": "Real chuko pieces can land in different positions, but this variant only cares whether you knock one out of the circle",
       "aboutDescription": "Chuko is a family of Kyrgyz throwing games played with astragalus bones - this builds one simplified variant (throw-and-collect).",
-      "aboutObjective": "Collect the most pieces before the circle empties."
+      "aboutObjective": "Collect the most pieces before the circle empties.",
+      "landingHit": "Knocked out {{count}}!",
+      "landingMiss": "Missed"
     },
     "controls": {
       "sprint": "SPRINT"
@@ -1102,7 +1108,13 @@
       "caughtTitle": "YOU CAUGHT UP!",
       "notCaughtTitle": "NOT QUITE THERE",
       "aboutDescription": "Kyz Kuumai is a traditional Kyrgyz horseback chase - this mobile build is the chase phase, roles named generically.",
-      "aboutObjective": "Close the gap and catch the lead rider before the course ends."
+      "aboutObjective": "Close the gap and catch the lead rider before the course ends.",
+      "checkpoints": "Checkpoints",
+      "trainingComplete": "TRAINING COMPLETE!",
+      "coachSteer": "Steer with the left stick toward the marker",
+      "coachSprint": "Nice! Hold SPRINT on the straight to go faster",
+      "coachTurn": "Ease off sprint before the turn so you don't overshoot",
+      "coachFinish": "Almost there - head for the finish!"
     },
     "kokBoru": {
       "tutorial1": "Ride up to the object and press \"PICK UP\"",
@@ -1116,11 +1128,16 @@
       "scoredTitle": "SCORED!",
       "notScoredTitle": "TIME'S UP",
       "aboutDescription": "Kok Boru is Kyrgyz horseback polo - this is an early solo slice (ride, pick up, carry, score), no opponent yet.",
-      "aboutObjective": "Pick up the object and carry it into the goal circle."
+      "aboutObjective": "Pick up the object and carry it into the goal circle.",
+      "resetObject": "Reset object",
+      "scoredCount": "Scored"
     },
     "about": {
       "objectiveLabel": "GOAL",
       "continue": "Got it"
+    },
+    "practice": {
+      "exit": "Exit Practice"
     }
   }
 }

@@ -3,15 +3,16 @@ import { useTranslation } from 'react-i18next';
 
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { ChukoGame } from '@/games3d/games/chuko/ChukoGame';
+import type { ChukoMode } from '@/games3d/games/chuko/ChukoTypes';
 
-const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3'];
+const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3', 'games3d.chuko.tutorial4'];
 
 export default function ChukoRoute() {
   const { t } = useTranslation();
-  const [started, setStarted] = useState(false);
+  const [mode, setMode] = useState<ChukoMode | null>(null);
   const [difficulty, setDifficulty] = useState<GameDetailDifficulty>('normal');
 
-  if (!started) {
+  if (!mode) {
     return (
       <GameDetailScreen
         gameId="chuko"
@@ -24,13 +25,11 @@ export default function ChukoRoute() {
         onChangeDifficulty={setDifficulty}
         showBestScore
         cultureRoute="/culture/games"
-        // No practice-vs-play behavior split exists yet for Chuko (only
-        // Jaa Atuu has one so far) - both buttons start the same match.
-        onPressPractice={() => setStarted(true)}
-        onPressPlay={() => setStarted(true)}
+        onPressPractice={() => setMode('practice')}
+        onPressPlay={() => setMode('normal')}
       />
     );
   }
 
-  return <ChukoGame difficulty={difficulty} />;
+  return <ChukoGame difficulty={difficulty} mode={mode} />;
 }

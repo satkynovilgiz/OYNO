@@ -7,6 +7,7 @@ import {
   MAX_TURNS_PER_SIDE,
   ORDO_DIFFICULTY,
   type OrdoDifficulty,
+  type OrdoMode,
   type OrdoPhase,
   type OrdoResultSummary,
   type OrdoSide,
@@ -14,7 +15,7 @@ import {
 
 const AI_THINK_DELAY_MS = 900;
 
-export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
+export function useOrdoGame(difficulty: OrdoDifficulty = 'normal', mode: OrdoMode = 'normal') {
   const [phase, setPhase] = useState<OrdoPhase>('LOADING');
   const [score, setScore] = useState({ player: 0, ai: 0 });
   const [captures, setCaptures] = useState({ player: 0, ai: 0 });
@@ -34,6 +35,25 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
   const finishIntro = useCallback(() => setPhase('TUTORIAL'), []);
   const finishTutorial = useCallback(() => setPhase('PLAYER_TURN'), []);
 
+  /** Shared by `restart` (leaving practice or starting a real match over)
+   * and practice's own auto-reset-on-khan-capture / manual `resetPieces` -
+   * puts a fresh cluster back on the field without necessarily touching
+   * `phase` itself (callers decide that separately). */
+  const resetBoard = useCallback(() => {
+    worldRef.current.reset();
+    pendingSideRef.current = null;
+    roundsRef.current = 0;
+    setScore({ player: 0, ai: 0 });
+    setCaptures({ player: 0, ai: 0 });
+    setKhanCapturedBy(null);
+    setLastOutcome(null);
+  }, []);
+
+  const resetPieces = useCallback(() => {
+    resetBoard();
+    setPhase('PLAYER_TURN');
+  }, [resetBoard]);
+
   const throwPlayer = useCallback(
     (angleOffset: number, power: number) => {
       if (phase !== 'PLAYER_TURN') return;
@@ -44,9 +64,12 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
     [phase],
   );
 
-  // AI throws itself, on a short delay for pacing, the moment it's its turn.
+  // AI throws itself, on a short delay for pacing, the moment it's its turn -
+  // never reached in practice (throwPlayer always routes back to
+  // PLAYER_TURN below), but guarded here too in case phase is ever AI_TURN
+  // some other way.
   useEffect(() => {
-    if (phase !== 'AI_TURN') return;
+    if (phase !== 'AI_TURN' || mode === 'practice') return;
     const timer = setTimeout(() => {
       const { angleOffset, power } = computeAiThrow(ORDO_DIFFICULTY[difficulty]);
       worldRef.current.launchStriker(angleOffset, power);
@@ -80,12 +103,20 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
     pendingSideRef.current = null;
 
     if (outcome.khanCapturedBy) {
+      if (mode === 'practice') {
+        // No win/loss in practice (Section "Make Practice... intentionally
+        // different") - clearing the khan just means the board is done,
+        // so hand the player a fresh one instead of a result screen.
+        resetBoard();
+        setPhase('PLAYER_TURN');
+        return;
+      }
       setKhanCapturedBy(outcome.khanCapturedBy);
       setPhase('RESULT');
       return;
     }
 
-    if (side === 'ai') {
+    if (mode !== 'practice' && side === 'ai') {
       roundsRef.current += 1;
       if (roundsRef.current >= MAX_TURNS_PER_SIDE) {
         setPhase('RESULT');
@@ -93,8 +124,9 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
       }
     }
 
-    setPhase(side === 'player' ? 'AI_TURN' : 'PLAYER_TURN');
-  }, [captures]);
+    setPhase(mode === 'practice' ? 'PLAYER_TURN' : side === 'player' ? 'AI_TURN' : 'PLAYER_TURN');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [captures, mode, resetBoard]);
 
   const pause = useCallback(() => {
     setPhase((current) => {
@@ -109,15 +141,9 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
   }, []);
 
   const restart = useCallback(() => {
-    worldRef.current.reset();
-    pendingSideRef.current = null;
-    roundsRef.current = 0;
-    setScore({ player: 0, ai: 0 });
-    setCaptures({ player: 0, ai: 0 });
-    setKhanCapturedBy(null);
-    setLastOutcome(null);
+    resetBoard();
     setPhase('PLAYER_TURN');
-  }, []);
+  }, [resetBoard]);
 
   const summary: OrdoResultSummary = useMemo(() => {
     const winner: OrdoSide | 'draw' =
@@ -134,6 +160,7 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
 
   return {
     phase,
+    mode,
     world: worldRef.current,
     score,
     lastOutcome,
@@ -145,5 +172,6 @@ export function useOrdoGame(difficulty: OrdoDifficulty = 'normal') {
     pause,
     resume,
     restart,
+    resetPieces,
   };
 }

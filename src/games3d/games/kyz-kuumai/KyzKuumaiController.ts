@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_HORSE_CONFIG, HorseController } from '../../shared/horse/HorseController';
-import { distanceBetween, FINISH_POSITION, START_POSITION } from './KyzKuumaiTrack';
+import { distanceBetween, FINISH_POSITION, getTrackProgress, START_POSITION, TRACK_WAYPOINTS } from './KyzKuumaiTrack';
 import {
   CATCH_RADIUS_M,
   KYZ_KUUMAI_DIFFICULTY,
   MAX_ROUND_SECONDS,
   type KyzKuumaiDifficulty,
+  type KyzKuumaiMode,
   type KyzKuumaiPhase,
   type KyzKuumaiResultSummary,
 } from './KyzKuumaiTypes';
@@ -15,7 +16,16 @@ import {
 // rider starts this far ahead of the player along the course.
 const AI_HEAD_START_M = 8;
 
-export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
+// Practice reuses the same course as 3 training checkpoints (Section
+// "KYZ KUUMAI PRACTICE": "3-5 checkpoints") instead of a separate track -
+// TRACK_WAYPOINTS is [START, CP1, CP2, CP3, FINISH], so the 3 interior
+// points are exactly that. Each checkpoint's arc-length is derived from
+// the track itself (getTrackProgress of a point already on the track
+// returns that point's own arc-length) rather than hand-measured, so it
+// can never drift out of sync with the actual course.
+const CHECKPOINT_ARC_LENGTHS = TRACK_WAYPOINTS.slice(1, -1).map(getTrackProgress);
+
+export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal', mode: KyzKuumaiMode = 'normal') {
   const [phase, setPhase] = useState<KyzKuumaiPhase>('LOADING');
   const [summary, setSummary] = useState<KyzKuumaiResultSummary>({
     caught: false,
@@ -25,12 +35,14 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
   });
   const [liveDistance, setLiveDistance] = useState(0);
   const [liveElapsedSeconds, setLiveElapsedSeconds] = useState(0);
+  const [checkpointEvent, setCheckpointEvent] = useState<{ key: number; index: number } | null>(null);
 
   const prevPhaseRef = useRef<KyzKuumaiPhase>('PLAYING');
   const elapsedRef = useRef(0);
   const topSpeedRef = useRef(0);
   const closestDistanceRef = useRef(Infinity);
   const hudThrottleRef = useRef(0);
+  const checkpointsReachedRef = useRef(0);
 
   const aiConfig = KYZ_KUUMAI_DIFFICULTY[difficulty];
   const playerHorseRef = useRef(
@@ -61,9 +73,35 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
   const onTick = useCallback((dt: number) => {
     elapsedRef.current += dt;
     const player = playerHorseRef.current;
-    const ai = aiHorseRef.current;
 
     topSpeedRef.current = Math.max(topSpeedRef.current, player.speed);
+
+    if (mode === 'practice') {
+      const playerPos = { x: player.x, z: player.z };
+      const progress = getTrackProgress(playerPos);
+
+      hudThrottleRef.current += dt;
+      if (hudThrottleRef.current > 0.1) {
+        hudThrottleRef.current = 0;
+        setLiveElapsedSeconds(elapsedRef.current);
+      }
+
+      if (
+        checkpointsReachedRef.current < CHECKPOINT_ARC_LENGTHS.length &&
+        progress >= CHECKPOINT_ARC_LENGTHS[checkpointsReachedRef.current]
+      ) {
+        checkpointsReachedRef.current += 1;
+        setCheckpointEvent({ key: checkpointsReachedRef.current, index: checkpointsReachedRef.current - 1 });
+      }
+
+      if (distanceBetween(playerPos, FINISH_POSITION) < 1.5) {
+        setSummary({ caught: false, elapsedSeconds: elapsedRef.current, topSpeed: topSpeedRef.current, closestDistance: 0 });
+        setPhase('RESULT');
+      }
+      return;
+    }
+
+    const ai = aiHorseRef.current;
     const distance = distanceBetween({ x: player.x, z: player.z }, { x: ai.x, z: ai.z });
     closestDistanceRef.current = Math.min(closestDistanceRef.current, distance);
 
@@ -86,7 +124,8 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
       setSummary({ caught: false, elapsedSeconds: elapsedRef.current, topSpeed: topSpeedRef.current, closestDistance: closestDistanceRef.current });
       setPhase('RESULT');
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const pause = useCallback(() => {
     setPhase((current) => {
@@ -111,17 +150,22 @@ export function useKyzKuumaiGame(difficulty: KyzKuumaiDifficulty = 'normal') {
     elapsedRef.current = 0;
     topSpeedRef.current = 0;
     closestDistanceRef.current = Infinity;
+    checkpointsReachedRef.current = 0;
     setLiveDistance(0);
     setLiveElapsedSeconds(0);
+    setCheckpointEvent(null);
     setSummary({ caught: false, elapsedSeconds: 0, topSpeed: 0, closestDistance: Infinity });
     setPhase('READY');
   }, [aiConfig]);
 
   return {
     phase,
+    mode,
     playerHorseRef,
     aiHorseRef,
     liveDistance,
+    checkpointEvent,
+    totalCheckpoints: CHECKPOINT_ARC_LENGTHS.length,
     liveElapsedSeconds,
     summary,
     finishIntro,

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { StyleSheet, Text, View } from 'react-native';
@@ -14,15 +14,18 @@ import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
+import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
+import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
+import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useOrdoGame } from './OrdoController';
 import { OrdoScene } from './OrdoScene';
-import type { OrdoDifficulty } from './OrdoTypes';
+import type { OrdoDifficulty, OrdoMode } from './OrdoTypes';
 
 const TUTORIAL_STEPS = ['games3d.ordo.tutorial1', 'games3d.ordo.tutorial2', 'games3d.ordo.tutorial3'];
 const GAME_ID = 'ordo';
@@ -35,15 +38,46 @@ function hapticFor(scoreDelta: number, khan: boolean) {
 
 type OrdoGameProps = {
   difficulty?: OrdoDifficulty;
+  mode?: OrdoMode;
 };
 
-export function OrdoGame({ difficulty = 'normal' }: OrdoGameProps) {
+export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGameProps) {
   useTrackScreenView('games3d_ordo');
   const { t } = useTranslation();
   const { isBackgrounded } = useGameLifecycle('landscape');
-  const game = useOrdoGame(difficulty);
+  const game = useOrdoGame(difficulty, mode);
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
+  const [hasThrown, setHasThrown] = useState(false);
+
+  // First-time "what is this / how to play" flow (same pattern as
+  // JaaAtuuGame.tsx) - independent of `mode` so Practice and Play both get
+  // it on a player's very first visit, and neither repeats it afterward.
+  const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
+
+  useEffect(() => {
+    if (game.phase !== 'TUTORIAL') return;
+    let cancelled = false;
+    hasSeenTutorial(GAME_ID).then((seen) => {
+      if (cancelled) return;
+      if (seen) game.finishTutorial();
+      else setHelpStage('about');
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
+  const handleAboutDone = useCallback(() => setHelpStage('controls'), []);
+
+  const handleTutorialDone = useCallback(() => {
+    setHelpStage(null);
+    void markTutorialSeen(GAME_ID);
+    if (game.phase === 'TUTORIAL') game.finishTutorial();
+  }, [game]);
+
+  const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
   // Fires once per completed match. Resets when leaving RESULT (e.g. after
   // restart) rather than needing every onRestart/onReplay call site to
@@ -77,6 +111,7 @@ export function OrdoGame({ difficulty = 'normal' }: OrdoGameProps) {
   const handleRelease = useCallback(
     (payload: { angleOffset: number; power: number }) => {
       game.throwPlayer(payload.angleOffset, payload.power);
+      setHasThrown(true);
     },
     [game],
   );
@@ -88,9 +123,25 @@ export function OrdoGame({ difficulty = 'normal' }: OrdoGameProps) {
     else router.replace('/games');
   }, []);
 
+  const handleResetPieces = useCallback(() => {
+    setHasThrown(false);
+    game.resetPieces();
+  }, [game]);
+
   const hudVisible = game.phase === 'PLAYER_TURN' || game.phase === 'SETTLING' || game.phase === 'AI_TURN' || game.phase === 'PAUSED';
+  const inGameplayPhase = game.phase === 'PLAYER_TURN' || game.phase === 'SETTLING';
   const turnLabel =
-    game.phase === 'AI_TURN' ? t('games3d.ordo.aiTurn') : game.phase === 'PLAYER_TURN' ? t('games3d.ordo.yourTurn') : null;
+    mode === 'practice'
+      ? inGameplayPhase
+        ? hasThrown
+          ? t('games3d.ordo.practiceLabel')
+          : t('games3d.ordo.practiceGuidance')
+        : null
+      : game.phase === 'AI_TURN'
+        ? t('games3d.ordo.aiTurn')
+        : game.phase === 'PLAYER_TURN'
+          ? t('games3d.ordo.yourTurn')
+          : null;
 
   const resultStats = useMemo(() => {
     const s = game.summary;
@@ -131,8 +182,12 @@ export function OrdoGame({ difficulty = 'normal' }: OrdoGameProps) {
         <GameHUD
           title={t('games3d.titles.ordo')}
           onPause={game.pause}
-          primaryStat={{ label: t('games3d.ordo.you'), value: String(game.score.player) }}
-          secondaryStat={{ label: t('games3d.ordo.ai'), value: String(game.score.ai) }}
+          primaryStat={
+            mode === 'practice'
+              ? { label: t('games3d.ordo.captures'), value: String(game.summary.playerCaptures) }
+              : { label: t('games3d.ordo.you'), value: String(game.score.player) }
+          }
+          secondaryStat={mode === 'practice' ? undefined : { label: t('games3d.ordo.ai'), value: String(game.score.ai) }}
         />
       ) : null}
 
@@ -142,13 +197,37 @@ export function OrdoGame({ difficulty = 'normal' }: OrdoGameProps) {
         </View>
       ) : null}
 
+      <PracticeBar
+        visible={mode === 'practice' && inGameplayPhase}
+        onReset={handleResetPieces}
+        onExit={handleExit}
+        resetLabel={t('games3d.ordo.resetPieces')}
+        exitLabel={t('games3d.practice.exit')}
+      />
+
       <GameIntroCard visible={game.phase === 'INTRO'} title={t('games3d.titles.ordo')} onDone={game.finishIntro} />
 
-      <TutorialOverlay visible={game.phase === 'TUTORIAL'} stepKeys={TUTORIAL_STEPS} onDone={game.finishTutorial} />
+      <GameAboutCard
+        visible={helpStage === 'about'}
+        title={t('games3d.titles.ordo')}
+        description={t('games3d.ordo.aboutDescription')}
+        objective={t('games3d.ordo.aboutObjective')}
+        onDone={handleAboutDone}
+      />
 
-      <PauseMenu visible={game.phase === 'PAUSED'} onResume={game.resume} onRestart={game.restart} onExit={handleExit} />
+      <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
-      <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+      <PauseMenu
+        visible={game.phase === 'PAUSED' && helpStage === null}
+        onResume={game.resume}
+        onRestart={game.restart}
+        onExit={handleExit}
+        onHowToPlay={handleHowToPlay}
+      />
+
+      {mode === 'normal' ? (
+        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+      ) : null}
     </View>
   );
 }

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { StyleSheet, Text, View } from 'react-native';
@@ -14,17 +14,20 @@ import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
+import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
+import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
+import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useChukoGame } from './ChukoController';
 import { ChukoScene } from './ChukoScene';
-import type { ChukoDifficulty } from './ChukoTypes';
+import type { ChukoDifficulty, ChukoMode } from './ChukoTypes';
 
-const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3'];
+const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3', 'games3d.chuko.tutorial4'];
 const GAME_ID = 'chuko';
 
 function hapticFor(scoreDelta: number) {
@@ -35,15 +38,43 @@ function hapticFor(scoreDelta: number) {
 
 type ChukoGameProps = {
   difficulty?: ChukoDifficulty;
+  mode?: ChukoMode;
 };
 
-export function ChukoGame({ difficulty = 'normal' }: ChukoGameProps) {
+export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameProps) {
   useTrackScreenView('games3d_chuko');
   const { t } = useTranslation();
   const { isBackgrounded } = useGameLifecycle('landscape');
-  const game = useChukoGame(difficulty);
+  const game = useChukoGame(difficulty, mode);
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
+  const [hasThrown, setHasThrown] = useState(false);
+
+  const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
+
+  useEffect(() => {
+    if (game.phase !== 'TUTORIAL') return;
+    let cancelled = false;
+    hasSeenTutorial(GAME_ID).then((seen) => {
+      if (cancelled) return;
+      if (seen) game.finishTutorial();
+      else setHelpStage('about');
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
+  const handleAboutDone = useCallback(() => setHelpStage('controls'), []);
+
+  const handleTutorialDone = useCallback(() => {
+    setHelpStage(null);
+    void markTutorialSeen(GAME_ID);
+    if (game.phase === 'TUTORIAL') game.finishTutorial();
+  }, [game]);
+
+  const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
   useEffect(() => {
     if (isBackgrounded) game.pause();
@@ -61,13 +92,29 @@ export function ChukoGame({ difficulty = 'normal' }: ChukoGameProps) {
     void setBestScoreIfHigher(GAME_ID, game.summary.playerScore);
   }, [game.phase, game.summary.playerScore]);
 
+  // "Show landing result" (Section "CHUKO PRACTICE") - a brief text readout
+  // of what the throw actually did, not just a haptic buzz.
+  const [landingMessage, setLandingMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (!game.lastOutcome || game.lastOutcome.key === lastOutcomeKeyRef.current) return;
     lastOutcomeKeyRef.current = game.lastOutcome.key;
-    void hapticFor(game.lastOutcome.outcome.scoreDelta);
-  }, [game.lastOutcome]);
+    const { outcome, side } = game.lastOutcome;
+    void hapticFor(outcome.scoreDelta);
+    if (side === 'player') {
+      setLandingMessage(outcome.scoreDelta > 0 ? t('games3d.chuko.landingHit', { count: outcome.captured.length }) : t('games3d.chuko.landingMiss'));
+      const timer = setTimeout(() => setLandingMessage(null), 1600);
+      return () => clearTimeout(timer);
+    }
+  }, [game.lastOutcome, t]);
 
-  const handleRelease = useCallback((payload: { angleOffset: number; power: number }) => game.throwPlayer(payload.angleOffset, payload.power), [game]);
+  const handleRelease = useCallback(
+    (payload: { angleOffset: number; power: number }) => {
+      game.throwPlayer(payload.angleOffset, payload.power);
+      setHasThrown(true);
+    },
+    [game],
+  );
   const drag = useDragPowerController({ enabled: game.phase === 'PLAYER_TURN', onRelease: handleRelease });
 
   const handleExit = useCallback(() => {
@@ -75,8 +122,25 @@ export function ChukoGame({ difficulty = 'normal' }: ChukoGameProps) {
     else router.replace('/games');
   }, []);
 
+  const handleResetPieces = useCallback(() => {
+    setHasThrown(false);
+    game.resetPieces();
+  }, [game]);
+
   const hudVisible = game.phase === 'PLAYER_TURN' || game.phase === 'SETTLING' || game.phase === 'AI_TURN' || game.phase === 'PAUSED';
-  const turnLabel = game.phase === 'AI_TURN' ? t('games3d.ordo.aiTurn') : game.phase === 'PLAYER_TURN' ? t('games3d.ordo.yourTurn') : null;
+  const inGameplayPhase = game.phase === 'PLAYER_TURN' || game.phase === 'SETTLING';
+  const turnLabel =
+    mode === 'practice'
+      ? inGameplayPhase
+        ? hasThrown
+          ? t('games3d.ordo.practiceLabel')
+          : t('games3d.ordo.practiceGuidance')
+        : null
+      : game.phase === 'AI_TURN'
+        ? t('games3d.ordo.aiTurn')
+        : game.phase === 'PLAYER_TURN'
+          ? t('games3d.ordo.yourTurn')
+          : null;
 
   const resultStats = useMemo(
     () => [
@@ -105,8 +169,12 @@ export function ChukoGame({ difficulty = 'normal' }: ChukoGameProps) {
         <GameHUD
           title={t('games3d.titles.chuko')}
           onPause={game.pause}
-          primaryStat={{ label: t('games3d.ordo.you'), value: String(game.score.player) }}
-          secondaryStat={{ label: t('games3d.ordo.ai'), value: String(game.score.ai) }}
+          primaryStat={
+            mode === 'practice'
+              ? { label: t('games3d.ordo.captures'), value: String(game.score.player) }
+              : { label: t('games3d.ordo.you'), value: String(game.score.player) }
+          }
+          secondaryStat={mode === 'practice' ? undefined : { label: t('games3d.ordo.ai'), value: String(game.score.ai) }}
         />
       ) : null}
 
@@ -116,10 +184,43 @@ export function ChukoGame({ difficulty = 'normal' }: ChukoGameProps) {
         </View>
       ) : null}
 
+      {landingMessage ? (
+        <View style={styles.landingBanner} pointerEvents="none">
+          <Text style={styles.landingText}>{landingMessage}</Text>
+        </View>
+      ) : null}
+
+      <PracticeBar
+        visible={mode === 'practice' && inGameplayPhase}
+        onReset={handleResetPieces}
+        onExit={handleExit}
+        resetLabel={t('games3d.ordo.resetPieces')}
+        exitLabel={t('games3d.practice.exit')}
+      />
+
       <GameIntroCard visible={game.phase === 'INTRO'} title={t('games3d.titles.chuko')} onDone={game.finishIntro} />
-      <TutorialOverlay visible={game.phase === 'TUTORIAL'} stepKeys={TUTORIAL_STEPS} onDone={game.finishTutorial} />
-      <PauseMenu visible={game.phase === 'PAUSED'} onResume={game.resume} onRestart={game.restart} onExit={handleExit} />
-      <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+
+      <GameAboutCard
+        visible={helpStage === 'about'}
+        title={t('games3d.titles.chuko')}
+        description={t('games3d.chuko.aboutDescription')}
+        objective={t('games3d.chuko.aboutObjective')}
+        onDone={handleAboutDone}
+      />
+
+      <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
+
+      <PauseMenu
+        visible={game.phase === 'PAUSED' && helpStage === null}
+        onResume={game.resume}
+        onRestart={game.restart}
+        onExit={handleExit}
+        onHowToPlay={handleHowToPlay}
+      />
+
+      {mode === 'normal' ? (
+        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+      ) : null}
     </View>
   );
 }
@@ -136,4 +237,14 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   turnText: { ...typography.bodyBold, color: colors.textOnDark },
+  landingBanner: {
+    position: 'absolute',
+    top: '20%',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(232,185,61,0.9)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  landingText: { ...typography.bodyBold, color: '#2B2019' },
 });

@@ -48,6 +48,10 @@ export const CHUKO_DIFFICULTY: Record<ChukoDifficulty, ChukoDifficultyConfig> = 
   hard: { aiAccuracy: 0.85 },
 };
 
+/** Practice drops the AI opponent and win/loss framing entirely, same
+ * reasoning as OrdoMode. */
+export type ChukoMode = 'practice' | 'normal';
+
 export type ChukoResultSummary = {
   playerScore: number;
   aiScore: number;

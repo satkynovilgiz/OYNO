@@ -3,14 +3,15 @@ import { useTranslation } from 'react-i18next';
 
 import { GameDetailScreen } from '@/features/games/GameDetailScreen';
 import { KokBoruGame } from '@/games3d/games/kok-boru/KokBoruGame';
+import type { KokBoruMode } from '@/games3d/games/kok-boru/KokBoruTypes';
 
 const TUTORIAL_STEPS = ['games3d.kokBoru.tutorial1', 'games3d.kokBoru.tutorial2', 'games3d.kokBoru.tutorial3'];
 
 export default function KokBoruRoute() {
   const { t } = useTranslation();
-  const [started, setStarted] = useState(false);
+  const [mode, setMode] = useState<KokBoruMode | null>(null);
 
-  if (!started) {
+  if (!mode) {
     return (
       <GameDetailScreen
         gameId="kok_boru"
@@ -21,11 +22,11 @@ export default function KokBoruRoute() {
         // No difficulty presets exist for Kok Boru yet (Phase A: no AI
         // opponent at all - see KokBoruTypes.ts), so no picker is shown.
         cultureRoute="/culture/horse"
-        onPressPractice={() => setStarted(true)}
-        onPressPlay={() => setStarted(true)}
+        onPressPractice={() => setMode('practice')}
+        onPressPlay={() => setMode('normal')}
       />
     );
   }
 
-  return <KokBoruGame />;
+  return <KokBoruGame mode={mode} />;
 }

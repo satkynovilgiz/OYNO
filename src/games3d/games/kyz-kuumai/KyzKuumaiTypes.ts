@@ -57,3 +57,9 @@ export type KyzKuumaiResultSummary = {
   topSpeed: number;
   closestDistance: number;
 };
+
+/** Practice is a solo checkpoint training course (steering/sprint/turning),
+ * not a shorter/easier chase - no AI horse exists at all, and it always
+ * ends by reaching the finish, never by being caught (Section "Make
+ * Practice, Tutorial and Play three intentionally different"). */
+export type KyzKuumaiMode = 'practice' | 'normal';

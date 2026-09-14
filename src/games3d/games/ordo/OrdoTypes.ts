@@ -73,6 +73,12 @@ export const ORDO_DIFFICULTY: Record<OrdoDifficulty, OrdoDifficultyConfig> = {
   hard: { aiAccuracy: 0.85 },
 };
 
+/** Practice drops the AI opponent and the win/loss framing entirely - the
+ * player throws at a fresh board for as long as they like (Section "Make
+ * Practice, Tutorial and Play three intentionally different experiences"),
+ * not just a shorter/easier version of a real match. */
+export type OrdoMode = 'practice' | 'normal';
+
 export type OrdoResultSummary = {
   playerScore: number;
   aiScore: number;

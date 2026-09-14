@@ -16,13 +16,17 @@ type KyzKuumaiSceneProps = {
   phase: KyzKuumaiPhase;
   playerHorseRef: React.MutableRefObject<HorseController>;
   aiHorseRef: React.MutableRefObject<HorseController>;
+  /** Practice is a solo checkpoint course - no lead rider exists at all
+   * (Section "KYZ KUUMAI PRACTICE": "no opponent initially"), so the AI
+   * horse is neither stepped nor rendered. */
+  showAiHorse: boolean;
   moveX: SharedValue<number>;
   moveZ: SharedValue<number>;
   sprintHeld: SharedValue<boolean>;
   onTick: (dt: number) => void;
 };
 
-export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, moveX, moveZ, sprintHeld, onTick }: KyzKuumaiSceneProps) {
+export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, showAiHorse, moveX, moveZ, sprintHeld, onTick }: KyzKuumaiSceneProps) {
   const playerGroupRef = useRef<THREE.Group>(null);
   const aiGroupRef = useRef<THREE.Group>(null);
   const playerVisualRef = useRef<HorseVisualState>({ speed: 0, maxSpeed: 1, state: 'IDLE' });
@@ -36,9 +40,11 @@ export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, moveX, moveZ
       const player = playerHorseRef.current;
       player.step({ moveX: moveX.value, moveZ: moveZ.value, sprintHeld: sprintHeld.value }, clampedDelta);
 
-      const ai = aiHorseRef.current;
-      const aiInput = computeAiHorseInput({ x: ai.x, z: ai.z });
-      ai.step(aiInput, clampedDelta);
+      if (showAiHorse) {
+        const ai = aiHorseRef.current;
+        const aiInput = computeAiHorseInput({ x: ai.x, z: ai.z });
+        ai.step(aiInput, clampedDelta);
+      }
 
       onTick(clampedDelta);
     }
@@ -83,13 +89,15 @@ export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, moveX, moveZ
         coatColor="#5C4326"
         modelId="quaterniusHorse"
       />
-      <HorseLoader
-        ref={aiGroupRef}
-        visualStateRef={aiVisualRef}
-        riderVariant={CHARACTER_PRESETS.kyzKuumaiRival}
-        coatColor="#2B2019"
-        modelId="quaterniusHorse"
-      />
+      {showAiHorse ? (
+        <HorseLoader
+          ref={aiGroupRef}
+          visualStateRef={aiVisualRef}
+          riderVariant={CHARACTER_PRESETS.kyzKuumaiRival}
+          coatColor="#2B2019"
+          modelId="quaterniusHorse"
+        />
+      ) : null}
     </>
   );
 }

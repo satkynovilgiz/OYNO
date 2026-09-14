@@ -31,6 +31,11 @@ export const OBJECT_SPAWN = { x: 0, z: 0 };
 export const GOAL_POSITION = { x: 0, z: -38 };
 export const PLAYER_START = { x: 0, z: 10 };
 
+/** Practice never times out and scoring resets the object instead of
+ * ending the session (Section "Make Practice... intentionally different")
+ * - Phase A already has no AI/opponent, so that part needs no change. */
+export type KokBoruMode = 'practice' | 'normal';
+
 export type KokBoruResultSummary = {
   scored: boolean;
   elapsedSeconds: number;
