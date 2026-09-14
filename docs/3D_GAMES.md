@@ -211,9 +211,15 @@ FPS/performance claim.
 
 ## Known limitations - Jaa Atuu specifically
 
-- No GLB models - see `docs/GAME_ASSETS.md` (the loading pipeline itself is
-  now built - `CharacterLoader`/`HorseLoader` - but unexercised, since no
-  real `.glb` has been added).
+- The archer is now a real CC0 GLB (`CharacterLoader`, `quaterniusHuman` -
+  see `docs/GAME_ASSETS.md`) with a kalpak/quiver attached to its bones and
+  Idle/Walk/Run clips (no Aim/Shoot clips exist in this asset - the
+  existing shoulder-rotation bow-draw pose from `CharacterAnimator.ts`
+  still applies directly to the real bones, so aiming/drawing still reads
+  correctly without a dedicated clip). `tsc`/tests pass and the model
+  bundles/resolves correctly through Metro (verified via `expo export`),
+  but it has **not been visually reviewed by a human or run on a device** -
+  treat scale/kalpak/quiver fit as unverified until someone actually looks.
 - Bullseye feedback is a brief (~900ms) camera zoom-in/out toward the
   target, not literal slow motion (no time-dilation of the physics/render
   loop) - a simplification of the "small slow-motion moment" ask.
@@ -226,14 +232,36 @@ FPS/performance claim.
   scoring - personal best (AsyncStorage-only, no leaderboard) is tracked for
   'normal' rounds only, since practice's arrow count isn't comparable.
 
+## Known limitations - Kyz Kuumai specifically
+
+- Both horses are now the same real CC0 GLB (`HorseLoader`, `quaterniusHorse`)
+  with real Idle/Walk/Gallop clips - there's no dedicated Trot clip in this
+  asset, so the TROT gait state currently plays the Gallop animation (see
+  `modelManifest.ts`'s comment on this). The AI horse's coat is tinted via a
+  cloned-and-recolored copy of the GLB's own materials (`useTintedScene`,
+  using `SkeletonUtils.clone` so the clone's own skeleton/animation doesn't
+  break or cross-contaminate the player horse's) so it doesn't look like an
+  exact duplicate. The rider stayed procedural (`GenericRider` in
+  `HorseLoader.tsx`) rather than also becoming a GLB - a simpler seated pose
+  that doesn't depend on this specific horse's exact back width, per
+  Section 10's "visually acceptable seated pose" allowance. Saddle position
+  was computed from the GLB's own spine bones, not eyeballed - like the
+  archer, **not yet visually reviewed by a human or run on a device.**
+
 ## Known limitations - all 5 games
 
-- No GLB models anywhere - every game is primitive geometry (see
-  `docs/GAME_ASSETS.md`).
+- Ordo, Chuko, and Kok Boru are untouched by the GLB work this pass and
+  remain full primitive geometry (see `docs/GAME_ASSETS.md`) - only Jaa
+  Atuu's archer and Kyz Kuumai's horses were migrated, per the explicit
+  "prove the pipeline on 2 games, don't touch the rest yet" scope.
 - No SFX assets anywhere - haptics only.
 - No LOW/MEDIUM/HIGH quality-mode switch.
 - **None of the 5 games have been run on a real device yet** - "PARTIAL" on
-  every registry entry, not "PLAYABLE", pending that verification.
+  every registry entry, not "PLAYABLE", pending that verification. This
+  environment also has no working browser preview (Chrome extension
+  unavailable) - the two new GLBs are verified to bundle/resolve correctly
+  (`tsc`, `jest`, and a full `expo export --platform web` all pass clean)
+  but have not actually been *seen* rendered by anyone yet.
 - A pre-entry `GameDetailScreen` (What is this / how to play / difficulty /
   best score / games played / achievements / a Culture link) now gates
   every game's route (`src/app/games/<id>.tsx`, same state-gate shape

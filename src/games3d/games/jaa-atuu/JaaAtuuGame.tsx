@@ -1,3 +1,4 @@
+import { useProgress } from '@react-three/drei';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,6 +19,7 @@ import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
+import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { ShotFeedback, type ShotFeedbackEvent } from '../../ui/ShotFeedback';
@@ -47,6 +49,11 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   const { t } = useTranslation();
   const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useJaaAtuuGame(difficulty, mode);
+  // Tracks the archer GLB's fetch/parse (Section 12: "do not start with
+  // models popping in late") - a global loading-manager listener, not
+  // scoped to this screen, but there is nothing else for it to report on
+  // while this screen is the only thing mounted under games3d.
+  const { active: modelsLoading, progress: modelsProgress } = useProgress();
   const config = JAA_ATUU_DIFFICULTY[game.difficulty];
 
   const [bestScore, setBestScore] = useState<number | null>(null);
@@ -255,6 +262,8 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
         onReplay={handleRestart}
         onExit={handleExit}
       />
+
+      {modelsLoading ? <LoadingOverlay progress={modelsProgress / 100} /> : null}
     </View>
   );
 }

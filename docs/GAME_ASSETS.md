@@ -3,76 +3,91 @@
 Tracks every asset (model, texture, sound) used by `src/games3d`, its source,
 and its license, per the "no unlicensed models" rule for the 3D games phase.
 
-## Current status: no GLB/GLTF models yet
+## Current status: two real GLB models in use (Jaa Atuu, Kyz Kuumai only)
 
-Every visual across all 5 games is built from Three.js primitive geometry
+Everything else across all 5 games is still Three.js primitive geometry
 (`boxGeometry`, `coneGeometry`, `cylinderGeometry`, `circleGeometry`,
 `torusGeometry`, `capsuleGeometry`, `sphereGeometry`) and flat/vertex
-colors defined in `src/games3d/shared/scenePalette.ts` - no textures, no
-downloaded 3D models. This is placeholder geometry (mandated as acceptable
-for prototypes), marked here explicitly per the "mark it clearly" rule.
+colors defined in `src/games3d/shared/scenePalette.ts` - no textures.
 
 | Object | File | Geometry | Status |
 |---|---|---|---|
-| Sky | `shared/environment/KyrgyzSky.tsx` | Inverted sphere, vertex-color gradient | Placeholder |
-| Mountains | `shared/environment/MountainBackdrop.tsx` | Cones (4-sided, flat-shaded) | Placeholder |
-| Ground | `shared/environment/JailooTerrain.tsx` | Flat plane | Placeholder |
-| Boz-uy | `shared/environment/BozUy.tsx` | Cylinder + cone | Placeholder |
-| Horse + rider | `shared/horse/HorseModel.tsx` | Boxes/cylinders/capsule, procedural gait bob | Placeholder |
-| Target | `games/jaa-atuu/JaaAtuuTarget.tsx` | Stacked circles + boxes (stand) | Placeholder |
-| Arrow | `games/jaa-atuu/JaaAtuuArrow.tsx` | Cylinder + cones | Placeholder |
-| Bow | `games/jaa-atuu/JaaAtuuBow.tsx` | Torus arc + cylinders (string) | Placeholder |
-| Ordo khan/piece | `games/ordo/OrdoPiece.tsx` | Cylinder disc, khan visually distinct (gold/metal) | Placeholder |
-| Chuko piece | `games/chuko/ChukoPiece.tsx` | Offset boxes (approximating an astragalus) | Placeholder |
-| Kok Boru object (ulak) | `games/kok-boru/KokBoruObject.tsx` | Sphere + torus band - deliberately abstract, not literal | Placeholder |
+| Sky | `shared/environment/KyrgyzSky.tsx` | Inverted sphere, vertex-color gradient | PLACEHOLDER |
+| Mountains | `shared/environment/MountainBackdrop.tsx` | Cones (4-sided, flat-shaded) | PLACEHOLDER |
+| Ground | `shared/environment/JailooTerrain.tsx` | Flat plane | PLACEHOLDER |
+| Boz-uy | `shared/environment/BozUy.tsx` | Cylinder + cone | PLACEHOLDER |
+| Archer (Jaa Atuu) | GLB via `CharacterLoader` (see Model log) - `CharacterModel.tsx` is the fallback | Real rigged/animated mesh | PRODUCTION_CANDIDATE |
+| Horse + rider (Kyz Kuumai) | GLB via `HorseLoader` (see Model log) for the horse; rider stays procedural (`GenericRider` in `HorseLoader.tsx`) | Real rigged/animated horse mesh + procedural rider | PRODUCTION_CANDIDATE (horse) / STYLIZED_PROTOTYPE (rider) |
+| Horse + rider (Kok Boru) | `shared/horse/HorseModel.tsx` | Boxes/cylinders/capsule, procedural gait bob | STYLIZED_PROTOTYPE (not touched this pass - see docs/3D_GAMES.md) |
+| Target | `games/jaa-atuu/JaaAtuuTarget.tsx` | Stacked circles + boxes (stand) | STYLIZED_PROTOTYPE |
+| Arrow | `games/jaa-atuu/JaaAtuuArrow.tsx` | Cylinder + cones + fletching fins | STYLIZED_PROTOTYPE |
+| Bow | `games/jaa-atuu/JaaAtuuBow.tsx` | Riser + tapered limbs + dynamic 2-segment string | STYLIZED_PROTOTYPE |
+| Ordo khan/piece | `games/ordo/OrdoPiece.tsx` | Cylinder disc, khan visually distinct (gold/metal) | PLACEHOLDER |
+| Chuko piece | `games/chuko/ChukoPiece.tsx` | Offset boxes (approximating an astragalus) | PLACEHOLDER |
+| Kok Boru object (ulak) | `games/kok-boru/KokBoruObject.tsx` | Sphere + torus band - deliberately abstract, not literal | PLACEHOLDER |
 
-## GLB/GLTF loading pipeline (built, not yet exercised)
+Status vocabulary: `PLACEHOLDER` (stand-in, not meant to resemble the real
+thing) < `STYLIZED_PROTOTYPE` (deliberate simplified art direction) <
+`PRODUCTION_CANDIDATE` (a real, licensed, reasonably fitting asset, not yet
+verified on a real device or visually reviewed by a human) <
+`PRODUCTION_READY` (verified on-device and signed off). Nothing in this repo
+is `PRODUCTION_READY` yet - the two GLBs below are `PRODUCTION_CANDIDATE`
+specifically because they have not been seen rendered (no working visual
+preview was available in the environment that integrated them - see
+docs/3D_GAMES.md's device-testing note).
 
-`metro.config.js` (project root) already adds `glb`/`gltf`/`bin` to Metro's
-`resolver.assetExts`, so a bundled `.glb` resolves like any other asset -
-that no longer needs doing per-model.
+## GLB/GLTF loading pipeline (built and now exercised by 2 real models)
+
+`metro.config.js` (project root) adds `glb`/`gltf`/`bin` to Metro's
+`resolver.assetExts`, so a bundled `.glb` resolves like any other asset.
 
 `shared/characters/CharacterLoader.tsx` and `shared/horse/HorseLoader.tsx`
 are drop-in replacements for `CharacterModel`/`HorseModel` with an identical
 ref/prop contract - existing scenes don't change when a model is added,
-except swapping the import (Jaa Atuu's `JaaAtuuScene.tsx` already does this,
-as the reference integration - see `docs/3D_GAMES.md`). Both load via
-`@react-three/drei`'s `useGLTF`/`useAnimations` (resolved through
-`expo-asset`), never a hand-rolled `GLTFLoader` + `expo-file-system` read,
-and crossfade clips through `shared/animation/useClipCrossfade.ts` using the
-shared `AnimationStateId` vocabulary (`Idle`/`Walk`/`Run`/`Gallop`/`Aim`/
-`Shoot`/`Ride`) rather than each caller knowing a GLB's raw clip names.
+except swapping the import (Jaa Atuu's `JaaAtuuScene.tsx` and Kyz Kuumai's
+`KyzKuumaiScene.tsx` both do this now). Both load via `@react-three/drei`'s
+`useGLTF`/`useAnimations` (resolved through `expo-asset`), crossfade clips
+through `shared/animation/useClipCrossfade.ts` using the shared
+`AnimationStateId` vocabulary (`Idle`/`Walk`/`Run`/`Gallop`/`Aim`/`Shoot`/
+`Ride`), and fall back to the procedural model both when a `modelId` has no
+manifest entry *and* when the GLB fails to load at runtime
+(`shared/assets/ModelErrorBoundary.tsx` - a real error boundary, not just
+the no-entry case).
 
-**To add a real model:**
+A manifest entry also carries `scale`/`groundOffsetY` (a real exported rig
+essentially never lands on this app's "1 unit ~= 1 meter" scale or exactly
+plants its feet at y=0 by default - both were measured per-model from the
+GLB's own bone hierarchy, not eyeballed) and, for horses, `riderAnchor` (the
+saddle position) and `accessories` (character-only: procedural kalpak/quiver
+attached to resolved bones, sized for that model's own baked armature
+scale - see `CharacterLoader.tsx`'s `buildAccessory`).
 
-1. Store the file under `assets/models/<name>.glb`.
-2. Add an entry to `characterModelManifest`/`horseModelManifest` in
-   `shared/assets/modelManifest.ts`: `source: require('../../../../assets/models/<name>.glb')`,
-   its `clipNames` (this app's state names -> the GLB's actual clip names),
-   optionally `bones` (only if a game poses a joint directly per-frame, e.g.
-   Jaa Atuu's bow-draw shoulder rotation - see `CharacterAnimator.ts`), and
-   a `license: {source, license, author?}` - **required**, not optional,
-   per the "no unlicensed models" rule below.
-3. Set `modelId` on the relevant `CharacterVariant` (`CharacterTypes.ts`) or
-   pass `modelId` to `HorseLoader` at the call site. Nothing else changes -
-   `CharacterLoader`/`HorseLoader` render the procedural model for every
-   other `modelId` (including `undefined`), which is every character today.
-4. Record it in the Model log table below with source + license.
-5. `useGLTF.preload(...)` a repeated model (horse, rider, boz-uy) once
-   rather than loading it per scene mount (Section 55) - not yet done
-   anywhere since no model exists to preload.
+**To add another real model:** store the file under `assets/models/<name>.glb`,
+add an entry to `characterModelManifest`/`horseModelManifest` in
+`shared/assets/modelManifest.ts` (see `quaterniusHuman`/`quaterniusHorse`
+below as worked examples, including how `scale`/`groundOffsetY` were
+derived), set `modelId` on the relevant `CharacterVariant` or pass it to
+`HorseLoader`, and record it in the Model log below with source + license
+**before merging** - required, not optional.
 
-**Not yet exercised end-to-end**: no real `.glb` file has been added or
-tested through this pipeline (the manifest ships empty by design - see its
-own doc comment). Treat `CharacterLoader`/`HorseLoader`'s GLTF-loading path
-as unverified plumbing, not confirmed-working, until a real model runs
-through it.
+**Not verified on-device or visually reviewed**: `tsc`/tests pass and Metro
+resolves both GLBs cleanly (checked by starting the dev server after adding
+them), but no human or on-device look has confirmed final visual fit
+(kalpak/quiver sizing on the archer, saddle position on the horse) - see
+docs/3D_GAMES.md.
 
-## Model log (fill in as models are added)
+## Model log
 
-| File | Source | License | Author (if required) | Added for |
-|---|---|---|---|---|
-| _(none yet)_ | | | | |
+| File | Source | License | Author | Modifications | Used in |
+|---|---|---|---|---|---|
+| `assets/models/quaternius-animated-human.glb` | https://poly.pizza/m/c3Ibh9I3udk (mirrors quaternius.com) | CC0 1.0 Universal (Public Domain) - no attribution required | Quaternius | None - used as downloaded | Jaa Atuu archer (`CharacterTypes.ts` `playerArcher.modelId`) |
+| `assets/models/quaternius-horse.glb` | https://poly.pizza/m/qvTrSG9pZF (mirrors quaternius.com) | CC0 1.0 Universal (Public Domain) - no attribution required | Quaternius | None - used as downloaded | Kyz Kuumai player + AI horse (`KyzKuumaiScene.tsx`, `modelId: 'quaterniusHorse'`) |
+
+Both are untextured (flat PBR `baseColorFactor` materials, no
+`baseColorTexture`/images at all) - zero texture-memory cost, well under
+this doc's texture-size guidance by construction. Triangle counts: archer
+~1,578; horse ~2,182 - both comfortably mobile-friendly. File sizes: archer
+682 KB, horse 1,082 KB (no textures to bloat either).
 
 ## Cultural-accuracy note (applies across all 5 games)
 

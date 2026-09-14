@@ -5,7 +5,8 @@ import * as THREE from 'three';
 
 import { ChaseCamera, type ChaseCameraTarget } from '../../camera/ChaseCamera';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
-import { HorseModel, type HorseVisualState } from '../../shared/horse/HorseModel';
+import { HorseLoader } from '../../shared/horse/HorseLoader';
+import type { HorseVisualState } from '../../shared/horse/HorseModel';
 import type { HorseController } from '../../shared/horse/HorseController';
 import { KyzKuumaiCourse } from './KyzKuumaiCourse';
 import { computeAiHorseInput } from './KyzKuumaiAI';
@@ -75,8 +76,20 @@ export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, moveX, moveZ
 
       <KyzKuumaiCourse />
 
-      <HorseModel ref={playerGroupRef} visualStateRef={playerVisualRef} riderVariant={CHARACTER_PRESETS.kyzKuumaiPlayer} coatColor="#5C4326" />
-      <HorseModel ref={aiGroupRef} visualStateRef={aiVisualRef} riderVariant={CHARACTER_PRESETS.kyzKuumaiRival} coatColor="#2B2019" />
+      <HorseLoader
+        ref={playerGroupRef}
+        visualStateRef={playerVisualRef}
+        riderVariant={CHARACTER_PRESETS.kyzKuumaiPlayer}
+        coatColor="#5C4326"
+        modelId="quaterniusHorse"
+      />
+      <HorseLoader
+        ref={aiGroupRef}
+        visualStateRef={aiVisualRef}
+        riderVariant={CHARACTER_PRESETS.kyzKuumaiRival}
+        coatColor="#2B2019"
+        modelId="quaterniusHorse"
+      />
     </>
   );
 }

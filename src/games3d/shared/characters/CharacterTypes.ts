@@ -43,8 +43,9 @@ export type CharacterVariant = {
   wearsElechek: boolean;
   /** Looks up a GLB entry in `shared/assets/modelManifest.ts` for
    * `CharacterLoader` to render instead of this procedural body. Omitted
-   * (the default for every preset below) means "use the procedural
-   * CharacterModel" - not "GLB pending," since no GLB exists yet. */
+   * means "use the procedural CharacterModel" - every preset below except
+   * `playerArcher` is still on that path (no per-game visual regression
+   * risk from adding a real model to just one). */
   modelId?: string;
 };
 
@@ -58,6 +59,7 @@ export const CHARACTER_PRESETS = {
     clothingSecondary: '#8B6B3D',
     wearsKalpak: true,
     wearsElechek: false,
+    modelId: 'quaterniusHuman',
   },
   ordoOpponent: {
     gender: 'male',

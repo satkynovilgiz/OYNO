@@ -1,3 +1,4 @@
+import { useProgress } from '@react-three/drei';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -18,6 +19,7 @@ import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
+import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
@@ -39,6 +41,9 @@ export function KyzKuumaiGame({ difficulty = 'normal' }: KyzKuumaiGameProps) {
   const insets = useSafeAreaInsets();
   const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useKyzKuumaiGame(difficulty);
+  // Tracks both horse GLBs' fetch/parse (Section 12) - same shared/global
+  // useProgress used by JaaAtuuGame.tsx.
+  const { active: modelsLoading, progress: modelsProgress } = useProgress();
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
@@ -128,6 +133,8 @@ export function KyzKuumaiGame({ difficulty = 'normal' }: KyzKuumaiGameProps) {
       <StartCountdown visible={game.phase === 'READY'} onDone={game.startChase} />
       <PauseMenu visible={game.phase === 'PAUSED'} onResume={game.resume} onRestart={game.restart} onExit={handleExit} />
       <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+
+      {modelsLoading ? <LoadingOverlay progress={modelsProgress / 100} /> : null}
     </View>
   );
 }
