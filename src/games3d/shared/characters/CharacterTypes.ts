@@ -41,6 +41,11 @@ export type CharacterVariant = {
   /** Traditional-inspired white headwrap - independent of `gender` for the
    * same reason. */
   wearsElechek: boolean;
+  /** Looks up a GLB entry in `shared/assets/modelManifest.ts` for
+   * `CharacterLoader` to render instead of this procedural body. Omitted
+   * (the default for every preset below) means "use the procedural
+   * CharacterModel" - not "GLB pending," since no GLB exists yet. */
+  modelId?: string;
 };
 
 export const CHARACTER_PRESETS = {

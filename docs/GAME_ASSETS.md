@@ -26,18 +26,47 @@ for prototypes), marked here explicitly per the "mark it clearly" rule.
 | Chuko piece | `games/chuko/ChukoPiece.tsx` | Offset boxes (approximating an astragalus) | Placeholder |
 | Kok Boru object (ulak) | `games/kok-boru/KokBoruObject.tsx` | Sphere + torus band - deliberately abstract, not literal | Placeholder |
 
-## When real GLB/GLTF models are added
+## GLB/GLTF loading pipeline (built, not yet exercised)
+
+`metro.config.js` (project root) already adds `glb`/`gltf`/`bin` to Metro's
+`resolver.assetExts`, so a bundled `.glb` resolves like any other asset -
+that no longer needs doing per-model.
+
+`shared/characters/CharacterLoader.tsx` and `shared/horse/HorseLoader.tsx`
+are drop-in replacements for `CharacterModel`/`HorseModel` with an identical
+ref/prop contract - existing scenes don't change when a model is added,
+except swapping the import (Jaa Atuu's `JaaAtuuScene.tsx` already does this,
+as the reference integration - see `docs/3D_GAMES.md`). Both load via
+`@react-three/drei`'s `useGLTF`/`useAnimations` (resolved through
+`expo-asset`), never a hand-rolled `GLTFLoader` + `expo-file-system` read,
+and crossfade clips through `shared/animation/useClipCrossfade.ts` using the
+shared `AnimationStateId` vocabulary (`Idle`/`Walk`/`Run`/`Gallop`/`Aim`/
+`Shoot`/`Ride`) rather than each caller knowing a GLB's raw clip names.
+
+**To add a real model:**
 
 1. Store the file under `assets/models/<name>.glb`.
-2. Record it in the table below with source + license before merging.
-3. Add `glb`/`gltf`/`bin` to Metro's `resolver.assetExts` in a
-   `metro.config.js` (none exists yet - the project uses Expo's default
-   Metro config, which does not include these extensions).
-4. Load it with `@react-three/drei`'s `useGLTF` (native-compatible, resolves
-   through `expo-asset`/`expo-file-system`, both already installed) rather
-   than hand-rolling a `GLTFLoader` + `expo-file-system` read.
-5. Preload/cache repeated models (horse, rider, boz-uy) with `useGLTF.preload`
-   instead of loading the same file per scene mount (Section 55).
+2. Add an entry to `characterModelManifest`/`horseModelManifest` in
+   `shared/assets/modelManifest.ts`: `source: require('../../../../assets/models/<name>.glb')`,
+   its `clipNames` (this app's state names -> the GLB's actual clip names),
+   optionally `bones` (only if a game poses a joint directly per-frame, e.g.
+   Jaa Atuu's bow-draw shoulder rotation - see `CharacterAnimator.ts`), and
+   a `license: {source, license, author?}` - **required**, not optional,
+   per the "no unlicensed models" rule below.
+3. Set `modelId` on the relevant `CharacterVariant` (`CharacterTypes.ts`) or
+   pass `modelId` to `HorseLoader` at the call site. Nothing else changes -
+   `CharacterLoader`/`HorseLoader` render the procedural model for every
+   other `modelId` (including `undefined`), which is every character today.
+4. Record it in the Model log table below with source + license.
+5. `useGLTF.preload(...)` a repeated model (horse, rider, boz-uy) once
+   rather than loading it per scene mount (Section 55) - not yet done
+   anywhere since no model exists to preload.
+
+**Not yet exercised end-to-end**: no real `.glb` file has been added or
+tested through this pipeline (the manifest ships empty by design - see its
+own doc comment). Treat `CharacterLoader`/`HorseLoader`'s GLTF-loading path
+as unverified plumbing, not confirmed-working, until a real model runs
+through it.
 
 ## Model log (fill in as models are added)
 
