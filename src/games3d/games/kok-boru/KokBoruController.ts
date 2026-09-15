@@ -216,9 +216,18 @@ export function useKokBoruGame(mode: KokBoruMode = 'normal') {
     [mode, canPickUp, finishMatch],
   );
 
+  // GOAL_PAUSE is pausable too (previously excluded, which left the Pause
+  // button silently inert during the ~1.8s goal celebration) - the
+  // GOAL_PAUSE useEffect below already clears its setTimeout via its own
+  // cleanup whenever `phase` changes away from 'GOAL_PAUSE', so pausing
+  // here safely cancels that timer without any extra bookkeeping, and
+  // resume() (generic, via prevPhaseRef) naturally restarts a fresh
+  // GOAL_PAUSE_S celebration on resume rather than a mid-way one - a minor
+  // animation-timing nuance, not a change to scoring/match-clock behavior
+  // (elapsedRef only advances during onTick, which never runs while paused).
   const pause = useCallback(() => {
     setPhase((current) => {
-      if (current === 'PAUSED' || current === 'RESULT' || current === 'GOAL_PAUSE') return current;
+      if (current === 'PAUSED' || current === 'RESULT') return current;
       prevPhaseRef.current = current;
       return 'PAUSED';
     });

@@ -50,6 +50,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const audioRef = useRef(createKokBoruAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
   const prevPossessionRef = useRef(game.possession);
+  const lastGoalKeyRef = useRef(0);
 
   const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
 
@@ -95,12 +96,24 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
     audioRef.current.play('whistle', 0.6);
   }, [game.phase, game.summary.scored, game.summary.outcome, mode]);
 
+  // Keyed off total goals scored, not just phase/lastScorer, so pausing and
+  // resuming during the celebration (phase goes GOAL_PAUSE -> PAUSED ->
+  // GOAL_PAUSE for the *same* goal) can't replay this a second time - reset
+  // when a new match starts (READY), since restart() zeroes the score back
+  // to a total this ref may have already seen.
+  useEffect(() => {
+    if (game.phase === 'READY') lastGoalKeyRef.current = 0;
+  }, [game.phase]);
+
   useEffect(() => {
     if (game.phase !== 'GOAL_PAUSE' || !game.lastScorer) return;
+    const totalGoals = game.score.player + game.score.ai;
+    if (totalGoals === lastGoalKeyRef.current) return;
+    lastGoalKeyRef.current = totalGoals;
     const playerScored = game.lastScorer === 'player';
     void (playerScored ? gameHaptics.success() : gameHaptics.warning());
     audioRef.current.play(playerScored ? 'goalPlayer' : 'goalAi', 0.65);
-  }, [game.phase, game.lastScorer]);
+  }, [game.phase, game.lastScorer, game.score]);
 
   // No scored/higher-is-better metric exists for practice (Phase A: score
   // or don't) - games played only, same reasoning as Kyz Kuumai. Normal
