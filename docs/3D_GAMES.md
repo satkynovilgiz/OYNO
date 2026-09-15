@@ -333,16 +333,40 @@ check.
 
 No `games/kokBoru/RULES.md` exists - Kok Boru is new to this 3D phase, not
 one of the originally-researched 9 games, so it has had **no dedicated
-cultural-research pass**. Per the master brief's own explicit phasing
-("PHASE A: 1 player, 1 horse, object, goal... Nothing else. Make this work
-first"), this build is **Phase A only**: ride, pick up an object near you,
-carry it, ride it into the goal circle to score. No AI opponent, no
-possession contest/stealing, no match timer-to-N, no real traditional
-match rules - those need Phase B+ and a proper cultural-research pass
-first, in that order. Possession is explicit state
-(`KokBoruPossession: 'FREE' | 'PLAYER'`), not inferred from physics
-collisions. Reuses `HorseController`/`HorseModel`/`ChaseCamera` from Kyz
-Kuumai (Section "Do not implement a completely separate horse controller
-for Kok Boru later") with a higher/farther-back camera offset for
-situational awareness, and a single context-sensitive action button
-(`ui/ContextActionButton.tsx` - "PICK UP"/"DROP", never both at once).
+cultural-research pass**. Phase A (ride, pick up an object near you, carry
+it, ride into a goal circle, no opponent) shipped first, per the master
+brief's own explicit phasing. **Phase B** (this pass) adds a basic playable
+1v1 match against a single AI rider - still not the real traditional game
+(no teams, no real match rules, no fouls), and still without that
+cultural-research pass - a **MOBILE PROTOTYPE ADAPTATION** for a complete,
+testable match shape (see `KokBoruTypes.ts`'s scope note).
+
+Normal mode: two goals now (`PLAYER_GOAL`/`AI_GOAL`, opposite ends of the
+field, `KokBoruArena.tsx` draws both - gold for the player's, terracotta
+for the AI's), a 2-minute match clock, and a `'GOAL_PAUSE'` phase (extends
+the base `GamePhase` set, same pattern as Ordo/Chuko's turn-structure
+phases) for a short freeze/reset after each goal - horses and the object
+reset, the match continues, ending in a `WIN`/`LOSS`/`DRAW` + final score
+when the clock runs out. Possession is explicit state
+(`KokBoruPossession: 'FREE' | 'PLAYER' | 'AI'`), never inferred from raw
+physics collisions. Pickup and stealing are both automatic proximity for
+*both* sides in normal mode (Section 5 groups player/AI under the same
+"when close enough" condition, and the AI obviously has no button) -
+Practice mode is unchanged and keeps Phase A's explicit player-only "PICK
+UP" press (`ui/ContextActionButton.tsx`), which is why the pure game logic
+lives in a new `KokBoruMatchEngine.ts` (possession/goal/outcome
+resolution, unit-tested in `KokBoruMatchEngine.test.ts`) that only
+`normal` mode's `onTick` branch calls - practice's own tick logic is
+untouched. The AI's steering (`KokBoruAI.ts`) is a simple "seek whatever
+point the match state says to chase" helper - the object when free, the
+player when the player has it, its own goal when it has it - run through
+the same `HorseController.step()` physics as the player (Section "No
+teleporting AI"), with a modest speed handicap so it isn't a perfectly
+matched opponent, not a scripted rubber-band chase.
+
+Reuses `HorseController`/`ChaseCamera` from Kyz Kuumai (Section "Do not
+implement a completely separate horse controller for Kok Boru later") with
+a higher/farther-back camera offset for situational awareness. Both riders
+now go through `HorseLoader` (the real CC0 GLB horse, same as Kyz Kuumai) -
+Phase A had this on the raw procedural `HorseModel` directly; that was a
+real gap fixed in this pass, not a new asset.

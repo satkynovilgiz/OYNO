@@ -3,13 +3,31 @@ import * as THREE from 'three';
 
 import { BozUy, JailooTerrain, KyrgyzSky, MountainBackdrop, SceneLighting } from '../../shared/environment';
 import { scenePalette } from '../../shared/scenePalette';
-import { GOAL_POSITION, GOAL_RADIUS_M, OBJECT_SPAWN } from './KokBoruTypes';
+import { AI_GOAL, GOAL_RADIUS_M, OBJECT_SPAWN, PLAYER_GOAL } from './KokBoruTypes';
 
-/** Kok Boru's competition field (Section 44) - kept compact/manageable for
- * this Phase A slice (one player, one goal), not the full-size arena a
- * multi-rider match would need. */
-export function KokBoruArena() {
+function GoalMarker({ position, ringColor }: { position: { x: number; z: number }; ringColor: string }) {
   const goalRingGeometry = useMemo(() => new THREE.RingGeometry(GOAL_RADIUS_M - 0.08, GOAL_RADIUS_M, 48), []);
+  return (
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[position.x, 0.006, position.z]} geometry={goalRingGeometry}>
+        <meshStandardMaterial color={ringColor} roughness={0.8} />
+      </mesh>
+      <mesh position={[position.x - GOAL_RADIUS_M - 0.3, 1, position.z]}>
+        <cylinderGeometry args={[0.04, 0.04, 2, 6]} />
+        <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
+      </mesh>
+      <mesh position={[position.x + GOAL_RADIUS_M + 0.3, 1, position.z]}>
+        <cylinderGeometry args={[0.04, 0.04, 2, 6]} />
+        <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
+      </mesh>
+    </>
+  );
+}
+
+/** Kok Boru's competition field (Section 44) - two goals now (Section
+ * "KOK BORU 1V1": one per side), kept compact/manageable for a 1v1 slice
+ * rather than the full-size arena a multi-rider match would need. */
+export function KokBoruArena() {
   const centerMarkGeometry = useMemo(() => new THREE.RingGeometry(0.6, 0.7, 32), []);
 
   return (
@@ -19,18 +37,11 @@ export function KokBoruArena() {
       <MountainBackdrop />
       <JailooTerrain size={200} />
 
-      {/* Goal circle */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[GOAL_POSITION.x, 0.006, GOAL_POSITION.z]} geometry={goalRingGeometry}>
-        <meshStandardMaterial color={scenePalette.gold} roughness={0.8} />
-      </mesh>
-      <mesh position={[GOAL_POSITION.x - GOAL_RADIUS_M - 0.3, 1, GOAL_POSITION.z]}>
-        <cylinderGeometry args={[0.04, 0.04, 2, 6]} />
-        <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
-      </mesh>
-      <mesh position={[GOAL_POSITION.x + GOAL_RADIUS_M + 0.3, 1, GOAL_POSITION.z]}>
-        <cylinderGeometry args={[0.04, 0.04, 2, 6]} />
-        <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
-      </mesh>
+      {/* Player's goal (gold) and the AI's goal (terracotta) at opposite
+          ends of the field, so which ring belongs to which side reads at a
+          glance rather than needing a HUD label to tell them apart. */}
+      <GoalMarker position={PLAYER_GOAL} ringColor={scenePalette.gold} />
+      <GoalMarker position={AI_GOAL} ringColor={scenePalette.terracotta} />
 
       {/* Object spawn marker */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[OBJECT_SPAWN.x, 0.005, OBJECT_SPAWN.z]} geometry={centerMarkGeometry}>

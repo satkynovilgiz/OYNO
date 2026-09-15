@@ -101,6 +101,16 @@ export const CHARACTER_PRESETS = {
     wearsKalpak: false,
     wearsElechek: false,
   },
+  kokBoruRival: {
+    gender: 'male',
+    skinTone: '#C99568',
+    hairColor: '#3B2A1E',
+    hairStyle: 'covered',
+    clothingPrimary: '#7A3226',
+    clothingSecondary: '#2B2019',
+    wearsKalpak: true,
+    wearsElechek: false,
+  },
 } satisfies Record<string, CharacterVariant>;
 
 export type CharacterPresetId = keyof typeof CHARACTER_PRESETS;

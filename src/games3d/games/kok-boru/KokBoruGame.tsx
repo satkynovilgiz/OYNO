@@ -2,12 +2,12 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
-import { spacing } from '@/theme';
+import { spacing, typography } from '@/theme';
 
 import { ContextActionButton } from '../../ui/ContextActionButton';
 import { SprintButtonView, useSprintButton } from '../../controls/SprintButton';
@@ -27,7 +27,7 @@ import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKokBoruGame } from './KokBoruController';
 import { KokBoruScene } from './KokBoruScene';
-import type { KokBoruMode } from './KokBoruTypes';
+import { MATCH_DURATION_S, type KokBoruMode } from './KokBoruTypes';
 
 const TUTORIAL_STEPS = ['games3d.kokBoru.tutorial1', 'games3d.kokBoru.tutorial2', 'games3d.kokBoru.tutorial3'];
 const GAME_ID = 'kok_boru';
@@ -79,11 +79,25 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
 
   useEffect(() => {
     if (game.phase !== 'RESULT') return;
-    void Haptics.notificationAsync(game.summary.scored ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
-  }, [game.phase, game.summary.scored]);
+    // Practice always ends on its own timeout/no-score note (Haptics
+    // matches the old scored/not-scored feel); normal mode's win/draw/loss
+    // gets a matching positive/neutral/negative haptic instead.
+    if (mode === 'practice') {
+      void Haptics.notificationAsync(game.summary.scored ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+    void Haptics.notificationAsync(game.summary.outcome === 'WIN' ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+  }, [game.phase, game.summary.scored, game.summary.outcome, mode]);
 
-  // No scored/higher-is-better metric exists (Phase A: score or don't -
-  // see KokBoruTypes.ts) - games played only, same reasoning as Kyz Kuumai.
+  useEffect(() => {
+    if (game.phase !== 'GOAL_PAUSE' || !game.lastScorer) return;
+    void Haptics.notificationAsync(game.lastScorer === 'player' ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+  }, [game.phase, game.lastScorer]);
+
+  // No scored/higher-is-better metric exists for practice (Phase A: score
+  // or don't) - games played only, same reasoning as Kyz Kuumai. Normal
+  // mode's win/loss/draw isn't a "best score" either, so this stays as-is
+  // for both modes.
   useEffect(() => {
     if (game.phase !== 'RESULT') {
       recordedResultRef.current = false;
@@ -95,8 +109,17 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   }, [game.phase]);
 
   useEffect(() => {
+    if (mode === 'normal') return;
     if (game.possession === 'PLAYER') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, [game.possession]);
+  }, [game.possession, mode]);
+
+  // Normal mode: possession changing hands (pickup or steal, either
+  // direction) is worth a tap regardless of which side it favors -
+  // separate from practice's player-only haptic above.
+  useEffect(() => {
+    if (mode !== 'normal' || game.possession === 'FREE') return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, [game.possession, mode]);
 
   const handleExit = useCallback(() => {
     if (router.canGoBack()) router.back();
@@ -104,21 +127,44 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   }, []);
 
   const playing = game.phase === 'PLAYING';
-  const hudVisible = playing || game.phase === 'PAUSED';
+  const hudVisible = playing || game.phase === 'PAUSED' || game.phase === 'GOAL_PAUSE';
 
   const actionLabel = game.possession === 'PLAYER' ? t('games3d.kokBoru.throw') : t('games3d.kokBoru.pickUp');
   const actionEnabled = game.possession === 'PLAYER' || game.canPickUp;
   const handleAction = game.possession === 'PLAYER' ? game.drop : game.pickUp;
 
-  const resultStats = useMemo(
-    () => [
-      { label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(1)}s` },
-      { label: t('games3d.kyzKuumai.topSpeed'), value: `${game.summary.topSpeed.toFixed(1)} m/s` },
-    ],
-    [game.summary, t],
-  );
+  const resultStats = useMemo(() => {
+    if (mode === 'practice') {
+      return [
+        { label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(1)}s` },
+        { label: t('games3d.kyzKuumai.topSpeed'), value: `${game.summary.topSpeed.toFixed(1)} m/s` },
+      ];
+    }
+    return [
+      { label: t('games3d.kokBoru.you'), value: String(game.summary.playerScore) },
+      { label: t('games3d.kokBoru.opponent'), value: String(game.summary.aiScore) },
+    ];
+  }, [game.summary, mode, t]);
 
-  const resultTitle = game.summary.scored ? t('games3d.kokBoru.scoredTitle') : t('games3d.kokBoru.notScoredTitle');
+  const resultTitle =
+    mode === 'practice'
+      ? game.summary.scored
+        ? t('games3d.kokBoru.scoredTitle')
+        : t('games3d.kokBoru.notScoredTitle')
+      : game.summary.outcome === 'WIN'
+        ? t('games3d.result.win')
+        : game.summary.outcome === 'LOSS'
+          ? t('games3d.result.lose')
+          : t('games3d.result.draw');
+
+  const possessionLabel =
+    game.possession === 'PLAYER'
+      ? t('games3d.kokBoru.you')
+      : game.possession === 'AI'
+        ? t('games3d.kokBoru.opponent')
+        : t('games3d.kokBoru.free');
+
+  const timeRemaining = mode === 'normal' ? Math.max(0, MATCH_DURATION_S - game.liveElapsedSeconds) : null;
 
   return (
     <View style={styles.root}>
@@ -128,6 +174,8 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
             phase={game.phase}
             possession={game.possession}
             playerHorseRef={game.playerHorseRef}
+            aiHorseRef={game.aiHorseRef}
+            showAiHorse={mode === 'normal'}
             objectPositionRef={game.objectPositionRef}
             moveX={joystick.moveX}
             moveZ={joystick.moveZ}
@@ -141,13 +189,23 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
         <GameHUD
           title={t('games3d.titles.kokBoru')}
           onPause={game.pause}
-          primaryStat={{ label: t('games3d.kokBoru.possession'), value: game.possession === 'PLAYER' ? t('games3d.kokBoru.you') : t('games3d.kokBoru.free') }}
+          primaryStat={
+            mode === 'normal'
+              ? { label: t('games3d.kokBoru.score'), value: `${game.score.player}-${game.score.ai}` }
+              : { label: t('games3d.kokBoru.possession'), value: possessionLabel }
+          }
           secondaryStat={
             mode === 'practice'
               ? { label: t('games3d.kokBoru.scoredCount'), value: String(game.practiceScoreCount) }
-              : { label: t('games3d.kyzKuumai.time'), value: `${game.liveElapsedSeconds.toFixed(0)}s` }
+              : { label: t('games3d.kyzKuumai.time'), value: `${(timeRemaining ?? 0).toFixed(0)}s` }
           }
         />
+      ) : null}
+
+      {game.phase === 'GOAL_PAUSE' ? (
+        <View style={styles.goalBanner} pointerEvents="none">
+          <Text style={styles.goalText}>{game.lastScorer === 'player' ? t('games3d.kokBoru.playerScored') : t('games3d.kokBoru.aiScored')}</Text>
+        </View>
       ) : null}
 
       {playing ? (
@@ -156,7 +214,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
             <VirtualJoystickView gesture={joystick.gesture} knobX={joystick.knobX} knobY={joystick.knobY} />
           </View>
           <View pointerEvents="box-none" style={[styles.controlSlot, styles.rightControls]}>
-            <ContextActionButton label={actionLabel} enabled={actionEnabled} onPress={handleAction} />
+            {mode === 'practice' ? <ContextActionButton label={actionLabel} enabled={actionEnabled} onPress={handleAction} /> : null}
             <SprintButtonView sprintHeld={sprint.sprintHeld} />
           </View>
         </View>
@@ -192,9 +250,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
         onHowToPlay={handleHowToPlay}
       />
 
-      {mode === 'normal' ? (
-        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
-      ) : null}
+      <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
     </View>
   );
 }
@@ -218,5 +274,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignItems: 'center',
+  },
+  goalBanner: {
+    position: 'absolute',
+    top: '30%',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(232,185,61,0.92)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  goalText: {
+    ...typography.h1,
+    color: '#2B2019',
   },
 });
