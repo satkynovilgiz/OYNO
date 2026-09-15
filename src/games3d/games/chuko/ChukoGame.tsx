@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +14,7 @@ import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
+import { gameHaptics } from '../../haptics/gameHaptics';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -24,6 +24,7 @@ import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useChukoGame } from './ChukoController';
+import { createChukoAudio } from './chukoAudio';
 import { ChukoScene } from './ChukoScene';
 import type { ChukoDifficulty, ChukoMode } from './ChukoTypes';
 
@@ -31,9 +32,9 @@ const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'g
 const GAME_ID = 'chuko';
 
 function hapticFor(scoreDelta: number) {
-  if (scoreDelta > 1) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  if (scoreDelta > 0) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  if (scoreDelta > 1) return gameHaptics.heavy();
+  if (scoreDelta > 0) return gameHaptics.medium();
+  return gameHaptics.light();
 }
 
 type ChukoGameProps = {
@@ -49,6 +50,9 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
   const [hasThrown, setHasThrown] = useState(false);
+
+  const audioRef = useRef(createChukoAudio());
+  useEffect(() => () => audioRef.current.dispose(), []);
 
   const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
 
@@ -90,7 +94,13 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
     recordedResultRef.current = true;
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
     void setBestScoreIfHigher(GAME_ID, game.summary.playerScore);
-  }, [game.phase, game.summary.playerScore]);
+
+    if (mode === 'normal') {
+      if (game.summary.winner === 'player') audioRef.current.play('success', 0.6);
+      else if (game.summary.winner === 'ai') audioRef.current.play('loss', 0.55);
+      else audioRef.current.play('draw', 0.5);
+    }
+  }, [game.phase, game.summary.playerScore, game.summary.winner, mode]);
 
   // "Show landing result" (Section "CHUKO PRACTICE") - a brief text readout
   // of what the throw actually did, not just a haptic buzz.
@@ -101,6 +111,11 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
     lastOutcomeKeyRef.current = game.lastOutcome.key;
     const { outcome, side } = game.lastOutcome;
     void hapticFor(outcome.scoreDelta);
+    // "Pieces hitting ground" plays for every resolved throw; a positive
+    // capture on top of that also gets its own brighter "successful
+    // result" chime, same layering as Ordo's pieceHit+clear.
+    audioRef.current.play('land', 0.5);
+    if (outcome.scoreDelta > 0) audioRef.current.play('success', 0.55);
     if (side === 'player') {
       setLandingMessage(outcome.scoreDelta > 0 ? t('games3d.chuko.landingHit', { count: outcome.captured.length }) : t('games3d.chuko.landingMiss'));
       const timer = setTimeout(() => setLandingMessage(null), 1600);
@@ -112,6 +127,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
     (payload: { angleOffset: number; power: number }) => {
       game.throwPlayer(payload.angleOffset, payload.power);
       setHasThrown(true);
+      audioRef.current.play('throw', 0.55);
     },
     [game],
   );

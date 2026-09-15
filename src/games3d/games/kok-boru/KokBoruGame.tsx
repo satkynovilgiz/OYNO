@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +15,7 @@ import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
+import { gameHaptics } from '../../haptics/gameHaptics';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -26,6 +26,7 @@ import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKokBoruGame } from './KokBoruController';
+import { createKokBoruAudio } from './kokBoruAudio';
 import { KokBoruScene } from './KokBoruScene';
 import { MATCH_DURATION_S, type KokBoruMode } from './KokBoruTypes';
 
@@ -45,6 +46,10 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
+
+  const audioRef = useRef(createKokBoruAudio());
+  useEffect(() => () => audioRef.current.dispose(), []);
+  const prevPossessionRef = useRef(game.possession);
 
   const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
 
@@ -82,16 +87,19 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
     // Practice always ends on its own timeout/no-score note (Haptics
     // matches the old scored/not-scored feel); normal mode's win/draw/loss
     // gets a matching positive/neutral/negative haptic instead.
-    if (mode === 'practice') {
-      void Haptics.notificationAsync(game.summary.scored ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
-      return;
-    }
-    void Haptics.notificationAsync(game.summary.outcome === 'WIN' ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+    const positive = mode === 'practice' ? game.summary.scored : game.summary.outcome === 'WIN';
+    void (positive ? gameHaptics.success() : gameHaptics.warning());
+    // "Final whistle" (Section "final whistle") - the match/round is over,
+    // independent of win/loss framing (which the haptic above already
+    // carries).
+    audioRef.current.play('whistle', 0.6);
   }, [game.phase, game.summary.scored, game.summary.outcome, mode]);
 
   useEffect(() => {
     if (game.phase !== 'GOAL_PAUSE' || !game.lastScorer) return;
-    void Haptics.notificationAsync(game.lastScorer === 'player' ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+    const playerScored = game.lastScorer === 'player';
+    void (playerScored ? gameHaptics.success() : gameHaptics.warning());
+    audioRef.current.play(playerScored ? 'goalPlayer' : 'goalAi', 0.65);
   }, [game.phase, game.lastScorer]);
 
   // No scored/higher-is-better metric exists for practice (Phase A: score
@@ -110,15 +118,24 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
 
   useEffect(() => {
     if (mode === 'normal') return;
-    if (game.possession === 'PLAYER') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (game.possession === 'PLAYER') {
+      void gameHaptics.medium();
+      audioRef.current.play('pickup', 0.55);
+    }
   }, [game.possession, mode]);
 
   // Normal mode: possession changing hands (pickup or steal, either
   // direction) is worth a tap regardless of which side it favors -
-  // separate from practice's player-only haptic above.
+  // separate from practice's player-only haptic above. "Pickup" (from
+  // FREE) and "steal" (taken directly from the other side) get distinct
+  // sounds since both are explicitly requested events (Section "pickup" /
+  // "steal"), even though the haptic itself doesn't need to differ.
   useEffect(() => {
-    if (mode !== 'normal' || game.possession === 'FREE') return;
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const prev = prevPossessionRef.current;
+    prevPossessionRef.current = game.possession;
+    if (mode !== 'normal' || game.possession === 'FREE' || game.possession === prev) return;
+    void gameHaptics.medium();
+    audioRef.current.play(prev === 'FREE' ? 'pickup' : 'steal', 0.55);
   }, [game.possession, mode]);
 
   const handleExit = useCallback(() => {

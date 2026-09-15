@@ -1,4 +1,3 @@
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +14,7 @@ import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
+import { gameHaptics } from '../../haptics/gameHaptics';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -24,6 +24,7 @@ import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useOrdoGame } from './OrdoController';
+import { createOrdoAudio } from './ordoAudio';
 import { OrdoScene } from './OrdoScene';
 import type { OrdoDifficulty, OrdoMode } from './OrdoTypes';
 
@@ -31,9 +32,9 @@ const TUTORIAL_STEPS = ['games3d.ordo.tutorial1', 'games3d.ordo.tutorial2', 'gam
 const GAME_ID = 'ordo';
 
 function hapticFor(scoreDelta: number, khan: boolean) {
-  if (khan) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  if (scoreDelta > 0) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  if (khan) return gameHaptics.heavy();
+  if (scoreDelta > 0) return gameHaptics.medium();
+  return gameHaptics.light();
 }
 
 type OrdoGameProps = {
@@ -49,6 +50,10 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
   const [hasThrown, setHasThrown] = useState(false);
+
+  const audioRef = useRef(createOrdoAudio());
+  useEffect(() => () => audioRef.current.dispose(), []);
+  const prevTurnPhaseRef = useRef(game.phase);
 
   // First-time "what is this / how to play" flow (same pattern as
   // JaaAtuuGame.tsx) - independent of `mode` so Practice and Play both get
@@ -91,22 +96,49 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
     recordedResultRef.current = true;
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
     void setBestScoreIfHigher(GAME_ID, game.summary.playerScore);
-  }, [game.phase, game.summary.playerScore]);
+
+    // Win/loss/draw sound (Section "win/loss") - only for a real match;
+    // practice never reaches RESULT (Section "no win-loss" for practice).
+    if (mode === 'normal') {
+      if (game.summary.winner === 'player') audioRef.current.play('win', 0.6);
+      else if (game.summary.winner === 'ai') audioRef.current.play('loss', 0.55);
+      else audioRef.current.play('draw', 0.5);
+    }
+  }, [game.phase, game.summary.playerScore, game.summary.winner, mode]);
 
   useEffect(() => {
     if (isBackgrounded) game.pause();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBackgrounded]);
 
-  // Haptic feedback the moment a throw resolves, for either side - it's
-  // useful signal regardless of who threw (Section "ORDO — CAMERA FEEDBACK"
-  // style feedback, extended to touch).
+  // Haptic + sound feedback the moment a throw resolves, for either side -
+  // it's useful signal regardless of who threw (Section "ORDO — CAMERA
+  // FEEDBACK" style feedback, extended to touch/audio). "Piece hit" plays
+  // for every resolved throw; "successful clear" (a capture, or the khan)
+  // layers a brighter confirmation on top rather than replacing the thud.
   useEffect(() => {
     if (!game.lastOutcome || game.lastOutcome.key === lastOutcomeKeyRef.current) return;
     lastOutcomeKeyRef.current = game.lastOutcome.key;
     const { outcome, side } = game.lastOutcome;
-    void hapticFor(outcome.scoreDelta[side], outcome.khanCapturedBy !== null);
+    const scoreDelta = outcome.scoreDelta[side];
+    const khan = outcome.khanCapturedBy !== null;
+    void hapticFor(scoreDelta, khan);
+    audioRef.current.play('pieceHit', 0.55);
+    if (scoreDelta > 0 || khan) audioRef.current.play('clear', 0.6);
   }, [game.lastOutcome]);
+
+  // Turn-change cue (Section "turn change") - fires only on an actual
+  // PLAYER_TURN<->AI_TURN transition, not on every phase change (SETTLING
+  // sits between them every throw, so gating on just those two values
+  // keeps this from firing twice per throw).
+  useEffect(() => {
+    const prev = prevTurnPhaseRef.current;
+    prevTurnPhaseRef.current = game.phase;
+    const isTurnPhase = (p: typeof game.phase) => p === 'PLAYER_TURN' || p === 'AI_TURN';
+    if (isTurnPhase(game.phase) && isTurnPhase(prev) && game.phase !== prev) {
+      audioRef.current.play('turnChange', 0.4);
+    }
+  }, [game.phase]);
 
   const handleRelease = useCallback(
     (payload: { angleOffset: number; power: number }) => {

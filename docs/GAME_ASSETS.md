@@ -89,6 +89,73 @@ this doc's texture-size guidance by construction. Triangle counts: archer
 ~1,578; horse ~2,182 - both comfortably mobile-friendly. File sizes: archer
 682 KB, horse 1,082 KB (no textures to bloat either).
 
+## Sound Effects
+
+All 3D-game SFX are **CC0 (Creative Commons Zero / public domain)** from
+three Kenney.nl packs, downloaded directly from kenney.nl and converted
+from the packs' `.ogg` originals to `.mp3` (iOS's AVFoundation cannot
+decode Ogg Vorbis, so `.ogg` would silently fail to play on iOS while
+working fine on Android/web - `.mp3` is supported on all three). Each
+pack's own `License.txt` states: *"License: (Creative Commons Zero, CC0) -
+This content is free to use in personal, educational and commercial
+projects. Support us by crediting Kenney or www.kenney.nl (this is not
+mandatory)."* No attribution is legally required; Kenney is credited here
+anyway.
+
+- RPG Audio (Kenney, kenney.nl/assets/rpg-audio) - CC0
+- Impact Sounds (Kenney, kenney.nl/assets/impact-sounds) - CC0
+- Interface Sounds (Kenney, kenney.nl/assets/interface-sounds) - CC0
+
+A few slots are **stylized stand-ins**, not literal recordings of the real
+thing - called out explicitly below rather than left to look authentic by
+omission. This mirrors the "MOBILE PROTOTYPE ADAPTATION" honesty convention
+used elsewhere in this doc for mechanics.
+
+| Game | Slot (event) | File | Source pack / original file | Note |
+|---|---|---|---|---|
+| Jaa Atuu | draw (bow draw) | `assets/audio/games/jaa-atuu/draw.mp3` | RPG Audio / `drawKnife2.ogg` | Stand-in - no bow-foley recording in the sourced packs |
+| Jaa Atuu | release (arrow release) | `assets/audio/games/jaa-atuu/release.mp3` | RPG Audio / `knifeSlice.ogg` | Stand-in |
+| Jaa Atuu | impactLight (target hit, low score) | `assets/audio/games/jaa-atuu/impactLight.mp3` | Impact Sounds / `impactSoft_medium_000.ogg` | |
+| Jaa Atuu | impactMedium (target hit, ≥50) | `assets/audio/games/jaa-atuu/impactMedium.mp3` | Impact Sounds / `impactWood_medium_000.ogg` | |
+| Jaa Atuu | impactHeavy (bullseye) | `assets/audio/games/jaa-atuu/impactHeavy.mp3` | Impact Sounds / `impactWood_heavy_000.ogg` | |
+| Jaa Atuu | miss | `assets/audio/games/jaa-atuu/miss.mp3` | Impact Sounds / `impactSoft_medium_001.ogg` | |
+| Jaa Atuu | result (round ends) | `assets/audio/games/jaa-atuu/result.mp3` | Interface Sounds / `confirmation_001.ogg` | |
+| Ordo | pieceHit | `assets/audio/games/ordo/pieceHit.mp3` | Impact Sounds / `impactWood_light_000.ogg` | |
+| Ordo | clear (successful capture/khan) | `assets/audio/games/ordo/clear.mp3` | Interface Sounds / `confirmation_002.ogg` | |
+| Ordo | turnChange | `assets/audio/games/ordo/turnChange.mp3` | Interface Sounds / `switch_002.ogg` | |
+| Ordo | win | `assets/audio/games/ordo/win.mp3` | Interface Sounds / `confirmation_004.ogg` | |
+| Ordo | loss | `assets/audio/games/ordo/loss.mp3` | Interface Sounds / `error_002.ogg` | |
+| Ordo | draw | `assets/audio/games/ordo/draw.mp3` | Interface Sounds / `select_001.ogg` | Not explicitly requested - added for completeness since `OrdoResultSummary.winner` already has a `'draw'` case |
+| Chuko | throw | `assets/audio/games/chuko/throw.mp3` | RPG Audio / `chop.ogg` | Stand-in |
+| Chuko | land (pieces hitting ground) | `assets/audio/games/chuko/land.mp3` | Impact Sounds / `impactWood_medium_001.ogg` | |
+| Chuko | success (successful result / win) | `assets/audio/games/chuko/success.mp3` | Interface Sounds / `confirmation_001.ogg` | |
+| Chuko | loss | `assets/audio/games/chuko/loss.mp3` | Interface Sounds / `error_002.ogg` | Not explicitly requested - added for parity with Ordo, which Chuko otherwise mirrors exactly (see docs/3D_GAMES.md) |
+| Chuko | draw | `assets/audio/games/chuko/draw.mp3` | Interface Sounds / `select_001.ogg` | Same reasoning as loss, above |
+| Kyz Kuumai | hoofbeat | `assets/audio/games/kyz-kuumai/hoofbeat.mp3` | Impact Sounds / `footstep_grass_000.ogg` | Stand-in (grass footstep, not a hoof recording); re-triggered on a throttle while moving rather than looped - see docs/3D_GAMES.md |
+| Kyz Kuumai | checkpoint | `assets/audio/games/kyz-kuumai/checkpoint.mp3` | Interface Sounds / `select_003.ogg` | |
+| Kyz Kuumai | sprint | `assets/audio/games/kyz-kuumai/sprint.mp3` | Interface Sounds / `switch_005.ogg` | |
+| Kyz Kuumai | finish | `assets/audio/games/kyz-kuumai/finish.mp3` | Interface Sounds / `confirmation_004.ogg` | |
+| Kok Boru | pickup | `assets/audio/games/kok-boru/pickup.mp3` | RPG Audio / `handleSmallLeather.ogg` | |
+| Kok Boru | steal | `assets/audio/games/kok-boru/steal.mp3` | Impact Sounds / `impactPunch_medium_000.ogg` | |
+| Kok Boru | goalPlayer | `assets/audio/games/kok-boru/goalPlayer.mp3` | Interface Sounds / `confirmation_003.ogg` | |
+| Kok Boru | goalAi (opponent goal) | `assets/audio/games/kok-boru/goalAi.mp3` | Interface Sounds / `error_004.ogg` | |
+| Kok Boru | whistle (final whistle) | `assets/audio/games/kok-boru/whistle.mp3` | Impact Sounds / `impactBell_heavy_000.ogg` | Stand-in - no referee-whistle recording in the sourced CC0 packs; a bell strike reads as a clear "time's up" signal instead |
+
+**Volume/settings**: every `play()` call site passes a conservative volume
+(≤0.8, most 0.4-0.65), on top of a hard 0.85 ceiling inside
+`GameAudioManager.play()` itself - see docs/3D_GAMES.md's "Audio and
+haptics" section for how mute/settings are respected. No background music
+was added (not requested this pass, and no suitable licensed track was
+sourced/needed).
+
+**Not verified on a real device**: all 26 files bundle/resolve correctly
+through Metro (`expo export --platform web` passes clean) and `ffmpeg`
+converted every source `.ogg` to `.mp3` without error, but nobody has
+actually listened to any of them in the app - whether a file sounds right
+for its event, in-game volume balance, and whether `.mp3` decodes
+identically across iOS/Android have not been checked on a real device or
+in a running app - see docs/3D_GAMES.md.
+
 ## Cultural-accuracy note (applies across all 5 games)
 
 `games/RESEARCH_SUMMARY.md` and each game's `games/<name>/RULES.md` already

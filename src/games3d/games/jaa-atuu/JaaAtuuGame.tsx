@@ -1,5 +1,4 @@
 import { useProgress } from '@react-three/drei';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +14,7 @@ import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { getBestScore, setBestScoreIfHigher } from '../../core/gameBestScore';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
+import { gameHaptics } from '../../haptics/gameHaptics';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -34,9 +34,9 @@ const TUTORIAL_STEPS = ['games3d.jaaAtuu.tutorial1', 'games3d.jaaAtuu.tutorial2'
 const GAME_ID = 'jaa_atuu';
 
 function hapticForScore(score: number) {
-  if (score >= 100) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  if (score > 0) return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  if (score >= 100) return gameHaptics.heavy();
+  if (score > 0) return gameHaptics.medium();
+  return gameHaptics.light();
 }
 
 type JaaAtuuGameProps = {
@@ -104,13 +104,13 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   }, [isBackgrounded]);
 
   const handleDrawStart = useCallback(() => {
-    audioRef.current.play('draw');
+    audioRef.current.play('draw', 0.5);
   }, []);
 
   const handleRelease = useCallback(
     (payload: { aimX: number; aimY: number; power: number }) => {
       game.fireArrow(payload);
-      audioRef.current.play('release');
+      audioRef.current.play('release', 0.6);
     },
     [game],
   );
@@ -127,14 +127,14 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
       void hapticForScore(shot.score);
 
       if (shot.ring === 'center') {
-        audioRef.current.play('impactHeavy');
+        audioRef.current.play('impactHeavy', 0.8);
         setBullseyeSignalMs(Date.now());
       } else if (shot.score >= 50) {
-        audioRef.current.play('impactMedium');
+        audioRef.current.play('impactMedium', 0.65);
       } else if (shot.score > 0) {
-        audioRef.current.play('impactLight');
+        audioRef.current.play('impactLight', 0.5);
       } else {
-        audioRef.current.play('miss');
+        audioRef.current.play('miss', 0.45);
       }
 
       shotKeyRef.current += 1;
@@ -168,6 +168,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
     if (game.phase !== 'RESULT' || recordedResultRef.current) return;
     recordedResultRef.current = true;
 
+    audioRef.current.play('result', 0.6);
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
 
     if (mode !== 'normal') return;

@@ -44,6 +44,7 @@ src/games3d/
   physics/     Hand-rolled 2D disc physics (Ordo/Chuko)
   ai/          Shared "honest AI" throw-aim generator (Ordo/Chuko)
   audio/       Generic imperative SFX manager
+  haptics/     Shared expo-haptics wrapper (settings-aware, spam-throttled)
   ui/          Shared HUD/pause/result/tutorial/intro/countdown/loading/error/context-action overlays
   shared/
     environment/  Sky, mountains, terrain, lighting, boz-uy - reused by every game
@@ -130,17 +131,51 @@ phase - the last shot of a round resolves in the same tick the phase flips
 to `RESULT`, so gating the popup on `READY`/`PLAYING` would silently drop
 it (this was a real bug caught and fixed during this phase).
 
-## Audio
+## Audio and haptics
 
 `audio/GameAudioManager.ts` is a shared, generic (`<TSlot extends string>`)
-imperative SFX player built on `expo-audio`'s `createAudioPlayer`. A game
-defines its own slot union (`games/jaa-atuu/jaaAtuuAudio.ts` -
-`'draw'|'release'|'impactLight'|'impactMedium'|'impactHeavy'|'miss'`) and a
-`{slot: assetModule}` map; a slot with no asset registered safely no-ops.
-**No SFX assets exist yet for any game** - every `play()` call in
-`JaaAtuuGame.tsx` currently no-ops; haptics (`expo-haptics`, already wired)
-are the only real feedback right now. Drop files into the map in
-`jaaAtuuAudio.ts` to activate a sound - no call-site changes needed.
+imperative SFX player built on `expo-audio`'s `createAudioPlayer`. Each game
+defines its own slot union and a `{slot: assetModule}` map in a per-game
+`<name>Audio.ts` file (`jaaAtuuAudio.ts`, `ordoAudio.ts`, `chukoAudio.ts`,
+`kyzKuumaiAudio.ts`, `kokBoruAudio.ts`) - a slot with no asset registered
+safely no-ops, so this same architecture was already correct when only Jaa
+Atuu had empty slots.
+
+**All 5 games now have real, licensed sound effects** - see
+`docs/GAME_ASSETS.md`'s "Sound Effects" table for the exact source file/
+pack/license backing every slot. All of it is CC0 (public domain, Kenney.nl)
+- no attribution legally required, though Kenney's license file asks for it
+"nicely." A few slots are honest stylized stand-ins rather than literal
+recordings (bow draw/release use RPG-foley knife sounds; Kok Boru's "final
+whistle" is a bell strike) since no closer real recording existed in the
+sourced CC0 packs - documented per-slot in the same table, not silently
+passed off as authentic.
+
+`haptics/gameHaptics.ts` is the equivalent shared entry point for
+`expo-haptics` - every game calls through it instead of the library
+directly. Two things live there once instead of per call-site: a
+`useSettingsStore().game.haptics` check, and a 120ms cross-game throttle so
+a burst of events (e.g. rapid Kok Boru possession changes) can't spam the
+device with haptic pulses.
+
+**Respecting settings**: `GameAudioManager.play()` itself checks
+`useSettingsStore().game.soundEffects` before playing anything, and every
+volume passed to `play()` is a conservative per-event value already capped
+below 1.0 inside the manager (Section "don't play every sound too loudly").
+There is no numeric volume slider - `GameSettingsScreen`'s existing
+architecture only has on/off `Toggle` rows (`soundEffects`/`music`/
+`haptics`), no slider component or volume field in `useSettingsStore`
+exists to attach one to, so this pass respects mute rather than inventing a
+new settings control beyond what "if the existing settings architecture
+supports it" covers. `music` stays unused - no background music was added,
+per the task's own "not yet" instruction.
+
+**Platform handling**: `expo-haptics`'s own web implementation already
+falls back to `navigator.vibrate`/a no-op (see its `ExpoHaptics.web.ts`);
+`gameHaptics`'s try/catch covers devices/simulators with no haptics engine
+at all. `GameAudioManager.play()` is wrapped in try/catch for the same
+reason on the audio side (e.g. no usable output device). None of this has
+been confirmed on a real device yet - see the final report for this phase.
 
 ## How physics/scoring work (Jaa Atuu)
 
@@ -239,7 +274,8 @@ web` (bundles/resolves correctly), not by seeing it render.
 - Bullseye feedback is a brief (~900ms) camera zoom-in/out toward the
   target, not literal slow motion (no time-dilation of the physics/render
   loop) - a simplification of the "small slow-motion moment" ask.
-- No SFX assets - see "Audio" above. Haptics only.
+- Real CC0 SFX + haptics for draw/release/hit/bullseye/result - see "Audio
+  and haptics" above. No background music.
 - No LOW/MEDIUM/HIGH quality-mode switch yet (Section 16) - there's only one
   quality level right now, tuned conservatively (no postprocessing, capped
   shadow map size, capped `dpr`).
@@ -270,7 +306,9 @@ web` (bundles/resolves correctly), not by seeing it render.
   remain full primitive geometry (see `docs/GAME_ASSETS.md`) - only Jaa
   Atuu's archer and Kyz Kuumai's horses were migrated, per the explicit
   "prove the pipeline on 2 games, don't touch the rest yet" scope.
-- No SFX assets anywhere - haptics only.
+- All 5 games now have real CC0 SFX + haptics for their key events (see
+  "Audio and haptics" above) - none of it confirmed on a real device yet,
+  and no background music (not requested for this pass).
 - No LOW/MEDIUM/HIGH quality-mode switch.
 - **None of the 5 games have been run on a real device yet** - "PARTIAL" on
   every registry entry, not "PLAYABLE", pending that verification. This

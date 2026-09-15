@@ -1,12 +1,20 @@
 import { GameAudioManager } from '../../audio/GameAudioManager';
 
-export type JaaAtuuSfxSlot = 'draw' | 'release' | 'impactLight' | 'impactMedium' | 'impactHeavy' | 'miss';
+export type JaaAtuuSfxSlot = 'draw' | 'release' | 'impactLight' | 'impactMedium' | 'impactHeavy' | 'miss' | 'result';
 
-/** No recorded SFX yet for Jaa Atuu (see docs/GAME_ASSETS.md) - add entries
- * here once real files exist, e.g.
- * `release: require('@assets/audio/games/jaa-atuu/release.mp3')`. Every
- * call site in JaaAtuuGame.tsx is already wired against these slot names,
- * so dropping in files later needs no game-logic changes. */
+/** CC0 (public domain) sound effects from Kenney.nl - see
+ * `docs/GAME_ASSETS.md`'s "Sound Effects" table for the exact source file/
+ * pack/license per slot. `draw`/`release` are stylized foley stand-ins
+ * (no real bow recording exists in the sourced CC0 packs), not literal bow
+ * audio - documented honestly rather than passed off as authentic. */
 export function createJaaAtuuAudio() {
-  return new GameAudioManager<JaaAtuuSfxSlot>({});
+  return new GameAudioManager<JaaAtuuSfxSlot>({
+    draw: require('../../../../assets/audio/games/jaa-atuu/draw.mp3'),
+    release: require('../../../../assets/audio/games/jaa-atuu/release.mp3'),
+    impactLight: require('../../../../assets/audio/games/jaa-atuu/impactLight.mp3'),
+    impactMedium: require('../../../../assets/audio/games/jaa-atuu/impactMedium.mp3'),
+    impactHeavy: require('../../../../assets/audio/games/jaa-atuu/impactHeavy.mp3'),
+    miss: require('../../../../assets/audio/games/jaa-atuu/miss.mp3'),
+    result: require('../../../../assets/audio/games/jaa-atuu/result.mp3'),
+  });
 }

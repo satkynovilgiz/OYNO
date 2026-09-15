@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
+import { gameHaptics } from '../haptics/gameHaptics';
+
 /** Shared right-side hold-to-sprint button (Section 37/46) - exposes
  * `sprintHeld` as a Reanimated shared value the scene reads directly, and
  * fires haptics on press (Section 61). Large touch target (Section 92:
@@ -22,6 +24,7 @@ export function SprintButtonView({ sprintHeld, onPressIn }: SprintButtonViewProp
 
   const handlePressIn = useCallback(() => {
     sprintHeld.value = true;
+    void gameHaptics.light();
     onPressIn?.();
   }, [sprintHeld, onPressIn]);
 

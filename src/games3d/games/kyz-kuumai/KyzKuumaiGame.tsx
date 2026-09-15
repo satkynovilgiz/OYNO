@@ -1,5 +1,4 @@
 import { useProgress } from '@react-three/drei';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +16,7 @@ import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
+import { gameHaptics } from '../../haptics/gameHaptics';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -27,6 +27,7 @@ import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKyzKuumaiGame } from './KyzKuumaiController';
+import { createKyzKuumaiAudio } from './kyzKuumaiAudio';
 import { KyzKuumaiScene } from './KyzKuumaiScene';
 import type { KyzKuumaiDifficulty, KyzKuumaiMode } from './KyzKuumaiTypes';
 
@@ -59,6 +60,11 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
+
+  const audioRef = useRef(createKyzKuumaiAudio());
+  useEffect(() => () => audioRef.current.dispose(), []);
+  const lastCheckpointKeyRef = useRef<number | null>(null);
+  const lastHoofbeatAtRef = useRef(0);
 
   const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
 
@@ -97,8 +103,23 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
     // caught - that's a completion, not a "not caught" loss, so it always
     // gets the positive haptic regardless of `summary.caught`.
     const positive = mode === 'practice' || game.summary.caught;
-    void Haptics.notificationAsync(positive ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning);
+    void (positive ? gameHaptics.success() : gameHaptics.warning());
+    // "Finish" (Section "finish") plays whenever the chase/course ends,
+    // regardless of caught/not-caught - that framing belongs to the haptic
+    // above and the result title, not to whether a sound plays at all.
+    audioRef.current.play('finish', 0.6);
   }, [game.phase, game.summary.caught, mode]);
+
+  // Checkpoint cue (Section "checkpoint") - `checkpointEvent.key` increments
+  // once per checkpoint crossed (KyzKuumaiController.ts), so this fires
+  // exactly once per checkpoint rather than once per render.
+  useEffect(() => {
+    const key = game.checkpointEvent?.key ?? null;
+    if (key === null || key === lastCheckpointKeyRef.current) return;
+    lastCheckpointKeyRef.current = key;
+    void gameHaptics.medium();
+    audioRef.current.play('checkpoint', 0.55);
+  }, [game.checkpointEvent]);
 
   // No single "higher is better" score exists for a time-based chase (a
   // faster catch is *better* despite a *lower* number) - tracked here as
@@ -118,6 +139,28 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   const handleExit = useCallback(() => {
     if (router.canGoBack()) router.back();
     else router.replace('/games');
+  }, []);
+
+  // Hoofbeat (Section "horse movement/hoof sound") - `GameAudioManager` is
+  // fire-and-forget/one-shot, not a loop player, so a real per-hoofstep
+  // sound is approximated by re-triggering a short footstep sample on a
+  // throttle while the horse is actually moving, instead of building a new
+  // looping-audio capability just for this one slot.
+  const handleTick = useCallback(
+    (dt: number) => {
+      game.onTick(dt);
+      if (game.phase !== 'PLAYING') return;
+      if (game.playerHorseRef.current.speed <= 0.5) return;
+      const now = Date.now();
+      if (now - lastHoofbeatAtRef.current < 260) return;
+      lastHoofbeatAtRef.current = now;
+      audioRef.current.play('hoofbeat', 0.3);
+    },
+    [game],
+  );
+
+  const handleSprintPressIn = useCallback(() => {
+    audioRef.current.play('sprint', 0.4);
   }, []);
 
   const playing = game.phase === 'PLAYING';
@@ -161,7 +204,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
             moveX={joystick.moveX}
             moveZ={joystick.moveZ}
             sprintHeld={sprint.sprintHeld}
-            onTick={game.onTick}
+            onTick={handleTick}
           />
         </Game3DCanvas>
       </Game3DErrorBoundary>
@@ -191,7 +234,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
             <VirtualJoystickView gesture={joystick.gesture} knobX={joystick.knobX} knobY={joystick.knobY} />
           </View>
           <View pointerEvents="box-none" style={styles.controlSlot}>
-            <SprintButtonView sprintHeld={sprint.sprintHeld} />
+            <SprintButtonView sprintHeld={sprint.sprintHeld} onPressIn={handleSprintPressIn} />
           </View>
         </View>
       ) : null}
