@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-import { BozUy, JailooTerrain, KyrgyzSky, MountainBackdrop, SceneLighting } from '../../shared/environment';
+import { BozUy, Bush, Flag, JailooTerrain, KyrgyzSky, MountainBackdrop, RockCluster, SceneLighting } from '../../shared/environment';
 import { scenePalette } from '../../shared/scenePalette';
 import { AI_GOAL, GOAL_RADIUS_M, OBJECT_SPAWN, PLAYER_GOAL } from './KokBoruTypes';
 
@@ -12,14 +12,8 @@ function GoalMarker({ position, ringColor }: { position: { x: number; z: number 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[position.x, 0.006, position.z]} geometry={goalRingGeometry}>
         <meshStandardMaterial color={ringColor} roughness={0.8} />
       </mesh>
-      <mesh position={[position.x - GOAL_RADIUS_M - 0.3, 1, position.z]}>
-        <cylinderGeometry args={[0.04, 0.04, 2, 6]} />
-        <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
-      </mesh>
-      <mesh position={[position.x + GOAL_RADIUS_M + 0.3, 1, position.z]}>
-        <cylinderGeometry args={[0.04, 0.04, 2, 6]} />
-        <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
-      </mesh>
+      <Flag position={[position.x - GOAL_RADIUS_M - 0.3, 0, position.z]} height={2} color={ringColor} phase={0} />
+      <Flag position={[position.x + GOAL_RADIUS_M + 0.3, 0, position.z]} height={2} color={ringColor} phase={1.8} />
     </>
   );
 }
@@ -50,6 +44,15 @@ export function KokBoruArena() {
 
       <BozUy position={[7, 0, 4]} />
       <BozUy position={[-7, 0, -10]} />
+
+      {/* Sideline rocks/scrub (Section "rocks" / "simple vegetation") -
+       * placed outside PLAYER_GOAL/AI_GOAL/OBJECT_SPAWN and the riding
+       * lane between them, purely field-edge dressing for the larger
+       * competitive-field identity. */}
+      <RockCluster position={[9, 0, -4]} seed={21} count={3} />
+      <RockCluster position={[-9, 0, 8]} seed={25} count={3} />
+      <Bush position={[8.5, 0, -12]} seed={23} scale={1.2} />
+      <Bush position={[-8, 0, 2]} seed={27} />
     </>
   );
 }

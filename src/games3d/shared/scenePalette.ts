@@ -15,6 +15,9 @@ export const scenePalette = {
   gold: '#E8B93D',
   wood: '#5C4326',
   fletching: '#D64545',
+  snow: '#F2F0EA',
+  cloud: '#FDFBF5',
+  felt: '#D8C9A3',
 } as const;
 
 /** 1 unit ~= 1 meter (Section 89) - keep every game's props/characters/

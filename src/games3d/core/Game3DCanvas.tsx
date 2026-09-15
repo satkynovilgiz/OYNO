@@ -33,6 +33,16 @@ export function Game3DCanvas({ children, isPaused }: Game3DCanvasProps) {
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         dpr={Math.min(2, PixelRatio.get())}
         camera={{ fov: 55, near: 0.1, far: 200, position: [0, 1.6, 4] }}
+        // react-three-fiber's <Canvas> defaults `shadows` to false (leaves
+        // gl.shadowMap.enabled off) unless set here - every game's
+        // castShadow/receiveShadow/shadow-camera-* config (SceneLighting,
+        // JailooTerrain, CharacterModel, HorseModel, ...) had been a no-op
+        // this whole time as a result. "soft" = PCFSoftShadowMap, the
+        // softer-edged filter this polish pass asked for, at the same
+        // 1024^2 map size/bounds already budgeted in SceneLighting.tsx -
+        // not a new cost class, but real device FPS should be re-checked
+        // now that shadows actually render (see docs/3D_GAMES.md).
+        shadows="soft"
       >
         <Suspense fallback={null}>{children}</Suspense>
       </Canvas>

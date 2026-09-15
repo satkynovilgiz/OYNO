@@ -1,5 +1,5 @@
 import { scenePalette } from '../../shared/scenePalette';
-import { JailooTerrain, KyrgyzSky, MountainBackdrop, SceneLighting } from '../../shared/environment';
+import { Bush, Flag, JailooTerrain, KyrgyzSky, MountainBackdrop, RockCluster, SceneLighting } from '../../shared/environment';
 import { ARCHER_POSITION } from './JaaAtuuBallistics';
 
 type ArcheryRangeProps = {
@@ -25,14 +25,23 @@ export function ArcheryRange({ targetDistance }: ArcheryRangeProps) {
         <meshStandardMaterial color={scenePalette.dirt} roughness={1} />
       </mesh>
 
-      {[targetDistance * 0.33, targetDistance * 0.66].map((distance) => (
-        <group key={distance} position={[1.6, 0, ARCHER_POSITION.z - distance]}>
-          <mesh position={[0, 0.3, 0]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.6, 6]} />
-            <meshStandardMaterial color={scenePalette.wood} roughness={1} />
-          </mesh>
-        </group>
+      {[targetDistance * 0.33, targetDistance * 0.66].map((distance, i) => (
+        <Flag
+          key={distance}
+          position={[1.6, 0, ARCHER_POSITION.z - distance]}
+          height={0.7}
+          color={scenePalette.terracotta}
+          phase={i * 1.7}
+        />
       ))}
+
+      {/* Sideline dressing (Section "small paths" / "rocks" / "simple
+       * vegetation") - kept well outside the dirt lane so it never overlaps
+       * an arrow's flight path; purely cosmetic, gameplay untouched. */}
+      <RockCluster position={[-4.5, 0, ARCHER_POSITION.z - laneLength * 0.4]} seed={5} count={3} />
+      <RockCluster position={[4.2, 0, ARCHER_POSITION.z - laneLength * 0.75]} seed={9} count={4} />
+      <Bush position={[-3.4, 0, ARCHER_POSITION.z - laneLength * 0.15]} seed={2} />
+      <Bush position={[3.6, 0, ARCHER_POSITION.z - laneLength * 0.55]} seed={6} scale={1.2} />
     </>
   );
 }

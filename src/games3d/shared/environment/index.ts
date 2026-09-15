@@ -3,3 +3,6 @@ export { MountainBackdrop } from './MountainBackdrop';
 export { JailooTerrain } from './JailooTerrain';
 export { SceneLighting } from './SceneLighting';
 export { BozUy } from './BozUy';
+export { Flag } from './Flag';
+export { RockCluster } from './Rock';
+export { Bush } from './Bush';

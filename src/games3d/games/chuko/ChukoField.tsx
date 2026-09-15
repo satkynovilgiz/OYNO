@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 
-import { JailooTerrain, KyrgyzSky, MountainBackdrop, SceneLighting } from '../../shared/environment';
+import { BozUy, Bush, JailooTerrain, KyrgyzSky, MountainBackdrop, RockCluster, SceneLighting } from '../../shared/environment';
 import { scenePalette } from '../../shared/scenePalette';
 import { CHUKO_FIELD_RADIUS } from './ChukoTypes';
 
@@ -28,6 +28,14 @@ export function ChukoField() {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} geometry={borderGeometry}>
         <meshStandardMaterial color={scenePalette.wood} roughness={0.9} />
       </mesh>
+
+      {/* One modest boz-uy + a little vegetation (Section "a few boz uy" /
+       * "simple vegetation") - kept singular and close, matching Chuko's
+       * own stated identity as a small social/play area, not Ordo's larger
+       * festival ground. */}
+      <BozUy position={[CHUKO_FIELD_RADIUS + 2.2, 0, -2]} />
+      <Bush position={[-(CHUKO_FIELD_RADIUS + 1.6), 0, 1.5]} seed={8} />
+      <RockCluster position={[-(CHUKO_FIELD_RADIUS + 1.2), 0, -2.5]} seed={11} count={2} />
     </>
   );
 }

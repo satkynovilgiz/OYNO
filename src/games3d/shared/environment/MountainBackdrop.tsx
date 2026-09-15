@@ -40,10 +40,22 @@ export function MountainBackdrop() {
       {rows.map((row, rowIndex) => (
         <group key={rowIndex}>
           {row.peaks.map((peak, i) => (
-            <mesh key={i} position={[peak.x, peak.height / 2 - 1, peak.z]}>
-              <coneGeometry args={[peak.radius, peak.height, 4]} />
-              <meshStandardMaterial color={row.color} flatShading roughness={1} />
-            </mesh>
+            <group key={i}>
+              <mesh position={[peak.x, peak.height / 2 - 1, peak.z]}>
+                <coneGeometry args={[peak.radius, peak.height, 4]} />
+                <meshStandardMaterial color={row.color} flatShading roughness={1} />
+              </mesh>
+              {/* Snow caps on the farthest row only (Section "improved
+               * scene composition") - a small second cone sharing the same
+               * apex reads as a snowline at zero extra draw calls beyond
+               * one more flat-shaded primitive per far peak. */}
+              {rowIndex === 0 && (
+                <mesh position={[peak.x, peak.height - 1 - peak.radius * 0.32, peak.z]}>
+                  <coneGeometry args={[peak.radius * 0.42, peak.height * 0.32, 4]} />
+                  <meshStandardMaterial color={scenePalette.snow} flatShading roughness={0.9} />
+                </mesh>
+              )}
+            </group>
           ))}
         </group>
       ))}

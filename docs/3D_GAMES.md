@@ -190,6 +190,22 @@ full note.
 for what's been verified vs. what still needs an on-device pass before any
 FPS/performance claim.
 
+**Shadows were a silent no-op until the visual-polish pass** - `@react-three/
+fiber`'s `<Canvas>` defaults its `shadows` prop to `false` (confirmed by
+reading the installed library source), and `core/Game3DCanvas.tsx` never set
+it, so every `castShadow`/`receiveShadow`/shadow-camera-bounds already
+present across `SceneLighting.tsx`, `JailooTerrain.tsx`, the character/horse
+models, and the archery target never actually rasterized a shadow in any of
+the 5 games - `gl.shadowMap.enabled` was simply off. The polish pass set
+`shadows="soft"` on that `<Canvas>` (`PCFSoftShadowMap`, the softer-edged
+filter this pass specifically asked for), using the same 1024² shadow-map
+size and camera bounds already budgeted in `SceneLighting.tsx` - not a new
+cost class, but a genuine rendering-cost change (shadows now actually
+sample every frame where before they cost nothing). **This needs a real
+on-device FPS re-check across all 5 games before any performance claim
+about the current build** - it was verified only via `expo export --platform
+web` (bundles/resolves correctly), not by seeing it render.
+
 ## How to add a new 3D game
 
 1. Add its entry to `src/games3d/core/gameRegistry.ts` (`route: null`,
@@ -278,6 +294,71 @@ FPS/performance claim.
 - All 5 games now call `useProgressStore().recordGamePlayed(gameId)` on
   reaching `RESULT` - Games-hub `gamesPlayed` stats were previously
   disconnected from every 3D game.
+
+## Visual polish pass (environments)
+
+Explicitly a **visuals-only** pass - no gameplay, physics, controls, or
+scoring changed anywhere in this section; only files under
+`shared/environment/`, `shared/scenePalette.ts`, `core/Game3DCanvas.tsx`,
+and each game's own `*Field.tsx`/`*Range.tsx`/`*Course.tsx`/`*Arena.tsx`
+environment-dressing file were touched.
+
+- **Shadows enabled** - see "Performance choices made for mobile" above;
+  `shadows="soft"` on `Game3DCanvas`'s `<Canvas>` is the single biggest
+  change in this pass and the one most in need of a real-device FPS check.
+- Three new shared, reusable dressing primitives added to
+  `shared/environment/` (all cheap low-poly/flat-shaded, matching the
+  existing `MountainBackdrop.tsx` visual language, all using the
+  deterministic `Math.sin`-based pseudo-random pattern rather than
+  `Math.random()` so scatter layouts don't reshuffle on re-render):
+  - `Flag.tsx` - a pole + a single banner plane that gently rocks in
+    `useFrame` (whole-mesh rotation, not per-vertex cloth sim) for cheap
+    "subtle environmental movement."
+  - `Rock.tsx` (`RockCluster`) - a small scatter of undivided icosahedrons.
+  - `Bush.tsx` - a 3-lobe icosahedron cluster standing in for vegetation.
+- `MountainBackdrop.tsx`: the farthest row now gets a small second cone at
+  each peak's apex in a new `scenePalette.snow` tone, read as snow caps.
+- `KyrgyzSky.tsx`: added `Clouds` - 5 drifting puffs, each 3 flattened
+  spheres (no image texture, so no licensing question), looping across the
+  sky via one `useFrame` position lerp per cloud.
+- `JailooTerrain.tsx`: the ground plane is now vertex-colored (a
+  deterministic `grass`/`grassShadow` patch blend from a `Float32BufferAttribute`
+  built once in `useMemo`) instead of one flat material color - same
+  triangle/segment count as the flat variant, just an added per-vertex
+  color attribute, so it's free at render time relative to before.
+- `BozUy.tsx`: added a `scenePalette.felt` trim band around the wall/roof
+  seam and a dark doorway recess + wood lintel on the front face - still 5
+  primitives per yurt, not a geometry rebuild.
+- Per-game integration, kept inside each game's own stated identity
+  (Section: "Do not make every game visually identical"):
+  - **Jaa Atuu** (archery training field): the two bare-cylinder distance
+    markers became real `Flag`s; sideline `RockCluster`/`Bush` added well
+    outside the dirt lane so nothing can ever sit in an arrow's flight path.
+  - **Ordo** (traditional open playing area): four `Flag`s frame the play
+    ring from just outside its boundary; a couple of `RockCluster`/`Bush`
+    scattered further out.
+  - **Chuko** (smaller social/play area): gained its first `BozUy` (singular
+    - kept small/close, not Ordo's multi-yurt festival scale) plus one
+    `Bush`/`RockCluster`, all outside the mat/border rings.
+  - **Kyz Kuumai** (open mountain horse-riding track): the bare-cylinder
+    checkpoint posts became real `Flag`s (gold at the finish, terracotta at
+    every other checkpoint); sparse `RockCluster`s placed to one side of
+    each waypoint (never on the dirt trail itself) plus two `Bush`es.
+  - **Kok Boru** (larger competitive field): the bare-cylinder goalposts
+    became real `Flag`s in each goal's own ring color; `RockCluster`/`Bush`
+    added at the field edges, clear of both goals, the object-spawn point,
+    and the riding lane between them.
+- **Needs real-device visual verification** (not yet seen rendered by
+  anyone - this environment has no working browser preview; verified only
+  via `tsc`, `jest`, and a full `expo export --platform web` bundling
+  clean): whether shadows actually look good once they render for the
+  first time (softness, shadow-acne, peter-panning on any mesh), the new
+  cloud puffs' scale/placement relative to `MountainBackdrop`'s peaks, the
+  vertex-colored ground's patch scale (may read too subtle or too busy on
+  a small phone screen vs. this description), and every new prop's exact
+  placement relative to its game's actual play area on-device (desktop-web
+  export only proves it bundles and mounts, not that the composition reads
+  well).
 
 ## Ordo
 
