@@ -2,6 +2,8 @@ import { Canvas } from '@react-three/fiber';
 import { type ReactNode, Suspense } from 'react';
 import { PixelRatio, StyleSheet, View } from 'react-native';
 
+import { FpsCounter } from '../ui/FpsCounter';
+
 type Game3DCanvasProps = {
   children: ReactNode;
   /** Stops the render loop without unmounting the scene, so a backgrounded
@@ -46,6 +48,7 @@ export function Game3DCanvas({ children, isPaused }: Game3DCanvasProps) {
       >
         <Suspense fallback={null}>{children}</Suspense>
       </Canvas>
+      <FpsCounter />
     </View>
   );
 }

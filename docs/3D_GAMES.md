@@ -45,7 +45,7 @@ src/games3d/
   ai/          Shared "honest AI" throw-aim generator (Ordo/Chuko)
   audio/       Generic imperative SFX manager
   haptics/     Shared expo-haptics wrapper (settings-aware, spam-throttled)
-  ui/          Shared HUD/pause/result/tutorial/intro/countdown/loading/error/context-action overlays
+  ui/          Shared HUD/pause/result/tutorial/intro/countdown/loading/error/context-action/FPS-counter overlays
   shared/
     environment/  Sky, mountains, terrain, lighting, boz-uy - reused by every game
     horse/        HorseController (kinematic movement) + HorseModel (placeholder mesh + procedural gait) - shared by Kyz Kuumai and Kok Boru
@@ -224,6 +224,19 @@ full note.
 **Not yet measured on a real device** - see the final report for this phase
 for what's been verified vs. what still needs an on-device pass before any
 FPS/performance claim.
+
+**Dev-only FPS counter**: `ui/FpsCounter.tsx` is mounted once in
+`core/Game3DCanvas.tsx` (the one shared Canvas host every game already
+renders through), so all 5 games show it automatically with zero per-game
+wiring. It counts frames via `requestAnimationFrame` - deliberately
+independent of react-three-fiber's own render loop, so it's a plain RN
+`View`/`Text` sibling of `<Canvas>`, not a Three.js object, and never
+touches any game/graphics code. Gated on `__DEV__`: the component returns
+`null` outright (not just visually hidden) when `__DEV__` is `false`, which
+Expo/RN set to `false` in a release/production JS bundle - so it costs
+nothing and shows nothing in production. Sampling is throttled to 2
+`setState` updates/sec regardless of actual frame rate, so it doesn't add a
+React re-render on every rendered frame.
 
 **Shadows were a silent no-op until the visual-polish pass** - `@react-three/
 fiber`'s `<Canvas>` defaults its `shadows` prop to `false` (confirmed by
