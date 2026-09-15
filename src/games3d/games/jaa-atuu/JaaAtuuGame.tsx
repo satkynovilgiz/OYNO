@@ -47,8 +47,8 @@ type JaaAtuuGameProps = {
 export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuGameProps) {
   useTrackScreenView('games3d_jaa_atuu');
   const { t } = useTranslation();
-  const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useJaaAtuuGame(difficulty, mode);
+  useGameLifecycle('landscape', game.pause);
   // Tracks the archer GLB's fetch/parse (Section 12: "do not start with
   // models popping in late") - a global loading-manager listener, not
   // scoped to this screen, but there is nothing else for it to report on
@@ -95,13 +95,6 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   }, [game]);
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
-
-  // Backgrounding always pauses (Section 17); resuming gameplay is always
-  // an explicit tap on the pause menu, never automatic on foreground.
-  useEffect(() => {
-    if (isBackgrounded) game.pause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBackgrounded]);
 
   const handleDrawStart = useCallback(() => {
     audioRef.current.play('draw', 0.5);

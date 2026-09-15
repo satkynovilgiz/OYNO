@@ -5,6 +5,7 @@ import * as THREE from 'three';
 
 import { AIM_CAMERA_OFFSET, AimCamera } from '../../camera/AimCamera';
 import { IntroCameraSweep } from '../../camera/IntroCameraSweep';
+import { clampFrameDelta } from '../../core/frameDelta';
 import { applyDrawPose } from '../../shared/characters/CharacterAnimator';
 import { CharacterLoader } from '../../shared/characters/CharacterLoader';
 import type { CharacterHandle } from '../../shared/characters/CharacterModel';
@@ -113,7 +114,7 @@ export function JaaAtuuScene({
     if (phase !== 'PLAYING' || !pendingShot || !arrowGroupRef.current) return;
 
     if (flightElapsedRef.current === 0) resolvedRef.current = false;
-    flightElapsedRef.current += delta;
+    flightElapsedRef.current += clampFrameDelta(delta);
     const t = flightElapsedRef.current;
 
     const position = arrowPositionAt(pendingShot, t, config);

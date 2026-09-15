@@ -41,8 +41,8 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   useTrackScreenView('games3d_kok_boru');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useKokBoruGame(mode);
+  useGameLifecycle('landscape', game.pause);
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
@@ -77,11 +77,6 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   }, [game]);
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
-
-  useEffect(() => {
-    if (isBackgrounded) game.pause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBackgrounded]);
 
   useEffect(() => {
     if (game.phase !== 'RESULT') return;

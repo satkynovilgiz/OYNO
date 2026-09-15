@@ -38,7 +38,7 @@ Everything here is TypeScript/TSX, developed and run through the normal
 
 ```
 src/games3d/
-  core/        Canvas host, error boundary, app-lifecycle/orientation hook, game registry, the 3D Game Lab screen
+  core/        Canvas host, error boundary, app-lifecycle/orientation/background-pause hook, shared frame-delta clamp, game registry, the 3D Game Lab screen
   camera/      Shared camera rigs - AimCamera, IntroCameraSweep, TacticalCamera, ChaseCamera
   controls/    Shared touch input - AimController (hold-to-draw), DragPowerController (pull-to-launch), DragAimIndicator, VirtualJoystick, SprintButton
   physics/     Hand-rolled 2D disc physics (Ordo/Chuko)
@@ -110,9 +110,51 @@ Every game's controller should use the shared `GamePhase` union from
 `didStart`, ...). Jaa Atuu's `JaaAtuuController.ts` is the reference
 implementation: `PAUSED` is a real phase (backgrounding and the pause
 button both drive into it, remembering what phase to restore on resume),
-not a boolean bolted on next to the phase. `useGameLifecycle` only reports
-`isBackgrounded` - it doesn't own pause state itself; the game screen
-decides what "paused" means by calling its own controller's `pause()`.
+not a boolean bolted on next to the phase. `useGameLifecycle` doesn't own
+pause state itself - the game screen's own controller decides what
+"paused" means by exposing `pause()`/`resume()`.
+
+## App background auto-pause
+
+`useGameLifecycle(orientation, onBackground?)` takes the controller's
+`pause` as its second argument and calls it itself the instant
+`AppState` reports the app left `'active'` (a phone lock, a notification
+shade pull, switching apps, ...) - every game screen used to duplicate
+this as its own `useEffect(() => { if (isBackgrounded) game.pause(); },
+[isBackgrounded])`; centralizing it in the one hook every game already
+calls removed that duplication (Section "shared system so we don't
+duplicate code") without changing what it does. Deliberately does nothing
+on returning to the foreground - `isBackgrounded` flipping back to `false`
+triggers no callback at all, so gameplay never auto-resumes; the phase
+stays `PAUSED` and `PauseMenu` (gated on `phase === 'PAUSED'`) is exactly
+what a returning player sees, same as pausing manually. Resuming is always
+`PauseMenu.onResume` - a real tap, never automatic.
+
+Pausing this way also stops the game timer and AI movement for free,
+without `useGameLifecycle` needing to know anything about either: both
+live inside per-scene `useFrame` callbacks, and `core/Game3DCanvas.tsx`'s
+`frameloop={isPaused ? 'never' : 'always'}` (`isPaused` = `phase ===
+'PAUSED'`) means `useFrame` - and therefore every game's `onTick`,
+possession/AI-stepping, and physics `world.step` - simply doesn't run at
+all while paused, backgrounded or not.
+
+**Preventing large frame/delta jumps on return**: `core/frameDelta.ts`
+exports `clampFrameDelta()`, a ceiling of 1/20s (50ms) on any single
+`useFrame` delta - used by every game's `useFrame` before it reaches a
+physics step (`OrdoScene`/`ChukoScene`'s `world.step`) or a per-frame time
+accumulator (Jaa Atuu's arrow-flight clock, Kyz Kuumai/Kok Boru's
+`HorseController.step`/AI stepping). This matters because `frameloop`
+freezing while paused doesn't freeze the underlying clock `useFrame`'s
+`delta` is measured against - the first frame after a long manual pause or
+background stint would otherwise report a delta of however long the pause
+lasted (seconds, minutes, longer), which for a physics `world.step` risks
+tunneling/instability, and for Jaa Atuu's arrow would instantly evaluate
+the analytic flight path at a bogus far-future time instead of the arrow's
+real position. Under normal play the clamp never triggers (a real 60fps
+frame's delta is ~0.016s, far under 1/20s) - Kyz Kuumai and Kok Boru
+already clamped this inline before this pass; the fix here was making
+Ordo/Chuko/Jaa Atuu do the same and moving all five onto the one shared
+constant instead of two of them re-deriving `1/20` locally.
 
 ## Intro sweep
 

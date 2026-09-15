@@ -45,8 +45,8 @@ type OrdoGameProps = {
 export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGameProps) {
   useTrackScreenView('games3d_ordo');
   const { t } = useTranslation();
-  const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useOrdoGame(difficulty, mode);
+  useGameLifecycle('landscape', game.pause);
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
   const [hasThrown, setHasThrown] = useState(false);
@@ -105,11 +105,6 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
       else audioRef.current.play('draw', 0.5);
     }
   }, [game.phase, game.summary.playerScore, game.summary.winner, mode]);
-
-  useEffect(() => {
-    if (isBackgrounded) game.pause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBackgrounded]);
 
   // Haptic + sound feedback the moment a throw resolves, for either side -
   // it's useful signal regardless of who threw (Section "ORDO — CAMERA

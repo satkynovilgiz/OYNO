@@ -4,6 +4,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import * as THREE from 'three';
 
 import { ChaseCamera, type ChaseCameraTarget } from '../../camera/ChaseCamera';
+import { clampFrameDelta } from '../../core/frameDelta';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { HorseLoader } from '../../shared/horse/HorseLoader';
 import type { HorseVisualState } from '../../shared/horse/HorseModel';
@@ -34,7 +35,7 @@ export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, showAiHorse,
   const chaseCameraTargetRef = useRef<ChaseCameraTarget>({ x: 0, z: 0, heading: 0, speed: 0, maxSpeed: 1 });
 
   useFrame((_state, delta) => {
-    const clampedDelta = Math.min(delta, 1 / 20);
+    const clampedDelta = clampFrameDelta(delta);
 
     if (phase === 'PLAYING') {
       const player = playerHorseRef.current;

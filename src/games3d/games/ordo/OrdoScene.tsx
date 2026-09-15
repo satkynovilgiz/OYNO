@@ -5,6 +5,7 @@ import * as THREE from 'three';
 
 import { TacticalCamera } from '../../camera/TacticalCamera';
 import { DragAimIndicator } from '../../controls/DragAimIndicator';
+import { clampFrameDelta } from '../../core/frameDelta';
 import { scenePalette } from '../../shared/scenePalette';
 import { OrdoField } from './OrdoField';
 import { getLaunchPosition, type OrdoPhysicsWorld } from './OrdoPhysicsWorld';
@@ -36,7 +37,7 @@ export function OrdoScene({ phase, world, onSettled, pullX, pullY, isPulling }: 
 
   useFrame((_state, delta) => {
     if (phase === 'SETTLING') {
-      world.step(delta);
+      world.step(clampFrameDelta(delta));
       if (!settledCalledRef.current && world.isSettled()) {
         settledCalledRef.current = true;
         onSettled();

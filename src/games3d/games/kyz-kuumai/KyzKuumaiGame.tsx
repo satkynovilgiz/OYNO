@@ -52,8 +52,8 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   useTrackScreenView('games3d_kyz_kuumai');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useKyzKuumaiGame(difficulty, mode);
+  useGameLifecycle('landscape', game.pause);
   // Tracks both horse GLBs' fetch/parse (Section 12) - same shared/global
   // useProgress used by JaaAtuuGame.tsx.
   const { active: modelsLoading, progress: modelsProgress } = useProgress();
@@ -91,11 +91,6 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   }, [game]);
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
-
-  useEffect(() => {
-    if (isBackgrounded) game.pause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBackgrounded]);
 
   useEffect(() => {
     if (game.phase !== 'RESULT') return;

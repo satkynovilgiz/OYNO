@@ -4,6 +4,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import * as THREE from 'three';
 
 import { ChaseCamera, type ChaseCameraTarget } from '../../camera/ChaseCamera';
+import { clampFrameDelta } from '../../core/frameDelta';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import type { HorseController } from '../../shared/horse/HorseController';
 import { HorseLoader } from '../../shared/horse/HorseLoader';
@@ -63,7 +64,7 @@ export function KokBoruScene({
   const carryScratch = useRef(new THREE.Vector3());
 
   useFrame((_state, delta) => {
-    const clampedDelta = Math.min(delta, 1 / 20);
+    const clampedDelta = clampFrameDelta(delta);
     const player = playerHorseRef.current;
     const ai = aiHorseRef.current;
 

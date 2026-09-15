@@ -45,8 +45,8 @@ type ChukoGameProps = {
 export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameProps) {
   useTrackScreenView('games3d_chuko');
   const { t } = useTranslation();
-  const { isBackgrounded } = useGameLifecycle('landscape');
   const game = useChukoGame(difficulty, mode);
+  useGameLifecycle('landscape', game.pause);
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
   const [hasThrown, setHasThrown] = useState(false);
@@ -79,11 +79,6 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
   }, [game]);
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
-
-  useEffect(() => {
-    if (isBackgrounded) game.pause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBackgrounded]);
 
   useEffect(() => {
     if (game.phase !== 'RESULT') {
