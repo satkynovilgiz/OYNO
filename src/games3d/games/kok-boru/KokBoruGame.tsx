@@ -1,3 +1,4 @@
+import { useProgress } from '@react-three/drei';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,10 +17,12 @@ import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { gameHaptics } from '../../haptics/gameHaptics';
+import { preloadHorseModel } from '../../shared/assets/preloadModels';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
+import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
@@ -43,6 +46,17 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const insets = useSafeAreaInsets();
   const game = useKokBoruGame(mode);
   useGameLifecycle('landscape', game.pause);
+  // Starts the horse GLB fetch/parse as soon as this screen mounts (Section
+  // "Preload... before gameplay starts") - both the player and AI horse
+  // (KokBoruScene.tsx) use the same modelId, so this one call covers both;
+  // a no-op if already cached from a previous visit this session.
+  useEffect(() => {
+    preloadHorseModel('quaterniusHorse');
+  }, []);
+  // KokBoruScene also renders a real GLB horse (Section "Preload...") but
+  // previously had no loading gate at all, unlike Jaa Atuu/Kyz Kuumai -
+  // same shared/global useProgress those two already use.
+  const { active: modelsLoading, progress: modelsProgress } = useProgress();
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
@@ -276,6 +290,8 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
       />
 
       <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+
+      {modelsLoading ? <LoadingOverlay progress={modelsProgress / 100} /> : null}
     </View>
   );
 }

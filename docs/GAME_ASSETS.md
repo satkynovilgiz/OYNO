@@ -36,7 +36,7 @@ specifically because they have not been seen rendered (no working visual
 preview was available in the environment that integrated them - see
 docs/3D_GAMES.md's device-testing note).
 
-## GLB/GLTF loading pipeline (built and now exercised by 2 real models)
+## GLB/GLTF loading pipeline (built and now exercised by 2 real models, in 3 games)
 
 `metro.config.js` (project root) adds `glb`/`gltf`/`bin` to Metro's
 `resolver.assetExts`, so a bundled `.glb` resolves like any other asset.
@@ -44,15 +44,45 @@ docs/3D_GAMES.md's device-testing note).
 `shared/characters/CharacterLoader.tsx` and `shared/horse/HorseLoader.tsx`
 are drop-in replacements for `CharacterModel`/`HorseModel` with an identical
 ref/prop contract - existing scenes don't change when a model is added,
-except swapping the import (Jaa Atuu's `JaaAtuuScene.tsx` and Kyz Kuumai's
-`KyzKuumaiScene.tsx` both do this now). Both load via `@react-three/drei`'s
-`useGLTF`/`useAnimations` (resolved through `expo-asset`), crossfade clips
-through `shared/animation/useClipCrossfade.ts` using the shared
-`AnimationStateId` vocabulary (`Idle`/`Walk`/`Run`/`Gallop`/`Aim`/`Shoot`/
-`Ride`), and fall back to the procedural model both when a `modelId` has no
-manifest entry *and* when the GLB fails to load at runtime
+except swapping the import. Three scenes do this: Jaa Atuu's
+`JaaAtuuScene.tsx` (archer, `quaterniusHuman`), and Kyz Kuumai's
+`KyzKuumaiScene.tsx` + Kok Boru's `KokBoruScene.tsx` (both horses,
+`quaterniusHorse` - Kok Boru switched onto the shared horse GLB during its
+own 1v1-match phase, after this doc was first written for just the first
+two). Both loaders load via `@react-three/drei`'s `useGLTF`/`useAnimations`
+(resolved through `expo-asset`), crossfade clips through
+`shared/animation/useClipCrossfade.ts` using the shared `AnimationStateId`
+vocabulary (`Idle`/`Walk`/`Run`/`Gallop`/`Aim`/`Shoot`/`Ride`), and fall
+back to the procedural model both when a `modelId` has no manifest entry
+*and* when the GLB fails to load at runtime
 (`shared/assets/ModelErrorBoundary.tsx` - a real error boundary, not just
 the no-entry case).
+
+**Preloading and caching** (`shared/assets/preloadModels.ts`): each of the
+3 GLB-using games' top-level `<Name>Game.tsx` calls `preloadCharacterModel`/
+`preloadHorseModel` in a mount-time `useEffect`, which resolves the same
+`Asset.fromModule(entry.source).uri` and calls `useGLTF.preload(uri)` -
+starting the fetch/parse as soon as the screen mounts, rather than only
+once the Scene's own `CharacterLoader`/`HorseLoader` happens to render and
+suspend. This is not a second, separate load: drei's `useGLTF`/
+`useGLTF.preload` both bottom out in `useLoader`/`useLoader.preload`, whose
+cache key is `[GLTFLoader, uri]` - the loader class and url string, not the
+per-call draco/meshopt-extension closure - so the preload call and the
+Scene's later `useGLTF(uri)` read the exact same cache entry. That cache is
+global and outlives any one component: Kyz Kuumai's player and AI horse
+(two `HorseLoader` instances, same `modelId`) share it, restarting/
+replaying a game never causes a reload (nothing in any `<Name>Game.tsx`
+remounts `Game3DCanvas`/the Scene on restart - only game state resets, and
+even if something did remount them, the cache would still make a second
+mount instant), and a repeat visit to a game earlier this app session finds
+its model already cached.
+
+**`LoadingOverlay` gating**: Jaa Atuu and Kyz Kuumai already showed
+`ui/LoadingOverlay.tsx` (via `@react-three/drei`'s global `useProgress()`)
+while their GLB was in flight; Kok Boru had no such gate at all despite
+using the same horse GLB - `KokBoruGame.tsx` now reads `useProgress()` and
+renders `LoadingOverlay` the same way, closing that gap rather than
+inventing a new loading UI.
 
 A manifest entry also carries `scale`/`groundOffsetY` (a real exported rig
 essentially never lands on this app's "1 unit ~= 1 meter" scale or exactly

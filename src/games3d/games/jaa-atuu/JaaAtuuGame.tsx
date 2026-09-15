@@ -15,6 +15,8 @@ import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { getBestScore, setBestScoreIfHigher } from '../../core/gameBestScore';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { gameHaptics } from '../../haptics/gameHaptics';
+import { preloadCharacterModel } from '../../shared/assets/preloadModels';
+import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -49,6 +51,13 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   const { t } = useTranslation();
   const game = useJaaAtuuGame(difficulty, mode);
   useGameLifecycle('landscape', game.pause);
+  // Starts the archer GLB fetch/parse the instant this screen mounts
+  // (Section "Preload... before gameplay starts"), rather than only once
+  // JaaAtuuScene's own CharacterLoader/Suspense boundary happens to render
+  // - a no-op if it's already cached (e.g. a previous visit this session).
+  useEffect(() => {
+    preloadCharacterModel(CHARACTER_PRESETS.playerArcher.modelId);
+  }, []);
   // Tracks the archer GLB's fetch/parse (Section 12: "do not start with
   // models popping in late") - a global loading-manager listener, not
   // scoped to this screen, but there is nothing else for it to report on

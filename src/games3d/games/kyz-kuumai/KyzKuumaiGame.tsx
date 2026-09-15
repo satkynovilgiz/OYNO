@@ -17,6 +17,7 @@ import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { gameHaptics } from '../../haptics/gameHaptics';
+import { preloadHorseModel } from '../../shared/assets/preloadModels';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -54,6 +55,13 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   const insets = useSafeAreaInsets();
   const game = useKyzKuumaiGame(difficulty, mode);
   useGameLifecycle('landscape', game.pause);
+  // Starts the horse GLB fetch/parse as soon as this screen mounts (Section
+  // "Preload... before gameplay starts") - both the player and AI horse
+  // (KyzKuumaiScene.tsx) use the same modelId, so this one call covers
+  // both; a no-op if already cached from a previous visit this session.
+  useEffect(() => {
+    preloadHorseModel('quaterniusHorse');
+  }, []);
   // Tracks both horse GLBs' fetch/parse (Section 12) - same shared/global
   // useProgress used by JaaAtuuGame.tsx.
   const { active: modelsLoading, progress: modelsProgress } = useProgress();
