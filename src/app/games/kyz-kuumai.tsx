@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import kyzKuumaiThumbnail from '@assets/img/games/kyzKuumay/thumbnail.png';
+
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { KyzKuumaiGame } from '@/games3d/games/kyz-kuumai/KyzKuumaiGame';
 import type { KyzKuumaiMode } from '@/games3d/games/kyz-kuumai/KyzKuumaiTypes';
@@ -20,6 +22,7 @@ export default function KyzKuumaiRoute() {
         description={t('games3d.kyzKuumai.aboutDescription')}
         objective={t('games3d.kyzKuumai.aboutObjective')}
         tutorialStepKeys={TUTORIAL_STEPS}
+        imageSource={kyzKuumaiThumbnail}
         difficultyOptions={['easy', 'normal', 'hard']}
         difficulty={difficulty}
         onChangeDifficulty={setDifficulty}

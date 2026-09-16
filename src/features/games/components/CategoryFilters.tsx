@@ -39,6 +39,7 @@ export function CategoryFilters({ active, onSelect }: CategoryFiltersProps) {
             style={[styles.pill, isActive && styles.pillActive]}
             onPress={() => onSelect(categoryId)}
             haptic="light"
+            hitSlop={6}
             accessibilityRole="button"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={label}

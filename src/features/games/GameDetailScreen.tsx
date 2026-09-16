@@ -1,15 +1,16 @@
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Gamepad2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, Button, IconButton } from '@/components/ui';
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
+import { AnimatedPressable, Button, FadeSlideIn, IconButton } from '@/components/ui';
 import { getBestScore } from '@/games3d/core/gameBestScore';
 import { achievementDefinitions } from '@/services/progress/achievements';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { aspectRatios, colors, radii, shadows, spacing, typography } from '@/theme';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -19,6 +20,11 @@ type GameDetailScreenProps = {
   description: string;
   objective: string;
   tutorialStepKeys: string[];
+  /** Existing game-card artwork (Games screen's mockData thumbnails) reused
+   * here as a header banner - omit only for a game with no art yet (Kok
+   * Boru, see docs/DESIGN_ASSET_AUDIT.md), which falls back to a plain
+   * icon chip instead of inventing placeholder art. */
+  imageSource?: ImageSourcePropType;
   /** Omit for games with no difficulty presets (Kok Boru). */
   difficultyOptions?: GameDetailDifficulty[];
   difficulty?: GameDetailDifficulty;
@@ -43,6 +49,7 @@ export function GameDetailScreen({
   description,
   objective,
   tutorialStepKeys,
+  imageSource,
   difficultyOptions,
   difficulty = 'normal',
   onChangeDifficulty,
@@ -84,16 +91,26 @@ export function GameDetailScreen({
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.card}>
+        <View style={styles.banner}>
+          {imageSource ? (
+            <Image source={imageSource} style={styles.bannerImage} resizeMode="cover" />
+          ) : (
+            <View style={styles.bannerFallback}>
+              <Gamepad2 size={32} color={colors.primary} strokeWidth={1.75} />
+            </View>
+          )}
+        </View>
+
+        <FadeSlideIn style={styles.card} index={0}>
           <Text style={styles.sectionLabel}>{t('gameDetail.whatIsThis')}</Text>
           <Text style={styles.body}>{description}</Text>
           <View style={styles.objectiveRow}>
             <Text style={styles.objectiveLabel}>{t('games3d.about.objectiveLabel')}</Text>
             <Text style={styles.objectiveText}>{objective}</Text>
           </View>
-        </View>
+        </FadeSlideIn>
 
-        <View style={styles.card}>
+        <FadeSlideIn style={styles.card} index={1}>
           <Text style={styles.sectionLabel}>{t('gameDetail.howToPlay')}</Text>
           {tutorialStepKeys.map((key, index) => (
             <View key={key} style={styles.stepRow}>
@@ -101,10 +118,10 @@ export function GameDetailScreen({
               <Text style={styles.body}>{t(key)}</Text>
             </View>
           ))}
-        </View>
+        </FadeSlideIn>
 
         {difficultyOptions ? (
-          <View style={styles.card}>
+          <FadeSlideIn style={styles.card} index={2}>
             <Text style={styles.sectionLabel}>{t('gameDetail.difficulty')}</Text>
             <View style={styles.difficultyRow}>
               {difficultyOptions.map((option) => {
@@ -114,6 +131,7 @@ export function GameDetailScreen({
                     key={option}
                     style={[styles.difficultyPill, selected && styles.difficultyPillSelected]}
                     onPress={() => onChangeDifficulty?.(option)}
+                    haptic="light"
                     accessibilityRole="button"
                     accessibilityLabel={t(`gameDetail.${option}`)}
                     accessibilityState={{ selected }}
@@ -125,10 +143,10 @@ export function GameDetailScreen({
                 );
               })}
             </View>
-          </View>
+          </FadeSlideIn>
         ) : null}
 
-        <View style={styles.statsRow}>
+        <FadeSlideIn style={styles.statsRow} index={3}>
           {showBestScore ? (
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{bestScore ?? '—'}</Text>
@@ -143,14 +161,16 @@ export function GameDetailScreen({
             <Text style={styles.statValue}>{t('profile.achievements.unlocked', { unlocked: unlockedCount, total: achievementDefinitions.length })}</Text>
             <Text style={styles.statLabel}>{t('profile.achievements.title')}</Text>
           </View>
-        </View>
+        </FadeSlideIn>
 
         <AnimatedPressable
           style={styles.cultureLink}
           onPress={() => router.push(cultureRoute as never)}
+          hoverEffect
           accessibilityRole="button"
           accessibilityLabel={t('gameDetail.learnTradition')}
         >
+          <OymoOrnament size={12} color={colors.accentGold} />
           <Text style={styles.cultureLinkText}>{t('gameDetail.learnTradition')}</Text>
           <ChevronRight size={18} color={colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
@@ -190,6 +210,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.md,
+  },
+  banner: {
+    width: '100%',
+    aspectRatio: aspectRatios.banner,
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceAlt,
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  bannerFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
     backgroundColor: colors.surface,

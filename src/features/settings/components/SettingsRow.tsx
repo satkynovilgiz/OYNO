@@ -1,7 +1,7 @@
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, IconChip } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type SettingsRowProps = {
@@ -16,9 +16,14 @@ type SettingsRowProps = {
 export function SettingsRow({ icon: Icon, label, value, onPress, destructive = false, showChevron = true }: SettingsRowProps) {
   return (
     <AnimatedPressable style={styles.row} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
-      <View style={[styles.iconWrap, destructive && styles.iconWrapDestructive]}>
-        <Icon size={18} color={destructive ? colors.danger : colors.primary} strokeWidth={1.75} />
-      </View>
+      <IconChip
+        icon={Icon}
+        size={36}
+        iconSize={18}
+        shape="circle"
+        color={destructive ? colors.danger : colors.primary}
+        tinted={destructive}
+      />
       <Text style={[styles.label, destructive && styles.labelDestructive]} numberOfLines={1}>
         {label}
       </Text>
@@ -41,17 +46,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
-  },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrapDestructive: {
-    backgroundColor: 'rgba(214,69,69,0.12)',
   },
   label: {
     ...typography.body,

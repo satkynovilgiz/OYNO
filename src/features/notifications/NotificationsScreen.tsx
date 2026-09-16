@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, IconButton } from '@/components/ui';
+import { AnimatedPressable, IconButton, IconChip } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { mockNotifications } from './data';
@@ -58,8 +58,8 @@ export function NotificationsScreen({ readIds, onPressBack, onPressNotification,
                 accessibilityRole="button"
                 accessibilityLabel={notification.title}
               >
-                <View style={styles.iconWrap}>
-                  <notification.icon size={20} color={colors.primary} strokeWidth={1.75} />
+                <View>
+                  <IconChip icon={notification.icon} size={40} iconSize={20} shape="circle" color={colors.primary} />
                   {isUnread ? <View style={styles.unreadDot} /> : null}
                 </View>
                 <View style={styles.itemBody}>
@@ -116,14 +116,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     ...shadows.card,
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   unreadDot: {
     position: 'absolute',

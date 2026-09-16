@@ -2,7 +2,7 @@ import { Award, Coins, Gem, Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FadeSlideIn } from '@/components/ui';
+import { FadeSlideIn, IconChip } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ProfileSummary } from '../types';
@@ -26,9 +26,7 @@ export function CurrencyRow({ profile }: CurrencyRowProps) {
       {items.map((item, index) => (
         <FadeSlideIn key={item.id} style={styles.cardWrap} index={index}>
           <View style={styles.card}>
-            <View style={[styles.iconWrap, { backgroundColor: `${item.color}1F` }]}>
-              <item.icon size={16} color={item.color} strokeWidth={2.25} />
-            </View>
+            <IconChip icon={item.icon} size={32} iconSize={16} color={item.color} shape="circle" tinted />
             <View style={styles.textBlock}>
               <Text style={styles.value} numberOfLines={1}>
                 {item.value}
@@ -65,13 +63,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     ...shadows.card,
-  },
-  iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   textBlock: {
     flexShrink: 1,

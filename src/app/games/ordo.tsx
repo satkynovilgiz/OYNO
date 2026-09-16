@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import ordoThumbnail from '@assets/img/games/ordo/thumbnail.png';
+
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { OrdoGame } from '@/games3d/games/ordo/OrdoGame';
 import type { OrdoMode } from '@/games3d/games/ordo/OrdoTypes';
@@ -20,6 +22,7 @@ export default function OrdoRoute() {
         description={t('games3d.ordo.aboutDescription')}
         objective={t('games3d.ordo.aboutObjective')}
         tutorialStepKeys={TUTORIAL_STEPS}
+        imageSource={ordoThumbnail}
         difficultyOptions={['easy', 'normal', 'hard']}
         difficulty={difficulty}
         onChangeDifficulty={setDifficulty}

@@ -20,7 +20,11 @@ const palette = {
   tilePurple: '#5B4B7A',
   ink900: '#2B2019',
   ink600: '#6B5A47',
-  ink400: '#9C8A73',
+  // Was #9C8A73 - measured ~2.7:1 contrast against the cream background,
+  // below WCAG AA's 4.5:1 for normal text. Darkened just enough to clear
+  // 4.5:1 while staying visibly lighter than ink600 (textSecondary), so
+  // the muted/secondary text hierarchy stays distinguishable.
+  ink400: '#786550',
   white: '#FFFFFF',
 } as const;
 

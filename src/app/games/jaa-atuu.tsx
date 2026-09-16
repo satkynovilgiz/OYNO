@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import jaaAtuuThumbnail from '@assets/img/games/zhaaAtuu/thumbnail.png';
+
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { JaaAtuuGame } from '@/games3d/games/jaa-atuu/JaaAtuuGame';
 import type { JaaAtuuMode } from '@/games3d/games/jaa-atuu/JaaAtuuTypes';
@@ -20,6 +22,7 @@ export default function JaaAtuuRoute() {
         description={t('games3d.jaaAtuu.aboutDescription')}
         objective={t('games3d.jaaAtuu.aboutObjective')}
         tutorialStepKeys={TUTORIAL_STEPS}
+        imageSource={jaaAtuuThumbnail}
         difficultyOptions={['easy', 'normal', 'hard']}
         difficulty={difficulty}
         onChangeDifficulty={setDifficulty}
