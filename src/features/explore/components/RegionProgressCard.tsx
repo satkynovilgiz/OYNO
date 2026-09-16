@@ -2,7 +2,7 @@ import { Compass, Diamond, Mountain, TreePine, type LucideIcon } from 'lucide-re
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, ProgressBar } from '@/components/ui';
+import { Card, FadeSlideIn, ProgressBar, ProgressRing } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
 import type { ExploreProgress, ExploreStatId } from '../types';
@@ -20,6 +20,11 @@ type RegionProgressCardProps = {
   progress: ExploreProgress;
 };
 
+/** Overall bar stays (it's the one number that matters most - "how much
+ * of Kyrgyzstan have I explored"), but the 4 sub-stats moved from plain
+ * text counts to progress rings (Section "Show discovery progress in a
+ * clean visual way"), the same visual language `ProfileStatsGrid` already
+ * uses for the equivalent numbers on the Profile tab. */
 export function RegionProgressCard({ progress }: RegionProgressCardProps) {
   const { t } = useTranslation();
 
@@ -33,18 +38,21 @@ export function RegionProgressCard({ progress }: RegionProgressCardProps) {
       <ProgressBar progress={progress.overallPercent / 100} height={8} />
 
       <View style={styles.statsRow}>
-        {STATS.map(({ id, icon: Icon }) => {
+        {STATS.map(({ id, icon: Icon }, index) => {
           const stat = progress.stats[id];
+          const ratio = stat.total > 0 ? stat.current / stat.total : 0;
           return (
-            <View key={id} style={styles.statItem}>
-              <Icon size={20} color={colors.primary} strokeWidth={1.75} />
+            <FadeSlideIn key={id} style={styles.statItem} index={index}>
+              <ProgressRing progress={ratio} size={48} strokeWidth={3.5}>
+                <Icon size={18} color={colors.primary} strokeWidth={1.75} />
+              </ProgressRing>
               <Text style={styles.statLabel} numberOfLines={1}>
                 {t(`explore.progress.stats.${id}`)}
               </Text>
               <Text style={styles.statCount}>
                 {stat.current} / {stat.total}
               </Text>
-            </View>
+            </FadeSlideIn>
           );
         })}
       </View>

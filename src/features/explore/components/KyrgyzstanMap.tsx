@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { IconButton } from '@/components/ui/IconButton';
 import type { RegionState } from '@/services/explore/regionState';
-import { radii } from '@/theme';
+import { colors, radii, shadows } from '@/theme';
 import mapTerrain from '@assets/img/OYNO_design/explore/map_terrain.png';
 
 import { RegionStateBadge } from './RegionStateBadge';
@@ -91,14 +92,22 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
   };
 
   return (
-    <View style={styles.card}>
-      <GestureDetector gesture={composedGesture}>
-        <Animated.View style={[styles.surface, contentStyle]}>
-          <Image
-            source={mapTerrain}
-            style={[StyleSheet.absoluteFill, styles.terrainImage]}
-            resizeMode="cover"
-          />
+    // Shadow and corner-clipping live on separate layers (a view drops its
+    // own shadow on iOS once it also clips content via overflow) - same
+    // split HeroBanner.tsx uses, purely a frame/depth treatment around the
+    // exact same gesture/pin content, none of which moved.
+    <View style={[styles.shadowWrap, shadows.raised]}>
+      <View style={styles.card}>
+        <View style={styles.ornamentBadge}>
+          <OymoOrnament size={13} color={colors.accentGold} strokeWidth={1.5} />
+        </View>
+        <GestureDetector gesture={composedGesture}>
+          <Animated.View style={[styles.surface, contentStyle]}>
+            <Image
+              source={mapTerrain}
+              style={[StyleSheet.absoluteFill, styles.terrainImage]}
+              resizeMode="cover"
+            />
 
           {pins.map((pin) => (
             <View
@@ -146,17 +155,36 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
               shape="roundedSquare"
             />
           </View>
-        </Animated.View>
-      </GestureDetector>
+          </Animated.View>
+        </GestureDetector>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  shadowWrap: {
     aspectRatio: 1290 / 750,
     borderRadius: radii.xl,
+  },
+  card: {
+    flex: 1,
+    borderRadius: radii.xl,
     overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(232,185,61,0.5)',
+  },
+  ornamentBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    zIndex: 1,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(43,32,25,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   surface: {
     flex: 1,

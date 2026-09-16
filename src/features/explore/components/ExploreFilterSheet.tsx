@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, Toggle } from '@/components/ui';
 import type { ExploreFilterId } from '@/services/explore/filters';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -35,10 +36,14 @@ export function ExploreFilterSheet({ visible, activeFilters, onApply, onClose }:
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>{t('explore.filters.title')}</Text>
+          <View style={styles.handle} />
+          <View style={styles.titleRow}>
+            <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.5} />
+            <Text style={styles.title}>{t('explore.filters.title')}</Text>
+          </View>
 
-          {FILTER_IDS.map((id) => (
-            <View key={id} style={styles.row}>
+          {FILTER_IDS.map((id, index) => (
+            <View key={id} style={[styles.row, index === FILTER_IDS.length - 1 && styles.rowLast]}>
               <Text style={styles.rowLabel}>{t(`explore.filters.options.${id}`)}</Text>
               <Toggle value={local.includes(id)} onValueChange={() => toggle(id)} accessibilityLabel={t(`explore.filters.options.${id}`)} />
             </View>
@@ -71,16 +76,34 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.sm,
   },
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.surfaceBorder,
+    marginBottom: spacing.xs,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
   title: {
     ...typography.h1,
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceAlt,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
   },
   rowLabel: {
     ...typography.body,

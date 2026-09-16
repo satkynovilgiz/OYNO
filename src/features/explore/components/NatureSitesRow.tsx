@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 export type NatureSiteItem = {
@@ -34,18 +34,20 @@ export function NatureSitesRow({ sites, onPressSite }: NatureSitesRowProps) {
       <Text style={styles.sectionTitle}>{t('explore.natureSites.title')}</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {sites.map((site) => (
-          <AnimatedPressable
-            key={site.id}
-            style={styles.card}
-            onPress={() => onPressSite?.(site.id)}
-            accessibilityRole="button"
-            accessibilityLabel={site.name}
-          >
-            <Text style={styles.name} numberOfLines={1}>{site.name}</Text>
-            <Text style={styles.tagline} numberOfLines={2}>{site.tagline}</Text>
-            <ChevronRight size={16} color={colors.textOnDark} strokeWidth={2.25} />
-          </AnimatedPressable>
+        {sites.map((site, index) => (
+          <FadeSlideIn key={site.id} index={index}>
+            <AnimatedPressable
+              style={styles.card}
+              onPress={() => onPressSite?.(site.id)}
+              hoverEffect
+              accessibilityRole="button"
+              accessibilityLabel={site.name}
+            >
+              <Text style={styles.name} numberOfLines={1}>{site.name}</Text>
+              <Text style={styles.tagline} numberOfLines={2}>{site.tagline}</Text>
+              <ChevronRight size={16} color={colors.textOnDark} strokeWidth={2.25} />
+            </AnimatedPressable>
+          </FadeSlideIn>
         ))}
       </ScrollView>
     </View>

@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AnimatedPressable, Badge, TextButton } from '@/components/ui';
+import { AnimatedPressable, Badge, FadeSlideIn, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ExploreDiscovery } from '../types';
@@ -39,35 +39,42 @@ export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscove
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {discoveries.map((discovery) => {
+        {discoveries.map((discovery, index) => {
           const categoryColor = colors.discovery[discovery.category];
           const discovered = discoveredIds.includes(discovery.id);
           return (
-            <AnimatedPressable
-              key={discovery.id}
-              style={styles.card}
-              onPress={() => onPressDiscovery?.(discovery)}
-              accessibilityRole="button"
-              accessibilityLabel={discovery.title}
-            >
-              {discovery.imageSource ? (
-                <Image source={discovery.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              ) : (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: categoryColor }]} />
-              )}
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.6)']}
-                locations={[0.45, 1]}
-                style={StyleSheet.absoluteFill}
-              />
+            <FadeSlideIn key={discovery.id} style={shadows.card} index={index}>
+              <AnimatedPressable
+                style={[styles.card, discovered && styles.cardDiscovered]}
+                onPress={() => onPressDiscovery?.(discovery)}
+                hoverEffect
+                accessibilityRole="button"
+                accessibilityLabel={discovery.title}
+              >
+                {discovery.imageSource ? (
+                  <Image source={discovery.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                ) : (
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: categoryColor }]} />
+                )}
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.65)']}
+                  locations={[0.35, 1]}
+                  style={StyleSheet.absoluteFill}
+                />
 
-              <View style={styles.topRow}>
-                <Badge label={t(`explore.discoveries.categories.${discovery.category}`)} color={categoryColor} />
-              </View>
-              <Text style={styles.xpText}>
-                {discovered ? t('explore.discoveries.discoveredLabel') : `+${discovery.xpReward} XP`}
-              </Text>
-            </AnimatedPressable>
+                <View style={styles.topRow}>
+                  <Badge label={t(`explore.discoveries.categories.${discovery.category}`)} color={categoryColor} />
+                </View>
+                <View style={styles.bottomBlock}>
+                  <Text style={styles.discoveryTitle} numberOfLines={2}>
+                    {discovery.title}
+                  </Text>
+                  <Text style={[styles.xpText, discovered && styles.xpTextDiscovered]}>
+                    {discovered ? t('explore.discoveries.discoveredLabel') : `+${discovery.xpReward} XP`}
+                  </Text>
+                </View>
+              </AnimatedPressable>
+            </FadeSlideIn>
           );
         })}
       </ScrollView>
@@ -102,14 +109,28 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
-    ...shadows.card,
+  },
+  cardDiscovered: {
+    borderWidth: 2,
+    borderColor: colors.accentGold,
   },
   topRow: {
     flexDirection: 'row',
+  },
+  bottomBlock: {
+    gap: 1,
+  },
+  discoveryTitle: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.textOnDark,
   },
   xpText: {
     ...typography.small,
     color: colors.textOnDark,
     fontWeight: '700',
+  },
+  xpTextDiscovered: {
+    color: colors.accentGold,
   },
 });

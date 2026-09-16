@@ -3,7 +3,8 @@ import { ChevronRight } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AnimatedPressable } from '@/components/ui';
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import questBackground from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
@@ -21,7 +22,11 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
   const { t } = useTranslation();
 
   return (
-    <AnimatedPressable style={styles.card} onPress={onPress} accessibilityRole="button" accessibilityLabel={quest.title}>
+    // Shadow lives on this wrapper, not the clipped/overflow:hidden card
+    // itself - a view drops its own shadow on iOS once it also clips
+    // content via overflow (same fix as HeroBanner.tsx/KyrgyzstanMap.tsx).
+    <FadeSlideIn style={shadows.card}>
+      <AnimatedPressable style={styles.card} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={quest.title}>
       <View style={styles.background} />
       <Image source={questBackground} style={styles.artwork} resizeMode="cover" />
       <LinearGradient
@@ -33,7 +38,10 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
       />
 
       <View style={styles.content}>
-        <Text style={styles.label}>{t('explore.quest.label')}</Text>
+        <View style={styles.labelRow}>
+          <OymoOrnament size={11} color={colors.accentGold} strokeWidth={1.5} />
+          <Text style={styles.label}>{t('explore.quest.label')}</Text>
+        </View>
         <Text style={styles.title}>{quest.title}</Text>
         <Text style={styles.subtitle}>{quest.subtitle}</Text>
         <Text style={styles.progress}>
@@ -45,7 +53,8 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
           <ChevronRight size={16} color={colors.textOnPrimary} strokeWidth={2.5} />
         </View>
       </View>
-    </AnimatedPressable>
+      </AnimatedPressable>
+    </FadeSlideIn>
   );
 }
 
@@ -55,9 +64,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     overflow: 'hidden',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
+    borderWidth: 1.5,
+    borderColor: 'rgba(232,185,61,0.4)',
   },
   background: {
     ...StyleSheet.absoluteFill,
@@ -75,6 +83,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: 2,
     maxWidth: '72%',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   label: {
     ...typography.overline,

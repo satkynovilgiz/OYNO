@@ -5,7 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import type { SupportedLanguage } from '@/i18n';
@@ -200,22 +200,24 @@ export function ExploreScreen() {
                   <Text style={styles.stateText}>{t('explore.filters.noResults')}</Text>
                 ) : (
                   <View style={styles.filteredList}>
-                    {filteredRegionsList.map((region) => (
-                      <AnimatedPressable
-                        key={region.id}
-                        style={styles.filteredRow}
-                        onPress={() => router.push(`/explore/${region.id}` as never)}
-                        accessibilityRole="button"
-                        accessibilityLabel={region.name}
-                      >
-                        <View style={styles.filteredRowText}>
-                          <Text style={styles.filteredRowName}>{region.name}</Text>
-                          <Text style={styles.filteredRowTagline} numberOfLines={1}>
-                            {region.tagline}
-                          </Text>
-                        </View>
-                        <ChevronRight size={16} color={colors.textSecondary} strokeWidth={2.25} />
-                      </AnimatedPressable>
+                    {filteredRegionsList.map((region, index) => (
+                      <FadeSlideIn key={region.id} index={index}>
+                        <AnimatedPressable
+                          style={styles.filteredRow}
+                          onPress={() => router.push(`/explore/${region.id}` as never)}
+                          hoverEffect
+                          accessibilityRole="button"
+                          accessibilityLabel={region.name}
+                        >
+                          <View style={styles.filteredRowText}>
+                            <Text style={styles.filteredRowName}>{region.name}</Text>
+                            <Text style={styles.filteredRowTagline} numberOfLines={1}>
+                              {region.tagline}
+                            </Text>
+                          </View>
+                          <ChevronRight size={16} color={colors.textSecondary} strokeWidth={2.25} />
+                        </AnimatedPressable>
+                      </FadeSlideIn>
                     ))}
                   </View>
                 )}
