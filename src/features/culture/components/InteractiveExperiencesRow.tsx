@@ -64,9 +64,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.h1,
     color: colors.textPrimary,
+    paddingHorizontal: spacing.md,
   },
   row: {
     flexDirection: 'row',
+    paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
   tile: {

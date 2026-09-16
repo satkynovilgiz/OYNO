@@ -132,9 +132,7 @@ export function CultureScreen() {
               onPressSeeAll={() => router.push('/collection' as never)}
             />
 
-            <View style={styles.horizontalPad}>
-              <InteractiveExperiencesRow experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
-            </View>
+            <InteractiveExperiencesRow experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
 
             <View style={[styles.horizontalPad, styles.row]}>
               {todayDiscovery && (
@@ -154,12 +152,10 @@ export function CultureScreen() {
               <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
             </View>
 
-            <View style={styles.horizontalPad}>
-              <NewMaterialsRow
-                materials={materials}
-                onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
-              />
-            </View>
+            <NewMaterialsRow
+              materials={materials}
+              onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
+            />
           </>
         )}
       </ScrollView>

@@ -1,9 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Clock, Gamepad2, Signal, Users } from 'lucide-react-native';
+import { Award, Gamepad2 } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { AnimatedPressable, Badge, FadeSlideIn } from '@/components/ui';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -55,45 +55,32 @@ export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardPr
               <Gamepad2 size={32} color={colors.primary} strokeWidth={1.5} />
             </View>
           )}
-          <LinearGradient colors={['rgba(20,14,8,0)', 'rgba(20,14,8,0.05)', 'rgba(20,14,8,0.85)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['rgba(20,14,8,0)', 'rgba(20,14,8,0.05)', 'rgba(20,14,8,0.85)']} locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
 
-          {game.featured ? (
+          {!isPlayable ? (
+            <View style={styles.comingSoonBadge}>
+              <Badge label={t('games.comingSoonBadge')} color="rgba(43,32,25,0.75)" />
+            </View>
+          ) : game.featured ? (
             <View style={styles.awardBadge}>
               <Award size={13} color={colors.textOnPrimary} strokeWidth={2} />
             </View>
           ) : null}
-          {!isPlayable ? (
-            <View style={styles.comingSoonBadge}>
-              <Text style={styles.comingSoonText}>{t('games.comingSoonBadge')}</Text>
-            </View>
-          ) : null}
 
           <View style={styles.overlayText}>
-            <Text style={styles.category} numberOfLines={1}>
-              {t(`games.categories.${game.category}`)}
-            </Text>
-            <Text style={[styles.name, isFeatured && styles.nameFeatured]} numberOfLines={1}>
+            <Text style={[styles.name, isFeatured && styles.nameFeatured]} numberOfLines={2}>
               {game.name}
             </Text>
-            <View style={styles.metaRow}>
-              <Signal size={11} color="rgba(255,255,255,0.8)" strokeWidth={2} />
-              <Text style={styles.metaTextLight}>{t(`games.difficulty.${game.difficulty}`)}</Text>
-              <View style={styles.metaDotLight} />
-              <Clock size={11} color="rgba(255,255,255,0.8)" strokeWidth={2} />
-              <Text style={styles.metaTextLight}>
-                {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })}
-              </Text>
-            </View>
+            <Text style={styles.metaTextLight} numberOfLines={1}>
+              {t(`games.difficulty.${game.difficulty}`)} · {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })}
+            </Text>
           </View>
         </View>
 
         <View style={styles.footer}>
-          <View style={styles.playersRow}>
-            <Users size={12} color={colors.textSecondary} strokeWidth={2} />
-            <Text style={styles.metaText} numberOfLines={1}>
-              {playersLabel(t, game.players)}
-            </Text>
-          </View>
+          <Text style={styles.metaText} numberOfLines={1}>
+            {playersLabel(t, game.players)}
+          </Text>
 
           {isPlayable ? (
             typeof playedCount === 'number' && playedCount > 0 ? (
@@ -138,11 +125,11 @@ const styles = StyleSheet.create({
   },
   thumbnailWrap: {
     width: '100%',
-    aspectRatio: 1.05,
+    aspectRatio: 0.92,
     justifyContent: 'flex-end',
   },
   thumbnailWrapFeatured: {
-    aspectRatio: 1.3,
+    aspectRatio: 1.15,
   },
   thumbnail: {
     ...StyleSheet.absoluteFill,
@@ -169,24 +156,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.xs,
     right: spacing.xs,
-    backgroundColor: 'rgba(43,32,25,0.75)',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 3,
-    borderRadius: radii.pill,
-  },
-  comingSoonText: {
-    ...typography.small,
-    color: colors.textOnDark,
-    fontWeight: '700',
   },
   overlayText: {
     padding: spacing.sm,
-    gap: 2,
-  },
-  category: {
-    ...typography.overline,
-    fontSize: 9,
-    color: colors.accentGold,
+    gap: 3,
   },
   name: {
     ...typography.bodyBold,
@@ -197,18 +170,6 @@ const styles = StyleSheet.create({
   },
   nameFeatured: {
     fontSize: 18,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
-  metaDotLight: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   metaTextLight: {
     ...typography.small,
@@ -222,15 +183,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     gap: spacing.xxs,
   },
-  playersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xxs,
-    flexShrink: 1,
-  },
   metaText: {
     ...typography.small,
-    color: colors.textSecondary,
+    color: colors.textMuted,
+    flexShrink: 1,
   },
   playChip: {
     backgroundColor: colors.accentGold,

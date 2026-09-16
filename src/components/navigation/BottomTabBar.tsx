@@ -48,11 +48,16 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
           >
             <View style={[styles.highlight, isActive && styles.highlightActive]}>
               {tab.id === 'culture' ? (
-                <OymoOrnament size={22} color={color} strokeWidth={1.75} />
+                <OymoOrnament size={21} color={color} strokeWidth={1.75} />
               ) : (
-                <Icon size={22} color={color} strokeWidth={1.75} />
+                <Icon size={21} color={color} strokeWidth={1.75} />
               )}
-              <Text style={[styles.label, { color }]} numberOfLines={1}>
+              <Text
+                style={[styles.label, { color }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
                 {t(tab.labelKey)}
               </Text>
             </View>
@@ -68,7 +73,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.surface,
     paddingTop: spacing.sm,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.xxs,
     ...shadows.raised,
   },
   item: {
@@ -76,11 +81,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   highlight: {
+    width: '100%',
     alignItems: 'center',
-    gap: spacing.xxs,
+    gap: 2,
     paddingVertical: spacing.xxs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radii.lg,
+    paddingHorizontal: 2,
+    borderRadius: radii.md,
     backgroundColor: 'transparent',
   },
   highlightActive: {
@@ -88,6 +94,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.small,
+    fontSize: 10,
     fontWeight: '600',
   },
 });

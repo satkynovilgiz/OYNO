@@ -62,12 +62,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
   },
   sectionTitle: {
     ...typography.h1,
     color: colors.textPrimary,
   },
   list: {
+    paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
   card: {
