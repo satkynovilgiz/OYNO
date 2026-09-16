@@ -100,6 +100,14 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
+  // Practice mode skips the pre-match countdown entirely (Section
+  // "Practice mode does NOT need the countdown") - normal mode's
+  // `READY` -> `PLAYING` transition instead waits for
+  // `<StartCountdown onDone={game.startChase}>` below.
+  useEffect(() => {
+    if (mode === 'practice' && game.phase === 'READY') game.startChase();
+  }, [mode, game.phase, game.startChase]);
+
   useEffect(() => {
     if (game.phase !== 'RESULT') return;
     // Practice always finishes by reaching the finish line, never by being
@@ -254,7 +262,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
 
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
-      <StartCountdown visible={game.phase === 'READY'} onDone={game.startChase} />
+      <StartCountdown visible={game.phase === 'READY' && mode === 'normal'} onDone={game.startChase} />
 
       <PauseMenu
         visible={game.phase === 'PAUSED' && helpStage === null}

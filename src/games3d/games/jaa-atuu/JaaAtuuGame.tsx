@@ -25,6 +25,7 @@ import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { ShotFeedback, type ShotFeedbackEvent } from '../../ui/ShotFeedback';
+import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useJaaAtuuGame } from './JaaAtuuController';
 import { createJaaAtuuAudio } from './jaaAtuuAudio';
@@ -105,6 +106,27 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
+  // 3-2-1-GO before the match's first shot only (Section "3-second
+  // countdown before normal matches") - `READY` is re-entered after every
+  // arrow (JaaAtuuController.resolveShot), so `countdownShownRef` gates
+  // this to the first entry per match rather than showing it before every
+  // shot; reset on restart so a replay shows it again. Practice mode never
+  // shows it at all. Gating `useAimController`'s `enabled` on
+  // `!showCountdown` (not just delaying when READY is reached) is what
+  // actually freezes drawing/firing for the countdown's duration,
+  // regardless of which of the 3 paths into READY fired (tutorial done,
+  // tutorial already seen, or a replay).
+  const [showCountdown, setShowCountdown] = useState(false);
+  const countdownShownRef = useRef(false);
+
+  useEffect(() => {
+    if (mode !== 'normal' || game.phase !== 'READY' || countdownShownRef.current) return;
+    countdownShownRef.current = true;
+    setShowCountdown(true);
+  }, [game.phase, mode]);
+
+  const handleCountdownDone = useCallback(() => setShowCountdown(false), []);
+
   const handleDrawStart = useCallback(() => {
     audioRef.current.play('draw', 0.5);
   }, []);
@@ -118,7 +140,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   );
 
   const aim = useAimController({
-    enabled: game.phase === 'READY',
+    enabled: game.phase === 'READY' && !showCountdown,
     onDrawStart: handleDrawStart,
     onRelease: handleRelease,
   });
@@ -159,6 +181,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
     setBullseyeSignalMs(undefined);
     recordedResultRef.current = false;
     setIsNewBest(false);
+    countdownShownRef.current = false;
     game.restart();
   }, [game]);
 
@@ -248,6 +271,8 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
       />
 
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
+
+      <StartCountdown visible={showCountdown && game.phase !== 'PAUSED'} onDone={handleCountdownDone} />
 
       <PauseMenu
         visible={game.phase === 'PAUSED' && helpStage === null}

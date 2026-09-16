@@ -22,6 +22,7 @@ import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
+import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useOrdoGame } from './OrdoController';
 import { createOrdoAudio } from './ordoAudio';
@@ -84,6 +85,32 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
+  // 3-2-1-GO before the match's first throw only (Section "3-second
+  // countdown before normal matches") - `PLAYER_TURN` is re-entered after
+  // every throw (OrdoController.onSettled), so `countdownShownRef` gates
+  // this to the first entry per match; reset on restart so a replay shows
+  // it again. Practice mode never shows it. Gating
+  // `useDragPowerController`'s `enabled` on `!showCountdown` (not just
+  // delaying when PLAYER_TURN is reached) is what actually freezes
+  // throwing for the countdown's duration, regardless of which of the 3
+  // paths into PLAYER_TURN fired (tutorial done, tutorial already seen, or
+  // a replay).
+  const [showCountdown, setShowCountdown] = useState(false);
+  const countdownShownRef = useRef(false);
+
+  useEffect(() => {
+    if (mode !== 'normal' || game.phase !== 'PLAYER_TURN' || countdownShownRef.current) return;
+    countdownShownRef.current = true;
+    setShowCountdown(true);
+  }, [game.phase, mode]);
+
+  const handleCountdownDone = useCallback(() => setShowCountdown(false), []);
+
+  const handleRestart = useCallback(() => {
+    countdownShownRef.current = false;
+    game.restart();
+  }, [game]);
+
   // Fires once per completed match. Resets when leaving RESULT (e.g. after
   // restart) rather than needing every onRestart/onReplay call site to
   // reset it - PauseMenu/ResultScreen both call `game.restart` directly.
@@ -143,7 +170,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
     [game],
   );
 
-  const drag = useDragPowerController({ enabled: game.phase === 'PLAYER_TURN', onRelease: handleRelease });
+  const drag = useDragPowerController({ enabled: game.phase === 'PLAYER_TURN' && !showCountdown, onRelease: handleRelease });
 
   const handleExit = useCallback(() => {
     if (router.canGoBack()) router.back();
@@ -244,16 +271,18 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
 
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
+      <StartCountdown visible={showCountdown && game.phase !== 'PAUSED'} onDone={handleCountdownDone} />
+
       <PauseMenu
         visible={game.phase === 'PAUSED' && helpStage === null}
         onResume={game.resume}
-        onRestart={game.restart}
+        onRestart={handleRestart}
         onExit={handleExit}
         onHowToPlay={handleHowToPlay}
       />
 
       {mode === 'normal' ? (
-        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={handleRestart} onExit={handleExit} />
       ) : null}
     </View>
   );

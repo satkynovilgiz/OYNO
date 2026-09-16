@@ -192,6 +192,55 @@ Two pieces, both shared so no game hand-rolls its own:
   Ordo/Chuko have no GLB to wait on, so they only get the Canvas fade-in
   above.
 
+## Pre-match countdown
+
+`ui/StartCountdown.tsx` (originally built for Kyz Kuumai/Kok Boru's
+"KYZ KUUMAI — INTRO" beat, now shared by all 5) shows "3, 2, 1, БАШТА!"
+exactly once per match, in normal mode only, between the tutorial ending
+and gameplay actually starting - never in practice mode, never again
+mid-match. Adds a haptic pulse per step (`gameHaptics.light()` for 3/2/1,
+`.heavy()` for GO) inside the shared component itself, so every game gets
+it for free. No new sound asset was added - nothing in the existing
+per-game SFX (docs/GAME_ASSETS.md) reads as a generic countdown tick, and
+sourcing one would be a fresh licensing decision outside a "reuse if
+suitable" ask.
+
+**How the freeze is enforced differs by controller shape, on purpose**:
+
+- **Kyz Kuumai / Kok Boru**: `READY` is already a genuine one-time
+  pre-match phase for these two (chase/riding games have no discrete
+  "turns" that return to it), so the countdown gates the controller's own
+  `startChase()`/`start()` call directly - `<StartCountdown
+  visible={phase === 'READY' && mode === 'normal'} onDone={game.startChase}
+  />`. Since movement/AI-stepping/the match timer only run once `phase ===
+  'PLAYING'` (Section "App background auto-pause"), and nothing reaches
+  `PLAYING` until the countdown's `onDone` fires, everything is frozen for
+  free - no extra gating needed. Practice mode calls `startChase()`/
+  `start()` immediately instead, via a small effect, skipping the
+  countdown entirely.
+- **Jaa Atuu / Ordo / Chuko**: their equivalent "ready" phase (`READY` for
+  Jaa Atuu, `PLAYER_TURN` for Ordo/Chuko) is reused after *every* shot/
+  throw, not just once - delaying the controller's own phase transition
+  the same way would show the countdown before every single shot, not
+  just the match's first. Instead, each `<Name>Game.tsx` tracks its own
+  one-shot `showCountdown`/`countdownShownRef` locally: the first time
+  `phase` reaches that value in normal mode, it shows the countdown
+  (guarding against the phase's later, per-turn re-entries), and gates
+  `useAimController`/`useDragPowerController`'s own `enabled` on
+  `!showCountdown` in addition to the phase check - this is what actually
+  freezes drawing/throwing, since none of the 3 real paths into that phase
+  (tutorial just finished, tutorial already seen this session, or a
+  replay) goes through one single interceptable function call. The guard
+  ref resets on `restart()` so a replay shows the countdown again. No
+  controller/gameplay-mechanics code was touched for any of the 5 games -
+  every change lives in the `<Name>Game.tsx` UI layer or the shared
+  `StartCountdown` component itself.
+
+Both shapes also hide the countdown while `phase === 'PAUSED'` (backgrounding
+or a manual pause mid-countdown) rather than letting it keep ticking behind
+the pause menu - resuming restarts the 3-2-1-GO sequence from the top
+rather than trying to resume a partial one.
+
 ## Per-shot feedback
 
 `ui/ShotFeedback.tsx` is a shared transient score-popup ("+100" / "ӨТТҮ")

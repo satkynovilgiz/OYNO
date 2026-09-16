@@ -22,6 +22,7 @@ import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
+import { StartCountdown } from '../../ui/StartCountdown';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useChukoGame } from './ChukoController';
 import { createChukoAudio } from './chukoAudio';
@@ -80,6 +81,29 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
+  // 3-2-1-GO before the match's first throw only (Section "3-second
+  // countdown before normal matches") - same reasoning as OrdoGame.tsx:
+  // `PLAYER_TURN` is re-entered after every throw, so `countdownShownRef`
+  // gates this to the first entry per match; reset on restart. Practice
+  // mode never shows it. Gating `useDragPowerController`'s `enabled` on
+  // `!showCountdown` freezes throwing for the countdown's duration
+  // regardless of which path into PLAYER_TURN fired.
+  const [showCountdown, setShowCountdown] = useState(false);
+  const countdownShownRef = useRef(false);
+
+  useEffect(() => {
+    if (mode !== 'normal' || game.phase !== 'PLAYER_TURN' || countdownShownRef.current) return;
+    countdownShownRef.current = true;
+    setShowCountdown(true);
+  }, [game.phase, mode]);
+
+  const handleCountdownDone = useCallback(() => setShowCountdown(false), []);
+
+  const handleRestart = useCallback(() => {
+    countdownShownRef.current = false;
+    game.restart();
+  }, [game]);
+
   useEffect(() => {
     if (game.phase !== 'RESULT') {
       recordedResultRef.current = false;
@@ -126,7 +150,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
     },
     [game],
   );
-  const drag = useDragPowerController({ enabled: game.phase === 'PLAYER_TURN', onRelease: handleRelease });
+  const drag = useDragPowerController({ enabled: game.phase === 'PLAYER_TURN' && !showCountdown, onRelease: handleRelease });
 
   const handleExit = useCallback(() => {
     if (router.canGoBack()) router.back();
@@ -221,16 +245,18 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
 
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
+      <StartCountdown visible={showCountdown && game.phase !== 'PAUSED'} onDone={handleCountdownDone} />
+
       <PauseMenu
         visible={game.phase === 'PAUSED' && helpStage === null}
         onResume={game.resume}
-        onRestart={game.restart}
+        onRestart={handleRestart}
         onExit={handleExit}
         onHowToPlay={handleHowToPlay}
       />
 
       {mode === 'normal' ? (
-        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={handleRestart} onExit={handleExit} />
       ) : null}
     </View>
   );

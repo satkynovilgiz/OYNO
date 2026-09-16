@@ -92,6 +92,14 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
 
   const handleHowToPlay = useCallback(() => setHelpStage('about'), []);
 
+  // Practice mode skips the pre-match countdown entirely (Section
+  // "Practice mode does NOT need the countdown") - normal mode's
+  // `READY` -> `PLAYING` transition instead waits for
+  // `<StartCountdown onDone={game.start}>` below.
+  useEffect(() => {
+    if (mode === 'practice' && game.phase === 'READY') game.start();
+  }, [mode, game.phase, game.start]);
+
   useEffect(() => {
     if (game.phase !== 'RESULT') return;
     // Practice always ends on its own timeout/no-score note (Haptics
@@ -279,7 +287,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
 
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
-      <StartCountdown visible={game.phase === 'READY'} onDone={game.start} />
+      <StartCountdown visible={game.phase === 'READY' && mode === 'normal'} onDone={game.start} />
 
       <PauseMenu
         visible={game.phase === 'PAUSED' && helpStage === null}
