@@ -34,7 +34,10 @@ export function RockCluster({ position, seed = 0, count = 3 }: RockClusterProps)
   }, [seed, count]);
 
   return (
-    <group position={position}>
+    // `userData.cameraObstacle` (Section "camera collision protection") -
+    // see BozUy.tsx's identical comment; ChaseCamera.tsx raycasts against
+    // objects tagged this way.
+    <group position={position} userData={{ cameraObstacle: true }}>
       {rocks.map((rock, i) => (
         <mesh key={i} position={[rock.x, rock.size * 0.4, rock.z]} rotation={[0, rock.rotation, rock.rotation * 0.4]} castShadow receiveShadow>
           <icosahedronGeometry args={[rock.size, 0]} />

@@ -513,6 +513,41 @@ threshold, 1 point per capture) - see `ChukoTypes.ts` for the full
 TRADITIONAL RULE vs ADAPTATION note, including why Variant B (упай
 points-per-face scoring) was NOT built this pass.
 
+## Camera collision protection (Kyz Kuumai, Kok Boru)
+
+`camera/ChaseCamera.tsx` (shared by both games) used to have no scene
+awareness at all - its desired position was a pure function of the horse's
+own position/heading, so nothing stopped it from ending up geometrically
+inside a `BozUy`/`RockCluster` decoration the horse rode close to, or below
+ground level. Fixed, in the one shared component rather than per-game:
+
+- `BozUy.tsx` and `Rock.tsx` (`RockCluster`) tag their outer `<group>` with
+  `userData.cameraObstacle = true` - a plain marker with no visual/
+  behavioral effect of its own. `Bush`/`Flag` are deliberately NOT tagged
+  (small/thin enough that clipping through one briefly isn't the problem
+  this is solving, and every extra raycast target costs a little).
+- Each frame, `ChaseCamera` casts a ray from near the horse/rider toward
+  its desired behind-and-above position and, if it hits a tagged obstacle
+  first, clamps the desired position to just short of it
+  (`OBSTACLE_MARGIN`). A floor on the resulting distance
+  (`MIN_FOLLOW_DISTANCE = 1.6`, well inside both games' 4.2/5.2 defaults)
+  keeps the camera structurally outside the horse/rider's own body even
+  under this clamping, and a floor on height (`MIN_CAMERA_HEIGHT = 0.5`)
+  keeps it above the flat ground plane both games use.
+- The obstacle list is gathered once via `scene.traverse` (these
+  decorations are static for a whole match, never added/removed at
+  runtime) rather than re-traversed every frame.
+- **Smoothness is inherited, not re-implemented**: the (possibly clamped)
+  desired position is fed into the exact same `LERP_SPEED`-based smoothing
+  the camera already used for normal following, rather than snapping to it
+  directly - a correction is just a different target for the same smooth
+  lerp, so "keep camera movement smooth" and "prevent sudden camera jumps"
+  didn't need a second smoothing pass or any new tuning.
+
+No gameplay/horse-physics change - this only ever moves where the *camera*
+sits, never the horse's own position/heading, which stay driven entirely by
+`HorseController.step()` as before.
+
 ## Kyz Kuumai
 
 `games/kyzKuumay/RULES.md` ("core structure verified"): a two-phase chase

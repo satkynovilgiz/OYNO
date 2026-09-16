@@ -8,7 +8,11 @@ import { scenePalette } from '../scenePalette';
  * a plain cone-on-cylinder. */
 export function BozUy({ position }: { position: [number, number, number] }) {
   return (
-    <group position={position}>
+    // `userData.cameraObstacle` (Section "camera collision protection") -
+    // ChaseCamera.tsx raycasts against objects tagged this way to keep the
+    // Kyz Kuumai/Kok Boru chase camera from clipping through a yurt it
+    // rides close to; a plain marker, no visual/behavioral effect here.
+    <group position={position} userData={{ cameraObstacle: true }}>
       <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.9, 1, 0.8, 12]} />
         <meshStandardMaterial color={scenePalette.terracotta} roughness={0.9} />
