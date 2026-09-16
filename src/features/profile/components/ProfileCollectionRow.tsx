@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, TextButton } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ProfileCollectionItem } from '../types';
@@ -28,26 +28,28 @@ export function ProfileCollectionRow({ items, onPressItem, onPressSeeAll }: Prof
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {items.map((item) => (
-          <AnimatedPressable
-            key={item.id}
-            style={styles.card}
-            onPress={() => onPressItem?.(item)}
-            accessibilityRole="button"
-            accessibilityLabel={item.title}
-          >
-            {item.imageSource ? (
-              <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
-            ) : (
-              <View style={[styles.image, { backgroundColor: item.color }]} />
-            )}
-            <Text style={styles.title} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <Text style={styles.progress}>
-              {item.current} / {item.total}
-            </Text>
-          </AnimatedPressable>
+        {items.map((item, index) => (
+          <FadeSlideIn key={item.id} index={index}>
+            <AnimatedPressable
+              style={styles.card}
+              onPress={() => onPressItem?.(item)}
+              hoverEffect
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+            >
+              {item.imageSource ? (
+                <Image source={item.imageSource} style={styles.image} resizeMode="cover" />
+              ) : (
+                <View style={[styles.image, { backgroundColor: item.color }]} />
+              )}
+              <Text style={styles.title} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text style={styles.progress}>
+                {item.current} / {item.total}
+              </Text>
+            </AnimatedPressable>
+          </FadeSlideIn>
         ))}
       </ScrollView>
     </View>

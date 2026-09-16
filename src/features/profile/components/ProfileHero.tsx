@@ -1,10 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pencil, Wand2 } from 'lucide-react-native';
+import { Flame, Pencil, Wand2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { UserAvatar } from '@/components/avatar';
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
 
@@ -23,7 +23,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
   const { t } = useTranslation();
 
   return (
-    <View style={[styles.card, shadows.card]}>
+    <FadeSlideIn style={[styles.card, shadows.card]}>
       <Image source={heroBackground} style={[StyleSheet.absoluteFill, styles.image]} resizeMode="cover" />
       <LinearGradient
         colors={[colors.surface, colors.surface, 'rgba(251,243,227,0)']}
@@ -53,13 +53,21 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
               <Pencil size={16} color={colors.textSecondary} strokeWidth={2} />
             </AnimatedPressable>
           </View>
-          <Text style={styles.level}>{t('profile.level', { level: profile.level })}</Text>
+          <View style={styles.badgeRow}>
+            <Text style={styles.level}>{t('profile.level', { level: profile.level })}</Text>
+            {profile.streakDays > 0 ? (
+              <View style={styles.streakChip}>
+                <Flame size={12} color={colors.accentGold} strokeWidth={2.25} />
+                <Text style={styles.streakText}>{t('profile.dailyActivity.streak', { count: profile.streakDays })}</Text>
+              </View>
+            ) : null}
+          </View>
           <Text style={styles.title} numberOfLines={2}>
             {profile.title}
           </Text>
         </View>
       </View>
-    </View>
+    </FadeSlideIn>
   );
 }
 
@@ -110,9 +118,28 @@ const styles = StyleSheet.create({
     ...typography.display,
     color: colors.textPrimary,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   level: {
     ...typography.bodyBold,
     color: colors.primary,
+  },
+  streakChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radii.pill,
+  },
+  streakText: {
+    ...typography.small,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   title: {
     ...typography.caption,

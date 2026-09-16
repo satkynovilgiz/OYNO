@@ -2,7 +2,7 @@ import { Flame } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { ProgressRing } from '@/components/ui';
+import { FadeSlideIn, ProgressRing } from '@/components/ui';
 import { colors, shadows, radii, spacing, typography } from '@/theme';
 
 import type { DailyActivityItem, ProfileSummary } from '../types';
@@ -18,13 +18,15 @@ export function DailyActivitySummaryCard({ profile, activity, completed, total }
   const { t } = useTranslation();
 
   return (
-    <View style={styles.card}>
+    <FadeSlideIn style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title} numberOfLines={1}>
           {t('profile.dailyActivity.title')}
         </Text>
         <View style={styles.streakChip}>
-          <Flame size={13} color={colors.danger} strokeWidth={2.25} />
+          {/* Gold, not danger-red (Section OYNO warm palette) - a streak is
+           * a positive, celebratory number, not a warning. */}
+          <Flame size={13} color={colors.accentGold} strokeWidth={2.25} />
           <Text style={styles.streakText}>{t('profile.dailyActivity.streak', { count: profile.streakDays })}</Text>
         </View>
       </View>
@@ -47,7 +49,7 @@ export function DailyActivitySummaryCard({ profile, activity, completed, total }
           </Text>
         </ProgressRing>
       </View>
-    </View>
+    </FadeSlideIn>
   );
 }
 

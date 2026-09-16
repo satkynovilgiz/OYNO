@@ -2,7 +2,7 @@ import { Coins, Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '@/components/ui';
+import { Button, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import chestImage from '@assets/img/OYNO_design/profile/reward_chest.png';
 
@@ -16,9 +16,10 @@ type DailyRewardCardProps = {
 
 export function DailyRewardCard({ reward, claimed = false, onPressClaim }: DailyRewardCardProps) {
   const { t } = useTranslation();
+  const ready = !claimed;
 
   return (
-    <View style={styles.card}>
+    <FadeSlideIn style={[styles.card, ready && styles.cardReady]}>
       <Text style={styles.title} numberOfLines={1}>
         {t('profile.reward.title')}
       </Text>
@@ -45,7 +46,7 @@ export function DailyRewardCard({ reward, claimed = false, onPressClaim }: Daily
           disabled={claimed}
         />
       </View>
-    </View>
+    </FadeSlideIn>
   );
 }
 
@@ -59,6 +60,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     ...shadows.card,
+  },
+  cardReady: {
+    borderWidth: 1.5,
+    borderColor: colors.accentGold,
   },
   title: {
     ...typography.h1,

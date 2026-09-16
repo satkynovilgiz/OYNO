@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { TextButton } from '@/components/ui';
+import { FadeSlideIn, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
@@ -34,18 +34,21 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
       <Text style={styles.unlocked}>{t('profile.achievements.unlocked', { unlocked, total })}</Text>
 
       <View style={styles.grid}>
-        {achievements.map((achievement) => (
-          <View key={achievement.id} style={styles.badgeItem}>
-            <Image
-              source={achievement.iconSource}
-              style={[styles.badgeImage, unlockedIds && !unlockedIds.includes(achievement.id) && styles.badgeLocked]}
-              resizeMode="cover"
-            />
-            <Text style={styles.badgeLabel} numberOfLines={2}>
-              {achievement.title}
-            </Text>
-          </View>
-        ))}
+        {achievements.map((achievement, index) => {
+          const isLocked = !!unlockedIds && !unlockedIds.includes(achievement.id);
+          return (
+            <FadeSlideIn key={achievement.id} style={styles.badgeItem} index={index}>
+              <Image
+                source={achievement.iconSource}
+                style={[styles.badgeImage, !isLocked && styles.badgeUnlocked, isLocked && styles.badgeLocked]}
+                resizeMode="cover"
+              />
+              <Text style={styles.badgeLabel} numberOfLines={2}>
+                {achievement.title}
+              </Text>
+            </FadeSlideIn>
+          );
+        })}
       </View>
     </View>
   );
@@ -92,6 +95,10 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: colors.surfaceAlt,
+  },
+  badgeUnlocked: {
+    borderWidth: 2,
+    borderColor: colors.accentGold,
   },
   badgeLocked: {
     opacity: 0.35,

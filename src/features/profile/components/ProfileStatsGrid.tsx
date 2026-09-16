@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, ProgressRing } from '@/components/ui';
+import { Card, FadeSlideIn, ProgressRing } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
 import type { ProfileStat } from '../types';
@@ -18,8 +18,8 @@ export function ProfileStatsGrid({ stats }: ProfileStatsGridProps) {
       <Text style={styles.title}>{t('profile.progress.title')}</Text>
 
       <View style={styles.row}>
-        {stats.map(({ id, icon: Icon, label, valueLabel, ringProgress }) => (
-          <View key={id} style={styles.item}>
+        {stats.map(({ id, icon: Icon, label, valueLabel, ringProgress }, index) => (
+          <FadeSlideIn key={id} style={styles.item} index={index}>
             <ProgressRing progress={ringProgress} size={52} strokeWidth={3.5}>
               <Icon size={20} color={colors.primary} strokeWidth={1.75} />
             </ProgressRing>
@@ -27,7 +27,7 @@ export function ProfileStatsGrid({ stats }: ProfileStatsGridProps) {
               {label}
             </Text>
             <Text style={styles.value}>{valueLabel}</Text>
-          </View>
+          </FadeSlideIn>
         ))}
       </View>
     </Card>

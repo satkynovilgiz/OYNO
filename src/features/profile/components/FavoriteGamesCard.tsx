@@ -2,7 +2,7 @@ import { ChevronRight, Trophy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, TextButton } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { FavoriteGame } from '../types';
@@ -34,24 +34,26 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
         <Text style={styles.emptyText}>{t('profile.favoriteGames.empty')}</Text>
       ) : (
         <View style={styles.list}>
-          {games.map((game) => (
-            <AnimatedPressable
-              key={game.id}
-              style={styles.gameItem}
-              onPress={() => onPressGame?.(game)}
-              accessibilityRole="button"
-              accessibilityLabel={game.name}
-            >
-              <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
-              <Text style={styles.gameName} numberOfLines={1}>
-                {game.name}
-              </Text>
-              <Text style={styles.gameMeta}>{t('profile.favoriteGames.played', { count: game.gamesPlayed })}</Text>
-              <View style={styles.winsRow}>
-                <Trophy size={11} color={colors.accentGold} strokeWidth={2.25} />
-                <Text style={styles.gameMeta}>{t('profile.favoriteGames.wins', { count: game.wins })}</Text>
-              </View>
-            </AnimatedPressable>
+          {games.map((game, index) => (
+            <FadeSlideIn key={game.id} style={styles.gameItem} index={index}>
+              <AnimatedPressable
+                style={styles.gamePressable}
+                onPress={() => onPressGame?.(game)}
+                hoverEffect
+                accessibilityRole="button"
+                accessibilityLabel={game.name}
+              >
+                <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+                <Text style={styles.gameName} numberOfLines={1}>
+                  {game.name}
+                </Text>
+                <Text style={styles.gameMeta}>{t('profile.favoriteGames.played', { count: game.gamesPlayed })}</Text>
+                <View style={styles.winsRow}>
+                  <Trophy size={11} color={colors.accentGold} strokeWidth={2.25} />
+                  <Text style={styles.gameMeta}>{t('profile.favoriteGames.wins', { count: game.wins })}</Text>
+                </View>
+              </AnimatedPressable>
+            </FadeSlideIn>
           ))}
         </View>
       )}
@@ -87,6 +89,8 @@ const styles = StyleSheet.create({
   },
   gameItem: {
     flex: 1,
+  },
+  gamePressable: {
     gap: 2,
   },
   thumbnail: {

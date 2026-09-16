@@ -2,6 +2,7 @@ import { Award, Coins, Gem, Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ProfileSummary } from '../types';
@@ -22,16 +23,22 @@ export function CurrencyRow({ profile }: CurrencyRowProps) {
 
   return (
     <View style={styles.row}>
-      {items.map((item) => (
-        <View key={item.id} style={styles.card}>
-          <View style={styles.headerRow}>
-            <item.icon size={16} color={item.color} strokeWidth={2} />
-            <Text style={styles.label} numberOfLines={1}>
-              {item.label}
-            </Text>
+      {items.map((item, index) => (
+        <FadeSlideIn key={item.id} style={styles.cardWrap} index={index}>
+          <View style={styles.card}>
+            <View style={[styles.iconWrap, { backgroundColor: `${item.color}1F` }]}>
+              <item.icon size={16} color={item.color} strokeWidth={2.25} />
+            </View>
+            <View style={styles.textBlock}>
+              <Text style={styles.value} numberOfLines={1}>
+                {item.value}
+              </Text>
+              <Text style={styles.label} numberOfLines={1}>
+                {item.label}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.value}>{item.value}</Text>
-        </View>
+        </FadeSlideIn>
       ))}
     </View>
   );
@@ -44,28 +51,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
-  card: {
+  cardWrap: {
     flexGrow: 1,
     flexBasis: '45%',
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.sm,
-    gap: spacing.xxs,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
-  headerRow: {
-    flexDirection: 'row',
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
-    gap: spacing.xxs,
+    justifyContent: 'center',
+  },
+  textBlock: {
+    flexShrink: 1,
   },
   label: {
     ...typography.small,
     color: colors.textSecondary,
   },
   value: {
-    ...typography.h1,
+    ...typography.h2,
     color: colors.textPrimary,
   },
 });
