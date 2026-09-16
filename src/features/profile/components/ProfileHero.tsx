@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { UserAvatar } from '@/components/avatar';
-import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, ProgressBar } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
 
@@ -21,6 +21,7 @@ type ProfileHeroProps = {
  * and text on a clean, legible surface regardless of what's behind them. */
 export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHeroProps) {
   const { t } = useTranslation();
+  const xpRatio = profile.xpMax > 0 ? profile.xpCurrent / profile.xpMax : 0;
 
   return (
     <FadeSlideIn style={[styles.card, shadows.card]}>
@@ -62,9 +63,13 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
               </View>
             ) : null}
           </View>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={1}>
             {profile.title}
           </Text>
+          <View style={styles.xpBlock}>
+            <ProgressBar progress={xpRatio} height={5} />
+            <Text style={styles.xpLabel}>{profile.xpCurrent} / {profile.xpMax} XP</Text>
+          </View>
         </View>
       </View>
     </FadeSlideIn>
@@ -73,7 +78,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 2.1,
+    aspectRatio: 1.75,
     borderRadius: radii.xl,
     overflow: 'hidden',
     backgroundColor: colors.surface,
@@ -144,5 +149,13 @@ const styles = StyleSheet.create({
   title: {
     ...typography.caption,
     color: colors.textSecondary,
+  },
+  xpBlock: {
+    gap: 2,
+    marginTop: spacing.xxs,
+  },
+  xpLabel: {
+    ...typography.small,
+    color: colors.textMuted,
   },
 });

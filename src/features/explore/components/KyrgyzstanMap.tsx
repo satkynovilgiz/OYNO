@@ -164,15 +164,13 @@ export function KyrgyzstanMap({ pins, onPressPin, onPressLocate, onPressFilter }
 
 const styles = StyleSheet.create({
   shadowWrap: {
-    aspectRatio: 1290 / 750,
-    borderRadius: radii.xl,
+    aspectRatio: 1.35,
+    borderRadius: radii.xxl,
   },
   card: {
     flex: 1,
-    borderRadius: radii.xl,
+    borderRadius: radii.xxl,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(232,185,61,0.5)',
   },
   ornamentBadge: {
     position: 'absolute',

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, FadeSlideIn, ProgressRing } from '@/components/ui';
+import { FadeSlideIn, ProgressRing } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
 import type { ProfileStat } from '../types';
@@ -10,11 +10,15 @@ type ProfileStatsGridProps = {
   stats: ProfileStat[];
 };
 
+/** Borderless section (Section "reduce statistics-dashboard appearance") -
+ * the rings themselves already carry the visual weight; boxing them in
+ * another cream card on top of everything else on this screen just added
+ * one more repetitive rectangle. */
 export function ProfileStatsGrid({ stats }: ProfileStatsGridProps) {
   const { t } = useTranslation();
 
   return (
-    <Card style={styles.card}>
+    <View style={styles.card}>
       <Text style={styles.title}>{t('profile.progress.title')}</Text>
 
       <View style={styles.row}>
@@ -30,7 +34,7 @@ export function ProfileStatsGrid({ stats }: ProfileStatsGridProps) {
           </FadeSlideIn>
         ))}
       </View>
-    </Card>
+    </View>
   );
 }
 

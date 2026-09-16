@@ -126,17 +126,17 @@ export function HomeScreen() {
           onPressNotifications={() => router.push('/notifications' as never)}
         />
 
-        <View style={styles.topRow}>
-          <ProfileSummaryCard player={player} />
-          <DailyChallengeCard challenge={dailyChallenge} onPress={handlePressDailyChallenge} ready={challengeComplete && !challengeClaimed} />
-        </View>
-
-        <View style={styles.horizontalPad}>
-          <DailyGiftCard gift={dailyGift} claimed={giftClaimed} onPress={() => useProgressStore.getState().claimDailyGift()} />
-        </View>
-
         <View style={styles.horizontalPad}>
           <HeroBanner />
+        </View>
+
+        <View style={styles.horizontalPad}>
+          <ProfileSummaryCard player={player} />
+        </View>
+
+        <View style={styles.topRow}>
+          <DailyChallengeCard challenge={dailyChallenge} onPress={handlePressDailyChallenge} ready={challengeComplete && !challengeClaimed} />
+          <DailyGiftCard gift={dailyGift} claimed={giftClaimed} onPress={() => useProgressStore.getState().claimDailyGift()} />
         </View>
 
         <GamesCarousel

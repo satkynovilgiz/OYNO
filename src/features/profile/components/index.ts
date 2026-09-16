@@ -7,4 +7,3 @@ export * from './ProfileCollectionRow';
 export * from './ProfileHeader';
 export * from './ProfileHero';
 export * from './ProfileStatsGrid';
-export * from './XpProgressCard';

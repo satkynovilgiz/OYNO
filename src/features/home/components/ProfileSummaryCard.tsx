@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { UserAvatar } from '@/components/avatar';
-import { Card, Pill, ProgressBar } from '@/components/ui';
+import { Pill, ProgressBar } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import type { PlayerSummary } from '../types';
@@ -17,7 +17,7 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
   const xpProgress = player.xpMax > 0 ? player.xpCurrent / player.xpMax : 0;
 
   return (
-    <Card style={styles.card}>
+    <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.avatarRing}>
           <View style={styles.avatar}>
@@ -64,13 +64,15 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
           <Text style={styles.currencyText}>{player.gems.toLocaleString('ru-RU')}</Text>
         </View>
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    backgroundColor: colors.surfaceWarm,
+    borderRadius: radii.xl,
+    padding: spacing.md,
     gap: spacing.sm,
   },
   topRow: {

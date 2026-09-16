@@ -27,7 +27,6 @@ import {
   ProfileHeader,
   ProfileHero,
   ProfileStatsGrid,
-  XpProgressCard,
 } from './components';
 import { achievementsTotal, getCollectionCounts, getCollectionItems, profileAchievements } from './data';
 import type { DailyActivityItem, FavoriteGame, ProfileStat, ProfileSummary } from './types';
@@ -143,10 +142,6 @@ export function ProfileScreen() {
             onPressAvatar={() => router.push('/avatar-editor' as never)}
             onPressEdit={() => router.push('/settings/account' as never)}
           />
-        </View>
-
-        <View style={styles.horizontalPad}>
-          <XpProgressCard profile={profile} />
         </View>
 
         <CurrencyRow profile={profile} />
