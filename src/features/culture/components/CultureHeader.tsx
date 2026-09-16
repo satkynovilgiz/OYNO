@@ -43,7 +43,10 @@ export function CultureHeader({
             <UserAvatar characterId={characterId} avatarConfig={avatarConfig} size="small" />
           </AnimatedPressable>
           <View style={styles.statChip}>
-            <Flame size={14} color={colors.danger} strokeWidth={2} />
+            {/* Gold, not danger-red (Section OYNO warm palette) - a streak
+             * is a positive number, matching every other streak indicator
+             * in the app. */}
+            <Flame size={14} color={colors.accentGold} strokeWidth={2} />
             <Text style={styles.statText}>{streakDays}</Text>
           </View>
           <View style={styles.statChip}>

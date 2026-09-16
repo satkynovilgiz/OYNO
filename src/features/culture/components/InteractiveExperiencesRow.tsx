@@ -2,7 +2,7 @@ import { Play } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 export type InteractiveExperience = {
@@ -30,25 +30,27 @@ export function InteractiveExperiencesRow({ experiences, onPressExperience }: In
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('culture.interactive.title')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {experiences.map((experience) => (
-          <AnimatedPressable
-            key={experience.id}
-            style={styles.tile}
-            onPress={() => onPressExperience(experience.id)}
-            haptic="light"
-            accessibilityRole="button"
-            accessibilityLabel={t(experience.titleKey)}
-          >
-            <Image source={experience.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
-            <View style={styles.playBadge}>
-              <Play size={14} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />
-            </View>
-            <View style={styles.tileFooter}>
-              <Text style={styles.tileTitle} numberOfLines={2}>
-                {t(experience.titleKey)}
-              </Text>
-            </View>
-          </AnimatedPressable>
+        {experiences.map((experience, index) => (
+          <FadeSlideIn key={experience.id} style={shadows.card} index={index}>
+            <AnimatedPressable
+              style={styles.tile}
+              onPress={() => onPressExperience(experience.id)}
+              hoverEffect
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel={t(experience.titleKey)}
+            >
+              <Image source={experience.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              <View style={styles.playBadge}>
+                <Play size={14} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />
+              </View>
+              <View style={styles.tileFooter}>
+                <Text style={styles.tileTitle} numberOfLines={2}>
+                  {t(experience.titleKey)}
+                </Text>
+              </View>
+            </AnimatedPressable>
+          </FadeSlideIn>
         ))}
       </ScrollView>
     </View>
@@ -72,10 +74,12 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: radii.xl,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    // A gold frame instead of the plain neutral border every other card
+    // uses (Section "make interactive experiences... visually stand
+    // out") - these are the hands-on creator tools, not passive reading.
+    borderWidth: 2,
+    borderColor: 'rgba(232,185,61,0.6)',
     backgroundColor: colors.surfaceAlt,
-    ...shadows.card,
   },
   playBadge: {
     position: 'absolute',

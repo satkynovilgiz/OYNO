@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, TextButton } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { CultureCategory } from '../types';
@@ -28,28 +28,29 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
       </View>
 
       <View style={styles.grid}>
-        {categories.map((category) => (
-          <AnimatedPressable
-            key={category.id}
-            style={styles.card}
-            onPress={() => onPressCategory?.(category)}
-            pressScale={1}
-            hoverEffect
-            accessibilityRole="button"
-            accessibilityLabel={category.title}
-          >
-            <View style={styles.cardInner}>
-              <Image source={category.imageSource} style={styles.image} resizeMode="cover" />
-              <View style={styles.textBlock}>
-                <Text style={styles.title} numberOfLines={1}>
-                  {category.title}
-                </Text>
-                <Text style={styles.progress}>
-                  {category.current} / {category.total}
-                </Text>
+        {categories.map((category, index) => (
+          <FadeSlideIn key={category.id} style={styles.cardWrap} index={index}>
+            <AnimatedPressable
+              style={styles.card}
+              onPress={() => onPressCategory?.(category)}
+              pressScale={1}
+              hoverEffect
+              accessibilityRole="button"
+              accessibilityLabel={category.title}
+            >
+              <View style={styles.cardInner}>
+                <Image source={category.imageSource} style={styles.image} resizeMode="cover" />
+                <View style={styles.textBlock}>
+                  <Text style={styles.title} numberOfLines={1}>
+                    {category.title}
+                  </Text>
+                  <Text style={styles.progress}>
+                    {category.current} / {category.total}
+                  </Text>
+                </View>
               </View>
-            </View>
-          </AnimatedPressable>
+            </AnimatedPressable>
+          </FadeSlideIn>
         ))}
       </View>
     </View>
@@ -76,9 +77,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
-  card: {
+  cardWrap: {
     flexGrow: 0,
     flexBasis: '30%',
+  },
+  card: {
+    width: '100%',
     borderRadius: radii.lg,
     ...shadows.card,
   },

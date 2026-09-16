@@ -2,7 +2,7 @@ import { Diamond, Gamepad2, Grid3x3, Home, Music2, Soup, type LucideIcon } from 
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, ProgressBar } from '@/components/ui';
+import { Card, FadeSlideIn, ProgressBar, ProgressRing } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
 import type { CultureProgress, CultureStatId } from '../types';
@@ -35,18 +35,21 @@ export function CultureProgressCard({ progress }: CultureProgressCardProps) {
       <ProgressBar progress={progress.overallPercent / 100} height={8} />
 
       <View style={styles.statsRow}>
-        {STATS.map(({ id, labelKey, icon: Icon }) => {
+        {STATS.map(({ id, labelKey, icon: Icon }, index) => {
           const stat = progress.stats[id];
+          const ratio = stat.total > 0 ? stat.current / stat.total : 0;
           return (
-            <View key={id} style={styles.statItem}>
-              <Icon size={20} color={colors.primary} strokeWidth={1.75} />
+            <FadeSlideIn key={id} style={styles.statItem} index={index}>
+              <ProgressRing progress={ratio} size={44} strokeWidth={3}>
+                <Icon size={16} color={colors.primary} strokeWidth={1.75} />
+              </ProgressRing>
               <Text style={styles.statLabel} numberOfLines={1}>
                 {t(`culture.progressStats.${labelKey}`)}
               </Text>
               <Text style={styles.statCount}>
                 {stat.current} / {stat.total}
               </Text>
-            </View>
+            </FadeSlideIn>
           );
         })}
       </View>

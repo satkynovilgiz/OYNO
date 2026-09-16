@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import artwork from '@assets/img/OYNO_design/culture/enter_boz_uy.png';
 
@@ -17,12 +17,16 @@ export function EnterBozUyCard({ onPress }: EnterBozUyCardProps) {
   const { t } = useTranslation();
 
   return (
-    <AnimatedPressable
-      style={styles.card}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={t('culture.enterBozUy.title')}
-    >
+    // Shadow lives on this wrapper, not the clipped/overflow:hidden card
+    // itself (same fix as CultureHero.tsx/Explore's KyrgyzstanMap.tsx).
+    <FadeSlideIn style={[styles.wrap, shadows.card]}>
+      <AnimatedPressable
+        style={styles.card}
+        onPress={onPress}
+        hoverEffect
+        accessibilityRole="button"
+        accessibilityLabel={t('culture.enterBozUy.title')}
+      >
       <Image source={artwork} style={[StyleSheet.absoluteFill, styles.image]} resizeMode="cover" />
       <LinearGradient
         colors={['rgba(20,14,8,0.85)', 'rgba(20,14,8,0)']}
@@ -36,11 +40,15 @@ export function EnterBozUyCard({ onPress }: EnterBozUyCardProps) {
         <Text style={styles.title}>{t('culture.enterBozUy.title')}</Text>
         <Text style={styles.subtitle}>{t('culture.enterBozUy.subtitle')}</Text>
       </View>
-    </AnimatedPressable>
+      </AnimatedPressable>
+    </FadeSlideIn>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    flex: 1,
+  },
   card: {
     flex: 1,
     borderRadius: radii.xl,
@@ -49,7 +57,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
-    ...shadows.card,
   },
   image: {
     width: '100%',

@@ -2,29 +2,34 @@ import { ArrowRight, GraduationCap } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, IconChip } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, IconChip } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 type QuizTeaserCardProps = {
   onPress?: () => void;
 };
 
+/** Whole card is the tap target now, not just the small CTA pill (Section
+ * "Improve pressed states") - the pill stays as a visual affordance rather
+ * than a second, separately-firing pressable. */
 export function QuizTeaserCard({ onPress }: QuizTeaserCardProps) {
   const { t } = useTranslation();
 
   return (
-    <View style={styles.card}>
-      <View style={styles.textCol}>
-        <Text style={styles.title}>{t('culture.quiz.title')}</Text>
-        <Text style={styles.description}>{t('culture.quiz.description')}</Text>
+    <FadeSlideIn>
+      <AnimatedPressable style={styles.card} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={t('culture.quiz.cta')}>
+        <View style={styles.textCol}>
+          <Text style={styles.title}>{t('culture.quiz.title')}</Text>
+          <Text style={styles.description}>{t('culture.quiz.description')}</Text>
 
-        <AnimatedPressable style={styles.cta} onPress={onPress} accessibilityRole="button" accessibilityLabel={t('culture.quiz.cta')}>
-          <Text style={styles.ctaLabel}>{t('culture.quiz.cta')}</Text>
-          <ArrowRight size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
-        </AnimatedPressable>
-      </View>
-      <IconChip icon={GraduationCap} size={56} iconSize={26} color={colors.primary} />
-    </View>
+          <View style={styles.cta}>
+            <Text style={styles.ctaLabel}>{t('culture.quiz.cta')}</Text>
+            <ArrowRight size={14} color={colors.textOnPrimary} strokeWidth={2.5} />
+          </View>
+        </View>
+        <IconChip icon={GraduationCap} size={56} iconSize={26} color={colors.primary} />
+      </AnimatedPressable>
+    </FadeSlideIn>
   );
 }
 

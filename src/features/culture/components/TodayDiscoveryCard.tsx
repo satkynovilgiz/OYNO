@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, Badge } from '@/components/ui';
+import { AnimatedPressable, Badge, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { CultureDiscovery } from '../types';
@@ -16,7 +16,7 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
   const { t } = useTranslation();
 
   return (
-    <View style={styles.card}>
+    <FadeSlideIn style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.label}>{t('culture.discovery.label')}</Text>
         {discovery.isNew && <Badge label={t('culture.discovery.newBadge')} color={colors.accentGold} textColor={colors.textPrimary} />}
@@ -27,13 +27,14 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
 
         <View style={styles.textBlock}>
           <Text style={styles.title}>{discovery.title}</Text>
-          <Text style={styles.description} numberOfLines={3}>
+          <Text style={styles.description} numberOfLines={2}>
             {discovery.description}
           </Text>
 
           <AnimatedPressable
             style={styles.cta}
             onPress={onPress}
+            hoverEffect
             accessibilityRole="button"
             accessibilityLabel={t('culture.discovery.cta')}
           >
@@ -42,7 +43,7 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
           </AnimatedPressable>
         </View>
       </View>
-    </View>
+    </FadeSlideIn>
   );
 }
 
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 64,
+    height: 84,
   },
   textBlock: {
     gap: 2,
