@@ -28,6 +28,12 @@ import wordmark from '@assets/img/OYNO_design/wordmark.png';
 import { onboardingSlideImages, type OnboardingSlideImage } from './data';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+/** Reserved bottom space so each slide's own text never sits under the
+ * fixed dots/CTA overlay (Section "reduce giant dead space" - the image
+ * now fills the whole screen instead of stopping partway down, so the
+ * chrome that used to live on its own cream footer now floats over the
+ * art instead of pushing it up). */
+const BOTTOM_CHROME_HEIGHT = 168;
 
 type OnboardingScreenProps = {
   onFinish: () => void;
@@ -66,12 +72,6 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
 
   return (
     <View style={styles.root}>
-      <View style={[styles.skipRow, { top: insets.top + spacing.sm }]}>
-        <View style={styles.skipChip}>
-          <TextButton label={t('onboarding.skip')} onPress={onFinish} />
-        </View>
-      </View>
-
       <Animated.ScrollView
         ref={scrollRef}
         horizontal
@@ -86,17 +86,23 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         ))}
       </Animated.ScrollView>
 
-      <View style={styles.dots}>
-        {onboardingSlideImages.map((slide, dotIndex) => (
-          <OnboardingDot key={slide.id} dotIndex={dotIndex} scrollX={scrollX} />
-        ))}
+      <View style={[styles.skipRow, { top: insets.top + spacing.sm }]}>
+        <View style={styles.skipChip}>
+          <TextButton label={t('onboarding.skip')} onPress={onFinish} />
+        </View>
       </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+      <View style={[styles.bottomChrome, { paddingBottom: insets.bottom + spacing.md }]}>
+        <View style={styles.dots}>
+          {onboardingSlideImages.map((slide, dotIndex) => (
+            <OnboardingDot key={slide.id} dotIndex={dotIndex} scrollX={scrollX} />
+          ))}
+        </View>
+
         {isLastSlide ? (
           <>
             <Button label={t('onboarding.start')} onPress={handleContinue} />
-            <TextButton label={t('onboarding.later')} onPress={onContinueAsGuest} tone="muted" />
+            <TextButton label={t('onboarding.later')} onPress={onContinueAsGuest} tone="light" style={styles.laterLink} />
           </>
         ) : (
           <Button label={t('onboarding.next')} onPress={handleContinue} />
@@ -118,6 +124,7 @@ type OnboardingSlideProps = {
  * momentum-end index so it tracks the finger during the swipe itself. */
 function OnboardingSlide({ slide, slideIndex, scrollX }: OnboardingSlideProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const inputRange = [(slideIndex - 1) * SCREEN_WIDTH, slideIndex * SCREEN_WIDTH, (slideIndex + 1) * SCREEN_WIDTH];
 
   const contentStyle = useAnimatedStyle(() => ({
@@ -131,25 +138,24 @@ function OnboardingSlide({ slide, slideIndex, scrollX }: OnboardingSlideProps) {
 
   return (
     <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
-      <View style={styles.imageWrap}>
-        <Animated.Image source={slide.image} style={[styles.image, imageStyle]} resizeMode="cover" />
-        <LinearGradient
-          colors={['rgba(20,14,8,0)', colors.background]}
-          locations={[0.55, 1]}
-          style={StyleSheet.absoluteFill}
-        />
-        {slide.id === 'welcome' ? (
-          <View style={styles.wordmarkBadge}>
-            <Image source={wordmark} style={styles.wordmarkImage} resizeMode="contain" />
-          </View>
-        ) : null}
-      </View>
+      <Animated.Image source={slide.image} style={[StyleSheet.absoluteFill, imageStyle]} resizeMode="cover" />
+      <LinearGradient
+        colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.25)', 'rgba(19,32,24,0.94)']}
+        locations={[0.35, 0.62, 1]}
+        style={StyleSheet.absoluteFill}
+      />
 
-      <Animated.View style={[styles.textBlock, contentStyle]}>
+      {slide.id === 'welcome' ? (
+        <View style={[styles.wordmarkBadge, { top: insets.top + spacing.xxl }]}>
+          <Image source={wordmark} style={styles.wordmarkImage} resizeMode="contain" />
+        </View>
+      ) : null}
+
+      <Animated.View style={[styles.content, { paddingBottom: BOTTOM_CHROME_HEIGHT + insets.bottom }, contentStyle]}>
         <View style={styles.ornamentRow}>
-          <OymoOrnament size={12} color={colors.accentGold} />
-          <OymoOrnament size={14} color={colors.accentGold} />
-          <OymoOrnament size={12} color={colors.accentGold} />
+          <OymoOrnament size={11} color={colors.accentGold} />
+          <OymoOrnament size={13} color={colors.accentGold} />
+          <OymoOrnament size={11} color={colors.accentGold} />
         </View>
         <Text style={styles.title}>{t(`onboarding.slides.${slide.id}.title`)}</Text>
         <Text style={styles.description}>{t(`onboarding.slides.${slide.id}.description`)}</Text>
@@ -172,7 +178,7 @@ function OnboardingDot({ dotIndex, scrollX }: { dotIndex: number; scrollX: Share
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceFeature,
   },
   skipRow: {
     position: 'absolute',
@@ -180,26 +186,18 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   skipChip: {
-    backgroundColor: 'rgba(251,243,227,0.88)',
+    backgroundColor: 'rgba(251,243,227,0.9)',
     borderRadius: radii.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
   },
   slide: {
     flex: 1,
-  },
-  imageWrap: {
-    width: '100%',
-    height: '56%',
-    backgroundColor: colors.surfaceAlt,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
+    justifyContent: 'flex-end',
+    backgroundColor: colors.surfaceFeature,
   },
   wordmarkBadge: {
     position: 'absolute',
-    top: '18%',
     alignSelf: 'center',
     alignItems: 'center',
   },
@@ -207,12 +205,9 @@ const styles = StyleSheet.create({
     width: 176,
     height: 48,
   },
-  textBlock: {
-    flex: 1,
+  content: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-    alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   ornamentRow: {
     flexDirection: 'row',
@@ -221,31 +216,38 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.display,
-    color: colors.primary,
-    textAlign: 'center',
+    fontSize: 26,
+    color: colors.textOnDark,
   },
   description: {
     ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
+    color: 'rgba(255,255,255,0.88)',
+    lineHeight: 21,
     maxWidth: 320,
+  },
+  bottomChrome: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    gap: spacing.sm,
+    alignItems: 'center',
   },
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.xs,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   dot: {
     height: 8,
     borderRadius: radii.pill,
     backgroundColor: colors.accentGold,
   },
-  footer: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.sm,
-    alignItems: 'center',
+  laterLink: {
+    paddingVertical: spacing.xxs,
   },
 });

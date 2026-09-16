@@ -10,9 +10,11 @@ type TextButtonProps = {
   onPress?: () => void;
   trailingIcon?: ReactNode;
   disabled?: boolean;
-  /** 'primary' (bold, primary-colored - e.g. "Баарын көрүү") or 'muted'
-   * (bold, secondary-colored - e.g. "Кодду кайра жөнөтүү"). */
-  tone?: 'primary' | 'muted';
+  /** 'primary' (bold, primary-colored - e.g. "Баарын көрүү"), 'muted'
+   * (bold, secondary-colored - e.g. "Кодду кайра жөнөтүү"), or 'light'
+   * (bold, translucent white - for a secondary action sitting directly
+   * over a dark image/gradient, e.g. onboarding's "Later" link). */
+  tone?: 'primary' | 'muted' | 'light';
   /** Keep `label` as the accessible name but don't render it visibly - for
    * space-constrained spots (e.g. a chevron-only "see all" on a narrow
    * card) that still need a real accessibility label instead of none. */
@@ -51,7 +53,9 @@ export function TextButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
     >
-      {hideLabel ? null : <Text style={[styles.label, tone === 'muted' && styles.labelMuted]}>{label}</Text>}
+      {hideLabel ? null : (
+        <Text style={[styles.label, tone === 'muted' && styles.labelMuted, tone === 'light' && styles.labelLight]}>{label}</Text>
+      )}
       {trailingIcon}
     </AnimatedPressable>
   );
@@ -76,5 +80,8 @@ const styles = StyleSheet.create({
   },
   labelMuted: {
     color: colors.textSecondary,
+  },
+  labelLight: {
+    color: 'rgba(255,255,255,0.85)',
   },
 });
