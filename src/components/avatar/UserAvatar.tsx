@@ -43,30 +43,49 @@ type UserAvatarProps = {
 export function UserAvatar({ characterId, avatarConfig, size = 'medium' }: UserAvatarProps) {
   const { t } = useTranslation();
   const px = SIZE_PX[size];
+  // Only the large Profile-header instance gets the gold "this is the
+  // centerpiece" ring - every smaller instance (Home/Explore/Culture
+  // headers) keeps the neutral border so gold stays a special-state
+  // accent instead of being sprinkled on every avatar in the app.
+  const isHero = size === 'profile';
 
   if (!avatarConfig) {
-    return <CharacterAvatar characterId={characterId} emotion="happy" size={px} />;
+    return (
+      <View style={isHero ? [styles.heroRing, { borderRadius: (px + 6) / 2 }] : undefined}>
+        <CharacterAvatar characterId={characterId} emotion="happy" size={px} />
+      </View>
+    );
   }
 
   const dimensionStyle = { width: px, height: px, borderRadius: px / 2 };
   const badgeSize = Math.max(16, Math.round(px * 0.3));
 
   return (
-    <View style={[styles.wrap, dimensionStyle]} accessibilityLabel={t('avatar.wipAvatarLabel')}>
-      <Image source={AVATAR_BUST_ART[avatarConfig.base]} style={dimensionStyle} resizeMode="cover" />
-      <View style={[styles.badge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
-        <Sparkles size={badgeSize * 0.6} color={colors.textOnPrimary} strokeWidth={2.25} />
+    <View style={isHero ? [styles.heroRing, { borderRadius: (px + 6) / 2 }] : undefined}>
+      <View style={[styles.wrap, dimensionStyle, isHero && styles.wrapHero]} accessibilityLabel={t('avatar.wipAvatarLabel')}>
+        <Image source={AVATAR_BUST_ART[avatarConfig.base]} style={dimensionStyle} resizeMode="cover" />
+        <View style={[styles.badge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
+          <Sparkles size={badgeSize * 0.6} color={colors.textOnPrimary} strokeWidth={2.25} />
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  heroRing: {
+    padding: 3,
+    borderWidth: 2,
+    borderColor: colors.accentGold,
+  },
   wrap: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: colors.surfaceBorder,
+  },
+  wrapHero: {
+    borderColor: colors.surface,
   },
   badge: {
     position: 'absolute',

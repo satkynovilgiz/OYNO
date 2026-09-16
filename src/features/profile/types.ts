@@ -38,7 +38,9 @@ export type ProfileAchievement = {
 export type FavoriteGame = {
   id: string;
   name: string;
-  thumbnail: ImageSourcePropType;
+  /** Omit when the game has no cover art yet (Kok Boru) - see
+   * docs/DESIGN_ASSET_AUDIT.md. */
+  thumbnail?: ImageSourcePropType;
   gamesPlayed: number;
   wins: number;
   route?: string;

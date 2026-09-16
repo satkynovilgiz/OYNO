@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Clock, Signal, Users } from 'lucide-react-native';
+import { Award, Clock, Gamepad2, Signal, Users } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -48,7 +48,13 @@ export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardPr
         accessibilityState={{ disabled: !isPlayable }}
       >
         <View style={[styles.thumbnailWrap, isFeatured && styles.thumbnailWrapFeatured]}>
-          <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+          {game.thumbnail ? (
+            <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+          ) : (
+            <View style={[styles.thumbnail, styles.thumbnailFallback]}>
+              <Gamepad2 size={32} color={colors.primary} strokeWidth={1.5} />
+            </View>
+          )}
           <LinearGradient colors={['rgba(20,14,8,0)', 'rgba(20,14,8,0.05)', 'rgba(20,14,8,0.85)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
 
           {game.featured ? (
@@ -140,6 +146,11 @@ const styles = StyleSheet.create({
   },
   thumbnail: {
     ...StyleSheet.absoluteFill,
+  },
+  thumbnailFallback: {
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   awardBadge: {
     position: 'absolute',

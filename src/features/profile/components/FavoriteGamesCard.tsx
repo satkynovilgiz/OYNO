@@ -48,7 +48,13 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
                 accessibilityRole="button"
                 accessibilityLabel={game.name}
               >
-                <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+                {game.thumbnail ? (
+                  <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+                ) : (
+                  <View style={[styles.thumbnail, styles.thumbnailFallback]}>
+                    <Gamepad2 size={20} color={colors.primary} strokeWidth={1.75} />
+                  </View>
+                )}
                 <Text style={styles.gameName} numberOfLines={1}>
                   {game.name}
                 </Text>
@@ -103,6 +109,10 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: radii.md,
     backgroundColor: colors.surfaceAlt,
+  },
+  thumbnailFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   gameName: {
     ...typography.small,

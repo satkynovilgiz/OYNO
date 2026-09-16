@@ -106,6 +106,21 @@ export const mockGamesList: GameListItem[] = [
     is3D: true,
   },
   {
+    id: 'kok-boru',
+    name: 'Көк бору',
+    // No cover art exists yet - see docs/DESIGN_ASSET_AUDIT.md for the
+    // exact spec (cinematic horse+rider composition, same illustrated
+    // style as the other 3D game covers) needed before this can be
+    // replaced with a real `thumbnail`. GameCard renders a plain icon
+    // chip in the meantime instead of a mismatched/placeholder photo.
+    category: 'horse',
+    difficulty: 'medium',
+    players: { kind: 'exact', count: 1 },
+    duration: { minMinutes: 2, maxMinutes: 3 },
+    route: '/games/kok-boru',
+    is3D: true,
+  },
+  {
     id: 'beshbarmak-challenge',
     name: 'Бешбармак Challenge',
     thumbnail: beshbarmak,

@@ -24,7 +24,10 @@ export type GameDuration = { minMinutes: number; maxMinutes: number };
 export type GameListItem = {
   id: string;
   name: string;
-  thumbnail: ImageSourcePropType;
+  /** Omit only when no real cover art exists yet (e.g. Kok Boru - see
+   * docs/DESIGN_ASSET_AUDIT.md for the exact spec needed) - GameCard falls
+   * back to a plain icon chip instead of a broken/blank image. */
+  thumbnail?: ImageSourcePropType;
   category: GameCategory;
   difficulty: GameDifficulty;
   players: GamePlayers;
