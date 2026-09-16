@@ -38,7 +38,9 @@ export function CategoryFilters({ active, onSelect }: CategoryFiltersProps) {
             key={categoryId}
             style={[styles.pill, isActive && styles.pillActive]}
             onPress={() => onSelect(categoryId)}
+            haptic="light"
             accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
             accessibilityLabel={label}
           >
             <Text style={[styles.label, isActive && styles.labelActive]}>{label}</Text>
@@ -59,9 +61,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radii.pill,
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
   },
   pillActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   label: {
     ...typography.caption,

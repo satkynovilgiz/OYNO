@@ -5,7 +5,8 @@
     "seeAll": "See all",
     "guestName": "Guest",
     "back": "Back",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "retry": "Try again"
   },
   "auth": {
     "signIn": {
@@ -307,6 +308,11 @@
       "subtitle": "Get more rewards when you play with friends!",
       "cta": "Invite",
       "shareMessage": "Come play OYNO with me - a game about Kyrgyz culture and traditions!"
+    },
+    "searchEmpty": {
+      "title": "No games found",
+      "description": "Try a different search or category.",
+      "action": "Show all games"
     }
   },
   "beshTash": {
@@ -782,6 +788,7 @@
     "search": {
       "placeholder": "Search a region, place, or discovery",
       "emptyState": "No results found.",
+      "emptyStateDescription": "Try a different word, or check the spelling.",
       "sectionRegions": "Regions",
       "sectionNature": "Nature sites",
       "sectionDiscoveries": "Discoveries"
@@ -792,6 +799,7 @@
       "clear": "Clear",
       "resultsTitle": "Filtered results",
       "noResults": "No places match these filters.",
+      "noResultsDescription": "Try clearing a filter to see more places.",
       "options": {
         "regions": "Regions",
         "nature": "Nature sites",
@@ -879,10 +887,13 @@
       "title": "My favorite games",
       "played": "{{count}} games",
       "wins": "{{count}} wins",
-      "empty": "No games played yet"
+      "empty": "No games played yet",
+      "emptyDescription": "Play a game to see your stats here."
     },
     "collection": {
-      "title": "My collection"
+      "title": "My collection",
+      "empty": "No discoveries yet",
+      "emptyDescription": "Explore Kyrgyzstan to find your first one."
     },
     "dailyActivity": {
       "title": "Today's activity",

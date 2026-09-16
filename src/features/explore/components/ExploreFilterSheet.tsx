@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, Toggle } from '@/components/ui';
@@ -22,6 +23,7 @@ const FILTER_IDS: ExploreFilterId[] = ['regions', 'nature', 'discovered', 'undis
  * yet (see the Explore 2.0 plan's audit section). */
 export function ExploreFilterSheet({ visible, activeFilters, onApply, onClose }: ExploreFilterSheetProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [local, setLocal] = useState<ExploreFilterId[]>(activeFilters);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export function ExploreFilterSheet({ visible, activeFilters, onApply, onClose }:
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
           <View style={styles.handle} />
           <View style={styles.titleRow}>
             <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.5} />

@@ -1,8 +1,8 @@
-import { ChevronRight, Trophy } from 'lucide-react-native';
+import { ChevronRight, Gamepad2, Trophy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
+import { AnimatedPressable, EmptyState, FadeSlideIn, TextButton } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { FavoriteGame } from '../types';
@@ -31,7 +31,12 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
       </View>
 
       {games.length === 0 ? (
-        <Text style={styles.emptyText}>{t('profile.favoriteGames.empty')}</Text>
+        <EmptyState
+          compact
+          icon={Gamepad2}
+          title={t('profile.favoriteGames.empty')}
+          description={t('profile.favoriteGames.emptyDescription')}
+        />
       ) : (
         <View style={styles.list}>
           {games.map((game, index) => (
@@ -113,9 +118,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-  },
-  emptyText: {
-    ...typography.small,
-    color: colors.textSecondary,
   },
 });

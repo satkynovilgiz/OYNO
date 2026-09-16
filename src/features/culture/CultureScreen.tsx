@@ -1,9 +1,11 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { TriangleAlert } from 'lucide-react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { EmptyState } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
@@ -53,8 +55,8 @@ export function CultureScreen() {
   const insets = useSafeAreaInsets();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const progress = useProgressStore();
-  const { data: categoryRows, isLoading: categoriesLoading, error: categoriesError } = useCultureCategories();
-  const { data: materialRows, isLoading: materialsLoading, error: materialsError } = useCultureMaterials();
+  const { data: categoryRows, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCultureCategories();
+  const { data: materialRows, isLoading: materialsLoading, error: materialsError, refetch: refetchMaterials } = useCultureMaterials();
 
   const isLoading = categoriesLoading || materialsLoading;
   const hasError = !!categoriesError || !!materialsError;
@@ -112,9 +114,16 @@ export function CultureScreen() {
             <ActivityIndicator color={colors.primary} />
           </View>
         ) : hasError ? (
-          <View style={styles.stateBlock}>
-            <Text style={styles.stateText}>{t('culture.loadError')}</Text>
-          </View>
+          <EmptyState
+            icon={TriangleAlert}
+            tone="error"
+            title={t('culture.loadError')}
+            actionLabel={t('common.retry')}
+            onPressAction={() => {
+              refetchCategories();
+              refetchMaterials();
+            }}
+          />
         ) : (
           <>
             <CultureCategoriesGrid
@@ -190,8 +199,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stateText: {
-    color: colors.textSecondary,
   },
 });

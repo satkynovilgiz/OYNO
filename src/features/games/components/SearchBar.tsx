@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal } from 'lucide-react-native';
+import { Search, SlidersHorizontal, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
@@ -25,11 +25,22 @@ export function SearchBar({ value, onChangeText, onPressFilter }: SearchBarProps
           placeholderTextColor={colors.textMuted}
           style={styles.input}
         />
+        {value.length > 0 ? (
+          <AnimatedPressable
+            onPress={() => onChangeText('')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+          >
+            <X size={16} color={colors.textMuted} strokeWidth={2.25} />
+          </AnimatedPressable>
+        ) : null}
       </View>
 
       <AnimatedPressable
         style={styles.filterButton}
         onPress={onPressFilter}
+        haptic="light"
         accessibilityRole="button"
         accessibilityLabel={t('games.filterLabel')}
       >
@@ -54,6 +65,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     height: 48,
     borderRadius: radii.pill,
+    borderWidth: 1.5,
+    borderColor: colors.surfaceBorder,
     ...shadows.card,
   },
   input: {
@@ -66,6 +79,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: radii.pill,
     backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.card,

@@ -1,10 +1,10 @@
-import { ChevronLeft, Search as SearchIcon, X } from 'lucide-react-native';
+import { ChevronLeft, Search as SearchIcon, SearchX, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, IconButton } from '@/components/ui';
+import { AnimatedPressable, EmptyState, FadeSlideIn, IconButton } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
 import { track } from '@/services/analytics/analytics';
 import { useDiscoveries } from '@/services/content/discoveriesService';
@@ -79,23 +79,29 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {query.trim().length === 0 ? null : results.length === 0 ? (
-          <Text style={styles.emptyText}>{t('explore.search.emptyState')}</Text>
+          <EmptyState
+            icon={SearchX}
+            title={t('explore.search.emptyState')}
+            description={t('explore.search.emptyStateDescription')}
+          />
         ) : (
           sections
             .filter((section) => section.items.length > 0)
             .map((section) => (
               <View key={section.key} style={styles.section}>
                 <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
-                {section.items.map((item) => (
-                  <AnimatedPressable
-                    key={item.id}
-                    style={styles.row}
-                    onPress={() => onPressResult(item)}
-                    accessibilityRole="button"
-                    accessibilityLabel={item.names[language] ?? item.names.kg}
-                  >
-                    <Text style={styles.rowLabel}>{item.names[language] ?? item.names.kg}</Text>
-                  </AnimatedPressable>
+                {section.items.map((item, index) => (
+                  <FadeSlideIn key={item.id} index={index}>
+                    <AnimatedPressable
+                      style={styles.row}
+                      onPress={() => onPressResult(item)}
+                      hoverEffect
+                      accessibilityRole="button"
+                      accessibilityLabel={item.names[language] ?? item.names.kg}
+                    >
+                      <Text style={styles.rowLabel}>{item.names[language] ?? item.names.kg}</Text>
+                    </AnimatedPressable>
+                  </FadeSlideIn>
                 ))}
               </View>
             ))
@@ -137,12 +143,6 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
     gap: spacing.lg,
-  },
-  emptyText: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.xl,
   },
   section: {
     gap: spacing.xs,

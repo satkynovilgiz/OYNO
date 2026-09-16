@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, SlidersHorizontal, TriangleAlert } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { AnimatedPressable, EmptyState, FadeSlideIn } from '@/components/ui';
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import type { SupportedLanguage } from '@/i18n';
@@ -44,9 +44,9 @@ export function ExploreScreen() {
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<ExploreFilterId[]>([]);
 
-  const { data: regions, isLoading: regionsLoading, error: regionsError } = useExploreRegions();
-  const { data: questRow, isLoading: questLoading, error: questError } = useCurrentQuest();
-  const { data: discoveries, isLoading: discoveriesLoading } = useDiscoveries();
+  const { data: regions, isLoading: regionsLoading, error: regionsError, refetch: refetchRegions } = useExploreRegions();
+  const { data: questRow, isLoading: questLoading, error: questError, refetch: refetchQuest } = useCurrentQuest();
+  const { data: discoveries, isLoading: discoveriesLoading, refetch: refetchDiscoveries } = useDiscoveries();
   const { data: questStepRows } = useQuestSteps(questRow?.id);
 
   const isLoading = regionsLoading || questLoading || discoveriesLoading;
@@ -180,9 +180,17 @@ export function ExploreScreen() {
             <ActivityIndicator color={colors.primary} />
           </View>
         ) : hasError ? (
-          <View style={styles.stateBlock}>
-            <Text style={styles.stateText}>{t('explore.loadError')}</Text>
-          </View>
+          <EmptyState
+            icon={TriangleAlert}
+            tone="error"
+            title={t('explore.loadError')}
+            actionLabel={t('common.retry')}
+            onPressAction={() => {
+              refetchRegions();
+              refetchQuest();
+              refetchDiscoveries();
+            }}
+          />
         ) : (
           <>
             <View style={styles.horizontalPad}>
@@ -197,7 +205,14 @@ export function ExploreScreen() {
               <View style={styles.horizontalPad}>
                 <Text style={styles.filteredTitle}>{t('explore.filters.resultsTitle')}</Text>
                 {filteredRegionsList.length === 0 ? (
-                  <Text style={styles.stateText}>{t('explore.filters.noResults')}</Text>
+                  <EmptyState
+                    compact
+                    icon={SlidersHorizontal}
+                    title={t('explore.filters.noResults')}
+                    description={t('explore.filters.noResultsDescription')}
+                    actionLabel={t('explore.filters.clear')}
+                    onPressAction={() => setActiveFilters([])}
+                  />
                 ) : (
                   <View style={styles.filteredList}>
                     {filteredRegionsList.map((region, index) => (
@@ -293,9 +308,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stateText: {
-    color: colors.textSecondary,
   },
   filteredTitle: {
     ...typography.h2,

@@ -4,6 +4,7 @@ export * from './Button';
 export * from './Card';
 export * from './FadeSlideIn';
 export * from './ConfirmationModal';
+export * from './EmptyState';
 export * from './IconButton';
 export * from './IconChip';
 export * from './OtpCodeInput';

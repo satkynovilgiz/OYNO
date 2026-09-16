@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { Gamepad2 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
@@ -6,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
+import { EmptyState } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing, typography } from '@/theme';
@@ -98,12 +100,27 @@ export function GamesScreen() {
           </View>
         ) : null}
 
-        <View style={styles.grid}>
-          {otherGames.map((game, index) => (
-            <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} />
-          ))}
-          {category === 'all' && !query ? <ComingSoonCard /> : null}
-        </View>
+        {filteredGames.length === 0 ? (
+          <View style={styles.horizontalPad}>
+            <EmptyState
+              icon={Gamepad2}
+              title={t('games.searchEmpty.title')}
+              description={t('games.searchEmpty.description')}
+              actionLabel={t('games.searchEmpty.action')}
+              onPressAction={() => {
+                setQuery('');
+                setCategory('all');
+              }}
+            />
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {otherGames.map((game, index) => (
+              <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} />
+            ))}
+            {category === 'all' && !query ? <ComingSoonCard /> : null}
+          </View>
+        )}
 
         <View style={styles.horizontalPad}>
           <InviteFriendsBanner onPressInvite={handlePressInvite} />
