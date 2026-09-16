@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, FadeSlideIn, IconChip } from '@/components/ui';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { colors, radii, spacing, typography } from '@/theme';
 
 type QuizTeaserCardProps = {
   onPress?: () => void;
@@ -37,13 +37,10 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceWarm,
     borderRadius: radii.xl,
     padding: spacing.sm,
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
   },
   textCol: {
     flex: 1,

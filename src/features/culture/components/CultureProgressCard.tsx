@@ -1,100 +1,62 @@
-import { Diamond, Gamepad2, Grid3x3, Home, Music2, Soup, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card, FadeSlideIn, ProgressBar, ProgressRing } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+import { FadeSlideIn, ProgressRing } from '@/components/ui';
+import { colors, radii, spacing, typography } from '@/theme';
 
-import type { CultureProgress, CultureStatId } from '../types';
-
-type StatDef = { id: CultureStatId; labelKey: string; icon: LucideIcon };
-
-const STATS: StatDef[] = [
-  { id: 'boz-uy', labelKey: 'bozUy', icon: Home },
-  { id: 'oymo', labelKey: 'oymo', icon: Diamond },
-  { id: 'shyrdak', labelKey: 'shyrdak', icon: Grid3x3 },
-  { id: 'komuz', labelKey: 'komuz', icon: Music2 },
-  { id: 'food', labelKey: 'food', icon: Soup },
-  { id: 'games', labelKey: 'games', icon: Gamepad2 },
-];
+import type { CultureProgress } from '../types';
 
 type CultureProgressCardProps = {
   progress: CultureProgress;
 };
 
+/** Compact single-row progress strip (Section "PROGRESS CARD: compact,
+ * data visualization, no giant empty container" / "Reduce the huge
+ * Culture Progress card... support the experience, not dominate half the
+ * screen"). The per-category breakdown this card used to show is now
+ * redundant with each category card's own current/total label
+ * (CultureCategoriesGrid), so this only surfaces the one number that
+ * doesn't live anywhere else: overall progress. */
 export function CultureProgressCard({ progress }: CultureProgressCardProps) {
   const { t } = useTranslation();
 
   return (
-    <Card style={styles.card}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>{t('culture.progress.title')}</Text>
+    <FadeSlideIn style={styles.card}>
+      <ProgressRing progress={progress.overallPercent / 100} size={48} strokeWidth={4}>
         <Text style={styles.percent}>{progress.overallPercent}%</Text>
+      </ProgressRing>
+      <View style={styles.textBlock}>
+        <Text style={styles.title}>{t('culture.progress.title')}</Text>
+        <Text style={styles.subtitle}>{t('culture.progress.continueLabel')}</Text>
       </View>
-
-      <ProgressBar progress={progress.overallPercent / 100} height={8} />
-
-      <View style={styles.statsRow}>
-        {STATS.map(({ id, labelKey, icon: Icon }, index) => {
-          const stat = progress.stats[id];
-          const ratio = stat.total > 0 ? stat.current / stat.total : 0;
-          return (
-            <FadeSlideIn key={id} style={styles.statItem} index={index}>
-              <ProgressRing progress={ratio} size={44} strokeWidth={3}>
-                <Icon size={16} color={colors.primary} strokeWidth={1.75} />
-              </ProgressRing>
-              <Text style={styles.statLabel} numberOfLines={1}>
-                {t(`culture.progressStats.${labelKey}`)}
-              </Text>
-              <Text style={styles.statCount}>
-                {stat.current} / {stat.total}
-              </Text>
-            </FadeSlideIn>
-          );
-        })}
-      </View>
-    </Card>
+    </FadeSlideIn>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    gap: spacing.sm,
-  },
-  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    ...typography.h2,
-    color: colors.textPrimary,
-    flex: 1,
-    marginRight: spacing.sm,
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceWarm,
+    borderRadius: radii.xl,
+    padding: spacing.sm,
   },
   percent: {
-    ...typography.h1,
+    ...typography.caption,
+    fontWeight: '700',
     color: colors.primary,
   },
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.xxs,
-    rowGap: spacing.sm,
+  textBlock: {
+    flex: 1,
+    gap: 1,
   },
-  statItem: {
-    width: '33.33%',
-    alignItems: 'center',
-    gap: 2,
-  },
-  statLabel: {
-    ...typography.small,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  statCount: {
-    ...typography.small,
+  title: {
+    ...typography.bodyBold,
     color: colors.textPrimary,
-    fontWeight: '700',
+  },
+  subtitle: {
+    ...typography.small,
+    color: colors.textMuted,
   },
 });

@@ -1,9 +1,9 @@
 import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { EditorialCard, FadeSlideIn, TextButton } from '@/components/ui';
+import { colors, spacing, typography } from '@/theme';
 
 import type { CultureCategory } from '../types';
 
@@ -13,16 +13,16 @@ type CultureCategoriesGridProps = {
   onPressSeeAll?: () => void;
 };
 
-/** Narrow phones (iPhone SE-class, ~375px and below) get 2 columns instead
- * of 3 - Kyrgyz category names like "Улуттук кийим"/"Кол өнөрчүлүк" need
- * more than a ~30%-width card to read as a real title instead of a
- * truncated fragment (Section "category title should never truncate
- * awkwardly"). */
+/** Editorial "browse culture" section (Section "Replace the rigid
+ * 3-column category grid... one large featured category + smaller
+ * supporting cards") - the first category leads as a wide feature card,
+ * the rest sit in a relaxed 2-column row underneath. Boz Uy/Oymo/Shyrdak/
+ * etc. no longer all render as identical same-size database tiles; the
+ * one featured slot rotates with whatever the catalog returns first
+ * rather than hardcoding a specific category id. */
 export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeAll }: CultureCategoriesGridProps) {
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
-  const columns = width < 380 ? 2 : 3;
-  const cardBasis = columns === 2 ? '47%' : '30%';
+  const [featured, ...rest] = categories;
 
   return (
     <View style={styles.section}>
@@ -35,29 +35,28 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
         />
       </View>
 
-      <View style={styles.grid}>
-        {categories.map((category, index) => (
-          <FadeSlideIn key={category.id} style={[styles.cardWrap, { flexBasis: cardBasis }]} index={index}>
-            <AnimatedPressable
-              style={styles.card}
+      {featured ? (
+        <FadeSlideIn style={styles.horizontalPad} index={0}>
+          <EditorialCard
+            imageSource={featured.imageSource}
+            title={featured.title}
+            meta={`${featured.current} / ${featured.total}`}
+            aspectRatio={16 / 9}
+            size="feature"
+            onPress={() => onPressCategory?.(featured)}
+          />
+        </FadeSlideIn>
+      ) : null}
+
+      <View style={[styles.grid, styles.horizontalPad]}>
+        {rest.map((category, index) => (
+          <FadeSlideIn key={category.id} style={styles.cardWrap} index={index + 1}>
+            <EditorialCard
+              imageSource={category.imageSource}
+              title={category.title}
+              meta={`${category.current} / ${category.total}`}
               onPress={() => onPressCategory?.(category)}
-              pressScale={1}
-              hoverEffect
-              accessibilityRole="button"
-              accessibilityLabel={category.title}
-            >
-              <View style={styles.cardInner}>
-                <Image source={category.imageSource} style={styles.image} resizeMode="cover" />
-                <View style={styles.textBlock}>
-                  <Text style={styles.title} numberOfLines={2}>
-                    {category.title}
-                  </Text>
-                  <Text style={styles.progress}>
-                    {category.current} / {category.total}
-                  </Text>
-                </View>
-              </View>
-            </AnimatedPressable>
+            />
           </FadeSlideIn>
         ))}
       </View>
@@ -79,45 +78,16 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.textPrimary,
   },
+  horizontalPad: {
+    paddingHorizontal: spacing.md,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   cardWrap: {
-    flexGrow: 0,
-  },
-  card: {
-    width: '100%',
-    borderRadius: radii.lg,
-    ...shadows.card,
-  },
-  cardInner: {
-    width: '100%',
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    backgroundColor: colors.surfaceAlt,
-  },
-  textBlock: {
-    padding: spacing.xs,
-    gap: 2,
-  },
-  title: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontWeight: '700',
-    lineHeight: 16,
-  },
-  progress: {
-    ...typography.small,
-    color: colors.textMuted,
+    flexBasis: '44%',
+    flexGrow: 1,
   },
 });

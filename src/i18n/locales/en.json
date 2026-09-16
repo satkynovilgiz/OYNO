@@ -452,7 +452,8 @@
       "subtitle": "Interactive experience"
     },
     "progress": {
-      "title": "Culture progress"
+      "title": "Culture progress",
+      "continueLabel": "Keep exploring to unlock more"
     },
     "quiz": {
       "title": "Test your knowledge!",

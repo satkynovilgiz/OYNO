@@ -23,19 +23,20 @@ export function CultureHero({ onPress }: CultureHeroProps) {
       <View style={styles.card}>
         <Image source={heroArt} style={[StyleSheet.absoluteFill, styles.image]} resizeMode="cover" />
         <LinearGradient
-          colors={['rgba(20,14,8,0.92)', 'rgba(20,14,8,0.55)', 'rgba(20,14,8,0)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.35)', 'rgba(19,32,24,0.92)']}
           locations={[0, 0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.ornamentBadge}>
-          <OymoOrnament size={13} color={colors.accentGold} strokeWidth={1.5} />
-        </View>
 
         <View style={styles.content}>
+          <View style={styles.ornamentRow}>
+            <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.5} />
+            <Text style={styles.eyebrow}>{t('culture.title')}</Text>
+          </View>
           <Text style={styles.title}>{t('culture.hero.title')}</Text>
-          <Text style={styles.description}>{t('culture.hero.description')}</Text>
+          <Text style={styles.description} numberOfLines={2}>
+            {t('culture.hero.description')}
+          </Text>
 
           <AnimatedPressable style={styles.cta} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={t('culture.hero.cta')}>
             <Text style={styles.ctaLabel}>{t('culture.hero.cta')}</Text>
@@ -49,35 +50,31 @@ export function CultureHero({ onPress }: CultureHeroProps) {
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 1.65,
-    borderRadius: radii.xl,
+    aspectRatio: 1.15,
+    borderRadius: radii.xxl,
     overflow: 'hidden',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(232,185,61,0.45)',
-  },
-  ornamentBadge: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(43,32,25,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   image: {
     width: '100%',
     height: '100%',
   },
   content: {
-    paddingHorizontal: spacing.lg,
+    padding: spacing.lg,
     gap: spacing.xs,
-    maxWidth: '68%',
+  },
+  ornamentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  eyebrow: {
+    ...typography.overline,
+    color: colors.accentGold,
   },
   title: {
     ...typography.display,
+    fontSize: 28,
     color: colors.textOnDark,
   },
   description: {

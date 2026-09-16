@@ -134,21 +134,21 @@ export function CultureScreen() {
 
             <InteractiveExperiencesRow experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
 
-            <View style={[styles.horizontalPad, styles.row]}>
-              {todayDiscovery && (
+            <View style={styles.horizontalPad}>
+              <EnterBozUyCard onPress={() => router.push('/culture/boz-uy/build' as never)} />
+            </View>
+
+            {todayDiscovery && (
+              <View style={styles.horizontalPad}>
                 <TodayDiscoveryCard
                   discovery={todayDiscovery}
                   onPress={() => useProgressStore.getState().discoverCulture()}
                 />
-              )}
-              <EnterBozUyCard onPress={() => router.push('/culture/boz-uy/build' as never)} />
-            </View>
+              </View>
+            )}
 
-            <View style={styles.horizontalPad}>
+            <View style={[styles.horizontalPad, styles.stack]}>
               <CultureProgressCard progress={cultureProgress} />
-            </View>
-
-            <View style={styles.horizontalPad}>
               <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
             </View>
 
@@ -187,8 +187,7 @@ const styles = StyleSheet.create({
   horizontalPad: {
     paddingHorizontal: spacing.md,
   },
-  row: {
-    flexDirection: 'row',
+  stack: {
     gap: spacing.sm,
   },
   stateBlock: {

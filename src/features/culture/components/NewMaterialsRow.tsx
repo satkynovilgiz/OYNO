@@ -1,9 +1,9 @@
 import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { CompactContentCard, TextButton } from '@/components/ui';
+import { colors, spacing, typography } from '@/theme';
 
 import type { CultureMaterial } from '../types';
 
@@ -30,24 +30,14 @@ export function NewMaterialsRow({ materials, onPressMaterial, onPressSeeAll }: N
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
-        {materials.map((material, index) => (
-          <FadeSlideIn key={material.id} index={index}>
-            <AnimatedPressable
-              style={styles.card}
-              onPress={() => onPressMaterial?.(material)}
-              hoverEffect
-              accessibilityRole="button"
-              accessibilityLabel={material.title}
-            >
-              <Image source={material.imageSource} style={styles.image} resizeMode="cover" />
-              <Text style={styles.title} numberOfLines={1}>
-                {material.title}
-              </Text>
-              <Text style={styles.meta}>
-                {t(`culture.materials.types.${material.type}`)} · {t('culture.materials.duration', { count: material.durationMinutes })}
-              </Text>
-            </AnimatedPressable>
-          </FadeSlideIn>
+        {materials.map((material) => (
+          <CompactContentCard
+            key={material.id}
+            imageSource={material.imageSource}
+            title={material.title}
+            meta={`${t(`culture.materials.types.${material.type}`)} · ${t('culture.materials.duration', { count: material.durationMinutes })}`}
+            onPress={() => onPressMaterial?.(material)}
+          />
         ))}
       </ScrollView>
     </View>
@@ -71,28 +61,5 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
-  },
-  card: {
-    width: 110,
-    gap: 2,
-  },
-  image: {
-    width: 110,
-    height: 78,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
-  },
-  title: {
-    ...typography.small,
-    color: colors.textPrimary,
-    fontWeight: '700',
-    marginTop: spacing.xxs,
-  },
-  meta: {
-    ...typography.small,
-    color: colors.textMuted,
   },
 });
