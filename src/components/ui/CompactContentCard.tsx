@@ -20,7 +20,7 @@ export function CompactContentCard({ imageSource, title, meta, onPress, style }:
   return (
     <AnimatedPressable style={[styles.card, style]} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={title}>
       <Image source={imageSource} style={styles.image} resizeMode="cover" />
-      <Text style={styles.title} numberOfLines={1}>
+      <Text style={styles.title} numberOfLines={2}>
         {title}
       </Text>
       {meta ? (
@@ -34,12 +34,12 @@ export function CompactContentCard({ imageSource, title, meta, onPress, style }:
 
 const styles = StyleSheet.create({
   card: {
-    width: 108,
+    width: 128,
     gap: 2,
   },
   image: {
     width: '100%',
-    height: 78,
+    height: 88,
     borderRadius: radii.md,
     backgroundColor: colors.surfaceAlt,
   },
@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '700',
     marginTop: 2,
+    lineHeight: 14,
   },
   meta: {
     ...typography.small,
