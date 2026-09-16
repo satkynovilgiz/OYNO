@@ -2,12 +2,12 @@ import { useProgress } from '@react-three/drei';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
-import { spacing, typography } from '@/theme';
+import { spacing } from '@/theme';
 
 import { ContextActionButton } from '../../ui/ContextActionButton';
 import { SprintButtonView, useSprintButton } from '../../controls/SprintButton';
@@ -27,6 +27,7 @@ import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
+import { StatusBanner } from '../../ui/StatusBanner';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKokBoruGame } from './KokBoruController';
 import { createKokBoruAudio } from './kokBoruAudio';
@@ -236,24 +237,33 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
         <GameHUD
           title={t('games3d.titles.kokBoru')}
           onPause={game.pause}
+          practice={mode === 'practice'}
+          // Normal mode splits the score into its own you-vs-AI scoreboard
+          // pair (Section "Player vs AI score where applicable" / Kok
+          // Boru's "competitive team-sport feeling") instead of one
+          // combined "2-1" string under a generic label - practice has no
+          // opponent, so it keeps its own possession/scored-count stats.
           primaryStat={
             mode === 'normal'
-              ? { label: t('games3d.kokBoru.score'), value: `${game.score.player}-${game.score.ai}` }
+              ? { label: t('games3d.kokBoru.you'), value: String(game.score.player) }
               : { label: t('games3d.kokBoru.possession'), value: possessionLabel }
           }
           secondaryStat={
-            mode === 'practice'
-              ? { label: t('games3d.kokBoru.scoredCount'), value: String(game.practiceScoreCount) }
-              : { label: t('games3d.kyzKuumai.time'), value: `${(timeRemaining ?? 0).toFixed(0)}s` }
+            mode === 'normal'
+              ? { label: t('games3d.kokBoru.opponent'), value: String(game.score.ai) }
+              : { label: t('games3d.kokBoru.scoredCount'), value: String(game.practiceScoreCount) }
           }
+          timerValue={mode === 'normal' ? `${(timeRemaining ?? 0).toFixed(0)}s` : undefined}
         />
       ) : null}
 
-      {game.phase === 'GOAL_PAUSE' ? (
-        <View style={styles.goalBanner} pointerEvents="none">
-          <Text style={styles.goalText}>{game.lastScorer === 'player' ? t('games3d.kokBoru.playerScored') : t('games3d.kokBoru.aiScored')}</Text>
-        </View>
-      ) : null}
+      <StatusBanner
+        visible={game.phase === 'GOAL_PAUSE'}
+        text={game.lastScorer === 'player' ? t('games3d.kokBoru.playerScored') : t('games3d.kokBoru.aiScored')}
+        tone="accent"
+        size="lg"
+        top="30%"
+      />
 
       {playing ? (
         <View pointerEvents="box-none" style={[styles.controlsRow, { paddingBottom: insets.bottom + spacing.lg }]}>
@@ -323,18 +333,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     alignItems: 'center',
-  },
-  goalBanner: {
-    position: 'absolute',
-    top: '30%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(232,185,61,0.92)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-  },
-  goalText: {
-    ...typography.h1,
-    color: '#2B2019',
   },
 });

@@ -3,12 +3,12 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector } from 'react-native-gesture-handler';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, spacing, typography } from '@/theme';
+import { spacing } from '@/theme';
 
 import { SprintButtonView, useSprintButton } from '../../controls/SprintButton';
 import { useVirtualJoystick, VirtualJoystickView } from '../../controls/VirtualJoystick';
@@ -26,6 +26,7 @@ import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
+import { StatusBanner } from '../../ui/StatusBanner';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKyzKuumaiGame } from './KyzKuumaiController';
 import { createKyzKuumaiAudio } from './kyzKuumaiAudio';
@@ -224,20 +225,17 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
         <GameHUD
           title={t('games3d.titles.kyzKuumai')}
           onPause={game.pause}
+          practice={mode === 'practice'}
           primaryStat={
             mode === 'practice'
               ? { label: t('games3d.kyzKuumai.checkpoints'), value: `${checkpointsReached}/${game.totalCheckpoints}` }
               : { label: t('games3d.kyzKuumai.distance'), value: `${game.liveDistance.toFixed(1)}m` }
           }
-          secondaryStat={{ label: t('games3d.kyzKuumai.time'), value: `${game.liveElapsedSeconds.toFixed(0)}s` }}
+          timerValue={`${game.liveElapsedSeconds.toFixed(0)}s`}
         />
       ) : null}
 
-      {coachingText ? (
-        <View style={styles.coachingBanner} pointerEvents="none">
-          <Text style={styles.coachingText}>{coachingText}</Text>
-        </View>
-      ) : null}
+      <StatusBanner visible={!!coachingText} text={coachingText ?? ''} top="14%" maxWidth="80%" />
 
       {playing ? (
         <View pointerEvents="box-none" style={[styles.controlsRow, { paddingBottom: insets.bottom + spacing.lg }]}>
@@ -293,20 +291,5 @@ const styles = StyleSheet.create({
   },
   controlSlot: {
     alignItems: 'center',
-  },
-  coachingBanner: {
-    position: 'absolute',
-    top: '14%',
-    alignSelf: 'center',
-    maxWidth: '80%',
-    backgroundColor: 'rgba(20,14,8,0.6)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  coachingText: {
-    ...typography.bodyBold,
-    color: colors.textOnDark,
-    textAlign: 'center',
   },
 });

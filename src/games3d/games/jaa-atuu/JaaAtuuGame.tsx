@@ -250,6 +250,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
         <GameHUD
           title={t('games3d.titles.jaaAtuu')}
           onPause={game.pause}
+          practice={mode === 'practice'}
           primaryStat={{ label: t('games3d.hud.score'), value: String(game.summary.totalScore) }}
           secondaryStat={{ label: t('games3d.hud.arrows'), value: `${game.arrowsRemaining}/${game.totalArrows}` }}
         />

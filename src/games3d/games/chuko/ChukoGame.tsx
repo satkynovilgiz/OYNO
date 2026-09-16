@@ -2,11 +2,10 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector } from 'react-native-gesture-handler';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, typography } from '@/theme';
 
 import { useDragPowerController } from '../../controls/DragPowerController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
@@ -23,6 +22,7 @@ import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
+import { StatusBanner } from '../../ui/StatusBanner';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useChukoGame } from './ChukoController';
 import { createChukoAudio } from './chukoAudio';
@@ -204,6 +204,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
         <GameHUD
           title={t('games3d.titles.chuko')}
           onPause={game.pause}
+          practice={mode === 'practice'}
           primaryStat={
             mode === 'practice'
               ? { label: t('games3d.ordo.captures'), value: String(game.score.player) }
@@ -213,17 +214,8 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
         />
       ) : null}
 
-      {turnLabel ? (
-        <View style={styles.turnBanner} pointerEvents="none">
-          <Text style={styles.turnText}>{turnLabel}</Text>
-        </View>
-      ) : null}
-
-      {landingMessage ? (
-        <View style={styles.landingBanner} pointerEvents="none">
-          <Text style={styles.landingText}>{landingMessage}</Text>
-        </View>
-      ) : null}
+      <StatusBanner visible={!!turnLabel} text={turnLabel ?? ''} top="12%" />
+      <StatusBanner visible={!!landingMessage} text={landingMessage ?? ''} tone="accent" top="20%" />
 
       <PracticeBar
         visible={mode === 'practice' && inGameplayPhase}
@@ -264,24 +256,4 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000' },
-  turnBanner: {
-    position: 'absolute',
-    top: '12%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(20,14,8,0.55)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  turnText: { ...typography.bodyBold, color: colors.textOnDark },
-  landingBanner: {
-    position: 'absolute',
-    top: '20%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(232,185,61,0.9)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  landingText: { ...typography.bodyBold, color: '#2B2019' },
 });

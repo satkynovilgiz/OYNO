@@ -241,6 +241,59 @@ or a manual pause mid-countdown) rather than letting it keep ticking behind
 the pause menu - resuming restarts the 3-2-1-GO sequence from the top
 rather than trying to resume a partial one.
 
+## HUD visual language
+
+`ui/GameHUD.tsx`, `ui/StatusBanner.tsx`, and `ui/PracticeBar.tsx` share one
+visual system (Section "Polish the HUD design") instead of each game
+inventing its own overlay styling: every chip/pill is a warm, translucent
+dark-brown card (`rgba(43,32,25,0.72)`) with a thin gold-tinted border
+(`rgba(232,185,61,0.3)`) - OYNO's own cream/gold identity carried into the
+HUD, not a generic flat-black/gray gaming overlay. A tiny `OymoOrnament`
+(the existing diamond-knot motif from `components/patterns/OymoOrnament.tsx`,
+previously only used in the bottom tab bar) sits in the title chip at 10px -
+deliberately small enough to read as texture, not a logo.
+
+- **`GameHUD`**: pause/title/stats stay 3 separate compact rounded chips
+  with gaps between them (not one wide bar) - both keeps more of the 3D
+  scene visible and keeps this informational HUD visually distinct from
+  the bottom movement controls (joystick/sprint/context-action), which
+  intentionally kept their own plain gold/neutral look. `primaryStat`/
+  `secondaryStat` render as one two-up scoreboard card with a hairline
+  divider when both are present (Ordo/Chuko/Kok Boru's you-vs-AI pairs)
+  rather than two separate pills - the primary value is gold/bold, the
+  secondary a calmer cream tone (`emphasis={false}`), a hierarchy cue
+  ("yours" stands out) instead of a competing red/blue team-color scheme.
+  A new `timerValue` prop is its own small clock-icon chip, kept separate
+  from `primaryStat`/`secondaryStat` specifically because Kok Boru's
+  normal mode needs a you/AI scoreboard AND a running match clock visible
+  at once - three numbers, one dedicated slot each rather than fighting
+  over two. A new `practice` boolean shows a small outlined "Practice" tag
+  next to the title (Section "Practice mode label") - previously nothing
+  in the HUD indicated practice mode at all.
+- **`StatusBanner`**: replaces the four near-identical `turnBanner`/
+  `landingBanner`/`coachingBanner`/`goalBanner` each of Ordo/Chuko/Kyz
+  Kuumai/Kok Boru used to hand-roll with its own `StyleSheet` (Section
+  "Small gameplay notifications" / "Create shared reusable HUD
+  components... instead of designing each game separately") - a `tone`
+  (`neutral` warm-dark or `accent` gold), `size` (`sm` compact pill or `lg`
+  for a bigger once-in-a-while announcement like a goal), and a required
+  `top` position (callers stack more than one banner at different heights,
+  e.g. Chuko's turn indicator above its per-throw landing result). Fades
+  and rises in slightly on show instead of popping in, using the same
+  Reanimated idiom as `GameIntroCard`/`StartCountdown`.
+- **`PracticeBar`** now imports `GAME_HUD_HEIGHT` from `GameHUD.tsx`
+  instead of a second, independently-guessed `+64` magic number for its
+  own vertical offset, and matches the same card language.
+- Kok Boru's normal-mode score display changed from one combined `"2-1"`
+  string under a generic "Score" label to a real `You` / `Opponent`
+  scoreboard pair (still both visible, plus the match timer in its own
+  chip) - a genuine improvement toward "competitive team-sport feeling,"
+  not just a restyle.
+
+Not yet verified on a real device or by a human eye - this environment has
+no working browser/device preview (see the same standing limitation noted
+throughout this doc); verified only via `tsc`/`jest`.
+
 ## Per-shot feedback
 
 `ui/ShotFeedback.tsx` is a shared transient score-popup ("+100" / "ӨТТҮ")

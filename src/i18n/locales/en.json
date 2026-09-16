@@ -1026,7 +1026,8 @@
     },
     "hud": {
       "score": "Score",
-      "arrows": "Arrows"
+      "arrows": "Arrows",
+      "practice": "Practice"
     },
     "pause": {
       "title": "Paused",

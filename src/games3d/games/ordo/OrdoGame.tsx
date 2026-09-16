@@ -2,11 +2,10 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestureDetector } from 'react-native-gesture-handler';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, typography } from '@/theme';
 
 import { useDragPowerController } from '../../controls/DragPowerController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
@@ -23,6 +22,7 @@ import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
+import { StatusBanner } from '../../ui/StatusBanner';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useOrdoGame } from './OrdoController';
 import { createOrdoAudio } from './ordoAudio';
@@ -236,6 +236,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
         <GameHUD
           title={t('games3d.titles.ordo')}
           onPause={game.pause}
+          practice={mode === 'practice'}
           primaryStat={
             mode === 'practice'
               ? { label: t('games3d.ordo.captures'), value: String(game.summary.playerCaptures) }
@@ -245,11 +246,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
         />
       ) : null}
 
-      {turnLabel ? (
-        <View style={styles.turnBanner} pointerEvents="none">
-          <Text style={styles.turnText}>{turnLabel}</Text>
-        </View>
-      ) : null}
+      <StatusBanner visible={!!turnLabel} text={turnLabel ?? ''} top="12%" />
 
       <PracticeBar
         visible={mode === 'practice' && inGameplayPhase}
@@ -292,18 +289,5 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#000',
-  },
-  turnBanner: {
-    position: 'absolute',
-    top: '12%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(20,14,8,0.55)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  turnText: {
-    ...typography.bodyBold,
-    color: colors.textOnDark,
   },
 });
