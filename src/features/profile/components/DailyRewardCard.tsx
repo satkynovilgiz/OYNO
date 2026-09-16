@@ -1,6 +1,8 @@
 import { Coins, Star } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
 import { Button, FadeSlideIn } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
@@ -17,6 +19,17 @@ type DailyRewardCardProps = {
 export function DailyRewardCard({ reward, claimed = false, onPressClaim }: DailyRewardCardProps) {
   const { t } = useTranslation();
   const ready = !claimed;
+  const chestScale = useSharedValue(1);
+
+  useEffect(() => {
+    if (ready) {
+      chestScale.value = withRepeat(withSequence(withTiming(1.06, { duration: 900 }), withTiming(1, { duration: 900 })), -1, true);
+    } else {
+      chestScale.value = withTiming(1, { duration: 200 });
+    }
+  }, [ready, chestScale]);
+
+  const chestStyle = useAnimatedStyle(() => ({ transform: [{ scale: chestScale.value }] }));
 
   return (
     <FadeSlideIn style={[styles.card, ready && styles.cardReady]}>
@@ -25,7 +38,7 @@ export function DailyRewardCard({ reward, claimed = false, onPressClaim }: Daily
       </Text>
 
       <View style={styles.body}>
-        <Image source={chestImage} style={styles.chest} resizeMode="contain" />
+        <Animated.Image source={chestImage} style={[styles.chest, chestStyle]} resizeMode="contain" />
 
         <View style={styles.rewardsBlock}>
           <View style={styles.rewardRow}>

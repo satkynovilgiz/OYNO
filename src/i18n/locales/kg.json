@@ -870,6 +870,8 @@
     "achievements": {
       "title": "Жетишкендиктер",
       "unlocked": "{{unlocked}} / {{total}} ачылды",
+      "unlockedBadge": "Ачылды",
+      "lockedBadge": "Кулпуланган",
       "unlockedTitle": "Жаңы жетишкендик!",
       "unlockedCta": "Сонун!"
     },

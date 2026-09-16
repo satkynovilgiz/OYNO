@@ -870,6 +870,8 @@
     "achievements": {
       "title": "Достижения",
       "unlocked": "Открыто {{unlocked}} / {{total}}",
+      "unlockedBadge": "Открыто",
+      "lockedBadge": "Заблокировано",
       "unlockedTitle": "Новое достижение!",
       "unlockedCta": "Отлично!"
     },

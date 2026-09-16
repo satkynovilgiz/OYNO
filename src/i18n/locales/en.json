@@ -870,6 +870,8 @@
     "achievements": {
       "title": "Achievements",
       "unlocked": "{{unlocked}} / {{total}} unlocked",
+      "unlockedBadge": "Unlocked",
+      "lockedBadge": "Locked",
       "unlockedTitle": "New achievement!",
       "unlockedCta": "Nice!"
     },
