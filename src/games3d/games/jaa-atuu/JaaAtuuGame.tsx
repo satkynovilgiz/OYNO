@@ -266,7 +266,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
         onExit={handleExit}
       />
 
-      {modelsLoading ? <LoadingOverlay progress={modelsProgress / 100} /> : null}
+      <LoadingOverlay visible={modelsLoading} progress={modelsProgress / 100} />
     </View>
   );
 }

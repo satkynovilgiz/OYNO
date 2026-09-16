@@ -291,7 +291,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
 
       <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
 
-      {modelsLoading ? <LoadingOverlay progress={modelsProgress / 100} /> : null}
+      <LoadingOverlay visible={modelsLoading} progress={modelsProgress / 100} />
     </View>
   );
 }

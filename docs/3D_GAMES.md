@@ -164,6 +164,34 @@ establishing shot to wherever the gameplay camera will pick up) are both
 reusable by every game's `INTRO` phase, not Jaa Atuu-specific. Replays skip
 straight to `READY` - the intro/tutorial only show once per session.
 
+## Loading transitions
+
+Two pieces, both shared so no game hand-rolls its own:
+
+- `core/Game3DCanvas.tsx` fades its Canvas in from fully transparent over
+  220ms, triggered by `<Canvas onCreated>` - R3F's own signal that the GL
+  context/renderer exist and the scene is about to paint its first frame,
+  not a guessed timeout. Lives once in the one Canvas host every game
+  already renders through, so all 5 games get it with zero per-game code -
+  masks the brief empty/black flash a fresh GL surface can otherwise show
+  before its first real paint (Section "Prevent the player from briefly
+  seeing an empty/unfinished scene").
+- `ui/LoadingOverlay.tsx` now takes an explicit `visible` prop (defaults to
+  `true` so a bare `<LoadingOverlay progress={x}/>` with no prop still
+  behaves exactly as before) instead of the caller conditionally mounting/
+  unmounting it - Jaa Atuu/Kyz Kuumai/Kok Boru now all render
+  `<LoadingOverlay visible={modelsLoading} .../>` unconditionally, and the
+  component stays mounted (and touch-blocking, since it's an opaque
+  full-bleed view with default `pointerEvents`) for 220ms after `visible`
+  goes false to fade its own opacity out, instead of popping away the
+  instant the GLB finishes. That same "still mounted while fading" window
+  is also what satisfies "prevent gameplay controls from working while
+  loading" - nothing under an opaque, touch-blocking overlay is reachable
+  until it's actually gone, fade included, with no per-game phase-gating
+  changes needed. Only Jaa Atuu/Kyz Kuumai/Kok Boru show this at all -
+  Ordo/Chuko have no GLB to wait on, so they only get the Canvas fade-in
+  above.
+
 ## Per-shot feedback
 
 `ui/ShotFeedback.tsx` is a shared transient score-popup ("+100" / "ӨТТҮ")
