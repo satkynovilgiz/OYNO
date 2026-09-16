@@ -5,50 +5,54 @@ import { useTranslation } from 'react-i18next';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { colors, radii, spacing, typography } from '@/theme';
 
+/** Matches GameCard's own image+text-below rhythm (square artwork area,
+ * plain text block underneath) instead of one solid dark tile, so it
+ * reads as "one more card in the grid" rather than a visually distinct
+ * database-style placeholder. */
 export function ComingSoonCard() {
   const { t } = useTranslation();
 
   return (
     <View style={styles.card}>
-      <View style={styles.iconWrap}>
-        <Lock size={22} color={colors.textOnDark} strokeWidth={1.75} />
+      <View style={styles.imageWrap}>
+        <Lock size={26} color={colors.textOnDark} strokeWidth={1.75} />
+        <OymoOrnament size={14} color="rgba(255,255,255,0.35)" strokeWidth={1.5} />
       </View>
-      <Text style={styles.title}>{t('games.comingSoon.title')}</Text>
-      <Text style={styles.subtitle}>{t('games.comingSoon.subtitle')}</Text>
-      <OymoOrnament size={14} color="rgba(255,255,255,0.35)" strokeWidth={1.5} />
+      <View style={styles.textBlock}>
+        <Text style={styles.title} numberOfLines={1}>
+          {t('games.comingSoon.title')}
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {t('games.comingSoon.subtitle')}
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    // Matches GameCard's own effective proportions (Section "do not
-    // overcrowd" / grid consistency) so this doesn't read as a stray
-    // shorter tile next to the redesigned, artwork-forward game cards.
     width: '47%',
-    aspectRatio: 0.86,
-    borderRadius: radii.xl,
+    gap: spacing.xs,
+  },
+  imageWrap: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: radii.lg,
     backgroundColor: colors.primaryPressed,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    padding: spacing.md,
+    gap: spacing.sm,
   },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  textBlock: {
+    gap: 1,
   },
   title: {
     ...typography.bodyBold,
-    color: colors.textOnDark,
-    textAlign: 'center',
+    color: colors.textPrimary,
   },
   subtitle: {
     ...typography.small,
-    color: 'rgba(255,255,255,0.75)',
+    color: colors.textMuted,
   },
 });

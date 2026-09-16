@@ -55,26 +55,25 @@ export function CategoryFilters({ active, onSelect }: CategoryFiltersProps) {
 const styles = StyleSheet.create({
   row: {
     paddingHorizontal: spacing.md,
-    gap: spacing.xs,
+    gap: spacing.xxs,
   },
   pill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
     borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
+    backgroundColor: 'transparent',
   },
   pillActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   label: {
-    ...typography.caption,
-    color: colors.textPrimary,
+    ...typography.small,
+    fontSize: 12,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   labelActive: {
     color: colors.textOnPrimary,
+    fontWeight: '700',
   },
 });

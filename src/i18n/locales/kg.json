@@ -294,6 +294,9 @@
       "title": "3D дүйнөдө ойно",
       "subtitle": "Оюнга кир"
     },
+    "allGames": {
+      "title": "Бардык оюндар"
+    },
     "playedCount": "{{count}} жолу ойнолду",
     "players": {
       "team": "Команда",

@@ -6,7 +6,6 @@ import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { EmptyState } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -15,6 +14,7 @@ import { colors, spacing, typography } from '@/theme';
 import {
   CategoryFilters,
   ComingSoonCard,
+  Game3DShowcaseCard,
   GameCard,
   GamesHeader,
   InviteFriendsBanner,
@@ -75,28 +75,18 @@ export function GamesScreen() {
         <CategoryFilters active={category} onSelect={setCategory} />
 
         {featured3D.length > 0 ? (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{t('games.featured3D.title')}</Text>
-              <Text style={styles.sectionSubtitle}>{t('games.featured3D.subtitle')}</Text>
-            </View>
+          <View style={styles.featuredSection}>
+            <Text style={styles.featuredTitle}>{t('games.featured3D.title')}</Text>
+            <Text style={styles.featuredSubtitle}>{t('games.featured3D.subtitle')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.featuredRow}
             >
               {featured3D.map((game, index) => (
-                <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} size="featured" />
+                <Game3DShowcaseCard key={game.id} game={game} onPress={handlePressGame} index={index} />
               ))}
             </ScrollView>
-          </View>
-        ) : null}
-
-        {featured3D.length > 0 && (otherGames.length > 0 || (category === 'all' && !query)) ? (
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <OymoOrnament size={12} color={colors.border} strokeWidth={1.5} />
-            <View style={styles.dividerLine} />
           </View>
         ) : null}
 
@@ -113,14 +103,17 @@ export function GamesScreen() {
               }}
             />
           </View>
-        ) : (
-          <View style={styles.grid}>
-            {otherGames.map((game, index) => (
-              <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} />
-            ))}
-            {category === 'all' && !query ? <ComingSoonCard /> : null}
+        ) : otherGames.length > 0 || (category === 'all' && !query) ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t('games.allGames.title')}</Text>
+            <View style={styles.grid}>
+              {otherGames.map((game, index) => (
+                <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} />
+              ))}
+              {category === 'all' && !query ? <ComingSoonCard /> : null}
+            </View>
           </View>
-        )}
+        ) : null}
 
         <View style={styles.horizontalPad}>
           <InviteFriendsBanner onPressInvite={handlePressInvite} />
@@ -154,32 +147,29 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.sm,
   },
-  sectionHeader: {
-    paddingHorizontal: spacing.md,
-    gap: 1,
-  },
   sectionTitle: {
-    ...typography.h2,
+    ...typography.h1,
     color: colors.textPrimary,
+    paddingHorizontal: spacing.md,
   },
-  sectionSubtitle: {
-    ...typography.small,
+  featuredSection: {
+    gap: 2,
+  },
+  featuredTitle: {
+    ...typography.display,
+    fontSize: 22,
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.md,
+  },
+  featuredSubtitle: {
+    ...typography.caption,
     color: colors.textSecondary,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
   },
   featuredRow: {
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.xl,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.border,
   },
   grid: {
     flexDirection: 'row',

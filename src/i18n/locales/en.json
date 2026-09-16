@@ -294,6 +294,9 @@
       "title": "Play in 3D",
       "subtitle": "Step into the game"
     },
+    "allGames": {
+      "title": "All games"
+    },
     "playedCount": "{{count}} plays",
     "players": {
       "team": "Team",

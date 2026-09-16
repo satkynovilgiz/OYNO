@@ -294,6 +294,9 @@
       "title": "Играй в 3D",
       "subtitle": "Погрузись в игру"
     },
+    "allGames": {
+      "title": "Все игры"
+    },
     "playedCount": "Сыграно: {{count}}",
     "players": {
       "team": "Команда",

@@ -3,16 +3,30 @@ const palette = {
   cream100: '#F3E5C9',
   cream200: '#EADCC0',
   cream300: '#E0CFAC',
+  // Warm secondary surface - a step warmer than cream200 without going as
+  // deep as the terracotta accent, used for "warm content" surfaces that
+  // shouldn't read as plain cream (Section "subtle warm secondary surface").
+  cream400: '#E8D3AC',
   brown300: '#C9A876',
   brown500: '#8B6B3D',
   brown700: '#5C4326',
   green500: '#3C6E47',
   green600: '#2F5233',
   green700: '#1F3A24',
+  // Deep feature surface - a full-bleed dark-green section background
+  // (Section "featured dark-green surface"), darker than any pressed/
+  // active state so it reads as a distinct elevation, not a button.
+  green900: '#132018',
   gold400: '#E8B93D',
   gold600: '#C79A2E',
   silver400: '#9AA6AC',
   red500: '#D64545',
+  // Real terracotta accent (Section "Use terracotta selectively for
+  // cultural warmth") - distinct from tileOrange below, which stays as
+  // the existing Home culture-tile tone so nothing that already renders
+  // with it shifts color.
+  terracotta500: '#B9622F',
+  terracotta700: '#7A3F1E',
   tileGreen: '#33482F',
   tileOrange: '#B9793A',
   tileRed: '#7A3226',
@@ -33,6 +47,15 @@ export const colors = {
   surface: palette.cream50,
   surfaceAlt: palette.cream200,
   surfaceBorder: palette.cream300,
+  /** Warm secondary surface - "content that isn't the default card but
+   * also isn't a full feature section" (Section "subtle warm secondary
+   * surface"). Use instead of another plain `surface` card when a block
+   * should feel warmer without borrowing the terracotta accent's weight. */
+  surfaceWarm: palette.cream400,
+  /** Full-bleed dark-green feature-section background (Section "featured
+   * dark-green surface") - for a hero/highlight block that should read as
+   * a distinct elevation, not another cream card. Pair with `textOnDark`. */
+  surfaceFeature: palette.green900,
 
   primary: palette.green600,
   primaryPressed: palette.green700,
@@ -43,6 +66,10 @@ export const colors = {
   accentSilver: palette.silver400,
   accentBrown: palette.brown500,
   accentBrownDark: palette.brown700,
+  /** Terracotta accent - cultural warmth, used selectively (a badge, a
+   * highlight, a "hero" tag), never as a default card border. */
+  accentTerracotta: palette.terracotta500,
+  accentTerracottaDark: palette.terracotta700,
 
   danger: palette.red500,
 

@@ -1,9 +1,8 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { Award, Gamepad2 } from 'lucide-react-native';
+import { Gamepad2, Lock, Play } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { AnimatedPressable, Badge, FadeSlideIn } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -16,11 +15,6 @@ type GameCardProps = {
    * entrance... animations") - an index within its own row/section, not a
    * global one, so each section cascades in independently. */
   index?: number;
-  /** `featured` is the wider showcase card used in the 3D-games row
-   * (bigger artwork, Section "Give game artwork more visual importance");
-   * `grid` (default) is the regular 2-column card. Same component either
-   * way - one place to keep the "premium card" look consistent. */
-  size?: 'grid' | 'featured';
 };
 
 function playersLabel(t: (key: string, options?: Record<string, unknown>) => string, players: GameListItem['players']): string {
@@ -29,16 +23,21 @@ function playersLabel(t: (key: string, options?: Record<string, unknown>) => str
   return t('games.players.open', { min: players.min });
 }
 
-export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardProps) {
+/** EDITORIAL-tier card (Section "GAME CARD: strong cover artwork, clear
+ * Play/status action, minimal metadata") for the regular Games grid - the
+ * 3D showcase row uses its own `Game3DShowcaseCard` instead. Artwork is
+ * never covered by a dark info bar; title and one metadata line sit below
+ * the image in plain text, and playable-vs-coming-soon is a single small
+ * corner badge instead of a banner. */
+export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
   const { t } = useTranslation();
   const isPlayable = !!game.route;
-  const isFeatured = size === 'featured';
   const playedCount = useProgressStore((state) => state.gameStats[game.id]?.played);
 
   return (
-    <FadeSlideIn style={isFeatured ? styles.featuredWrap : styles.gridWrap} index={index}>
+    <FadeSlideIn style={styles.wrap} index={index}>
       <AnimatedPressable
-        style={[styles.card, game.is3D && styles.card3D, !isPlayable && styles.cardDisabled]}
+        style={[styles.card, !isPlayable && styles.cardDisabled]}
         onPress={isPlayable ? () => onPress?.(game) : undefined}
         disabled={!isPlayable}
         hoverEffect
@@ -47,51 +46,32 @@ export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardPr
         accessibilityLabel={game.name}
         accessibilityState={{ disabled: !isPlayable }}
       >
-        <View style={[styles.thumbnailWrap, isFeatured && styles.thumbnailWrapFeatured]}>
+        <View style={styles.imageWrap}>
           {game.thumbnail ? (
-            <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+            <Image source={game.thumbnail} style={styles.image} resizeMode="cover" />
           ) : (
-            <View style={[styles.thumbnail, styles.thumbnailFallback]}>
-              <Gamepad2 size={32} color={colors.primary} strokeWidth={1.5} />
+            <View style={[styles.image, styles.imageFallback]}>
+              <Gamepad2 size={28} color={colors.primary} strokeWidth={1.5} />
             </View>
           )}
-          <LinearGradient colors={['rgba(20,14,8,0)', 'rgba(20,14,8,0.05)', 'rgba(20,14,8,0.85)']} locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
-
-          {!isPlayable ? (
-            <View style={styles.comingSoonBadge}>
-              <Badge label={t('games.comingSoonBadge')} color="rgba(43,32,25,0.75)" />
-            </View>
-          ) : game.featured ? (
-            <View style={styles.awardBadge}>
-              <Award size={13} color={colors.textOnPrimary} strokeWidth={2} />
-            </View>
-          ) : null}
-
-          <View style={styles.overlayText}>
-            <Text style={[styles.name, isFeatured && styles.nameFeatured]} numberOfLines={2}>
-              {game.name}
-            </Text>
-            <Text style={styles.metaTextLight} numberOfLines={1}>
-              {t(`games.difficulty.${game.difficulty}`)} · {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })}
-            </Text>
+          <View style={[styles.statusBadge, isPlayable ? styles.statusBadgePlay : styles.statusBadgeLocked]}>
+            {isPlayable ? (
+              <Play size={12} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
+            ) : (
+              <Lock size={12} color={colors.textOnDark} strokeWidth={2.25} />
+            )}
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.metaText} numberOfLines={1}>
-            {playersLabel(t, game.players)}
+        <View style={styles.textBlock}>
+          <Text style={styles.name} numberOfLines={2}>
+            {game.name}
           </Text>
-
-          {isPlayable ? (
-            typeof playedCount === 'number' && playedCount > 0 ? (
-              <View style={styles.playedChip}>
-                <Text style={styles.playedChipText}>{t('games.playedCount', { count: playedCount })}</Text>
-              </View>
-            ) : (
-              <View style={styles.playChip}>
-                <Text style={styles.playChipText}>{t('games.play')}</Text>
-              </View>
-            )
+          <Text style={styles.meta} numberOfLines={1}>
+            {playersLabel(t, game.players)} · {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })}
+          </Text>
+          {isPlayable && typeof playedCount === 'number' && playedCount > 0 ? (
+            <Text style={styles.playedText}>{t('games.playedCount', { count: playedCount })}</Text>
           ) : null}
         </View>
       </AnimatedPressable>
@@ -99,115 +79,59 @@ export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardPr
   );
 }
 
-const CARD_BORDER = 'rgba(139,107,61,0.25)';
-const CARD_BORDER_3D = 'rgba(232,185,61,0.55)';
-
 const styles = StyleSheet.create({
-  gridWrap: {
+  wrap: {
     width: '47%',
   },
-  featuredWrap: {
-    width: 210,
-  },
   card: {
-    borderRadius: radii.xl,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    overflow: 'hidden',
-  },
-  card3D: {
-    borderColor: CARD_BORDER_3D,
-    borderWidth: 1.5,
+    gap: spacing.xs,
   },
   cardDisabled: {
-    opacity: 0.75,
+    opacity: 0.65,
   },
-  thumbnailWrap: {
+  imageWrap: {
     width: '100%',
-    aspectRatio: 0.92,
-    justifyContent: 'flex-end',
   },
-  thumbnailWrapFeatured: {
-    aspectRatio: 1.15,
-  },
-  thumbnail: {
-    ...StyleSheet.absoluteFill,
-  },
-  thumbnailFallback: {
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceAlt,
+  },
+  imageFallback: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  awardBadge: {
+  statusBadge: {
     position: 'absolute',
-    top: spacing.xs,
-    left: spacing.xs,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.surface,
-  },
-  comingSoonBadge: {
-    position: 'absolute',
-    top: spacing.xs,
+    bottom: spacing.xs,
     right: spacing.xs,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  overlayText: {
-    padding: spacing.sm,
-    gap: 3,
+  statusBadgePlay: {
+    backgroundColor: colors.accentGold,
+  },
+  statusBadgeLocked: {
+    backgroundColor: 'rgba(43,32,25,0.55)',
+  },
+  textBlock: {
+    gap: 1,
   },
   name: {
     ...typography.bodyBold,
-    fontSize: 16,
-    color: colors.textOnDark,
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowRadius: 4,
-  },
-  nameFeatured: {
-    fontSize: 18,
-  },
-  metaTextLight: {
-    ...typography.small,
-    color: 'rgba(255,255,255,0.85)',
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    gap: spacing.xxs,
-  },
-  metaText: {
-    ...typography.small,
-    color: colors.textMuted,
-    flexShrink: 1,
-  },
-  playChip: {
-    backgroundColor: colors.accentGold,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-  },
-  playChipText: {
-    ...typography.small,
-    fontWeight: '700',
     color: colors.textPrimary,
   },
-  playedChip: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-  },
-  playedChipText: {
+  meta: {
     ...typography.small,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.textMuted,
+  },
+  playedText: {
+    ...typography.small,
+    color: colors.primary,
+    fontWeight: '700',
   },
 });
