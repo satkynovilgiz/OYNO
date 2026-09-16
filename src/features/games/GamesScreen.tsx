@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, spacing } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 import {
   CategoryFilters,
@@ -38,6 +39,14 @@ export function GamesScreen() {
     });
   }, [query, category]);
 
+  // 3D games get their own showcase row instead of a per-card badge
+  // (Section "Clearly distinguish 3D games... without a cheap '3D' badge
+  // everywhere") - still driven by the same search/category filter as the
+  // grid below, just presented separately, so search/filtering keeps
+  // working exactly as before across every game.
+  const featured3D = useMemo(() => filteredGames.filter((game) => game.is3D), [filteredGames]);
+  const otherGames = useMemo(() => filteredGames.filter((game) => !game.is3D), [filteredGames]);
+
   const handlePressGame = (game: GameListItem) => {
     if (game.route) {
       router.push(game.route as never);
@@ -63,9 +72,35 @@ export function GamesScreen() {
 
         <CategoryFilters active={category} onSelect={setCategory} />
 
+        {featured3D.length > 0 ? (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('games.featured3D.title')}</Text>
+              <Text style={styles.sectionSubtitle}>{t('games.featured3D.subtitle')}</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.featuredRow}
+            >
+              {featured3D.map((game, index) => (
+                <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} size="featured" />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
+        {featured3D.length > 0 && (otherGames.length > 0 || (category === 'all' && !query)) ? (
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <OymoOrnament size={12} color={colors.border} strokeWidth={1.5} />
+            <View style={styles.dividerLine} />
+          </View>
+        ) : null}
+
         <View style={styles.grid}>
-          {filteredGames.map((game) => (
-            <GameCard key={game.id} game={game} onPress={handlePressGame} />
+          {otherGames.map((game, index) => (
+            <GameCard key={game.id} game={game} onPress={handlePressGame} index={index} />
           ))}
           {category === 'all' && !query ? <ComingSoonCard /> : null}
         </View>
@@ -98,6 +133,36 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  sectionHeader: {
+    paddingHorizontal: spacing.md,
+    gap: 1,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
+  },
+  sectionSubtitle: {
+    ...typography.small,
+    color: colors.textSecondary,
+  },
+  featuredRow: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xl,
+  },
+  dividerLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
   },
   grid: {
     flexDirection: 'row',

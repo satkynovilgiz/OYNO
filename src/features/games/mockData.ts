@@ -32,6 +32,7 @@ export const mockGamesList: GameListItem[] = [
     players: { kind: 'open', min: 1 },
     duration: { minMinutes: 5, maxMinutes: 10 },
     route: '/games/chuko',
+    is3D: true,
   },
   {
     id: 'ordo',
@@ -42,6 +43,7 @@ export const mockGamesList: GameListItem[] = [
     players: { kind: 'exact', count: 2 },
     duration: { minMinutes: 5, maxMinutes: 25 },
     route: '/games/ordo',
+    is3D: true,
   },
   {
     id: 'besh-tash',
@@ -90,6 +92,7 @@ export const mockGamesList: GameListItem[] = [
     players: { kind: 'exact', count: 1 },
     duration: { minMinutes: 5, maxMinutes: 10 },
     route: '/games/jaa-atuu',
+    is3D: true,
   },
   {
     id: 'kyz-kuumay',
@@ -100,6 +103,7 @@ export const mockGamesList: GameListItem[] = [
     players: { kind: 'open', min: 2 },
     duration: { minMinutes: 15, maxMinutes: 20 },
     route: '/games/kyz-kuumai',
+    is3D: true,
   },
   {
     id: 'beshbarmak-challenge',

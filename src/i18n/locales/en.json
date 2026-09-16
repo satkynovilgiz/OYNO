@@ -287,6 +287,11 @@
     "comingSoonBadge": "Coming soon",
     "play": "Play",
     "addFunds": "Add funds",
+    "featured3D": {
+      "title": "Play in 3D",
+      "subtitle": "Step into the game"
+    },
+    "playedCount": "{{count}} plays",
     "players": {
       "team": "Team",
       "exact": "{{count}} players",

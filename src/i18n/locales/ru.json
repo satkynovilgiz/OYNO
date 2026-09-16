@@ -287,6 +287,11 @@
     "comingSoonBadge": "Скоро",
     "play": "Играть",
     "addFunds": "Пополнить",
+    "featured3D": {
+      "title": "Играй в 3D",
+      "subtitle": "Погрузись в игру"
+    },
+    "playedCount": "Сыграно: {{count}}",
     "players": {
       "team": "Команда",
       "exact": "Игроков: {{count}}",

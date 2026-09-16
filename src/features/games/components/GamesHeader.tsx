@@ -19,8 +19,8 @@ export function GamesHeader({ coins, tokens, onPressAddCoins, onPressAddTokens }
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
+        <OymoOrnament size={22} color={colors.accentGold} strokeWidth={1.5} />
         <Text style={styles.title}>{t('games.title')}</Text>
-        <OymoOrnament size={20} color={colors.primary} strokeWidth={1.5} />
       </View>
       <Text style={styles.subtitle}>{t('games.subtitle')}</Text>
 
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.display,
+    fontSize: 30,
     color: colors.textPrimary,
   },
   subtitle: {

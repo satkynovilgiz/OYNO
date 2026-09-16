@@ -32,4 +32,8 @@ export type GameListItem = {
   featured?: boolean;
   /** Route to push when "Ойноо" is pressed; omit for not-yet-built games. */
   route?: string;
+  /** Renders through the shared 3D game engine (`src/games3d/`) - shown in
+   * its own showcase row instead of a per-card "3D" badge (Section
+   * "Clearly distinguish 3D games... without a cheap badge"). */
+  is3D?: boolean;
 };
