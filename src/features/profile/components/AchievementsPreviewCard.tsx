@@ -28,7 +28,7 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
           label={t('common.seeAll')}
           hideLabel
           onPress={onPressSeeAll}
-          trailingIcon={<ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />}
+          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
         />
       </View>
       <Text style={styles.unlocked}>{t('profile.achievements.unlocked', { unlocked, total })}</Text>

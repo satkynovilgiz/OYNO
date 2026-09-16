@@ -26,7 +26,7 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
           label={t('common.seeAll')}
           hideLabel
           onPress={onPressSeeAll}
-          trailingIcon={<ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />}
+          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
         />
       </View>
 
