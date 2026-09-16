@@ -210,7 +210,8 @@
       "editLabel": "Аты-жөнүн оңдоо",
       "rank": "Жаш оюнчу",
       "level": "Деңгээл {{level}}",
-      "xp": "XP {{current}} / {{max}}"
+      "xp": "XP {{current}} / {{max}}",
+      "streak": "{{days}} күндүк ырааттуулук"
     },
     "dailyChallenge": {
       "title": "Бүгүнкү тапшырма",
@@ -234,7 +235,8 @@
       "sectionTitle": "Оюндар"
     },
     "culture": {
-      "openLabel": "Бөлүмдү ачуу"
+      "openLabel": "Бөлүмдү ачуу",
+      "sectionTitle": "Маданиятты изилде"
     },
     "cultureTiles": {
       "culture": {

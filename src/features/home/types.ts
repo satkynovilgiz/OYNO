@@ -13,6 +13,7 @@ export type PlayerSummary = {
   xpMax: number;
   coins: number;
   gems: number;
+  streakDays: number;
 };
 
 export type DailyChallenge = {

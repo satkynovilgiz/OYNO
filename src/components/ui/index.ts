@@ -2,6 +2,7 @@ export * from './AnimatedPressable';
 export * from './Badge';
 export * from './Button';
 export * from './Card';
+export * from './FadeSlideIn';
 export * from './ConfirmationModal';
 export * from './IconButton';
 export * from './IconChip';

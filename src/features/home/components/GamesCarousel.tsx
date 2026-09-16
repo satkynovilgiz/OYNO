@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, TextButton } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
 import type { GameListItem } from '@/features/games/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
@@ -33,19 +33,22 @@ export function GamesCarousel({ games, onPressGame, onPressSeeAll }: GamesCarous
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
       >
-        {games.map((game) => (
-          <AnimatedPressable
-            key={game.id}
-            style={styles.card}
-            onPress={() => onPressGame?.(game)}
-            accessibilityRole="button"
-            accessibilityLabel={game.name}
-          >
-            <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
-            <Text style={styles.name} numberOfLines={1}>
-              {game.name}
-            </Text>
-          </AnimatedPressable>
+        {games.map((game, index) => (
+          <FadeSlideIn key={game.id} index={index}>
+            <AnimatedPressable
+              style={styles.card}
+              onPress={() => onPressGame?.(game)}
+              hoverEffect
+              haptic="light"
+              accessibilityRole="button"
+              accessibilityLabel={game.name}
+            >
+              <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
+              <Text style={styles.name} numberOfLines={1}>
+                {game.name}
+              </Text>
+            </AnimatedPressable>
+          </FadeSlideIn>
         ))}
       </ScrollView>
 
@@ -77,13 +80,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   card: {
-    width: 92,
+    width: 104,
     alignItems: 'center',
     gap: spacing.xxs,
   },
   thumbnail: {
-    width: 92,
-    height: 92,
+    width: 104,
+    height: 104,
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
     borderWidth: 1,

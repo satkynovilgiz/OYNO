@@ -17,10 +17,11 @@ type DailyProgressCardProps = {
 export function DailyProgressCard({ progress, claimable = false, claimed = false, onPressClaim }: DailyProgressCardProps) {
   const { t } = useTranslation();
   const ratio = progress.progressMax > 0 ? progress.progressCurrent / progress.progressMax : 0;
+  const ready = claimable && !claimed;
 
   return (
-    <Card style={styles.card}>
-      <IconChip icon={Target} size={44} iconSize={22} />
+    <Card style={[styles.card, ready && styles.cardReady]}>
+      <IconChip icon={Target} size={44} iconSize={22} color={ready ? colors.accentGold : undefined} />
 
       <View style={styles.textBlock}>
         <Text style={styles.title}>{t('home.dailyProgress.title')}</Text>
@@ -47,6 +48,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  cardReady: {
+    borderWidth: 1.5,
+    borderColor: colors.accentGold,
   },
   textBlock: {
     flex: 1,

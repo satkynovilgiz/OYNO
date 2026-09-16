@@ -3,22 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, IconButton, IconChip, ProgressBar } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+import { colors, radii, spacing, typography } from '@/theme';
 
 import type { DailyChallenge } from '../types';
 
 type DailyChallengeCardProps = {
   challenge: DailyChallenge;
   onPress?: () => void;
+  /** Complete but not yet claimed (Section "daily task/reward cards feel
+   * more special") - a gold ring instead of a generic card border, the
+   * same "ready" cue `DailyGiftCard`/`DailyProgressCard` use. */
+  ready?: boolean;
 };
 
-export function DailyChallengeCard({ challenge, onPress }: DailyChallengeCardProps) {
+export function DailyChallengeCard({ challenge, onPress, ready = false }: DailyChallengeCardProps) {
   const { t } = useTranslation();
   const progress =
     challenge.progressMax > 0 ? challenge.progressCurrent / challenge.progressMax : 0;
 
   return (
-    <Card style={styles.card}>
+    <Card style={[styles.card, ready && styles.cardReady]}>
       <View style={styles.headerRow}>
         <IconChip icon={Calendar} size={28} iconSize={14} />
         <Text style={styles.title}>{t('home.dailyChallenge.title')}</Text>
@@ -61,6 +65,10 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     gap: spacing.xs,
+  },
+  cardReady: {
+    borderWidth: 1.5,
+    borderColor: colors.accentGold,
   },
   headerRow: {
     flexDirection: 'row',

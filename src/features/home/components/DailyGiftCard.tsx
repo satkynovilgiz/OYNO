@@ -10,14 +10,19 @@ import type { DailyGift } from '../types';
 type DailyGiftCardProps = {
   gift: DailyGift;
   onPress?: () => void;
+  /** Not yet claimed today (Section "daily task/reward cards feel more
+   * special") - a gold ring + a warmer icon chip instead of a generic
+   * card border, the same "ready" cue as the other 2 daily cards. */
+  claimed?: boolean;
 };
 
-export function DailyGiftCard({ gift, onPress }: DailyGiftCardProps) {
+export function DailyGiftCard({ gift, onPress, claimed = false }: DailyGiftCardProps) {
   const { t } = useTranslation();
+  const ready = !claimed;
 
   return (
-    <Card style={styles.card}>
-      <IconChip icon={Gift} size={48} iconSize={24} color={colors.primary} />
+    <Card style={[styles.card, ready && styles.cardReady]}>
+      <IconChip icon={Gift} size={48} iconSize={24} color={ready ? colors.accentGold : colors.primary} />
 
       <View style={styles.textBlock}>
         <Text style={styles.title}>{t('home.dailyGift.title')}</Text>
@@ -40,6 +45,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+  },
+  cardReady: {
+    borderWidth: 1.5,
+    borderColor: colors.accentGold,
   },
   textBlock: {
     flex: 1,

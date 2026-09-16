@@ -210,7 +210,8 @@
       "editLabel": "Изменить имя",
       "rank": "Молодой игрок",
       "level": "Уровень {{level}}",
-      "xp": "XP {{current}} / {{max}}"
+      "xp": "XP {{current}} / {{max}}",
+      "streak": "Серия: {{days}} дн."
     },
     "dailyChallenge": {
       "title": "Задание дня",
@@ -234,7 +235,8 @@
       "sectionTitle": "Игры"
     },
     "culture": {
-      "openLabel": "Открыть раздел"
+      "openLabel": "Открыть раздел",
+      "sectionTitle": "Исследуй культуру"
     },
     "cultureTiles": {
       "culture": {

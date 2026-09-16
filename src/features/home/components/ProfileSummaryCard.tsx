@@ -1,4 +1,4 @@
-import { Award, Coins, Pencil } from 'lucide-react-native';
+import { Award, Coins, Flame, Pencil } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -19,8 +19,10 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
   return (
     <Card style={styles.card}>
       <View style={styles.topRow}>
-        <View style={styles.avatar}>
-          <UserAvatar characterId={player.characterId} avatarConfig={player.avatarConfig} size="small" />
+        <View style={styles.avatarRing}>
+          <View style={styles.avatar}>
+            <UserAvatar characterId={player.characterId} avatarConfig={player.avatarConfig} size="small" />
+          </View>
         </View>
 
         <View style={styles.identity}>
@@ -33,14 +35,22 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
           <Text style={styles.rank} numberOfLines={1}>
             {player.rank}
           </Text>
-          <Pill label={t('home.profile.level', { level: player.level })} />
+          <View style={styles.badgeRow}>
+            <Pill label={t('home.profile.level', { level: player.level })} />
+            {player.streakDays > 0 ? (
+              <View style={styles.streakChip}>
+                <Flame size={11} color={colors.accentGold} strokeWidth={2.25} />
+                <Text style={styles.streakText}>{player.streakDays}</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
       </View>
 
       <View style={styles.xpBlock}>
-        <Text style={styles.xpLabel}>
-          {t('home.profile.xp', { current: player.xpCurrent, max: player.xpMax })}
-        </Text>
+        <View style={styles.xpLabelRow}>
+          <Text style={styles.xpLabel}>{t('home.profile.xp', { current: player.xpCurrent, max: player.xpMax })}</Text>
+        </View>
         <ProgressBar progress={xpProgress} />
       </View>
 
@@ -67,10 +77,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
+  avatarRing: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: colors.accentGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
@@ -98,8 +117,30 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  streakChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: colors.surfaceAlt,
+    paddingHorizontal: spacing.xxs,
+    paddingVertical: 2,
+    borderRadius: radii.pill,
+  },
+  streakText: {
+    ...typography.small,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
   xpBlock: {
     gap: spacing.xxs,
+  },
+  xpLabelRow: {
+    flexDirection: 'row',
   },
   xpLabel: {
     ...typography.small,

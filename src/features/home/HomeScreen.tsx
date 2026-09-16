@@ -77,6 +77,7 @@ export function HomeScreen() {
     xpMax,
     coins: progress.coins,
     gems: progress.gems,
+    streakDays: progress.streakDays,
   };
 
   const dailyChallenge: DailyChallenge = {
@@ -127,11 +128,11 @@ export function HomeScreen() {
 
         <View style={styles.topRow}>
           <ProfileSummaryCard player={player} />
-          <DailyChallengeCard challenge={dailyChallenge} onPress={handlePressDailyChallenge} />
+          <DailyChallengeCard challenge={dailyChallenge} onPress={handlePressDailyChallenge} ready={challengeComplete && !challengeClaimed} />
         </View>
 
         <View style={styles.horizontalPad}>
-          <DailyGiftCard gift={dailyGift} onPress={() => useProgressStore.getState().claimDailyGift()} />
+          <DailyGiftCard gift={dailyGift} claimed={giftClaimed} onPress={() => useProgressStore.getState().claimDailyGift()} />
         </View>
 
         <View style={styles.horizontalPad}>

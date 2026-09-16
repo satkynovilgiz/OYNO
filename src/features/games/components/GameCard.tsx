@@ -1,11 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Award, Clock, Signal, Users } from 'lucide-react-native';
-import { useEffect } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -37,28 +35,8 @@ export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardPr
   const isFeatured = size === 'featured';
   const playedCount = useProgressStore((state) => state.gameStats[game.id]?.played);
 
-  // Cascading fade/rise-in (Section "subtle card entrance... animations
-  // using the project's existing animation system") - reanimated, same
-  // idiom as GameIntroCard/StartCountdown elsewhere in the app, staggered
-  // by this card's position in its own row so a grid/showcase reveals
-  // left-to-right instead of every card popping in at once.
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(10);
-
-  useEffect(() => {
-    const delay = Math.min(index, 8) * 55;
-    opacity.value = withDelay(delay, withTiming(1, { duration: 260 }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: 260 }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const enterStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
   return (
-    <Animated.View style={[isFeatured ? styles.featuredWrap : styles.gridWrap, enterStyle]}>
+    <FadeSlideIn style={isFeatured ? styles.featuredWrap : styles.gridWrap} index={index}>
       <AnimatedPressable
         style={[styles.card, game.is3D && styles.card3D, !isPlayable && styles.cardDisabled]}
         onPress={isPlayable ? () => onPress?.(game) : undefined}
@@ -124,7 +102,7 @@ export function GameCard({ game, onPress, index = 0, size = 'grid' }: GameCardPr
           ) : null}
         </View>
       </AnimatedPressable>
-    </Animated.View>
+    </FadeSlideIn>
   );
 }
 

@@ -210,7 +210,8 @@
       "editLabel": "Edit name",
       "rank": "Young player",
       "level": "Level {{level}}",
-      "xp": "XP {{current}} / {{max}}"
+      "xp": "XP {{current}} / {{max}}",
+      "streak": "{{days}}-day streak"
     },
     "dailyChallenge": {
       "title": "Daily challenge",
@@ -234,7 +235,8 @@
       "sectionTitle": "Games"
     },
     "culture": {
-      "openLabel": "Open section"
+      "openLabel": "Open section",
+      "sectionTitle": "Explore Culture"
     },
     "cultureTiles": {
       "culture": {
