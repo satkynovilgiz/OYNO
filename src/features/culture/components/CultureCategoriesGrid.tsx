@@ -13,16 +13,23 @@ type CultureCategoriesGridProps = {
   onPressSeeAll?: () => void;
 };
 
-/** Editorial "browse culture" section (Section "Replace the rigid
- * 3-column category grid... one large featured category + smaller
- * supporting cards") - the first category leads as a wide feature card,
- * the rest sit in a relaxed 2-column row underneath. Boz Uy/Oymo/Shyrdak/
- * etc. no longer all render as identical same-size database tiles; the
- * one featured slot rotates with whatever the catalog returns first
- * rather than hardcoding a specific category id. */
+/** Editorial "browse culture" section (Section "one large featured
+ * category + smaller supporting cards... should NOT all look like
+ * identical database tiles"). One featured card alone wasn't enough -
+ * with 10 categories, the other 9 still read as one long repeated
+ * template. Instead, after the lead feature, the rest are grouped in
+ * threes: one wide "spotlight" card + a square pair, repeating - so the
+ * rhythm keeps breaking instead of settling into a flat grid. */
 export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeAll }: CultureCategoriesGridProps) {
   const { t } = useTranslation();
   const [featured, ...rest] = categories;
+
+  const groups: CultureCategory[][] = [];
+  for (let i = 0; i < rest.length; i += 3) {
+    groups.push(rest.slice(i, i + 3));
+  }
+
+  let cardIndex = 1;
 
   return (
     <View style={styles.section}>
@@ -48,18 +55,39 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
         </FadeSlideIn>
       ) : null}
 
-      <View style={[styles.grid, styles.horizontalPad]}>
-        {rest.map((category, index) => (
-          <FadeSlideIn key={category.id} style={styles.cardWrap} index={index + 1}>
-            <EditorialCard
-              imageSource={category.imageSource}
-              title={category.title}
-              meta={`${category.current} / ${category.total}`}
-              onPress={() => onPressCategory?.(category)}
-            />
-          </FadeSlideIn>
-        ))}
-      </View>
+      {groups.map((group, groupIndex) => {
+        const [spotlight, ...pair] = group;
+        return (
+          <View key={groupIndex} style={[styles.horizontalPad, styles.group]}>
+            {spotlight ? (
+              <FadeSlideIn index={cardIndex++}>
+                <EditorialCard
+                  imageSource={spotlight.imageSource}
+                  title={spotlight.title}
+                  meta={`${spotlight.current} / ${spotlight.total}`}
+                  aspectRatio={2}
+                  onPress={() => onPressCategory?.(spotlight)}
+                />
+              </FadeSlideIn>
+            ) : null}
+
+            {pair.length > 0 ? (
+              <View style={styles.grid}>
+                {pair.map((category) => (
+                  <FadeSlideIn key={category.id} style={styles.cardWrap} index={cardIndex++}>
+                    <EditorialCard
+                      imageSource={category.imageSource}
+                      title={category.title}
+                      meta={`${category.current} / ${category.total}`}
+                      onPress={() => onPressCategory?.(category)}
+                    />
+                  </FadeSlideIn>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -80,6 +108,9 @@ const styles = StyleSheet.create({
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
+  },
+  group: {
+    gap: spacing.md,
   },
   grid: {
     flexDirection: 'row',
