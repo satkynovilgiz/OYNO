@@ -2,14 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import i18n, { DEFAULT_LANGUAGE, type SupportedLanguage } from '@/i18n';
-import { ALL_CHARACTER_IDS, type CharacterId } from '@/components/character';
+import { ALL_CHARACTER_IDS, type CharacterId } from '@/components/character/characterAssets';
 import { track } from '@/services/analytics/analytics';
+import { ALL_AGE_GROUPS, type AgeGroup } from '@/services/ageExperience/types';
 import { supabase } from '@/services/supabase/client';
 import { useAuthStore } from '@/store/useAuthStore';
 
 const ONBOARDING_COMPLETE_KEY = 'oyno.onboardingComplete';
 const LANGUAGE_CHOSEN_KEY = 'oyno.languageChosen';
 const CHARACTER_ID_KEY = 'oyno.characterId';
+const AGE_GROUP_KEY = 'oyno.ageGroup';
 
 type AppState = {
   language: SupportedLanguage;
@@ -39,6 +41,19 @@ type AppState = {
   loadOnboardingFlags: () => Promise<void>;
   markLanguageChosen: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
+
+  /** The user's self-selected age band (spec "Add age-group selection to
+   * OYNO onboarding") - never a birth date. Local-only: it steers
+   * presentation, not account data, so it deliberately skips the
+   * server-sync pattern used by useAvatarStore/useSettingsStore. */
+  ageGroup: AgeGroup | null;
+  /** Whether the onboarding age-group step has been completed. Gates
+   * routing the same way hasCompletedOnboarding does. */
+  hasChosenAgeGroup: boolean;
+  loadAgeGroup: () => Promise<void>;
+  /** Sets and persists the age group - used both by the onboarding step and
+   * by the later Settings "Experience" control to change it. */
+  setAgeGroup: (ageGroup: AgeGroup) => Promise<void>;
 };
 
 function isRealUser(): boolean {
@@ -113,6 +128,21 @@ export const useAppStore = create<AppState>((set) => ({
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
     set({ hasCompletedOnboarding: true });
     track('onboarding_completed');
+  },
+
+  ageGroup: null,
+  hasChosenAgeGroup: false,
+
+  loadAgeGroup: async () => {
+    const stored = await AsyncStorage.getItem(AGE_GROUP_KEY).catch(() => null);
+    const ageGroup = (ALL_AGE_GROUPS as string[]).includes(stored ?? '') ? (stored as AgeGroup) : null;
+    set({ ageGroup, hasChosenAgeGroup: ageGroup !== null });
+  },
+
+  setAgeGroup: async (ageGroup) => {
+    await AsyncStorage.setItem(AGE_GROUP_KEY, ageGroup);
+    set({ ageGroup, hasChosenAgeGroup: true });
+    track('age_group_selected', { ageGroup });
   },
 }));
 

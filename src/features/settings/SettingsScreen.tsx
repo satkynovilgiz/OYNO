@@ -10,6 +10,7 @@ import {
   LogOut,
   Lock,
   ShieldCheck,
+  Sparkles,
   Wrench,
 } from 'lucide-react-native';
 import { useState } from 'react';
@@ -25,7 +26,9 @@ import { SettingsRow } from './components/SettingsRow';
 
 type SettingsScreenProps = {
   onPressBack: () => void;
-  onNavigate: (section: 'account' | 'language' | 'notifications' | 'privacy' | 'security' | 'game' | 'data' | 'help' | 'about') => void;
+  onNavigate: (
+    section: 'account' | 'language' | 'experience' | 'notifications' | 'privacy' | 'security' | 'game' | 'data' | 'help' | 'about',
+  ) => void;
   onPressAdmin: () => void;
   onSignOut: () => Promise<void>;
 };
@@ -57,6 +60,7 @@ export function SettingsScreen({ onPressBack, onNavigate, onPressAdmin, onSignOu
         <View style={styles.group}>
           <SettingsRow icon={CircleUser} label={t('settings.rows.account')} onPress={() => onNavigate('account')} />
           <SettingsRow icon={Globe} label={t('settings.rows.language')} onPress={() => onNavigate('language')} />
+          <SettingsRow icon={Sparkles} label={t('settings.rows.experience')} onPress={() => onNavigate('experience')} />
         </View>
 
         <Text style={styles.sectionLabel}>{t('settings.sections.general')}</Text>

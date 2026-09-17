@@ -11,12 +11,12 @@ export default function OnboardingRoute() {
     <OnboardingScreen
       onFinish={async () => {
         await completeOnboarding();
-        router.replace('/sign-up');
+        router.replace('/age-group' as never);
       }}
       onContinueAsGuest={async () => {
         await completeOnboarding();
         await useAuthStore.getState().continueAsGuest();
-        router.replace('/home');
+        router.replace('/age-group' as never);
       }}
     />
   );

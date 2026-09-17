@@ -1,12 +1,13 @@
 import { decideRouteGuardRedirect, type RouteGuardState } from './routeGuard';
 
-const UNGATED_ROUTES = ['/', '/language', '/onboarding', '/sign-up', '/sign-in', '/verify-email'];
+const UNGATED_ROUTES = ['/', '/language', '/onboarding', '/age-group', '/sign-up', '/sign-in', '/verify-email'];
 
 function baseState(overrides: Partial<RouteGuardState> = {}): RouteGuardState {
   return {
     authStatus: 'authenticated',
     hasChosenLanguage: true,
     hasCompletedOnboarding: true,
+    hasChosenAgeGroup: true,
     pathname: '/home',
     ungatedRoutes: UNGATED_ROUTES,
     ...overrides,
@@ -42,6 +43,26 @@ describe('decideRouteGuardRedirect', () => {
         baseState({ hasChosenLanguage: true, hasCompletedOnboarding: false, pathname: '/onboarding' }),
       ),
     ).toBeNull();
+  });
+
+  it('sends a user who finished onboarding but never picked an age group to /age-group', () => {
+    expect(
+      decideRouteGuardRedirect(baseState({ hasChosenAgeGroup: false, pathname: '/home' })),
+    ).toBe('/age-group');
+  });
+
+  it('does not loop /age-group back to itself', () => {
+    expect(
+      decideRouteGuardRedirect(baseState({ hasChosenAgeGroup: false, pathname: '/age-group' })),
+    ).toBeNull();
+  });
+
+  it('sends an unauthenticated user who has not picked an age group to /age-group before /sign-in', () => {
+    expect(
+      decideRouteGuardRedirect(
+        baseState({ authStatus: 'unauthenticated', hasChosenAgeGroup: false, pathname: '/explore' }),
+      ),
+    ).toBe('/age-group');
   });
 
   it('bounces a logged-out user hitting a gated route to /sign-in', () => {

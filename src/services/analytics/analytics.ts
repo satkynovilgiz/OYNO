@@ -36,7 +36,8 @@ export type AnalyticsEventName =
   | 'discovery_found'
   | 'quest_step_completed'
   | 'explore_search'
-  | 'explore_filter_used';
+  | 'explore_filter_used'
+  | 'age_group_selected';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

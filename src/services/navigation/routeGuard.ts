@@ -2,6 +2,10 @@ export type RouteGuardState = {
   authStatus: 'loading' | 'authenticated' | 'guest' | 'unauthenticated';
   hasChosenLanguage: boolean;
   hasCompletedOnboarding: boolean;
+  /** Whether the age-group onboarding step (spec "Add age-group selection
+   * to OYNO onboarding") has been completed - gates the same way
+   * hasCompletedOnboarding does, sequenced right after it. */
+  hasChosenAgeGroup: boolean;
   pathname: string;
   ungatedRoutes: readonly string[];
 };
@@ -15,7 +19,7 @@ export type RouteGuardState = {
  * Returns the path to redirect to, or null to redirect nowhere.
  */
 export function decideRouteGuardRedirect(state: RouteGuardState): string | null {
-  const { authStatus, hasChosenLanguage, hasCompletedOnboarding, pathname, ungatedRoutes } = state;
+  const { authStatus, hasChosenLanguage, hasCompletedOnboarding, hasChosenAgeGroup, pathname, ungatedRoutes } = state;
 
   if (authStatus === 'loading' || pathname === '/') return null;
 
@@ -28,7 +32,10 @@ export function decideRouteGuardRedirect(state: RouteGuardState): string | null 
   if (hasChosenLanguage && !hasCompletedOnboarding && pathname !== '/onboarding') {
     return '/onboarding';
   }
-  if (hasCompletedOnboarding && !isAuthenticatedOrGuest && !isUngatedRoute) {
+  if (hasCompletedOnboarding && !hasChosenAgeGroup && pathname !== '/age-group') {
+    return '/age-group';
+  }
+  if (hasCompletedOnboarding && hasChosenAgeGroup && !isAuthenticatedOrGuest && !isUngatedRoute) {
     return '/sign-in';
   }
   if (isAuthenticatedOrGuest && (pathname === '/sign-in' || pathname === '/sign-up')) {

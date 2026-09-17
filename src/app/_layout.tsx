@@ -36,6 +36,7 @@ const UNGATED_ROUTES = [
   '/',
   '/language',
   '/onboarding',
+  '/age-group',
   '/sign-up',
   '/sign-in',
   '/verify-email',
@@ -56,6 +57,7 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
   const authStatus = useAuthStore((state) => state.status);
   const hasChosenLanguage = useAppStore((state) => state.hasChosenLanguage);
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
+  const hasChosenAgeGroup = useAppStore((state) => state.hasChosenAgeGroup);
 
   useEffect(() => {
     if (!flagsReady) return;
@@ -63,11 +65,12 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
       authStatus,
       hasChosenLanguage,
       hasCompletedOnboarding,
+      hasChosenAgeGroup,
       pathname,
       ungatedRoutes: UNGATED_ROUTES,
     });
     if (redirect) router.replace(redirect as never);
-  }, [pathname, authStatus, hasChosenLanguage, hasCompletedOnboarding, flagsReady]);
+  }, [pathname, authStatus, hasChosenLanguage, hasCompletedOnboarding, hasChosenAgeGroup, flagsReady]);
 
   return children;
 }
@@ -144,6 +147,7 @@ export default function RootLayout() {
           await Promise.all([
             useAuthStore.getState().initialize(),
             useAppStore.getState().loadOnboardingFlags(),
+            useAppStore.getState().loadAgeGroup(),
             useNotificationsStore.getState().load(),
           ]);
         } catch (error) {

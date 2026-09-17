@@ -83,6 +83,7 @@
     "rows": {
       "account": "Account",
       "language": "Language",
+      "experience": "Experience",
       "notifications": "Notifications",
       "privacy": "Privacy",
       "security": "Security",
@@ -116,6 +117,10 @@
       "passwordLabel": "Password",
       "customizeAvatar": "Customize Avatar",
       "storyCompanion": "Story companion"
+    },
+    "experience": {
+      "title": "Experience",
+      "description": "OYNO uses this setting to adjust how content and the interface are presented. Your progress, achievements, coins, streak, game history and favorites are never affected."
     },
     "about": {
       "title": "About OYNO",
@@ -405,6 +410,17 @@
   "language": {
     "title": "Choose your language",
     "subtitle": "You can change this anytime in Settings",
+    "continue": "Continue"
+  },
+  "ageGroup": {
+    "title": "How old are you?",
+    "subtitle": "This helps us tailor OYNO to you. You can change this anytime in Settings.",
+    "options": {
+      "6-9": "6-9 years",
+      "10-13": "10-13 years",
+      "14-17": "14-17 years",
+      "18+": "18+ years"
+    },
     "continue": "Continue"
   },
   "onboarding": {
