@@ -4,10 +4,22 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import type { GameListItem } from '../types';
+
+/** Same card, same route, same data for every age (spec "adapt
+ * presentation/explanation, not cultural identity... preserve gameplay/
+ * routing") - only aspect ratio, meta verbosity, and how obvious the Play
+ * affordance is change, driven by AgeExperienceConfig.cardScale/
+ * textComplexity. */
+const ASPECT_RATIO_BY_CARD_SCALE: Record<'large' | 'medium' | 'compact', number> = {
+  large: 0.8,
+  medium: 0.92,
+  compact: 1.02,
+};
 
 type GameCardProps = {
   game: GameListItem;
@@ -31,13 +43,22 @@ function playersLabel(t: (key: string, options?: Record<string, unknown>) => str
  * underneath. The 3D showcase row uses its own `Game3DShowcaseCard`. */
 export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const isPlayable = !!game.route;
   const playedCount = useProgressStore((state) => state.gameStats[game.id]?.played);
+
+  // child: minimal text, one clear affordance. preteen/teen: full meta plus
+  // played-count (achievements/scores emphasized). adult: meta stays
+  // (duration/players read as cultural/practical context) but the played-
+  // count gamification pill drops, per "reduced gamification clutter".
+  const showMeta = config.textComplexity !== 'minimal';
+  const showPlayedCount = config.textComplexity === 'simple' || config.textComplexity === 'standard';
+  const isLargeCard = config.cardScale === 'large';
 
   return (
     <FadeSlideIn style={styles.wrap} index={index}>
       <AnimatedPressable
-        style={[styles.card, !isPlayable && styles.cardLocked]}
+        style={[styles.card, { aspectRatio: ASPECT_RATIO_BY_CARD_SCALE[config.cardScale] }, !isPlayable && styles.cardLocked]}
         onPress={isPlayable ? () => onPress?.(game) : undefined}
         pressScale={0.98}
         disabled={!isPlayable}
@@ -51,7 +72,7 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
           <Image source={game.thumbnail} style={[StyleSheet.absoluteFill, !isPlayable && styles.imageLocked]} resizeMode="cover" />
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.imageFallback]}>
-            <Gamepad2 size={32} color={colors.accentGold} strokeWidth={1.5} />
+            <Gamepad2 size={isLargeCard ? 40 : 32} color={colors.accentGold} strokeWidth={1.5} />
           </View>
         )}
         <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.9)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
@@ -64,19 +85,23 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
 
         <View style={styles.content}>
           <View style={styles.titleRow}>
-            <Text style={styles.name} numberOfLines={1}>
+            <Text style={[styles.name, isLargeCard && styles.nameLarge]} numberOfLines={1}>
               {game.name}
             </Text>
             {isPlayable ? (
-              <View style={styles.playBadge}>
-                <Play size={11} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
+              <View style={[styles.playBadge, isLargeCard && styles.playBadgeLarge]}>
+                <Play size={isLargeCard ? 13 : 11} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
+                {isLargeCard ? <Text style={styles.playBadgeLabel}>{t('games.play')}</Text> : null}
               </View>
             ) : null}
           </View>
-          <Text style={styles.meta} numberOfLines={1}>
-            {t(`games.difficulty.${game.difficulty}`)} · {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })} · {playersLabel(t, game.players)}
-          </Text>
-          {isPlayable && typeof playedCount === 'number' && playedCount > 0 ? (
+          {showMeta ? (
+            <Text style={styles.meta} numberOfLines={1}>
+              {t(`games.difficulty.${game.difficulty}`)}
+              {!isLargeCard ? ` · ${t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })} · ${playersLabel(t, game.players)}` : ''}
+            </Text>
+          ) : null}
+          {showPlayedCount && isPlayable && typeof playedCount === 'number' && playedCount > 0 ? (
             <Text style={styles.playedText}>{t('games.playedCount', { count: playedCount })}</Text>
           ) : null}
         </View>
@@ -137,6 +162,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     color: colors.textOnDark,
   },
+  nameLarge: {
+    fontSize: 19,
+  },
   playBadge: {
     width: 24,
     height: 24,
@@ -144,6 +172,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentGold,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  playBadgeLarge: {
+    flexDirection: 'row',
+    width: undefined,
+    height: 32,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 16,
+    gap: spacing.xxs,
+  },
+  playBadgeLabel: {
+    ...typography.small,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
   meta: {
     ...typography.small,

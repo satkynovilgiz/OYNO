@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -23,6 +24,7 @@ import {
   HomeHeader,
   ProfileSummaryCard,
 } from './components';
+import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
 import { cultureTileAssets, mockGames } from './mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 
@@ -53,6 +55,7 @@ export function HomeScreen() {
   useTrackScreenView('home');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { experience } = useAgeExperience();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
@@ -114,6 +117,66 @@ export function HomeScreen() {
     }
   }
 
+  // Same six sections, same underlying data, for every AgeExperience - only
+  // their order changes (spec "Make Home adapt to AgeExperience... Section
+  // ordering/presentation responds to AgeExperience... do not duplicate
+  // HomeScreen or change underlying progress/game logic").
+  function renderSection(id: HomeSectionId) {
+    switch (id) {
+      case 'hero':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <HeroBanner />
+          </View>
+        );
+      case 'profile':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <ProfileSummaryCard player={player} />
+          </View>
+        );
+      case 'dailyRow':
+        return (
+          <View key={id} style={styles.topRow}>
+            <DailyChallengeCard
+              challenge={dailyChallenge}
+              onPress={handlePressDailyChallenge}
+              ready={challengeComplete && !challengeClaimed}
+            />
+            <DailyGiftCard gift={dailyGift} claimed={giftClaimed} onPress={() => useProgressStore.getState().claimDailyGift()} />
+          </View>
+        );
+      case 'games':
+        return (
+          <GamesCarousel
+            key={id}
+            games={mockGames}
+            onPressGame={(game) => {
+              if (game.route) {
+                router.push(game.route as never);
+              }
+            }}
+            onPressSeeAll={() => router.push('/games' as never)}
+          />
+        );
+      case 'culture':
+        return (
+          <CultureGrid key={id} tiles={cultureTiles} onPressTile={(tile) => router.push(routeForCultureTile(tile.id) as never)} />
+        );
+      case 'dailyProgress':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <DailyProgressCard
+              progress={dailyProgress}
+              claimable={playComplete}
+              claimed={playClaimed}
+              onPressClaim={() => useProgressStore.getState().claimDailyPlay()}
+            />
+          </View>
+        );
+    }
+  }
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -126,39 +189,7 @@ export function HomeScreen() {
           onPressNotifications={() => router.push('/notifications' as never)}
         />
 
-        <View style={styles.horizontalPad}>
-          <HeroBanner />
-        </View>
-
-        <View style={styles.horizontalPad}>
-          <ProfileSummaryCard player={player} />
-        </View>
-
-        <View style={styles.topRow}>
-          <DailyChallengeCard challenge={dailyChallenge} onPress={handlePressDailyChallenge} ready={challengeComplete && !challengeClaimed} />
-          <DailyGiftCard gift={dailyGift} claimed={giftClaimed} onPress={() => useProgressStore.getState().claimDailyGift()} />
-        </View>
-
-        <GamesCarousel
-          games={mockGames}
-          onPressGame={(game) => {
-            if (game.route) {
-              router.push(game.route as never);
-            }
-          }}
-          onPressSeeAll={() => router.push('/games' as never)}
-        />
-
-        <CultureGrid tiles={cultureTiles} onPressTile={(tile) => router.push(routeForCultureTile(tile.id) as never)} />
-
-        <View style={styles.horizontalPad}>
-          <DailyProgressCard
-            progress={dailyProgress}
-            claimable={playComplete}
-            claimed={playClaimed}
-            onPressClaim={() => useProgressStore.getState().claimDailyPlay()}
-          />
-        </View>
+        {getHomeSectionOrder(experience).map(renderSection)}
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>

@@ -9,6 +9,7 @@ import { AnimatedPressable, EmptyState, FadeSlideIn } from '@/components/ui';
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import type { SupportedLanguage } from '@/i18n';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { track } from '@/services/analytics/analytics';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useDiscoveries } from '@/services/content/discoveriesService';
@@ -31,6 +32,7 @@ import {
   RegionProgressCard,
 } from './components';
 import { discoveryImages, exploreMapPins } from './data';
+import { getExploreSectionOrder, type ExploreSectionId } from './exploreSections';
 import type { ExploreDiscovery } from './types';
 
 export function ExploreScreen() {
@@ -40,6 +42,7 @@ export function ExploreScreen() {
   }, []);
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { experience } = useAgeExperience();
   const progress = useProgressStore();
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<ExploreFilterId[]>([]);
@@ -163,6 +166,50 @@ export function ExploreScreen() {
     useProgressStore.getState().discoverExploreItem(discovery.id);
   }
 
+  // Same four sections, same underlying regions/quest/discoveries data, for
+  // every AgeExperience - only their order changes (spec "Make Culture and
+  // Explore adapt to AgeExperience... Keep same underlying data"). The map
+  // (and its own filtered-results list) stays pinned above these, see
+  // exploreSections.ts.
+  function renderSection(id: ExploreSectionId) {
+    switch (id) {
+      case 'progress':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <RegionProgressCard
+              progress={{
+                overallPercent,
+                stats: {
+                  regions: { current: regionsVisited, total: regionsTotal },
+                  nature: { current: natureVisited, total: natureTotal },
+                  discoveries: { current: discoveriesFound, total: discoveriesTotal },
+                  quests: { current: questCurrent, total: questTotal },
+                },
+              }}
+            />
+          </View>
+        );
+      case 'quest':
+        return quest ? (
+          <View key={id} style={styles.horizontalPad}>
+            <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
+          </View>
+        ) : null;
+      case 'natureSites':
+        return <NatureSitesRow key={id} sites={natureSites} onPressSite={(siteId) => router.push(`/explore/${siteId}` as never)} />;
+      case 'discoveries':
+        return (
+          <DiscoveriesRow
+            key={id}
+            discoveries={homeDiscoveries}
+            discoveredIds={progress.discoveredExploreIds}
+            onPressDiscovery={handlePressDiscovery}
+            onPressSeeAll={() => router.push('/collection' as never)}
+          />
+        );
+    }
+  }
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -239,29 +286,7 @@ export function ExploreScreen() {
               </View>
             )}
 
-            <View style={styles.horizontalPad}>
-              <RegionProgressCard
-                progress={{
-                  overallPercent,
-                  stats: {
-                    regions: { current: regionsVisited, total: regionsTotal },
-                    nature: { current: natureVisited, total: natureTotal },
-                    discoveries: { current: discoveriesFound, total: discoveriesTotal },
-                    quests: { current: questCurrent, total: questTotal },
-                  },
-                }}
-              />
-            </View>
-
-            {quest && (
-              <View style={styles.horizontalPad}>
-                <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
-              </View>
-            )}
-
-            <NatureSitesRow sites={natureSites} onPressSite={(id) => router.push(`/explore/${id}` as never)} />
-
-            <DiscoveriesRow discoveries={homeDiscoveries} discoveredIds={progress.discoveredExploreIds} onPressDiscovery={handlePressDiscovery} onPressSeeAll={() => router.push('/collection' as never)} />
+            {getExploreSectionOrder(experience).map(renderSection)}
           </>
         )}
       </ScrollView>

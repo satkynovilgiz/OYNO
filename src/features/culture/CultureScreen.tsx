@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { EmptyState } from '@/components/ui';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
@@ -24,6 +25,7 @@ import {
   TodayDiscoveryCard,
 } from './components';
 import type { InteractiveExperience } from './components';
+import { getCultureSectionOrder, type CultureSectionId } from './cultureSections';
 import { cultureCategoryImages, cultureCategoryMockProgress, cultureMaterialImages, cultureProgress } from './data';
 import type { CultureCategory, CultureCategoryId, CultureDiscovery, CultureMaterial } from './types';
 
@@ -53,6 +55,7 @@ export function CultureScreen() {
   useTrackScreenView('culture');
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { experience } = useAgeExperience();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const progress = useProgressStore();
   const { data: categoryRows, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCultureCategories();
@@ -91,6 +94,54 @@ export function CultureScreen() {
       imageSource: cultureMaterialImages[row.id],
     }));
 
+  // Same seven sections, same underlying categories/materials data, for
+  // every AgeExperience - only their order changes (spec "Make Culture and
+  // Explore adapt to AgeExperience... Keep same underlying data").
+  function renderSection(id: CultureSectionId) {
+    switch (id) {
+      case 'categories':
+        return (
+          <CultureCategoriesGrid
+            key={id}
+            categories={categories}
+            onPressCategory={handlePressCategory}
+            onPressSeeAll={() => router.push('/collection' as never)}
+          />
+        );
+      case 'interactive':
+        return (
+          <InteractiveExperiencesRow key={id} experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
+        );
+      case 'bozUy':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <EnterBozUyCard onPress={() => router.push('/culture/boz-uy/build' as never)} />
+          </View>
+        );
+      case 'todayDiscovery':
+        return todayDiscovery ? (
+          <View key={id} style={styles.horizontalPad}>
+            <TodayDiscoveryCard discovery={todayDiscovery} onPress={() => useProgressStore.getState().discoverCulture()} />
+          </View>
+        ) : null;
+      case 'progressQuiz':
+        return (
+          <View key={id} style={[styles.horizontalPad, styles.stack]}>
+            <CultureProgressCard progress={cultureProgress} />
+            <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
+          </View>
+        );
+      case 'newMaterials':
+        return (
+          <NewMaterialsRow
+            key={id}
+            materials={materials}
+            onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
+          />
+        );
+    }
+  }
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -125,38 +176,7 @@ export function CultureScreen() {
             }}
           />
         ) : (
-          <>
-            <CultureCategoriesGrid
-              categories={categories}
-              onPressCategory={handlePressCategory}
-              onPressSeeAll={() => router.push('/collection' as never)}
-            />
-
-            <InteractiveExperiencesRow experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
-
-            <View style={styles.horizontalPad}>
-              <EnterBozUyCard onPress={() => router.push('/culture/boz-uy/build' as never)} />
-            </View>
-
-            {todayDiscovery && (
-              <View style={styles.horizontalPad}>
-                <TodayDiscoveryCard
-                  discovery={todayDiscovery}
-                  onPress={() => useProgressStore.getState().discoverCulture()}
-                />
-              </View>
-            )}
-
-            <View style={[styles.horizontalPad, styles.stack]}>
-              <CultureProgressCard progress={cultureProgress} />
-              <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
-            </View>
-
-            <NewMaterialsRow
-              materials={materials}
-              onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
-            />
-          </>
+          getCultureSectionOrder(experience).map(renderSection)
         )}
       </ScrollView>
 
