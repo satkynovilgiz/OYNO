@@ -6,6 +6,8 @@ import { AnimatedPressable, Badge } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { KomuzPlaylist } from '@/features/culture/components';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
+import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import type { CultureItemRow } from '@/services/content/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
@@ -32,7 +34,15 @@ const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
 
 export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack }: CultureItemDetailScreenProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
 
+  // 'simple' depth (child/preteen) shows just the condensed summary when
+  // one is stored for this item; 'standard'/'advanced' (teen/adult), or a
+  // 'simple' request with no summary stored yet, fall back to the full
+  // field-by-field breakdown that's always been here (spec "Fallback
+  // safely to the standard version when an age-specific version is
+  // unavailable").
+  const simpleSummary = resolveContentByDepth({ simple: item.simple_summary }, config.learningDepth);
   const filledFields = DETAIL_FIELDS.filter((field) => !!item[field.key]);
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
@@ -68,7 +78,11 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         </View>
       ) : null}
 
-      {filledFields.length === 0 ? (
+      {simpleSummary ? (
+        <View style={styles.field}>
+          <Text style={styles.fieldValue}>{simpleSummary}</Text>
+        </View>
+      ) : filledFields.length === 0 ? (
         hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
       ) : (
         <View style={styles.fields}>

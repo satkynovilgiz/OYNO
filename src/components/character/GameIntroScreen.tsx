@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { AnimatedPressable, Button } from '@/components/ui';
+import { hasSeenGameIntro, markGameIntroSeen } from '@/services/ageExperience/gameIntroSeen';
+import { resolveGameIntroPresentation } from '@/services/ageExperience/guideCharacterGating';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, spacing, typography } from '@/theme';
 import { getGameHostConfig } from '@games/gameHostCharacters';
 
@@ -23,10 +26,20 @@ type Step = { kind: 'line'; index: number } | { kind: 'howToPlay' };
  * Shared pre-game intro: splash-in host character -> a couple of short
  * dialogue lines (emotion-matched portrait, tap to advance) -> optional
  * "Кантип ойнойт?" tip -> start. Always skippable.
+ *
+ * How much of this plays adapts by AgeExperience (spec "Make OYNO guide
+ * characters age-aware... prominence adapts"): child always gets the full
+ * beat sequence; preteen gets it once per game then steps back; teen/adult
+ * get a single condensed line the first time only - see
+ * guideCharacterGating.ts. The host character and its dialogue lines
+ * themselves never change by age (never made to sound childish or
+ * different per age), only how often/how much of it plays.
  */
 export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroScreenProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const host = getGameHostConfig(gameId);
+  const [presentation, setPresentation] = useState<'full' | 'condensed' | 'skip' | 'loading'>('loading');
 
   const lines = host?.lines ?? [];
   const [step, setStep] = useState<Step>({ kind: 'line', index: 0 });
@@ -44,10 +57,69 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
     transform: [{ scale: scale.value }],
   }));
 
+  useEffect(() => {
+    if (!host) return;
+    let cancelled = false;
+    hasSeenGameIntro(gameId).then((hasSeenBefore) => {
+      if (!cancelled) setPresentation(resolveGameIntroPresentation(config.characterProminence, hasSeenBefore));
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId, host, config.characterProminence]);
+
   if (!host) {
     // No host configured for this game - nothing meaningful to show.
     onFinish();
     return null;
+  }
+
+  if (presentation === 'loading') {
+    return (
+      <View style={[styles.root, styles.center]}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (presentation === 'skip') {
+    onFinish();
+    return null;
+  }
+
+  const finish = () => {
+    void markGameIntroSeen(gameId);
+    onFinish();
+  };
+
+  if (presentation === 'condensed') {
+    const line = lines[0];
+    return (
+      <View style={styles.root}>
+        <View style={styles.skipRow}>
+          <AnimatedPressable onPress={finish} accessibilityRole="button" accessibilityLabel={t('gameIntro.skip')} style={styles.skipButton}>
+            <Text style={styles.skipLabel}>{t('gameIntro.skip')}</Text>
+          </AnimatedPressable>
+        </View>
+        <View style={styles.center}>
+          <View style={styles.condensedCard}>
+            <CharacterAvatar characterId={host.characterId} emotion={line?.emotion ?? 'happy'} size={72} />
+            <View style={styles.condensedText}>
+              <Text style={styles.condensedName}>{t(`character.names.${host.characterId}`)}</Text>
+              {line ? (
+                <Text style={styles.condensedLine} numberOfLines={2}>
+                  {line.text}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        </View>
+        <View style={styles.footer}>
+          <Button label={t('gameIntro.start')} onPress={finish} />
+        </View>
+      </View>
+    );
   }
 
   const advance = () => {
@@ -62,7 +134,7 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
       setStep({ kind: 'howToPlay' });
       return;
     }
-    onFinish();
+    finish();
   };
 
   const currentLine = step.kind === 'line' ? lines[step.index] : null;
@@ -72,7 +144,7 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
     <View style={styles.root}>
       <View style={styles.skipRow}>
         <AnimatedPressable
-          onPress={onFinish}
+          onPress={finish}
           accessibilityRole="button"
           accessibilityLabel={t('gameIntro.skip')}
           style={styles.skipButton}
@@ -152,6 +224,28 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     textAlign: 'center',
+  },
+  condensedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    width: '100%',
+  },
+  condensedText: {
+    flex: 1,
+    gap: 2,
+  },
+  condensedName: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+  },
+  condensedLine: {
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   footer: {
     paddingHorizontal: spacing.xl,
