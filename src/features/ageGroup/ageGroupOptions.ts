@@ -11,15 +11,15 @@ export type AgeGroupOption = {
 /** Shared list consumed by both the onboarding step and the later Settings
  * "Experience" screen (spec "Add Age Experience controls to Settings") so
  * the two pickers never drift out of sync with each other. */
-export const AGE_GROUP_OPTIONS: AgeGroupOption[] = ALL_AGE_GROUPS.map((id) => ({
-  id,
-  icon: ICONS[id],
-  labelKey: `ageGroup.options.${id}`,
-}));
-
 const ICONS: Record<AgeGroup, LucideIcon> = {
   '6-9': Baby,
   '10-13': Rocket,
   '14-17': Flame,
   '18+': GraduationCap,
 };
+
+export const AGE_GROUP_OPTIONS: AgeGroupOption[] = ALL_AGE_GROUPS.map((id) => ({
+  id,
+  icon: ICONS[id],
+  labelKey: `ageGroup.options.${id}`,
+}));
