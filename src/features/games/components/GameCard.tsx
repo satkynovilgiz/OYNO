@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Gamepad2, Lock, Play } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -23,12 +24,11 @@ function playersLabel(t: (key: string, options?: Record<string, unknown>) => str
   return t('games.players.open', { min: players.min });
 }
 
-/** EDITORIAL-tier card (Section "GAME CARD: strong cover artwork, clear
- * Play/status action, minimal metadata") for the regular Games grid - the
- * 3D showcase row uses its own `Game3DShowcaseCard` instead. Artwork is
- * never covered by a dark info bar; title and one metadata line sit below
- * the image in plain text, and playable-vs-coming-soon is a single small
- * corner badge instead of a banner. */
+/** One complete visual object (Section "GAME CARD... make each card one
+ * complete visual object") - the artwork IS the card, with title/metadata
+ * and the play/lock state living directly on it behind a bottom gradient,
+ * instead of a separate image tile plus a floating badge plus a text block
+ * underneath. The 3D showcase row uses its own `Game3DShowcaseCard`. */
 export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
   const { t } = useTranslation();
   const isPlayable = !!game.route;
@@ -37,8 +37,9 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
   return (
     <FadeSlideIn style={styles.wrap} index={index}>
       <AnimatedPressable
-        style={[styles.card, !isPlayable && styles.cardDisabled]}
+        style={[styles.card, !isPlayable && styles.cardLocked]}
         onPress={isPlayable ? () => onPress?.(game) : undefined}
+        pressScale={0.98}
         disabled={!isPlayable}
         hoverEffect
         haptic={isPlayable ? 'light' : false}
@@ -46,29 +47,34 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
         accessibilityLabel={game.name}
         accessibilityState={{ disabled: !isPlayable }}
       >
-        <View style={styles.imageWrap}>
-          {game.thumbnail ? (
-            <Image source={game.thumbnail} style={styles.image} resizeMode="cover" />
-          ) : (
-            <View style={[styles.image, styles.imageFallback]}>
-              <Gamepad2 size={28} color={colors.primary} strokeWidth={1.5} />
-            </View>
-          )}
-          <View style={[styles.statusBadge, isPlayable ? styles.statusBadgePlay : styles.statusBadgeLocked]}>
-            {isPlayable ? (
-              <Play size={12} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
-            ) : (
-              <Lock size={12} color={colors.textOnDark} strokeWidth={2.25} />
-            )}
+        {game.thumbnail ? (
+          <Image source={game.thumbnail} style={[StyleSheet.absoluteFill, !isPlayable && styles.imageLocked]} resizeMode="cover" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.imageFallback]}>
+            <Gamepad2 size={32} color={colors.accentGold} strokeWidth={1.5} />
           </View>
-        </View>
+        )}
+        <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.9)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
 
-        <View style={styles.textBlock}>
-          <Text style={styles.name} numberOfLines={2}>
-            {game.name}
-          </Text>
+        {!isPlayable ? (
+          <View style={styles.lockBadge}>
+            <Lock size={13} color={colors.textOnDark} strokeWidth={2.25} />
+          </View>
+        ) : null}
+
+        <View style={styles.content}>
+          <View style={styles.titleRow}>
+            <Text style={styles.name} numberOfLines={1}>
+              {game.name}
+            </Text>
+            {isPlayable ? (
+              <View style={styles.playBadge}>
+                <Play size={11} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
+              </View>
+            ) : null}
+          </View>
           <Text style={styles.meta} numberOfLines={1}>
-            {playersLabel(t, game.players)} · {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })}
+            {t(`games.difficulty.${game.difficulty}`)} · {t('games.duration.range', { min: game.duration.minMinutes, max: game.duration.maxMinutes })} · {playersLabel(t, game.players)}
           </Text>
           {isPlayable && typeof playedCount === 'number' && playedCount > 0 ? (
             <Text style={styles.playedText}>{t('games.playedCount', { count: playedCount })}</Text>
@@ -84,54 +90,68 @@ const styles = StyleSheet.create({
     width: '47%',
   },
   card: {
-    gap: spacing.xs,
-  },
-  cardDisabled: {
-    opacity: 0.65,
-  },
-  imageWrap: {
     width: '100%',
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: radii.lg,
+    aspectRatio: 0.92,
+    borderRadius: 22,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
     backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: 'rgba(139,107,61,0.2)',
+  },
+  cardLocked: {
+    borderColor: 'rgba(139,107,61,0.12)',
+  },
+  imageLocked: {
+    opacity: 0.6,
   },
   imageFallback: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.surfaceFeature,
   },
-  statusBadge: {
+  lockBadge: {
     position: 'absolute',
-    bottom: spacing.xs,
+    top: spacing.xs,
     right: spacing.xs,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(19,32,24,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusBadgePlay: {
-    backgroundColor: colors.accentGold,
+  content: {
+    padding: spacing.sm,
+    gap: 2,
   },
-  statusBadgeLocked: {
-    backgroundColor: 'rgba(43,32,25,0.55)',
-  },
-  textBlock: {
-    gap: 1,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   name: {
     ...typography.bodyBold,
-    color: colors.textPrimary,
+    fontSize: 16,
+    flexShrink: 1,
+    color: colors.textOnDark,
+  },
+  playBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accentGold,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   meta: {
     ...typography.small,
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.8)',
   },
   playedText: {
     ...typography.small,
-    color: colors.primary,
+    color: colors.accentGold,
     fontWeight: '700',
   },
 });

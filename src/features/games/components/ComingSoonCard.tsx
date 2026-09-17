@@ -3,22 +3,22 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
-/** Matches GameCard's own image+text-below rhythm (square artwork area,
- * plain text block underneath) instead of one solid dark tile, so it
- * reads as "one more card in the grid" rather than a visually distinct
- * database-style placeholder. */
+/** Matches GameCard's own one-complete-visual-object rhythm (full-bleed
+ * rounded surface, content anchored at the bottom) instead of a plain
+ * image-then-text tile, so it reads as "one more card in the grid"
+ * rather than a visually distinct database-style placeholder. */
 export function ComingSoonCard() {
   const { t } = useTranslation();
 
   return (
     <View style={styles.card}>
-      <View style={styles.imageWrap}>
-        <Lock size={26} color={colors.textOnDark} strokeWidth={1.75} />
-        <OymoOrnament size={14} color="rgba(255,255,255,0.35)" strokeWidth={1.5} />
+      <View style={styles.iconRow}>
+        <Lock size={22} color={colors.accentGold} strokeWidth={1.75} />
+        <OymoOrnament size={13} color="rgba(255,255,255,0.4)" strokeWidth={1.5} />
       </View>
-      <View style={styles.textBlock}>
+      <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>
           {t('games.comingSoon.title')}
         </Text>
@@ -33,26 +33,29 @@ export function ComingSoonCard() {
 const styles = StyleSheet.create({
   card: {
     width: '47%',
-    gap: spacing.xs,
+    aspectRatio: 0.92,
+    borderRadius: 22,
+    backgroundColor: colors.surfaceFeature,
+    borderWidth: 1,
+    borderColor: 'rgba(232,185,61,0.25)',
+    justifyContent: 'space-between',
+    padding: spacing.sm,
   },
-  imageWrap: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primaryPressed,
+  iconRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
+    justifyContent: 'space-between',
   },
-  textBlock: {
-    gap: 1,
+  content: {
+    gap: 2,
   },
   title: {
     ...typography.bodyBold,
-    color: colors.textPrimary,
+    fontSize: 16,
+    color: colors.textOnDark,
   },
   subtitle: {
     ...typography.small,
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.7)',
   },
 });

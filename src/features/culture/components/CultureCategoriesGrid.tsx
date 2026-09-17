@@ -48,6 +48,7 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
             imageSource={featured.imageSource}
             title={featured.title}
             meta={`${featured.current} / ${featured.total}`}
+            progress={{ current: featured.current, total: featured.total }}
             aspectRatio={16 / 9}
             size="feature"
             onPress={() => onPressCategory?.(featured)}
@@ -65,6 +66,7 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
                   imageSource={spotlight.imageSource}
                   title={spotlight.title}
                   meta={`${spotlight.current} / ${spotlight.total}`}
+                  progress={{ current: spotlight.current, total: spotlight.total }}
                   aspectRatio={2}
                   onPress={() => onPressCategory?.(spotlight)}
                 />
@@ -79,6 +81,7 @@ export function CultureCategoriesGrid({ categories, onPressCategory, onPressSeeA
                       imageSource={category.imageSource}
                       title={category.title}
                       meta={`${category.current} / ${category.total}`}
+                      progress={{ current: category.current, total: category.total }}
                       onPress={() => onPressCategory?.(category)}
                     />
                   </FadeSlideIn>
@@ -110,12 +113,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   group: {
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   cardWrap: {
     flexBasis: '44%',

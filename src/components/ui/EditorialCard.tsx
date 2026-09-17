@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image, StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
 
 import { colors, radii, spacing, typography } from '@/theme';
@@ -14,34 +15,43 @@ type EditorialCardProps = {
    * in a mixed layout (Section "one large featured category"); `standard`
    * (default) is the regular supporting-card size. */
   size?: 'feature' | 'standard';
+  /** Renders `meta` (a "current / total" string) as a small progress
+   * badge with a gold accent once complete, instead of plain caption text
+   * (Section "Show progress... as a small elegant progress indicator"). */
+  progress?: { current: number; total: number };
   style?: StyleProp<ViewStyle>;
 };
 
-/** Image-first, title-below card (Section "EDITORIAL CARD: image-first,
- * title + small metadata, minimal border") - the default "browse content"
- * card family (Culture categories, discoveries, materials). No dark
- * overlay bar across the artwork; the title lives in a plain text block
- * below the image so the photo/illustration stays fully visible. */
-export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio = 4 / 3, size = 'standard', style }: EditorialCardProps) {
+/** One complete visual object, edge-to-edge artwork with the title living
+ * on the image itself (Section "Make every category a complete rounded
+ * card rather than loose image + text... title inside the artwork near
+ * the bottom") - the default "browse content" card family (Culture
+ * categories). A thin gold highlight frames the artwork instead of a
+ * heavy beige container around it. */
+export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio = 4 / 3, size = 'standard', progress, style }: EditorialCardProps) {
   const isFeature = size === 'feature';
+  const isComplete = !!progress && progress.total > 0 && progress.current >= progress.total;
 
   return (
     <AnimatedPressable
-      style={[styles.card, style]}
+      style={[styles.card, { aspectRatio }, style]}
       onPress={onPress}
+      pressScale={0.98}
       hoverEffect
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Image source={imageSource} style={[styles.image, { aspectRatio }]} resizeMode="cover" />
-      <View style={styles.textBlock}>
-        <Text style={[styles.title, isFeature && styles.titleFeature]} numberOfLines={2}>
+      <Image source={imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+
+      <View style={styles.content}>
+        <Text style={[styles.title, isFeature && styles.titleFeature]} numberOfLines={isFeature ? 2 : 1}>
           {title}
         </Text>
         {meta ? (
-          <Text style={styles.meta} numberOfLines={1}>
-            {meta}
-          </Text>
+          <View style={[styles.metaBadge, isComplete && styles.metaBadgeComplete]}>
+            <Text style={[styles.meta, isComplete && styles.metaComplete]}>{meta}</Text>
+          </View>
         ) : null}
       </View>
     </AnimatedPressable>
@@ -51,26 +61,41 @@ export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio =
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-  },
-  image: {
-    width: '100%',
-    borderRadius: radii.lg,
+    borderRadius: 22,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
     backgroundColor: colors.surfaceAlt,
+    borderWidth: 1.5,
+    borderColor: 'rgba(232,185,61,0.35)',
   },
-  textBlock: {
-    paddingTop: spacing.xs,
-    gap: 1,
+  content: {
+    padding: spacing.sm,
+    gap: spacing.xxs,
   },
   title: {
-    ...typography.caption,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    ...typography.bodyBold,
+    color: colors.textOnDark,
   },
   titleFeature: {
     ...typography.h2,
+    color: colors.textOnDark,
+  },
+  metaBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radii.pill,
+  },
+  metaBadgeComplete: {
+    backgroundColor: colors.accentGold,
   },
   meta: {
     ...typography.small,
-    color: colors.textMuted,
+    fontWeight: '700',
+    color: colors.textOnDark,
+  },
+  metaComplete: {
+    color: colors.textPrimary,
   },
 });
