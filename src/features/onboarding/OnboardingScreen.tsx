@@ -2,10 +2,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dimensions,
   Image,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -27,7 +27,6 @@ import wordmark from '@assets/img/OYNO_design/wordmark.png';
 
 import { onboardingSlideImages, type OnboardingSlideImage } from './data';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 /** Reserved bottom space so each slide's own text never sits under the
  * fixed dots/CTA overlay (Section "reduce giant dead space" - the image
  * now fills the whole screen instead of stopping partway down, so the
@@ -43,6 +42,7 @@ type OnboardingScreenProps = {
 export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const scrollRef = useRef<Animated.ScrollView>(null);
   const scrollX = useSharedValue(0);
   const [index, setIndex] = useState(0);
@@ -53,12 +53,12 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
   });
 
   const goToIndex = (nextIndex: number) => {
-    scrollRef.current?.scrollTo({ x: nextIndex * SCREEN_WIDTH, animated: true });
+    scrollRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
     setIndex(nextIndex);
   };
 
   const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
     setIndex(nextIndex);
   };
 
@@ -82,7 +82,7 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         scrollEventThrottle={16}
       >
         {onboardingSlideImages.map((slide, slideIndex) => (
-          <OnboardingSlide key={slide.id} slide={slide} slideIndex={slideIndex} scrollX={scrollX} />
+          <OnboardingSlide key={slide.id} slide={slide} slideIndex={slideIndex} scrollX={scrollX} screenWidth={screenWidth} />
         ))}
       </Animated.ScrollView>
 
@@ -95,7 +95,7 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
       <View style={[styles.bottomChrome, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.dots}>
           {onboardingSlideImages.map((slide, dotIndex) => (
-            <OnboardingDot key={slide.id} dotIndex={dotIndex} scrollX={scrollX} />
+            <OnboardingDot key={slide.id} dotIndex={dotIndex} scrollX={scrollX} screenWidth={screenWidth} />
           ))}
         </View>
 
@@ -116,16 +116,17 @@ type OnboardingSlideProps = {
   slide: OnboardingSlideImage;
   slideIndex: number;
   scrollX: SharedValue<number>;
+  screenWidth: number;
 };
 
 /** Content fades/rises in as its page becomes active and eases out toward
  * the neighbours (spec "subtle transitions between onboarding pages"),
  * driven by the shared horizontal scroll offset rather than the
  * momentum-end index so it tracks the finger during the swipe itself. */
-function OnboardingSlide({ slide, slideIndex, scrollX }: OnboardingSlideProps) {
+function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth }: OnboardingSlideProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const inputRange = [(slideIndex - 1) * SCREEN_WIDTH, slideIndex * SCREEN_WIDTH, (slideIndex + 1) * SCREEN_WIDTH];
+  const inputRange = [(slideIndex - 1) * screenWidth, slideIndex * screenWidth, (slideIndex + 1) * screenWidth];
 
   const contentStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP),
@@ -137,7 +138,7 @@ function OnboardingSlide({ slide, slideIndex, scrollX }: OnboardingSlideProps) {
   }));
 
   return (
-    <View style={[styles.slide, { width: SCREEN_WIDTH }]}>
+    <View style={[styles.slide, { width: screenWidth }]}>
       <Animated.Image source={slide.image} style={[StyleSheet.absoluteFill, imageStyle]} resizeMode="cover" />
       <LinearGradient
         colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.25)', 'rgba(19,32,24,0.94)']}
@@ -164,8 +165,8 @@ function OnboardingSlide({ slide, slideIndex, scrollX }: OnboardingSlideProps) {
   );
 }
 
-function OnboardingDot({ dotIndex, scrollX }: { dotIndex: number; scrollX: SharedValue<number> }) {
-  const inputRange = [(dotIndex - 1) * SCREEN_WIDTH, dotIndex * SCREEN_WIDTH, (dotIndex + 1) * SCREEN_WIDTH];
+function OnboardingDot({ dotIndex, scrollX, screenWidth }: { dotIndex: number; scrollX: SharedValue<number>; screenWidth: number }) {
+  const inputRange = [(dotIndex - 1) * screenWidth, dotIndex * screenWidth, (dotIndex + 1) * screenWidth];
 
   const dotStyle = useAnimatedStyle(() => ({
     width: interpolate(scrollX.value, inputRange, [8, 24, 8], Extrapolation.CLAMP),
