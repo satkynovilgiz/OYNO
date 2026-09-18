@@ -1045,7 +1045,8 @@
     "bestScore": "Лучший результат",
     "gamesPlayed": "Сыграно партий",
     "learnTradition": "Узнать о традиции",
-    "practice": "Тренировка"
+    "practice": "Тренировка",
+    "culturalContext": "Культурное происхождение"
   },
   "games3d": {
     "lab": {

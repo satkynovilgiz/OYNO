@@ -31,5 +31,6 @@ export function useCultureItem(id: string) {
   return useQuery({
     queryKey: ['culture_item', id],
     queryFn: () => fetchCultureItem(id),
+    enabled: !!id,
   });
 }

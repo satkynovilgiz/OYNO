@@ -30,6 +30,7 @@ export default function KyzKuumaiRoute() {
         // in Practice (a solo checkpoint course, no AI at all) - shown
         // regardless since GameDetailScreen doesn't know which button will
         // be pressed, but the value is simply unused in that path.
+        culturalContextItemId="horse-kyz-kuumai"
         cultureRoute="/culture/horse"
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}

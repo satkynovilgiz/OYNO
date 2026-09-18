@@ -21,6 +21,7 @@ export default function KokBoruRoute() {
         tutorialStepKeys={TUTORIAL_STEPS}
         // No difficulty presets exist for Kok Boru yet (Phase A: no AI
         // opponent at all - see KokBoruTypes.ts), so no picker is shown.
+        culturalContextItemId="horse-kok-boru"
         cultureRoute="/culture/horse"
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}
