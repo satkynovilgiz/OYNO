@@ -17,6 +17,7 @@ import bozUyTushKiyiz from '@assets/img/OYNO_design/culture/boz_uy/tush_kiyiz_an
 import bozUyWallHanging from '@assets/img/OYNO_design/culture/boz_uy/wall_hanging_and_komuz.jpg';
 import bozUyWoodenFrame from '@assets/img/OYNO_design/culture/boz_uy/wooden_frame.jpg';
 import bozUyYurtCamp from '@assets/img/OYNO_design/culture/boz_uy/yurt_camp.jpg';
+import clothingAkKalpakCloseup from '@assets/img/OYNO_design/culture/clothing/ak_kalpak_closeup.jpg';
 import clothingBeldemchiChyptama from '@assets/img/OYNO_design/culture/clothing/beldemchi_chyptama.jpg';
 import clothingChapanNooruz from '@assets/img/OYNO_design/culture/clothing/chapan_nooruz.png';
 import clothingElechekCloseup from '@assets/img/OYNO_design/culture/clothing/elechek_closeup.jpg';
@@ -31,9 +32,11 @@ import clothingMensWomensCase from '@assets/img/OYNO_design/culture/clothing/men
 import clothingShokuloElechek from '@assets/img/OYNO_design/culture/clothing/shokulo_elechek.jpg';
 import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png';
 import horseAtChabysh from '@assets/img/OYNO_design/culture/horse/at_chabysh_1870s.png';
+import horseBerkutchiEagle from '@assets/img/OYNO_design/culture/horse/berkutchi_eagle.jpg';
 import horseEer from '@assets/img/OYNO_design/culture/horse/eer_saddle.jpg';
 import horseHorsemanSteppe from '@assets/img/OYNO_design/culture/horse/horseman_steppe.jpg';
 import horseJylkyHerd from '@assets/img/OYNO_design/culture/horse/jylky_herd.jpg';
+import horseKokBoruAction from '@assets/img/OYNO_design/culture/horse/kok_boru_action.jpg';
 import horseKokBoruFlag from '@assets/img/OYNO_design/culture/horse/kok_boru_flag.jpg';
 import horseKokBoruKazan from '@assets/img/OYNO_design/culture/horse/kok_boru_kazan.jpg';
 import horseKyzKuumai from '@assets/img/OYNO_design/culture/horse/kyz_kuumai.jpg';
@@ -121,17 +124,17 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'oymo-adamdyn-juzu': [oymoAdamdynJuzu],
   'oymo-muyuz-kyal': [oymoMuyuzKyal],
   'oymo-tort-kulak': [oymoTortKulak],
-  'horse-overview': [horseHorsemanSteppe],
+  'horse-overview': [horseHorsemanSteppe, horseBerkutchiEagle],
   'horse-jylky': [horseJylkyHerd],
   'horse-eer': [horseEer],
-  'horse-kok-boru': [horseKokBoruFlag, horseKokBoruKazan],
+  'horse-kok-boru': [horseKokBoruAction, horseKokBoruFlag, horseKokBoruKazan],
   'horse-at-chabysh': [horseAtChabysh],
   'horse-kyz-kuumai': [horseKyzKuumai],
   'horse-oodarysh': [horseOodarysh],
   'shyrdak-craft': [shyrdakMosaicCloseup, shyrdakInsideBozUy],
   'shyrdak-ala-kiyiz': [shyrdakAlaKiyizMaking, shyrdakAlaKiyizMaking2],
   'shyrdak-tustor': [shyrdakColorsPattern],
-  'clothing-ak-kalpak': [clothingKalpakTebeteyCoat],
+  'clothing-ak-kalpak': [clothingAkKalpakCloseup, clothingKalpakTebeteyCoat],
   'clothing-tebetey': [clothingKalpakTebeteyCoat, clothingMensWomensCase],
   'clothing-topu': [clothingHeadwearPanel],
   'clothing-malakai': [clothingHeadwearPanel],
