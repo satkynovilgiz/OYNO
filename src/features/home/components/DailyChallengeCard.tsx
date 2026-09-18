@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, IconButton, IconChip, ProgressBar } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import type { DailyChallenge } from '../types';
@@ -16,16 +18,27 @@ type DailyChallengeCardProps = {
   ready?: boolean;
 };
 
+const ICON_CHIP_SIZE_BY_CARD_SCALE = { large: 40, medium: 28, compact: 26, dense: 24 };
+const TITLE_FONT_SIZE_BY_CARD_SCALE = { large: 17, medium: 13, compact: 13, dense: 12 };
+const DESCRIPTION_FONT_SIZE_BY_CARD_SCALE = { large: 15, medium: 11, compact: 11, dense: 10 };
+
 export function DailyChallengeCard({ challenge, onPress, ready = false }: DailyChallengeCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const progress =
     challenge.progressMax > 0 ? challenge.progressCurrent / challenge.progressMax : 0;
 
   return (
     <Card style={[styles.card, ready && styles.cardReady]}>
       <View style={styles.headerRow}>
-        <IconChip icon={Calendar} size={28} iconSize={14} />
-        <Text style={styles.title}>{t('home.dailyChallenge.title')}</Text>
+        <IconChip
+          icon={Calendar}
+          size={resolveByCardScale(config.cardScale, ICON_CHIP_SIZE_BY_CARD_SCALE)}
+          iconSize={resolveByCardScale(config.cardScale, { large: 20, medium: 14, compact: 13, dense: 12 })}
+        />
+        <Text style={[styles.title, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}>
+          {t('home.dailyChallenge.title')}
+        </Text>
         <IconButton
           icon={ChevronRight}
           variant="primary"
@@ -35,7 +48,10 @@ export function DailyChallengeCard({ challenge, onPress, ready = false }: DailyC
         />
       </View>
 
-      <Text style={styles.description} numberOfLines={2}>
+      <Text
+        style={[styles.description, { fontSize: resolveByCardScale(config.cardScale, DESCRIPTION_FONT_SIZE_BY_CARD_SCALE) }]}
+        numberOfLines={2}
+      >
         {challenge.description}
       </Text>
 

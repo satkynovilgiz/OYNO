@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import questBackground from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
@@ -15,18 +17,28 @@ type CurrentQuestCardProps = {
   onPress?: () => void;
 };
 
+const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.7, medium: 2.4, compact: 2.6, dense: 2.9 };
+const TITLE_FONT_SIZE_BY_CARD_SCALE = { large: 24, medium: 20, compact: 18, dense: 16 };
+
 /** Background art (Бөрү + shyrdak, forest backdrop) sliced from the design
  * reference, right-aligned; a dark-to-transparent gradient over the left
  * keeps the text legible per the reference. */
 export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
 
   return (
     // Shadow lives on this wrapper, not the clipped/overflow:hidden card
     // itself - a view drops its own shadow on iOS once it also clips
     // content via overflow (same fix as HeroBanner.tsx/KyrgyzstanMap.tsx).
     <FadeSlideIn style={shadows.card}>
-      <AnimatedPressable style={styles.card} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={quest.title}>
+      <AnimatedPressable
+        style={[styles.card, { aspectRatio: resolveByCardScale(config.cardScale, ASPECT_RATIO_BY_CARD_SCALE) }]}
+        onPress={onPress}
+        hoverEffect
+        accessibilityRole="button"
+        accessibilityLabel={quest.title}
+      >
       <View style={styles.background} />
       <Image source={questBackground} style={styles.artwork} resizeMode="cover" />
       <LinearGradient
@@ -42,7 +54,9 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
           <OymoOrnament size={11} color={colors.accentGold} strokeWidth={1.5} />
           <Text style={styles.label}>{t('explore.quest.label')}</Text>
         </View>
-        <Text style={styles.title}>{quest.title}</Text>
+        <Text style={[styles.title, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}>
+          {quest.title}
+        </Text>
         <Text style={styles.subtitle}>{quest.subtitle}</Text>
         <Text style={styles.progress}>
           {quest.foundCount} / {quest.totalCount} {t('explore.quest.foundSuffix')}
@@ -60,7 +74,6 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 2.4,
     borderRadius: radii.xl,
     overflow: 'hidden',
     justifyContent: 'center',

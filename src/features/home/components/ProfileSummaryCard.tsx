@@ -4,6 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { UserAvatar } from '@/components/avatar';
 import { Pill, ProgressBar } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import type { PlayerSummary } from '../types';
@@ -12,22 +14,35 @@ type ProfileSummaryCardProps = {
   player: PlayerSummary;
 };
 
+/** Avatar ring diameter and name font size per cardScale - a bigger,
+ * friendlier "who am I" greeting for child, a compact identity strip for
+ * adult (spec "stronger character presence" vs. "smaller, more refined
+ * controls"). */
+const AVATAR_RING_SIZE_BY_CARD_SCALE = { large: 68, medium: 48, compact: 44, dense: 40 };
+const NAME_FONT_SIZE_BY_CARD_SCALE = { large: 19, medium: 15, compact: 14, dense: 13 };
+
 export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const xpProgress = player.xpMax > 0 ? player.xpCurrent / player.xpMax : 0;
+  const avatarRingSize = resolveByCardScale(config.cardScale, AVATAR_RING_SIZE_BY_CARD_SCALE);
+  const avatarSize = avatarRingSize - 6;
 
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
-        <View style={styles.avatarRing}>
-          <View style={styles.avatar}>
+        <View style={[styles.avatarRing, { width: avatarRingSize, height: avatarRingSize, borderRadius: avatarRingSize / 2 }]}>
+          <View style={[styles.avatar, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}>
             <UserAvatar characterId={player.characterId} avatarConfig={player.avatarConfig} size="small" />
           </View>
         </View>
 
         <View style={styles.identity}>
           <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={2}>
+            <Text
+              style={[styles.name, { fontSize: resolveByCardScale(config.cardScale, NAME_FONT_SIZE_BY_CARD_SCALE) }]}
+              numberOfLines={2}
+            >
               {player.name}
             </Text>
             <Pencil size={12} color={colors.textSecondary} strokeWidth={2} style={styles.pencil} />

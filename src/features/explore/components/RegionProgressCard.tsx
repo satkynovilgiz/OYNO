@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card, FadeSlideIn, ProgressBar, ProgressRing } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, spacing, typography } from '@/theme';
 
 import type { ExploreProgress, ExploreStatId } from '../types';
@@ -16,6 +18,9 @@ const STATS: StatDef[] = [
   { id: 'quests', icon: Compass },
 ];
 
+const RING_SIZE_BY_CARD_SCALE = { large: 64, medium: 48, compact: 44, dense: 40 };
+const TITLE_FONT_SIZE_BY_CARD_SCALE = { large: 20, medium: 17, compact: 16, dense: 15 };
+
 type RegionProgressCardProps = {
   progress: ExploreProgress;
 };
@@ -27,11 +32,15 @@ type RegionProgressCardProps = {
  * uses for the equivalent numbers on the Profile tab. */
 export function RegionProgressCard({ progress }: RegionProgressCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
+  const ringSize = resolveByCardScale(config.cardScale, RING_SIZE_BY_CARD_SCALE);
 
   return (
     <Card style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>{t('explore.progress.title')}</Text>
+        <Text style={[styles.title, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}>
+          {t('explore.progress.title')}
+        </Text>
         <Text style={styles.percent}>{progress.overallPercent}%</Text>
       </View>
 
@@ -43,8 +52,8 @@ export function RegionProgressCard({ progress }: RegionProgressCardProps) {
           const ratio = stat.total > 0 ? stat.current / stat.total : 0;
           return (
             <FadeSlideIn key={id} style={styles.statItem} index={index}>
-              <ProgressRing progress={ratio} size={48} strokeWidth={3.5}>
-                <Icon size={18} color={colors.primary} strokeWidth={1.75} />
+              <ProgressRing progress={ratio} size={ringSize} strokeWidth={3.5}>
+                <Icon size={ringSize * 0.375} color={colors.primary} strokeWidth={1.75} />
               </ProgressRing>
               <Text style={styles.statLabel} numberOfLines={1}>
                 {t(`explore.progress.stats.${id}`)}

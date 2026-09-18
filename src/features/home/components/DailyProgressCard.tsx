@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, Card, IconChip, ProgressBar } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, spacing, typography } from '@/theme';
 
 import type { DailyProgress } from '../types';
@@ -14,18 +16,32 @@ type DailyProgressCardProps = {
   onPressClaim?: () => void;
 };
 
+const ICON_CHIP_SIZE_BY_CARD_SCALE = { large: 60, medium: 44, compact: 40, dense: 36 };
+const TITLE_FONT_SIZE_BY_CARD_SCALE = { large: 21, medium: 17, compact: 16, dense: 15 };
+const DESCRIPTION_FONT_SIZE_BY_CARD_SCALE = { large: 16, medium: 13, compact: 12, dense: 12 };
+
 export function DailyProgressCard({ progress, claimable = false, claimed = false, onPressClaim }: DailyProgressCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const ratio = progress.progressMax > 0 ? progress.progressCurrent / progress.progressMax : 0;
   const ready = claimable && !claimed;
 
   return (
     <Card style={[styles.card, ready && styles.cardReady]}>
-      <IconChip icon={Target} size={44} iconSize={22} color={ready ? colors.accentGold : undefined} />
+      <IconChip
+        icon={Target}
+        size={resolveByCardScale(config.cardScale, ICON_CHIP_SIZE_BY_CARD_SCALE)}
+        iconSize={resolveByCardScale(config.cardScale, { large: 30, medium: 22, compact: 20, dense: 18 })}
+        color={ready ? colors.accentGold : undefined}
+      />
 
       <View style={styles.textBlock}>
-        <Text style={styles.title}>{t('home.dailyProgress.title')}</Text>
-        <Text style={styles.description}>{progress.description}</Text>
+        <Text style={[styles.title, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}>
+          {t('home.dailyProgress.title')}
+        </Text>
+        <Text style={[styles.description, { fontSize: resolveByCardScale(config.cardScale, DESCRIPTION_FONT_SIZE_BY_CARD_SCALE) }]}>
+          {progress.description}
+        </Text>
         <View style={styles.progressRow}>
           <ProgressBar progress={ratio} height={6} style={styles.progressBar} />
           <Text style={styles.progressLabel}>

@@ -5,6 +5,8 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { UserAvatar } from '@/components/avatar';
 import { AnimatedPressable, FadeSlideIn, ProgressBar } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
 
@@ -16,15 +18,19 @@ type ProfileHeroProps = {
   onPressEdit?: () => void;
 };
 
+const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.35, medium: 1.75, compact: 1.9, dense: 2.1 };
+const NAME_FONT_SIZE_BY_CARD_SCALE = { large: 28, medium: 24, compact: 21, dense: 19 };
+
 /** Background art (mountains, yurt, horse) sliced from the design
  * reference, right-aligned; a cream fade over the left keeps the avatar
  * and text on a clean, legible surface regardless of what's behind them. */
 export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHeroProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const xpRatio = profile.xpMax > 0 ? profile.xpCurrent / profile.xpMax : 0;
 
   return (
-    <FadeSlideIn style={[styles.card, shadows.card]}>
+    <FadeSlideIn style={[styles.card, { aspectRatio: resolveByCardScale(config.cardScale, ASPECT_RATIO_BY_CARD_SCALE) }, shadows.card]}>
       <Image source={heroBackground} style={[StyleSheet.absoluteFill, styles.image]} resizeMode="cover" />
       <LinearGradient
         colors={[colors.surface, colors.surface, 'rgba(251,243,227,0)']}
@@ -49,7 +55,9 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
 
         <View style={styles.textBlock}>
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{profile.name}</Text>
+            <Text style={[styles.name, { fontSize: resolveByCardScale(config.cardScale, NAME_FONT_SIZE_BY_CARD_SCALE) }]}>
+              {profile.name}
+            </Text>
             <AnimatedPressable onPress={onPressEdit} accessibilityRole="button" accessibilityLabel={t('profile.editLabel')}>
               <Pencil size={16} color={colors.textSecondary} strokeWidth={2} />
             </AnimatedPressable>
@@ -78,7 +86,6 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
 
 const styles = StyleSheet.create({
   card: {
-    aspectRatio: 1.75,
     borderRadius: radii.xl,
     overflow: 'hidden',
     backgroundColor: colors.surface,

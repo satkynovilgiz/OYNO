@@ -1,9 +1,20 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
 
+import { GRADIENT_BY_ARTWORK_PROMINENCE } from '@/services/ageExperience/cardGradient';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
+
+/** Title font size per cardScale, standard vs. the taller `feature`
+ * variant - child reads noticeably larger, adult noticeably denser,
+ * without a screen having to pass anything extra in. */
+const TITLE_FONT_SIZE = {
+  standard: { large: 18, medium: 15, compact: 14, dense: 13 },
+  feature: { large: 23, medium: 17, compact: 16, dense: 15 },
+};
 
 type EditorialCardProps = {
   imageSource: ImageSourcePropType;
@@ -29,8 +40,11 @@ type EditorialCardProps = {
  * categories). A thin gold highlight frames the artwork instead of a
  * heavy beige container around it. */
 export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio = 4 / 3, size = 'standard', progress, style }: EditorialCardProps) {
+  const { config } = useAgeExperience();
   const isFeature = size === 'feature';
   const isComplete = !!progress && progress.total > 0 && progress.current >= progress.total;
+  const gradient = GRADIENT_BY_ARTWORK_PROMINENCE[config.artworkProminence];
+  const titleFontSize = resolveByCardScale(config.cardScale, TITLE_FONT_SIZE[isFeature ? 'feature' : 'standard']);
 
   return (
     <AnimatedPressable
@@ -42,10 +56,10 @@ export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio =
       accessibilityLabel={title}
     >
       <Image source={imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
-      <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={gradient.colors} locations={gradient.locations} style={StyleSheet.absoluteFill} />
 
       <View style={styles.content}>
-        <Text style={[styles.title, isFeature && styles.titleFeature]} numberOfLines={isFeature ? 2 : 1}>
+        <Text style={[styles.title, { fontSize: titleFontSize }]} numberOfLines={isFeature ? 2 : 1}>
           {title}
         </Text>
         {meta ? (
@@ -74,10 +88,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.bodyBold,
-    color: colors.textOnDark,
-  },
-  titleFeature: {
-    ...typography.h2,
     color: colors.textOnDark,
   },
   metaBadge: {

@@ -14,10 +14,17 @@ export type AgeExperienceConfig = {
   /** How much is shown on one screen at once. */
   contentDensity: 'low' | 'medium' | 'high';
   /** Relative size of cards/touch targets vs. the shared design system's
-   * own default sizing. */
-  cardScale: 'large' | 'medium' | 'compact';
-  /** How much visual weight artwork/photography gets vs. text/metadata. */
-  artworkProminence: 'dominant' | 'high' | 'balanced';
+   * own default sizing - a full four-step scale (one distinct value per
+   * AgeExperience) so child-vs-adult, and preteen-vs-teen, are always
+   * visually distinguishable rather than sharing a tier. See
+   * `resolveByCardScale` in `scale.ts` for how components turn this into
+   * an actual pixel value. */
+  cardScale: 'large' | 'medium' | 'compact' | 'dense';
+  /** How much visual weight artwork/photography gets vs. text/metadata -
+   * 'cinematic' (teen) is still artwork-forward like 'high' (preteen) but
+   * paired with a darker/more dramatic treatment in cards that read it,
+   * so the two ages don't render identically. */
+  artworkProminence: 'dominant' | 'high' | 'cinematic' | 'balanced';
   /** Copy length/vocabulary level for the same underlying message. */
   textComplexity: 'minimal' | 'simple' | 'standard' | 'rich';
   /** How often/prominently OYNO's guide characters (Section "Make OYNO
@@ -60,9 +67,9 @@ export const AGE_EXPERIENCE_CONFIG: Record<AgeExperience, AgeExperienceConfig> =
     navigationDensity: 'moderate',
   },
   teen: {
-    contentDensity: 'medium',
-    cardScale: 'medium',
-    artworkProminence: 'high',
+    contentDensity: 'high',
+    cardScale: 'compact',
+    artworkProminence: 'cinematic',
     textComplexity: 'standard',
     characterProminence: 'occasional',
     animationIntensity: 'moderate',
@@ -72,7 +79,7 @@ export const AGE_EXPERIENCE_CONFIG: Record<AgeExperience, AgeExperienceConfig> =
   },
   adult: {
     contentDensity: 'high',
-    cardScale: 'compact',
+    cardScale: 'dense',
     artworkProminence: 'balanced',
     textComplexity: 'rich',
     characterProminence: 'subtle',

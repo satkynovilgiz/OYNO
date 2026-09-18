@@ -32,7 +32,14 @@ describe('AGE_EXPERIENCE_CONFIG', () => {
     expect(AGE_EXPERIENCE_CONFIG.child.contentDensity).toBe('low');
     expect(AGE_EXPERIENCE_CONFIG.adult.contentDensity).toBe('high');
     expect(AGE_EXPERIENCE_CONFIG.child.cardScale).toBe('large');
-    expect(AGE_EXPERIENCE_CONFIG.adult.cardScale).toBe('compact');
+    expect(AGE_EXPERIENCE_CONFIG.adult.cardScale).toBe('dense');
+  });
+
+  it('gives every experience its own distinct cardScale and artworkProminence tier', () => {
+    const cardScales = experiences.map((experience) => AGE_EXPERIENCE_CONFIG[experience].cardScale);
+    const artworkProminences = experiences.map((experience) => AGE_EXPERIENCE_CONFIG[experience].artworkProminence);
+    expect(new Set(cardScales).size).toBe(experiences.length);
+    expect(new Set(artworkProminences).size).toBe(experiences.length);
   });
 
   it('reduces character prominence from child (primary) to adult (subtle)', () => {

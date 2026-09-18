@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, Card, IconChip } from '@/components/ui';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, spacing, typography } from '@/theme';
 
 import type { DailyGift } from '../types';
@@ -16,6 +18,10 @@ type DailyGiftCardProps = {
   claimed?: boolean;
 };
 
+const ICON_CHIP_SIZE_BY_CARD_SCALE = { large: 56, medium: 40, compact: 36, dense: 32 };
+const TITLE_FONT_SIZE_BY_CARD_SCALE = { large: 18, medium: 13, compact: 13, dense: 12 };
+const SUBTITLE_FONT_SIZE_BY_CARD_SCALE = { large: 15, medium: 11, compact: 11, dense: 10 };
+
 /** Compact vertical layout so this reads consistently next to
  * DailyChallengeCard when the two sit side by side (Section "reduce
  * dashboard-box feeling" - was a wide horizontal strip that only worked
@@ -23,6 +29,7 @@ type DailyGiftCardProps = {
  * chevron button. */
 export function DailyGiftCard({ gift, onPress, claimed = false }: DailyGiftCardProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
   const ready = !claimed;
 
   return (
@@ -34,10 +41,20 @@ export function DailyGiftCard({ gift, onPress, claimed = false }: DailyGiftCardP
         accessibilityRole="button"
         accessibilityLabel={t('home.dailyGift.openLabel')}
       >
-        <IconChip icon={Gift} size={40} iconSize={20} color={ready ? colors.accentGold : colors.primary} />
+        <IconChip
+          icon={Gift}
+          size={resolveByCardScale(config.cardScale, ICON_CHIP_SIZE_BY_CARD_SCALE)}
+          iconSize={resolveByCardScale(config.cardScale, { large: 28, medium: 20, compact: 18, dense: 16 })}
+          color={ready ? colors.accentGold : colors.primary}
+        />
         <View style={styles.textBlock}>
-          <Text style={styles.title}>{t('home.dailyGift.title')}</Text>
-          <Text style={styles.subtitle} numberOfLines={2}>
+          <Text style={[styles.title, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}>
+            {t('home.dailyGift.title')}
+          </Text>
+          <Text
+            style={[styles.subtitle, { fontSize: resolveByCardScale(config.cardScale, SUBTITLE_FONT_SIZE_BY_CARD_SCALE) }]}
+            numberOfLines={2}
+          >
             {gift.subtitle}
           </Text>
         </View>

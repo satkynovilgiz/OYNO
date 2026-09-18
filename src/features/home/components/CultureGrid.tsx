@@ -5,6 +5,9 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { GRADIENT_BY_ARTWORK_PROMINENCE } from '@/services/ageExperience/cardGradient';
+import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { CultureTile } from '../types';
@@ -14,8 +17,13 @@ type CultureGridProps = {
   onPressTile?: (tile: CultureTile) => void;
 };
 
+const WIDTH_BY_CARD_SCALE = { large: '100%', medium: '47%', compact: '47%', dense: '31%' } as const;
+const TITLE_FONT_SIZE_BY_CARD_SCALE = { large: 20, medium: 17, compact: 15, dense: 14 };
+
 export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
   const { t } = useTranslation();
+  const { config } = useAgeExperience();
+  const gradient = GRADIENT_BY_ARTWORK_PROMINENCE[config.artworkProminence];
 
   return (
     <View style={styles.section}>
@@ -30,7 +38,11 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
 
       <View style={styles.grid}>
         {tiles.map((tile, index) => (
-          <FadeSlideIn key={tile.id} style={styles.tileWrap} index={index}>
+          <FadeSlideIn
+            key={tile.id}
+            style={{ width: resolveByCardScale(config.cardScale, WIDTH_BY_CARD_SCALE) }}
+            index={index}
+          >
             <AnimatedPressable
               style={styles.tile}
               onPress={() => onPressTile?.(tile)}
@@ -46,15 +58,14 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tiles[tile.tone] }]} />
               )}
 
-              <LinearGradient
-                colors={[colors.overlayStart, colors.overlayEnd]}
-                locations={[0.35, 1]}
-                style={StyleSheet.absoluteFill}
-              />
+              <LinearGradient colors={gradient.colors} locations={gradient.locations} style={StyleSheet.absoluteFill} />
 
               <View style={styles.content}>
                 <View style={styles.textBlock}>
-                  <Text style={styles.title} numberOfLines={2}>
+                  <Text
+                    style={[styles.title, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}
+                    numberOfLines={2}
+                  >
                     {tile.title}
                   </Text>
                   <Text style={styles.subtitle} numberOfLines={1}>
@@ -97,9 +108,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
-  },
-  tileWrap: {
-    width: '47%',
   },
   tile: {
     width: '100%',
