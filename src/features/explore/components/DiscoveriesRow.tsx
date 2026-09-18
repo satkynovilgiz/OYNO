@@ -52,9 +52,9 @@ export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscove
                 accessibilityLabel={discovery.title}
               >
                 {discovery.imageSource ? (
-                  <Image source={discovery.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                  <Image source={discovery.imageSource} style={styles.artwork} resizeMode="cover" />
                 ) : (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: categoryColor }]} />
+                  <View style={[styles.artwork, { backgroundColor: categoryColor }]} />
                 )}
                 <LinearGradient
                   colors={['transparent', 'rgba(0,0,0,0.65)']}
@@ -109,6 +109,14 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   cardDiscovered: {
     borderWidth: 2,

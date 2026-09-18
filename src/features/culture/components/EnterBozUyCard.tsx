@@ -28,7 +28,7 @@ export function EnterBozUyCard({ onPress }: EnterBozUyCardProps) {
         accessibilityRole="button"
         accessibilityLabel={t('culture.enterBozUy.title')}
       >
-        <Image source={artwork} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image source={artwork} style={styles.image} resizeMode="cover" />
         <LinearGradient
           colors={['rgba(20,14,8,0.8)', 'rgba(20,14,8,0.1)', 'rgba(20,14,8,0)']}
           start={{ x: 0, y: 0 }}
@@ -60,6 +60,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  image: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   content: {
     flex: 1,

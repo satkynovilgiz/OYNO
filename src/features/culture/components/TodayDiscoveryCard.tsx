@@ -24,7 +24,7 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
   return (
     <FadeSlideIn>
       <AnimatedPressable style={styles.card} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={discovery.title}>
-        <Image source={discovery.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image source={discovery.imageSource} style={styles.artwork} resizeMode="cover" />
         <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.9)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
 
         <View style={styles.header}>
@@ -56,6 +56,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'space-between',
     padding: spacing.md,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   header: {
     flexDirection: 'row',

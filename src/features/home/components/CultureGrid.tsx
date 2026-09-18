@@ -51,9 +51,9 @@ export function CultureGrid({ tiles, onPressTile }: CultureGridProps) {
               accessibilityLabel={tile.title}
             >
               {tile.imageSource ? (
-                <Image source={tile.imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                <Image source={tile.imageSource} style={styles.artwork} resizeMode="cover" />
               ) : tile.imageUri ? (
-                <Image source={{ uri: tile.imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                <Image source={{ uri: tile.imageUri }} style={styles.artwork} resizeMode="cover" />
               ) : (
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tiles[tile.tone] }]} />
               )}
@@ -118,6 +118,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     ...shadows.card,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style for why insets alone can leave
+  // Image sized by its intrinsic pixels instead of the tile.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   content: {
     flexDirection: 'row',

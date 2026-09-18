@@ -29,7 +29,7 @@ export function InteractiveCard({ imageSource, title, ctaIcon: CtaIcon, onPress,
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Image source={imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image source={imageSource} style={styles.artwork} resizeMode="cover" />
       <LinearGradient colors={['transparent', colors.overlayEnd]} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
       <View style={styles.ctaBadge}>
         <CtaIcon size={16} color={colors.textPrimary} strokeWidth={2.25} />
@@ -50,6 +50,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     padding: spacing.sm,
     backgroundColor: colors.surfaceAlt,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   ctaBadge: {
     position: 'absolute',

@@ -37,9 +37,9 @@ export function Game3DShowcaseCard({ game, onPress, index = 0 }: Game3DShowcaseC
         accessibilityLabel={game.name}
       >
         {game.thumbnail ? (
-          <Image source={game.thumbnail} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          <Image source={game.thumbnail} style={styles.artwork} resizeMode="cover" />
         ) : (
-          <View style={[StyleSheet.absoluteFill, styles.fallback]}>
+          <View style={[styles.artwork, styles.fallback]}>
             <Gamepad2 size={40} color={colors.accentGold} strokeWidth={1.5} />
           </View>
         )}
@@ -79,6 +79,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'flex-end',
     backgroundColor: colors.surfaceFeature,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   fallback: {
     alignItems: 'center',

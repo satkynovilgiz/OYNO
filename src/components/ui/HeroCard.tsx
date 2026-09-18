@@ -33,7 +33,7 @@ export function HeroCard({ imageSource, title, subtitle, onPress, children, aspe
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={title}
     >
-      <Image source={imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image source={imageSource} style={styles.artwork} resizeMode="cover" />
       <LinearGradient
         colors={[colors.overlayStart, 'rgba(20,14,8,0.15)', colors.overlayEnd]}
         locations={[0, 0.45, 1]}
@@ -61,6 +61,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'flex-end',
     backgroundColor: colors.surfaceAlt,
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   content: {
     padding: spacing.lg,

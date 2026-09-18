@@ -55,7 +55,7 @@ export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio =
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Image source={imageSource} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image source={imageSource} style={styles.artwork} resizeMode="cover" />
       <LinearGradient colors={gradient.colors} locations={gradient.locations} style={StyleSheet.absoluteFill} />
 
       <View style={styles.content}>
@@ -81,6 +81,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     borderWidth: 1.5,
     borderColor: 'rgba(232,185,61,0.35)',
+  },
+  // Explicit width/height alongside the absolute-fill insets - insets
+  // alone (StyleSheet.absoluteFill) can leave Image sized by its own
+  // intrinsic pixel dimensions instead of the aspectRatio-driven parent on
+  // the first layout pass (a real, reproduced-on-device Yoga/Image race,
+  // not a web-only quirk), rendering the artwork as a small block in the
+  // corner with empty space around it. Explicit percentages force a
+  // correct remeasure every time.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   content: {
     padding: spacing.sm,

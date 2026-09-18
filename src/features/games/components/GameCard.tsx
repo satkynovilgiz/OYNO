@@ -81,9 +81,9 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
         accessibilityState={{ disabled: !isPlayable }}
       >
         {game.thumbnail ? (
-          <Image source={game.thumbnail} style={[StyleSheet.absoluteFill, !isPlayable && styles.imageLocked]} resizeMode="cover" />
+          <Image source={game.thumbnail} style={[styles.artwork, !isPlayable && styles.imageLocked]} resizeMode="cover" />
         ) : (
-          <View style={[StyleSheet.absoluteFill, styles.imageFallback]}>
+          <View style={[styles.artwork, styles.imageFallback]}>
             <Gamepad2
               size={resolveByCardScale(config.cardScale, FALLBACK_ICON_SIZE_BY_CARD_SCALE)}
               color={colors.accentGold}
@@ -144,6 +144,14 @@ const styles = StyleSheet.create({
   },
   cardLocked: {
     borderColor: 'rgba(139,107,61,0.12)',
+  },
+  // Explicit width/height alongside the absolute-fill insets - see
+  // EditorialCard.tsx's own artwork style comment for why insets alone can
+  // leave Image sized by its intrinsic pixels instead of the card.
+  artwork: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   imageLocked: {
     opacity: 0.6,
