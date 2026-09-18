@@ -73,12 +73,18 @@ export type CultureItemRow = {
   regional_notes: string | null;
   modern_status: string | null;
   fun_facts: string | null;
-  /** Pre-authored, deterministic "simple" content-depth variant (spec
-   * "Build age-aware content presentation... never AI-generated at
-   * runtime") - a short distillation of this same row's other fields, not
-   * new facts. Most rows don't have one yet; the detail screen falls back
-   * to the full field breakdown when it's null, see contentDepth.ts. */
-  simple_summary: string | null;
+  /** Pre-authored, deterministic "simple" content-depth variant, one per
+   * locale (spec "Build age-aware content presentation... never
+   * AI-generated at runtime... Ensure KG/RU/EN architecture supports these
+   * variants") - a short distillation of this same row's other fields, not
+   * new facts. `_ru`/`_en` stay null until a real translation is authored
+   * (spec "Do not fake translations if verified/localized text does not
+   * exist") - most rows have none of the three yet; the detail screen
+   * falls back to the full field breakdown when the current language's
+   * variant is null, see contentDepth.ts. */
+  simple_summary_kg: string | null;
+  simple_summary_ru: string | null;
+  simple_summary_en: string | null;
   accuracy_level: CultureAccuracyLevel;
   sources: string[] | null;
   sort_order: number;

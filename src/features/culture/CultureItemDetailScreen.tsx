@@ -8,8 +8,19 @@ import { KomuzPlaylist } from '@/features/culture/components';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
+
+/** Picks the simple-depth summary matching the app's current language -
+ * `_ru`/`_en` stay null until a real translation is authored (spec "Do not
+ * fake translations if verified/localized text does not exist"), so most
+ * rows only ever resolve a value here for `kg`. */
+function localizedSimpleSummary(item: CultureItemRow, language: SupportedLanguage): string | null {
+  if (language === 'ru') return item.simple_summary_ru;
+  if (language === 'en') return item.simple_summary_en;
+  return item.simple_summary_kg;
+}
 
 type CultureItemDetailScreenProps = {
   item: CultureItemRow;
@@ -33,16 +44,19 @@ const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
 ];
 
 export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack }: CultureItemDetailScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { config } = useAgeExperience();
 
   // 'simple' depth (child/preteen) shows just the condensed summary when
-  // one is stored for this item; 'standard'/'advanced' (teen/adult), or a
-  // 'simple' request with no summary stored yet, fall back to the full
-  // field-by-field breakdown that's always been here (spec "Fallback
-  // safely to the standard version when an age-specific version is
-  // unavailable").
-  const simpleSummary = resolveContentByDepth({ simple: item.simple_summary }, config.learningDepth);
+  // one is stored (in the current language) for this item; 'standard'/
+  // 'advanced' (teen/adult), or a 'simple' request with no summary stored
+  // yet in this language, fall back to the full field-by-field breakdown
+  // that's always been here (spec "Fallback safely to the standard version
+  // when an age-specific version is unavailable").
+  const simpleSummary = resolveContentByDepth(
+    { simple: localizedSimpleSummary(item, i18n.language as SupportedLanguage) },
+    config.learningDepth,
+  );
   const filledFields = DETAIL_FIELDS.filter((field) => !!item[field.key]);
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
