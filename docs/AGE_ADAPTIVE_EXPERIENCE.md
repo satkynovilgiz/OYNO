@@ -46,6 +46,22 @@ fields - `contentDensity`, `cardScale`, `artworkProminence`,
 axes the spec asked for. Screens translate these into the existing design
 system's own tokens; this file is not a second design system.
 
+`cardScale` and `artworkProminence` are each a full four-step ladder -
+`large/medium/compact/dense` and `dominant/high/cinematic/balanced` - one
+distinct value per `AgeExperience`, specifically so preteen and teen never
+render identically (an early version shared `medium`/`high` between them;
+tightened after a review pass asked for the four modes to be "immediately
+noticeable" against each other, not just against their neighbors).
+`src/services/ageExperience/scale.ts`'s `resolveByCardScale()` is the one
+place a screen turns that tier into an actual pixel value (font size, icon
+size, card width...), and `resolveTouchTargetSize()` scales touch targets
+from 56pt (child) down to a floor of 44pt (never below the accessible
+minimum, even at the `dense` adult tier).
+`src/services/ageExperience/cardGradient.ts`'s `GRADIENT_BY_ARTWORK_PROMINENCE`
+does the same for the bottom-gradient overlay every full-bleed-artwork card
+uses, so `cinematic` (teen) reads darker/more dramatic than `high`
+(preteen) without a screen inventing its own gradient stops.
+
 `useAgeExperience()` (`src/services/ageExperience/useAgeExperience.ts`) is
 the one hook every adapting screen calls. It returns
 `{ ageGroup, hasChosenAgeGroup, experience, config }`, defaulting to
@@ -77,15 +93,32 @@ and a big games carousel ("Continue Playing"); adult leads with the
 culture grid ("featured cultural story") and pushes games toward the end
 without ever hiding them.
 
+Beyond ordering, the section components themselves read `cardScale`/
+`artworkProminence` directly: `ProfileSummaryCard`'s avatar ring and name
+grow from 40pt/13px (adult) to 68pt/19px (child); `GamesCarousel` scales
+its thumbnails 80→148pt and adds a real Play-button badge (icon-only for
+teen/adult, an icon+"Play" label for child - previously there was no Play
+affordance on this row at all); `CultureGrid`'s tiles go from three-per-row
+(adult) to one-per-row (child); `DailyChallengeCard`/`DailyGiftCard`/
+`DailyProgressCard` scale their icon chips and title/description type
+along the same ladder. Same cards, same data, same claim/press handlers -
+only size, type, and grid density change.
+
 ### Games (`src/features/games/components/GameCard.tsx`)
 
 Same games, same routes, same `mockGamesList`. `GameCard` reads
-`cardScale` (aspect ratio + icon size), `textComplexity` (whether the
-difficulty/duration/players meta line shows, and whether it's abbreviated)
-and the played-count "gamification" pill (dropped for `rich` text
-complexity - i.e. adult - per "reduced gamification clutter"). Child gets
-a visibly larger card and a labeled "Play" pill instead of an icon-only
-badge, for an unambiguous tap target. No game is ever hidden by age.
+`cardScale` for card width (one per row for child, three per row for
+adult - "fewer items visible at once" vs. "denser layout"), aspect ratio,
+title size, and fallback-icon size; `artworkProminence` for the bottom-
+gradient treatment (`cinematic` for teen goes noticeably darker/more
+dramatic than preteen's `high`); and `textComplexity` for whether the
+difficulty/duration/players meta line shows, and whether it's abbreviated,
+plus the played-count "gamification" pill (dropped for `rich` - adult -
+per "reduced gamification clutter"). Child gets a visibly larger card and
+a labeled "Play" pill instead of an icon-only badge, for an unambiguous
+tap target. `ComingSoonCard` shares the exact same width/aspect-ratio
+table so it never breaks the grid's column rhythm at any age. No game is
+ever hidden by age.
 
 ### Culture (`src/features/culture/CultureScreen.tsx`) and Explore (`src/features/explore/ExploreScreen.tsx`)
 
@@ -99,11 +132,28 @@ Explore quest; adult leads with the day's featured discovery/new
 materials and curated nature sites, with the more playful creator tools
 and the fetch-quest pushed toward the end - present, never removed.
 
+`EditorialCard` (Culture's category cards, both the Home culture grid and
+Culture's own categories grid) reads `cardScale` for its title size
+(13→23px across the four tiers) and `artworkProminence` for its gradient,
+the same shared helpers `GameCard` uses. `CurrentQuestCard` (Explore's
+quest banner) scales from a tall 1.7:1 card with 24px title text (child)
+to a short 2.9:1 strip with 16px text (adult); `RegionProgressCard`'s
+progress rings shrink from 64pt to 40pt along the same ladder.
+
 **Honesty note**: Culture/Explore's per-age ordering wasn't given as a
 literal bullet list the way Home's was - it was derived from the same
 `AgeExperienceConfig` axes (artwork/character prominence, content
 density), following Home's own reasoning. If real usage data later
 suggests a different order, it's a one-line change in either file.
+
+### Profile (`src/features/profile/`)
+
+Lighter touch, per the spec's "where appropriate": `ProfileHero`'s banner
+aspect ratio and name size, and `ProfileStatsGrid`'s progress-ring size,
+scale along the same `cardScale` ladder as everywhere else. Achievements/
+collection/currency rows were left as-is - they're already dense,
+number-driven surfaces that don't read as noticeably "childish" or
+"adult" the way artwork-forward cards do.
 
 ### Content depth (`src/features/culture/CultureItemDetailScreen.tsx`)
 
@@ -112,30 +162,63 @@ with `AgeExperience` - it's `AgeExperienceConfig.learningDepth` used as a
 *default* (child/preteen → simple, teen → standard, adult → advanced).
 
 **The hard constraint the spec called out**: no cultural fact is ever
-generated by AI at runtime. `CultureItemRow.simple_summary` is a new,
-nullable column (migration
-`supabase/migrations/20260917000001_culture_items_simple_summary.sql`)
-holding a short, pre-authored distillation of that same row's own
-`history`/`cultural_meaning`/etc fields - written once, at content-authoring
-time, stored like every other field in `culture_items`. Populated today
-for all 6 Boz Üy items, the concrete example the spec named.
-`resolveContentByDepth()` (`src/services/ageExperience/contentDepth.ts`) is
-the one place that picks a variant - if the resolved depth's field is
-missing, it falls back to the full field-by-field breakdown that's always
-been there (this doubles as "standard" and "advanced", since OYNO doesn't
-yet have a separately-authored advanced tier beyond its existing full
-research write-up). A row with no `simple_summary` at all behaves exactly
-as before this feature shipped.
+generated by AI at runtime. `culture_items` has three new nullable
+columns - `simple_summary_kg`, `simple_summary_ru`, `simple_summary_en`
+(migrations `20260917000001_culture_items_simple_summary.sql`,
+`20260918000001_content_depth_locale_columns.sql`) - the same kg/ru/en
+column shape `culture_categories`/`discoveries` already use for other
+localized text, so the architecture genuinely *supports* per-language
+depth variants rather than being Kyrgyz-only by accident.
+`CultureItemDetailScreen.tsx`'s `localizedSimpleSummary()` picks the
+column matching `i18n.language`, then
+`resolveContentByDepth()` (`src/services/ageExperience/contentDepth.ts`)
+decides whether to show it: if the resolved depth's field is missing (in
+that language), it falls back to the full field-by-field breakdown that's
+always been there (this doubles as "standard" and "advanced", since OYNO
+doesn't yet have a separately-authored advanced tier beyond its existing
+full research write-up). A row with no summary in the reader's language at
+all behaves exactly as before this feature shipped.
 
-**Honesty note - languages**: `culture_items` content (including the new
-`simple_summary` field) is Kyrgyz-only today, matching how this table
-already worked before this feature. Real KG/RU/EN content-depth variants
-would need native-language content authored per row - out of scope here,
-since fabricating translations of nuanced cultural facts at runtime would
-violate the same "never AI-generate cultural facts" constraint this
-feature exists to uphold. The onboarding/Settings copy *around* the
-feature (the age-group question, the Experience setting) is fully
-KG/RU/EN.
+Populated today (migrations `20260917000001`/`20260918000002`), one
+flagship item per category - the most fully-researched row, same standard
+as "Бешбармак is the food category's one fully-researched example" from
+this table's original seed comment:
+
+| Category | Flagship item(s) |
+| --- | --- |
+| Боз үй | all 6 items (tunduk, frame, felt, interior, ak-orgoo, overview) |
+| Оймо | `oymo-overview` |
+| Шырдак | `shyrdak-craft` |
+| Комуз | `komuz-overview` |
+| Улуттук кийим | `clothing-ak-kalpak`, `clothing-elechek` |
+| Кыргыз тамактары | `food-meat-01` (Бешбармак) |
+| Ат маданияты | `horse-kok-boru`, `horse-kyz-kuumai`, `horse-at-chabysh` |
+| Улуттук оюндар | none - see honesty note below |
+
+**Honesty note - languages**: every `simple_summary_*` value shipped so
+far is in `simple_summary_kg` only; `_ru`/`_en` are null everywhere. Real
+KG/RU/EN content-depth variants would need native-language content
+authored per row - the columns exist and the app already knows how to
+read them per-language, but filling in `_ru`/`_en` with anything other
+than a real, verified translation would violate the same "never AI-
+generate/fake cultural facts or translations" constraint this feature
+exists to uphold. RU/EN readers get the same full-breakdown-in-Kyrgyz
+experience they already had before this feature (no worse), and will
+start seeing localized simple summaries the moment real translations are
+authored and written to those columns - no code change needed. The
+onboarding/Settings copy *around* the feature (the age-group question, the
+Experience setting) is fully KG/RU/EN.
+
+**Honesty note - coverage**: most rows in every category (all of food and
+clothing beyond the two flagships above, and every item this table
+doesn't name) are still either "sourced name only" (no history/
+cultural_meaning to distill a summary from) or simply don't have a
+`simple_summary` yet - they behave exactly as they did before this
+feature, showing the full field breakdown at every age. Улуттук оюндар
+(games, category id `games`) has **no `culture_items` row at all** for
+Ordo/Chuko/Toguz Korgool - checked directly against every migration that
+touches this table - so nothing was added there rather than inventing a
+first pass of "history" text to fill the gap.
 
 ### Guide characters (`src/components/character/GameIntroScreen.tsx`)
 
@@ -164,6 +247,44 @@ this screen yet. The age-gating logic benefits every game the moment it's
 wired up, but it doesn't retroactively add intros to games that don't call
 it today.
 
+### Game detail screen (`src/features/games/GameDetailScreen.tsx`)
+
+The pre-entry "what is this / how to play / difficulty / stats" screen
+used by the 5 3D games (`jaa-atuu`, `ordo`, `chuko`, `kyz-kuumai`,
+`kok-boru`) now reads `useAgeExperience()` directly:
+
+- **Child** (`textComplexity === 'minimal'`): a taller 1.5:1 banner, the
+  description clamped to 2 lines, the game's own host character
+  (`gameHostCharacters.ts`, same one `GameIntroScreen` uses) shown next to
+  "How to play", no difficulty picker, no stats row at all ("avoid
+  overwhelming statistics"), and a visibly bigger Play button (2x the flex
+  width of Practice, plus a Play icon).
+- **Preteen**: full difficulty picker, full stats row (best score/games
+  played/achievements), and a modest cultural-context note when one exists
+  for the game (see below) - "moderate cultural context".
+- **Teen**: same as preteen but the host character next to "How to play"
+  drops out (`characterProminence === 'occasional'`) - "less character
+  guidance", standard-density everything else.
+- **Adult** (`characterProminence === 'subtle'`): when a verified
+  cultural-context row exists, it's promoted to its own card right after
+  the banner, above "What is this" - "cultural origin/context more
+  prominent". The footer gets tighter padding ("compact Play CTA"); every
+  other section (complete tutorial steps, full stats) stays at full
+  density - "complete rules available".
+
+**Cultural context, without inventing any**: a new optional
+`culturalContextItemId` prop names a real, already-researched
+`culture_items` row id; `GameDetailScreen` fetches it with the existing
+`useCultureItem()` hook and shows its `history`/`cultural_meaning` fields
+verbatim - the exact same verified content `CultureItemDetailScreen`
+would show, never new text written for this screen. Wired today for
+`kyz-kuumai.tsx` (`horse-kyz-kuumai`) and `kok-boru.tsx` (`horse-kok-boru`)
+- the two 3D games with a real culture_items row. `jaa-atuu`, `ordo`, and
+`chuko` have no such row yet (checked - Улуттук оюндар has no researched
+content at all, see the content-depth section above), so the prop is
+omitted for them and the cultural-context section simply doesn't render -
+no placeholder or invented text fills the gap.
+
 ## What was intentionally not built
 
 - **No four separate screens or forked business logic anywhere.** Every
@@ -172,14 +293,20 @@ it today.
 - **No AI-generated cultural content at runtime**, anywhere, for any age.
 - **No game, culture category, or cultural fact is hidden by age** - only
   its presentation, ordering, or explanatory depth changes.
-- **Admin panel editing for `simple_summary`** was not wired up (the
+- **Admin panel editing for `simple_summary_*`** was not wired up (the
   existing `admin_upsert_culture_item` RPC and its admin-panel field list
   weren't extended) - new simple summaries ship via migration, the same
   way most `culture_items` content already does.
-- **GameDetailScreen** (the pre-entry "what is this / how to play /
-  difficulty / best score" screen used by some 3D games) was not adapted
-  by age in this pass - it's a separate, already-existing screen from
-  earlier work, out of scope for this feature.
+- **No RU/EN translations of any cultural fact or simple summary were
+  authored or faked** - the columns exist, every value in them today is
+  Kyrgyz.
+- **Улуттук оюндар (games) has no age-adaptive content depth** - there is
+  no verified `culture_items` content for it to adapt yet.
+- **Button, IconButton, and other truly global shared components were
+  deliberately left non-age-reactive** - only the CTAs living inside Home/
+  Games/Culture/Explore/Profile/GameDetailScreen were made age-aware, so
+  Settings, auth, and other screens outside this feature's explicit scope
+  render identically regardless of age.
 
 ## Testing
 
@@ -194,6 +321,9 @@ Every pure decision function above has unit tests, run with `npx jest`:
   behavior.
 - `src/services/ageExperience/guideCharacterGating.test.ts` - the
   presentation table above.
+- `src/services/ageExperience/scale.test.ts` - `resolveByCardScale` picks
+  the right tier, `resolveTouchTargetSize` shrinks child→adult but never
+  below the 44pt accessibility floor.
 - `src/store/useAppStore.ageGroup.test.ts` - persistence, reload, and
   "changing groups later" (Task 9's explicit ask).
 - `src/services/navigation/routeGuard.test.ts` - the `/age-group` redirect
@@ -201,12 +331,23 @@ Every pure decision function above has unit tests, run with `npx jest`:
 - `src/features/{home,culture,explore}/*Sections.test.ts` - every section
   order is a full permutation of the same section set, for every
   experience (proof no section silently disappears for any age).
+- `src/services/ageExperience/config.test.ts` also asserts every
+  experience gets its **own distinct** `cardScale` and `artworkProminence`
+  tier (`new Set(...).size === 4`) - a regression guard against two ages
+  quietly sharing a tier again.
 
 `npx tsc --noEmit` and the full `npx jest` suite were run clean after every
-step in this feature (314 tests passing at the time of writing). Live
+step in this feature (317 tests passing at the time of writing). Live
 device/simulator visual QA across all four modes was **not** performed as
 part of this pass - this environment's browser tooling has repeated
 memory/rendering limitations noted elsewhere in this project's history, so
 this doc makes no claim about on-device visual polish beyond what the code
-and its tests can verify. A manual pass on a real device per age group is
-still worth doing before calling this feature done end-to-end.
+and its tests can verify. "Switching 6-9 → 18+ without restarting the app"
+was verified architecturally, not by hand on a device: every adapting
+component calls `useAgeExperience()`, which subscribes to `useAppStore`
+reactively - `setAgeGroup()` (Settings > Experience) triggers a normal
+React re-render of every mounted screen with the new config, the same way
+any other zustand-backed preference in this app already updates live,
+with no cache to invalidate or screen to remount. A manual pass on a real
+device per age group is still worth doing before calling this feature done
+end-to-end.
