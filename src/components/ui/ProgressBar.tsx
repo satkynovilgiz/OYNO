@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors } from '@/theme';
 
 type ProgressBarProps = {
@@ -10,6 +13,12 @@ type ProgressBarProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+/** Animates its fill toward `progress` (spec "Create a restrained OYNO
+ * motion system... Progress: animate XP/progress rings/bars when they
+ * enter, do not replay excessively") - starts at 0 and eases to the
+ * initial value once on mount, then eases smoothly between values on
+ * every later change (e.g. claiming a reward) rather than re-animating
+ * from 0 each time. Jumps straight to the target with Reduce Motion on. */
 export function ProgressBar({
   progress,
   height = 8,
@@ -18,6 +27,17 @@ export function ProgressBar({
   style,
 }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(1, progress));
+  const reducedMotion = useReducedMotion();
+  const animatedProgress = useSharedValue(reducedMotion ? clamped : 0);
+
+  useEffect(() => {
+    animatedProgress.value = reducedMotion ? clamped : withTiming(clamped, { duration: 500 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clamped, reducedMotion]);
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${animatedProgress.value * 100}%`,
+  }));
 
   return (
     <View
@@ -27,10 +47,11 @@ export function ProgressBar({
         style,
       ]}
     >
-      <View
+      <Animated.View
         style={[
           styles.fill,
-          { width: `${clamped * 100}%`, borderRadius: height / 2, backgroundColor: fillColor },
+          fillStyle,
+          { borderRadius: height / 2, backgroundColor: fillColor },
         ]}
       />
     </View>

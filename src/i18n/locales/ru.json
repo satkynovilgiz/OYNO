@@ -458,6 +458,9 @@
       "cta": "Исследовать"
     },
     "categoriesTitle": "Категории культуры",
+    "categoryDetail": {
+      "itemsTitle": "Что можно узнать"
+    },
     "discovery": {
       "label": "Открытие дня",
       "newBadge": "НОВОЕ",

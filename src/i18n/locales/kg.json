@@ -458,6 +458,9 @@
       "cta": "Изилдөө"
     },
     "categoriesTitle": "Маданият категориялары",
+    "categoryDetail": {
+      "itemsTitle": "Эмнелерди биле аласың"
+    },
     "discovery": {
       "label": "Бүгүнкү ачылыш",
       "newBadge": "ЖАҢЫ",

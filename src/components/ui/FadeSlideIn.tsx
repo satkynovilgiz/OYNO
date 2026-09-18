@@ -2,6 +2,10 @@ import { type ReactNode, useEffect } from 'react';
 import { type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
 
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { MOTION_BY_INTENSITY } from '@/services/motion/motionTokens';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
+
 type FadeSlideInProps = {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -12,23 +16,35 @@ type FadeSlideInProps = {
   index?: number;
 };
 
-/** Shared "subtle entrance animation" primitive (Section "Add subtle...
- * entrance animations using the project's existing animation system") - a
- * short fade + gentle rise, staggered by `index`, built on the same
- * Reanimated idiom already used by `GameIntroCard`/`StartCountdown`/
- * `games/GameCard`. One place to tune timing/easing for every card grid
- * or list across the app instead of each screen re-implementing its own
- * `useSharedValue`/`useAnimatedStyle` pair. */
+/** Shared "subtle entrance animation" primitive (spec "Create a
+ * restrained OYNO motion system... Screen entrance: subtle fade/
+ * translate, fast and natural") - a short fade + gentle rise, staggered
+ * by `index`. Distance/duration come from `AgeExperienceConfig.
+ * animationIntensity` (child reads slightly livelier, adult calmer) via
+ * `motionTokens.ts`, and the whole animation is skipped (content appears
+ * instantly) when the OS "Reduce Motion" setting is on. One place to tune
+ * timing/easing for every card grid or list across the app instead of
+ * each screen re-implementing its own `useSharedValue`/`useAnimatedStyle`
+ * pair. */
 export function FadeSlideIn({ children, style, index = 0 }: FadeSlideInProps) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(10);
+  const { config } = useAgeExperience();
+  const reducedMotion = useReducedMotion();
+  const motion = MOTION_BY_INTENSITY[config.animationIntensity];
+
+  const opacity = useSharedValue(reducedMotion ? 1 : 0);
+  const translateY = useSharedValue(reducedMotion ? 0 : motion.enterDistance);
 
   useEffect(() => {
+    if (reducedMotion) {
+      opacity.value = 1;
+      translateY.value = 0;
+      return;
+    }
     const delay = Math.min(index, 8) * 55;
-    opacity.value = withDelay(delay, withTiming(1, { duration: 260 }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: 260 }));
+    opacity.value = withDelay(delay, withTiming(1, { duration: motion.enterDurationMs }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: motion.enterDurationMs }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

@@ -3,6 +3,8 @@ import { type ReactNode } from 'react';
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
+
 const ReanimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const HAPTIC_STYLES = {
@@ -44,6 +46,7 @@ export function AnimatedPressable({
   onHoverOut,
   ...rest
 }: AnimatedPressableProps) {
+  const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
   const isHovering = useSharedValue(false);
 
@@ -51,27 +54,31 @@ export function AnimatedPressable({
     transform: [{ scale: scale.value }],
   }));
 
+  // Reduce Motion: keep every press/hover handler (haptics, onPress, etc.)
+  // fully functional, just never animate the scale value away from 1 -
+  // per spec "Create a restrained OYNO motion system... Respect Reduce
+  // Motion".
   return (
     <ReanimatedPressable
       style={[style, animatedStyle]}
       disabled={disabled}
       onPressIn={(event) => {
-        scale.value = withSpring(pressScale, { damping: 16, stiffness: 320 });
+        if (!reducedMotion) scale.value = withSpring(pressScale, { damping: 16, stiffness: 320 });
         if (haptic && !disabled) void Haptics.impactAsync(HAPTIC_STYLES[haptic]);
         onPressIn?.(event);
       }}
       onPressOut={(event) => {
-        scale.value = withSpring(hoverEffect && isHovering.value ? hoverScale : 1, { damping: 12, stiffness: 220 });
+        if (!reducedMotion) scale.value = withSpring(hoverEffect && isHovering.value ? hoverScale : 1, { damping: 12, stiffness: 220 });
         onPressOut?.(event);
       }}
       onHoverIn={(event) => {
         isHovering.value = true;
-        if (hoverEffect && !disabled) scale.value = withSpring(hoverScale, { damping: 14, stiffness: 260 });
+        if (hoverEffect && !disabled && !reducedMotion) scale.value = withSpring(hoverScale, { damping: 14, stiffness: 260 });
         onHoverIn?.(event);
       }}
       onHoverOut={(event) => {
         isHovering.value = false;
-        if (hoverEffect) scale.value = withSpring(1, { damping: 14, stiffness: 260 });
+        if (hoverEffect && !reducedMotion) scale.value = withSpring(1, { damping: 14, stiffness: 260 });
         onHoverOut?.(event);
       }}
       {...rest}

@@ -24,23 +24,14 @@ import {
   QuizTeaserCard,
   TodayDiscoveryCard,
 } from './components';
-import type { InteractiveExperience } from './components';
 import { getCultureSectionOrder, type CultureSectionId } from './cultureSections';
 import { cultureCategoryImages, cultureCategoryMockProgress, cultureMaterialImages, cultureProgress } from './data';
+import { INTERACTIVE_EXPERIENCES, routeForInteractiveExperience } from './interactiveExperiences';
 import type { CultureCategory, CultureCategoryId, CultureDiscovery, CultureMaterial } from './types';
 
-const INTERACTIVE_EXPERIENCES: InteractiveExperience[] = [
-  { id: 'oymo', titleKey: 'culture.interactive.oymo', imageSource: cultureCategoryImages.oymo },
-  { id: 'boz-uy', titleKey: 'culture.interactive.bozUy', imageSource: cultureCategoryImages['boz-uy'] },
-  { id: 'shyrdak', titleKey: 'culture.interactive.shyrdak', imageSource: cultureCategoryImages.shyrdak },
-  { id: 'komuz', titleKey: 'culture.interactive.komuz', imageSource: cultureCategoryImages.komuz },
-];
-
 function handlePressExperience(id: string) {
-  if (id === 'oymo') router.push('/culture/oymo/create' as never);
-  if (id === 'boz-uy') router.push('/culture/boz-uy/build' as never);
-  if (id === 'shyrdak') router.push('/culture/shyrdak/create' as never);
-  if (id === 'komuz') router.push('/culture/komuz/learn' as never);
+  const route = routeForInteractiveExperience(id);
+  if (route) router.push(route as never);
 }
 
 function handlePressCategory(category: CultureCategory) {

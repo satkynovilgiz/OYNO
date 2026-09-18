@@ -458,6 +458,9 @@
       "cta": "Explore"
     },
     "categoriesTitle": "Culture categories",
+    "categoryDetail": {
+      "itemsTitle": "Things to discover"
+    },
     "discovery": {
       "label": "Today's discovery",
       "newBadge": "NEW",
