@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   badgeLocked: {
-    opacity: 0.45,
+    opacity: 0.55,
   },
   title: {
     ...typography.h1,

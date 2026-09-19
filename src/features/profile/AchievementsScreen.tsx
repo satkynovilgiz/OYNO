@@ -160,8 +160,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // Moderate desaturation only (spec "Task fix... locked state washes out
+  // too much") - the medal stays clearly recognizable.
   badgeLocked: {
-    opacity: 0.45,
+    opacity: 0.55,
   },
   lockBadge: {
     position: 'absolute',
