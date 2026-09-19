@@ -54,7 +54,7 @@ export function ProfileSummaryCard({ player }: ProfileSummaryCardProps) {
             <Pill label={t('home.profile.level', { level: player.level })} />
             {player.streakDays > 0 ? (
               <View style={styles.streakChip}>
-                <Flame size={11} color={colors.accentGold} strokeWidth={2.25} />
+                <Flame size={11} color={colors.accentTerracotta} strokeWidth={2.25} />
                 <Text style={styles.streakText}>{player.streakDays}</Text>
               </View>
             ) : null}

@@ -20,7 +20,10 @@ export function StreakCard({ streakDays }: StreakCardProps) {
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
-        <Flame size={16} color={colors.danger} strokeWidth={2.25} />
+        {/* Terracotta, matching every other streak indicator in the app -
+         * this one previously used `danger` (red), which reads as a
+         * warning even though a streak is a positive, celebratory number. */}
+        <Flame size={16} color={colors.accentTerracotta} strokeWidth={2.25} />
         <Text style={styles.title}>{t('culture.bozUy.streakCard.title')}</Text>
       </View>
       <Text style={styles.days}>{t('culture.bozUy.streakCard.days', { count: streakDays })}</Text>

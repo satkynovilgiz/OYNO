@@ -28,8 +28,8 @@ type RegionProgressCardProps = {
 /** Overall bar stays (it's the one number that matters most - "how much
  * of Kyrgyzstan have I explored"), but the 4 sub-stats moved from plain
  * text counts to progress rings (Section "Show discovery progress in a
- * clean visual way"), the same visual language `ProfileStatsGrid` already
- * uses for the equivalent numbers on the Profile tab. */
+ * clean visual way"), the same visual language `CulturalJourneyCard` uses
+ * for the equivalent numbers on the Profile tab. */
 export function RegionProgressCard({ progress }: RegionProgressCardProps) {
   const { t } = useTranslation();
   const { config } = useAgeExperience();
