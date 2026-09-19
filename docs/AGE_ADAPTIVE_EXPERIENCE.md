@@ -285,6 +285,109 @@ content at all, see the content-depth section above), so the prop is
 omitted for them and the cultural-context section simply doesn't render -
 no placeholder or invented text fills the gap.
 
+## Culture Category Detail
+
+`src/features/culture/CultureCategoryDetailScreen.tsx` is the single reusable
+screen behind every category route (`src/app/culture/[categoryId].tsx`) -
+Боз үй, Оймо, Шырдак, Комуз, Улуттук кийим, Ат маданияты, Ашкана, Улуттук
+оюндар, Каада-салт, Музыка all render the same component driven by category
+data, replacing the old flat icon-tile grid (`CultureCategoryScreen.tsx`,
+deleted). Layout, top to bottom:
+
+- Full-bleed hero (`categoryImage`, real category photography) with a
+  gradient, back button, title, and a `current/total` progress `Pill` -
+  never a flat icon tile.
+- An optional intro paragraph from `pickCategoryIntro()`
+  (`src/features/culture/categoryIntro.ts`), which only ever surfaces real
+  `history`/`cultural_meaning` text already in `culture_items` (picked from
+  the richest, lowest-`sort_order` item with any content, resolved through
+  `resolveContentByDepth` for the current age's `learningDepth`) - no
+  category gets invented copy, and one with no researched items yet simply
+  has no intro section.
+- An optional featured interactive-experience card
+  (`interactiveExperienceForCategory()`,
+  `src/features/culture/interactiveExperiences.ts`) for the four categories
+  that actually have one (Оймо/Боз үй/Шырдак/Комуз) - never a dead button
+  for the rest.
+- The item list itself, `resolveByCardScale`-driven between a 1-column
+  full-width list (child, and adult's denser row variant) and a 2-column
+  grid (preteen/teen), using each item's own photo from `cultureItemImages`
+  when one exists and falling back to the same type-keyed icon tile the old
+  screen used otherwise.
+
+## Explore Destination Detail
+
+`src/features/explore/LocationDetailScreen.tsx` is the one shared "enter
+this place" page for every `/explore/[id]` route, region or nature site
+alike. `heroImage` is a real photo reused from one of the location's own
+`discoveries` when bundled art exists for it; when it doesn't, the hero
+falls back to a flat tone color plus `OymoOrnament` rather than a
+mismatched or generic photo. Facts render as a numbered list (no bordered
+boxes), the existing `DiscoveriesRow` is untouched, and a "Part of your
+quest" card only appears when `src/app/explore/[id].tsx` finds a genuine
+match between the player's next incomplete quest step and this location
+(`findNextIncompleteStep` + `resolveStepRoute`) - never shown
+speculatively. `config.characterProminence` decides whether that quest card
+sits near the top (child/preteen) or after the facts (teen/adult), and
+`isChild`/`isAdult` trim the fact list to 2 items or tighten it into denser
+caption text, respectively.
+
+## The motion system
+
+A small, deliberately restrained set of shared motion primitives under
+`src/services/motion/` and `src/components/ui/`, built so most screens opt
+in by using an existing component rather than hand-rolling animation:
+
+- `useReducedMotion()` (`src/services/motion/useReducedMotion.ts`) reads
+  `AccessibilityInfo.isReduceMotionEnabled()` and subscribes to
+  `reduceMotionChanged`. Every animated primitive below checks it and skips
+  straight to the end state - no partial fade, no transform - when it's on.
+- `MOTION_BY_INTENSITY` (`src/services/motion/motionTokens.ts`) maps the
+  existing `config.animationIntensity` (`playful`/`moderate`/`calm`) to a
+  concrete `{ pressScale, enterDistance, enterDurationMs, spring }` tuple,
+  giving child mode slightly stronger, snappier motion and teen/adult a
+  calmer, smaller one from the *same* components.
+- `FadeSlideIn` and `AnimatedPressable` (both pre-existing) now read those
+  tokens instead of hardcoded constants, so every screen already using them
+  for card entrance and press feedback got age-adaptive, reduced-motion-safe
+  motion for free.
+- `ProgressBar` and `ProgressRing` animate their fill/stroke toward the
+  target value with `withTiming` (an `Animated.createAnimatedComponent` /
+  `useAnimatedProps` wrapper around `react-native-svg`'s `Circle` for the
+  ring) - once from 0 on mount, smoothly between later values, never
+  replaying from 0 on every re-render, and jumping straight to the target
+  under Reduce Motion.
+- `AgeExperienceTransition` (`src/components/ui/AgeExperienceTransition.tsx`)
+  wraps each screen's age-ordered section list (`HomeScreen`,
+  `CultureScreen`, `ExploreScreen`) in an `Animated.View` keyed by
+  `experience`, so switching age groups in Settings crossfades the new
+  section order/content in instead of jump-cutting to it. Skipped entirely
+  under Reduce Motion.
+- `useHeroParallax()` (`src/services/motion/useHeroParallax.ts`) gives
+  `CultureCategoryDetailScreen` and `LocationDetailScreen`'s hero image a
+  subtle scroll-linked drift (slower than the scroll) plus a slight
+  overscroll zoom, computed entirely on the UI thread via a Reanimated
+  scroll handler - no JS work per frame, no-op under Reduce Motion.
+- The 5 home/culture/explore/profile horizontal carousels
+  (`GamesCarousel`, `DiscoveriesRow`, `NatureSitesRow`,
+  `InteractiveExperiencesRow`, `NewMaterialsRow`, `ProfileCollectionRow`)
+  snap one card at a time (`snapToInterval` matched to each card's own
+  fixed or age-scaled width, `decelerationRate="fast"`) instead of
+  free-scrolling to an arbitrary stopping point.
+- Game Play/Practice CTAs already routed through the shared `Button`
+  component, which already wraps `AnimatedPressable` with a real haptic
+  (`medium` for primary, `light` for secondary) - no separate change was
+  needed for "satisfying press feedback" there.
+- Navigation transitions between every Culture/Explore card and its detail
+  screen are already consistent by construction: the whole app is one flat
+  `expo-router` `<Stack screenOptions={...}>` in `src/app/_layout.tsx` with
+  no per-route animation override anywhere, so every push uses the same
+  platform-default transition.
+- **Not done**: game physics/3D rendering were not touched, per the
+  explicit instruction; no continuous/looping JS-thread animation was
+  added anywhere - every animation here is either gesture-driven (press,
+  scroll) or runs once on mount/enter/value-change and then stops.
+
 ## What was intentionally not built
 
 - **No four separate screens or forked business logic anywhere.** Every
@@ -335,9 +438,16 @@ Every pure decision function above has unit tests, run with `npx jest`:
   experience gets its **own distinct** `cardScale` and `artworkProminence`
   tier (`new Set(...).size === 4`) - a regression guard against two ages
   quietly sharing a tier again.
+- `src/features/culture/categoryIntro.test.ts` - `pickCategoryIntro` picks
+  the richest, lowest-`sort_order` item, prefers `simple_summary` at the
+  `simple` depth, falls back to `history`/`cultural_meaning`, and never
+  resolves a null RU/EN summary.
+- `src/services/motion/motionTokens.test.ts` - each intensity tier is
+  distinct and internally consistent (e.g. `playful` never ends up calmer
+  than `calm`).
 
 `npx tsc --noEmit` and the full `npx jest` suite were run clean after every
-step in this feature (317 tests passing at the time of writing). Live
+step in this feature (324 tests passing at the time of writing). Live
 device/simulator visual QA across all four modes was **not** performed as
 part of this pass - this environment's browser tooling has repeated
 memory/rendering limitations noted elsewhere in this project's history, so

@@ -45,6 +45,9 @@ export function GamesCarousel({ games, onPressGame, onPressSeeAll }: GamesCarous
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
+        snapToInterval={thumbnailSize + spacing.sm}
+        snapToAlignment="start"
+        decelerationRate="fast"
       >
         {games.map((game, index) => (
           <FadeSlideIn key={game.id} index={index}>

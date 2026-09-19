@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { EmptyState } from '@/components/ui';
+import { AgeExperienceTransition, EmptyState } from '@/components/ui';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
@@ -167,7 +167,9 @@ export function CultureScreen() {
             }}
           />
         ) : (
-          getCultureSectionOrder(experience).map(renderSection)
+          <AgeExperienceTransition style={styles.sectionList}>
+            {getCultureSectionOrder(experience).map(renderSection)}
+          </AgeExperienceTransition>
         )}
       </ScrollView>
 
@@ -194,6 +196,9 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  sectionList: {
+    gap: spacing.lg,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

@@ -1,3 +1,4 @@
+export * from './AgeExperienceTransition';
 export * from './AnimatedPressable';
 export * from './Badge';
 export * from './Button';

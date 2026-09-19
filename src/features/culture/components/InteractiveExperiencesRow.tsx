@@ -11,6 +11,9 @@ export type InteractiveExperience = {
   imageSource: ImageSourcePropType;
 };
 
+/** Matches InteractiveCard's fixed width so the row snaps one card at a time. */
+const INTERACTIVE_CARD_WIDTH = 148;
+
 type InteractiveExperiencesRowProps = {
   experiences: InteractiveExperience[];
   onPressExperience: (id: string) => void;
@@ -30,7 +33,14 @@ export function InteractiveExperiencesRow({ experiences, onPressExperience }: In
   return (
     <FadeSlideIn style={styles.section}>
       <Text style={styles.sectionTitle}>{t('culture.interactive.title')}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+        snapToInterval={INTERACTIVE_CARD_WIDTH + spacing.sm}
+        snapToAlignment="start"
+        decelerationRate="fast"
+      >
         {experiences.map((experience) => (
           <InteractiveCard
             key={experience.id}

@@ -834,6 +834,7 @@
       "backLabel": "Назад",
       "progressLabel": "Этот регион исследован на {{percent}}%",
       "factsTitle": "Знаете ли вы?",
+      "questLabel": "Часть вашего квеста",
       "discoveriesTitle": "Открытия",
       "noDiscoveries": "Здесь пока нет открытий.",
       "favoriteLabel": "Добавить в избранное",

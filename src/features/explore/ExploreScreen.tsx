@@ -5,7 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, EmptyState, FadeSlideIn } from '@/components/ui';
+import { AgeExperienceTransition, AnimatedPressable, EmptyState, FadeSlideIn } from '@/components/ui';
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import type { SupportedLanguage } from '@/i18n';
@@ -286,7 +286,9 @@ export function ExploreScreen() {
               </View>
             )}
 
-            {getExploreSectionOrder(experience).map(renderSection)}
+            <AgeExperienceTransition style={styles.sectionList}>
+              {getExploreSectionOrder(experience).map(renderSection)}
+            </AgeExperienceTransition>
           </>
         )}
       </ScrollView>
@@ -325,6 +327,9 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  sectionList: {
+    gap: spacing.lg,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

@@ -10,8 +10,9 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 
 import { AnimatedPressable, FadeSlideIn, IconButton, Pill } from '@/components/ui';
 import { pickCategoryIntro } from '@/features/culture/categoryIntro';
@@ -19,6 +20,7 @@ import type { InteractiveExperience } from '@/features/culture/components';
 import { cultureItemImages } from '@/features/culture/data';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
+import { useHeroParallax } from '@/services/motion/useHeroParallax';
 import type { CultureItemRow, CultureItemTypeLabel } from '@/services/content/types';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
@@ -86,6 +88,7 @@ export function CultureCategoryDetailScreen({
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { config } = useAgeExperience();
+  const { scrollHandler, heroStyle } = useHeroParallax();
 
   const intro = pickCategoryIntro(items, i18n.language as 'kg' | 'ru' | 'en', config.learningDepth);
   const heroAspectRatio = resolveByCardScale(config.cardScale, HERO_ASPECT_RATIO_BY_CARD_SCALE);
@@ -95,9 +98,14 @@ export function CultureCategoryDetailScreen({
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+      >
         <View style={[styles.hero, { aspectRatio: heroAspectRatio }]}>
-          <Image source={categoryImage} style={styles.heroImage} resizeMode="cover" />
+          <Animated.Image source={categoryImage} style={[styles.heroImage, heroStyle]} resizeMode="cover" />
           <LinearGradient
             colors={['rgba(19,32,24,0.15)', 'rgba(19,32,24,0.92)']}
             locations={[0.35, 1]}
@@ -216,7 +224,7 @@ export function CultureCategoryDetailScreen({
             )}
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -232,6 +240,7 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     justifyContent: 'space-between',
+    overflow: 'hidden',
   },
   heroImage: {
     ...StyleSheet.absoluteFill,

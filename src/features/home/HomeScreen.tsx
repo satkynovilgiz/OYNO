@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AgeExperienceTransition } from '@/components/ui';
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -189,7 +190,9 @@ export function HomeScreen() {
           onPressNotifications={() => router.push('/notifications' as never)}
         />
 
-        {getHomeSectionOrder(experience).map(renderSection)}
+        <AgeExperienceTransition style={styles.sectionList}>
+          {getHomeSectionOrder(experience).map(renderSection)}
+        </AgeExperienceTransition>
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>
@@ -207,6 +210,9 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  sectionList: {
+    gap: spacing.lg,
   },
   topRow: {
     flexDirection: 'row',

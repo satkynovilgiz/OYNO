@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { discoveryImages } from '@/features/explore/data';
-import { LocationDetailScreen } from '@/features/explore/LocationDetailScreen';
+import { LocationDetailScreen, type RelatedQuest } from '@/features/explore/LocationDetailScreen';
 import type { ExploreLocation } from '@/features/explore/types';
 import { track } from '@/services/analytics/analytics';
 import { useDiscoveries } from '@/services/content/discoveriesService';
@@ -12,7 +12,7 @@ import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreSe
 import { useQuestSteps } from '@/services/content/questStepsService';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
-import type { QuestStep } from '@/services/explore/questSteps';
+import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
 
@@ -103,17 +103,40 @@ export default function ExploreLocationRoute() {
     imageSource: discoveryImages[d.id],
   }));
 
+  // A real photo only when one of this region's own discoveries has
+  // bundled art - never a generic/unrelated stand-in for "cinematic
+  // photography" (spec "Do not fabricate missing information").
+  const heroImage = localizedDiscoveries.find((d) => d.imageSource)?.imageSource ?? null;
+
+  // "Related quest" only when the active quest's next real, incomplete
+  // step genuinely targets this location or a discovery inside it -
+  // never shown speculatively.
+  let relatedQuest: RelatedQuest = null;
+  if (questRow && !progress.questCompleted) {
+    const nextStep = findNextIncompleteStep(questStepsList, progress.completedQuestStepIds);
+    if (nextStep) {
+      const discoveryRegionId =
+        nextStep.stepType === 'DISCOVER_ITEM' ? ((discoveries ?? []).find((d) => d.id === nextStep.targetId)?.region_id ?? null) : null;
+      if (resolveStepRoute(nextStep, discoveryRegionId) === `/explore/${row.id}`) {
+        relatedQuest = { title: questRow.title, ctaLabel: questRow.cta_label };
+      }
+    }
+  }
+
   return (
     <LocationDetailScreen
       location={location}
       toneIndex={toneIndex}
       state={completion.state}
+      heroImage={heroImage}
       discoveries={localizedDiscoveries}
       discoveredIds={progress.discoveredExploreIds}
       isFavorite={progress.favoriteIds.includes(`${row.kind}:${row.id}`)}
+      relatedQuest={relatedQuest}
       onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       onPressDiscovery={(discoveryId) => useProgressStore.getState().discoverExploreItem(discoveryId)}
       onToggleFavorite={() => useProgressStore.getState().toggleFavorite(row.kind, row.id)}
+      onPressRelatedQuest={() => router.push('/explore' as never)}
     />
   );
 }

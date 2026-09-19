@@ -834,6 +834,7 @@
       "backLabel": "Back",
       "progressLabel": "This region is {{percent}}% explored",
       "factsTitle": "Did you know?",
+      "questLabel": "Part of your quest",
       "discoveriesTitle": "Discoveries",
       "noDiscoveries": "No discoveries here yet.",
       "favoriteLabel": "Add to favorites",

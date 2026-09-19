@@ -7,6 +7,9 @@ import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ProfileCollectionItem } from '../types';
 
+/** Matches styles.card's fixed width so the row snaps one card at a time. */
+const COLLECTION_CARD_WIDTH = 92;
+
 type ProfileCollectionRowProps = {
   items: ProfileCollectionItem[];
   onPressItem?: (item: ProfileCollectionItem) => void;
@@ -27,7 +30,14 @@ export function ProfileCollectionRow({ items, onPressItem, onPressSeeAll }: Prof
         />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.list}
+        snapToInterval={COLLECTION_CARD_WIDTH + spacing.sm}
+        snapToAlignment="start"
+        decelerationRate="fast"
+      >
         {items.map((item, index) => (
           <FadeSlideIn key={item.id} index={index}>
             <AnimatedPressable
