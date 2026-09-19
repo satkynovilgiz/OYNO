@@ -928,7 +928,7 @@
       "played": "{{count}} games",
       "wins": "{{count}} wins",
       "empty": "No games played yet",
-      "emptyDescription": "Play a game to see your stats here."
+      "emptyCta": "Go to Games"
     },
     "collection": {
       "title": "My collection",
