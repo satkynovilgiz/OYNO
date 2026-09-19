@@ -914,7 +914,14 @@
       "unlockedBadge": "Unlocked",
       "lockedBadge": "Locked",
       "unlockedTitle": "New achievement!",
-      "unlockedCta": "Nice!"
+      "unlockedCta": "Nice!",
+      "requirementLabel": "How to unlock",
+      "requirements": {
+        "firstWin": "Win one game",
+        "traveler": "Complete one quest",
+        "bozUyGuest": "Visit the Boz Üy",
+        "komuzchu": "Discover one Culture item"
+      }
     },
     "favoriteGames": {
       "title": "My favorite games",

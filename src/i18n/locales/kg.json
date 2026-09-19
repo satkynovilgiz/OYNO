@@ -914,7 +914,14 @@
       "unlockedBadge": "Ачылды",
       "lockedBadge": "Кулпуланган",
       "unlockedTitle": "Жаңы жетишкендик!",
-      "unlockedCta": "Сонун!"
+      "unlockedCta": "Сонун!",
+      "requirementLabel": "Кантип ачуу керек",
+      "requirements": {
+        "firstWin": "Бир оюндан жеңип чык",
+        "traveler": "Бир квестти аяктоо",
+        "bozUyGuest": "Боз үйгө кир",
+        "komuzchu": "Маданияттан бир нерсе тааны"
+      }
     },
     "favoriteGames": {
       "title": "Сүйүктүү оюндарым",

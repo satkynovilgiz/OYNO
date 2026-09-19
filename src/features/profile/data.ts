@@ -1,7 +1,7 @@
-import badgeBozUyGuest from '@assets/img/OYNO_design/profile/badge_boz_uy_guest.png';
-import badgeFirstWin from '@assets/img/OYNO_design/profile/badge_first_win.png';
-import badgeKomuzchu from '@assets/img/OYNO_design/profile/badge_komuzchu.png';
-import badgeTraveler from '@assets/img/OYNO_design/profile/badge_traveler.png';
+import badgeBozUyGuest from '@assets/img/OYNO_design/profile/achievement_boz_uy_guest.png';
+import badgeFirstWin from '@assets/img/OYNO_design/profile/achievement_first_win.png';
+import badgeKomuzchu from '@assets/img/OYNO_design/profile/achievement_komuz.png';
+import badgeTraveler from '@assets/img/OYNO_design/profile/achievement_explorer.png';
 
 import { discoveryImages } from '@/features/explore/data';
 import type { SupportedLanguage } from '@/i18n';
@@ -17,11 +17,15 @@ import type { ProfileAchievement, ProfileCollectionItem } from './types';
  * Real per-user numbers (xp, coins, unlocked achievements, favorite games,
  * daily activity) come from useProgressStore instead; see ProfileScreen.
  */
+/** `requirementKey` mirrors the real predicate in
+ * src/services/progress/achievements.ts exactly (gamesWon >= 1,
+ * questCompletedCount >= 1, bozUyVisited, cultureDiscoveryCount >= 1) -
+ * shown only for locked achievements, never an invented requirement. */
 export const profileAchievements: ProfileAchievement[] = [
-  { id: 'first-win', title: 'Биринчи жеңиш', iconSource: badgeFirstWin },
-  { id: 'traveler', title: 'Саякатчы', iconSource: badgeTraveler },
-  { id: 'boz-uy-guest', title: 'Боз үйдүн коногу', iconSource: badgeBozUyGuest },
-  { id: 'komuzchu', title: 'Комузчу', iconSource: badgeKomuzchu },
+  { id: 'first-win', title: 'Биринчи жеңиш', iconSource: badgeFirstWin, requirementKey: 'profile.achievements.requirements.firstWin' },
+  { id: 'traveler', title: 'Саякатчы', iconSource: badgeTraveler, requirementKey: 'profile.achievements.requirements.traveler' },
+  { id: 'boz-uy-guest', title: 'Боз үйдүн коногу', iconSource: badgeBozUyGuest, requirementKey: 'profile.achievements.requirements.bozUyGuest' },
+  { id: 'komuzchu', title: 'Комузчу', iconSource: badgeKomuzchu, requirementKey: 'profile.achievements.requirements.komuzchu' },
 ];
 /** The real catalog size - was hardcoded to 50 (the design spec's eventual
  * full catalog, never built) which made the Achievements screen show a

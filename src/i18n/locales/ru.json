@@ -914,7 +914,14 @@
       "unlockedBadge": "Открыто",
       "lockedBadge": "Заблокировано",
       "unlockedTitle": "Новое достижение!",
-      "unlockedCta": "Отлично!"
+      "unlockedCta": "Отлично!",
+      "requirementLabel": "Как открыть",
+      "requirements": {
+        "firstWin": "Выиграйте одну игру",
+        "traveler": "Завершите один квест",
+        "bozUyGuest": "Посетите Боз Үй",
+        "komuzchu": "Откройте один материал в Культуре"
+      }
     },
     "favoriteGames": {
       "title": "Мои любимые игры",

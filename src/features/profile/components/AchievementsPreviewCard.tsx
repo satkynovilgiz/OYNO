@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Lock } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
@@ -39,12 +39,17 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
           const isLocked = !!unlockedIds && !unlockedIds.includes(achievement.id);
           return (
             <FadeSlideIn key={achievement.id} style={styles.badgeItem} index={index}>
-              <View style={[styles.badgeRing, !isLocked && styles.badgeRingUnlocked]}>
+              <View style={styles.badgeStage}>
                 <Image
                   source={achievement.iconSource}
                   style={[styles.badgeImage, isLocked && styles.badgeLocked]}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
+                {isLocked ? (
+                  <View style={styles.lockBadge}>
+                    <Lock size={11} color={colors.textOnDark} strokeWidth={2.25} />
+                  </View>
+                ) : null}
               </View>
               <Text style={styles.badgeLabel} numberOfLines={2}>
                 {achievement.title}
@@ -87,26 +92,34 @@ const styles = StyleSheet.create({
   badgeItem: {
     alignItems: 'center',
     gap: spacing.xxs,
-    width: 72,
+    width: 84,
   },
-  badgeRing: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    padding: 3,
-    backgroundColor: colors.surfaceAlt,
-  },
-  badgeRingUnlocked: {
-    backgroundColor: colors.accentGold,
+  // No extra ring/border here - the medallion artwork already has its own
+  // ornate gold ring baked in (spec "Task 10... avoid tiny image inside
+  // another unnecessary circle... double gold rings"). `contain` shows
+  // the full circular medal - the source is already square, so nothing
+  // is cropped or stretched.
+  badgeStage: {
+    width: 84,
+    height: 84,
   },
   badgeImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 31,
-    backgroundColor: colors.surfaceAlt,
   },
   badgeLocked: {
-    opacity: 0.35,
+    opacity: 0.45,
+  },
+  lockBadge: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(19,32,24,0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeLabel: {
     ...typography.small,
