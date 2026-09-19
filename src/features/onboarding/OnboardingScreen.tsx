@@ -22,6 +22,7 @@ import Animated, {
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, TextButton } from '@/components/ui';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, radii, spacing, typography } from '@/theme';
 import wordmark from '@assets/img/OYNO_design/wordmark.png';
 
@@ -126,16 +127,24 @@ type OnboardingSlideProps = {
 function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth }: OnboardingSlideProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   const inputRange = [(slideIndex - 1) * screenWidth, slideIndex * screenWidth, (slideIndex + 1) * screenWidth];
 
-  const contentStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP),
-    transform: [{ translateY: interpolate(scrollX.value, inputRange, [14, 0, 14], Extrapolation.CLAMP) }],
-  }));
+  // Reduce Motion: content stays fully visible in place and the image
+  // stays at rest scale - the actual paging (a direct, user-driven swipe)
+  // is untouched, only the decorative fade/rise/parallax is skipped.
+  const contentStyle = useAnimatedStyle(() => {
+    if (reducedMotion) return { opacity: 1, transform: [{ translateY: 0 }] };
+    return {
+      opacity: interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP),
+      transform: [{ translateY: interpolate(scrollX.value, inputRange, [14, 0, 14], Extrapolation.CLAMP) }],
+    };
+  });
 
-  const imageStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(scrollX.value, inputRange, [1.1, 1, 1.1], Extrapolation.CLAMP) }],
-  }));
+  const imageStyle = useAnimatedStyle(() => {
+    if (reducedMotion) return { transform: [{ scale: 1 }] };
+    return { transform: [{ scale: interpolate(scrollX.value, inputRange, [1.1, 1, 1.1], Extrapolation.CLAMP) }] };
+  });
 
   return (
     <View style={[styles.slide, { width: screenWidth }]}>

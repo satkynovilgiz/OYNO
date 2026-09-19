@@ -434,24 +434,24 @@
   "onboarding": {
     "skip": "Skip",
     "next": "Next",
-    "start": "Get started",
+    "start": "Get Started",
     "later": "Later",
     "slides": {
       "welcome": {
-        "title": "The Kyrgyz world, in your pocket",
-        "description": "Discover Kyrgyz culture, games, and traditions in a new way."
-      },
-      "play": {
-        "title": "Play",
-        "description": "Get to know Kyrgyz national games in a fresh new format."
-      },
-      "explore": {
-        "title": "Explore",
-        "description": "Discover Kyrgyzstan's regions, nature, and heritage."
+        "title": "Welcome to OYNO",
+        "description": "Discover Kyrgyz culture in a new way."
       },
       "culture": {
-        "title": "Learn the culture",
-        "description": "Get to know the yurt, oymo, shyrdak, komuz, cuisine, and traditions."
+        "title": "Explore Kyrgyz Culture",
+        "description": "Discover traditions, stories and heritage — from komuz to Kyrgyz ornament."
+      },
+      "play": {
+        "title": "Play & Discover",
+        "description": "Play traditional games, complete challenges and discover more."
+      },
+      "journey": {
+        "title": "Your Journey Begins",
+        "description": "Explore. Play. Learn. Create your own journey."
       }
     }
   },
