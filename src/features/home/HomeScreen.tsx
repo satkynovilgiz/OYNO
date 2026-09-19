@@ -7,7 +7,11 @@ import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } fr
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { useCurrentQuest } from '@/services/content/exploreService';
+import { useDiscoveries } from '@/services/content/discoveriesService';
+import { useQuestSteps } from '@/services/content/questStepsService';
 import { xpProgress } from '@/services/progress/levelConfig';
+import type { QuestStep } from '@/services/explore/questSteps';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
@@ -16,6 +20,7 @@ import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
+  ContinueJourneyCard,
   CultureGrid,
   DailyChallengeCard,
   DailyGiftCard,
@@ -25,6 +30,7 @@ import {
   HomeHeader,
   ProfileSummaryCard,
 } from './components';
+import { resolveContinueJourney } from './continueJourney';
 import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
 import { cultureTileAssets, mockGames } from './mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
@@ -62,6 +68,29 @@ export function HomeScreen() {
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
   const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
   const progress = useProgressStore();
+  const { data: questRow } = useCurrentQuest();
+  const { data: questStepRows } = useQuestSteps(questRow?.id);
+  const { data: discoveries } = useDiscoveries();
+
+  const questSteps: QuestStep[] = (questStepRows ?? []).map((s) => ({
+    id: s.id,
+    questId: s.quest_id,
+    stepOrder: s.step_order,
+    stepType: s.step_type,
+    targetId: s.target_id,
+  }));
+  const continueJourney = resolveContinueJourney(
+    questRow ? { title: questRow.title, subtitle: questRow.subtitle, current: progress.questFoundCount, total: questRow.total_count, completed: progress.questCompleted } : null,
+    questSteps,
+    progress.completedQuestStepIds,
+    (step) => (step.stepType === 'DISCOVER_ITEM' ? ((discoveries ?? []).find((d) => d.id === step.targetId)?.region_id ?? null) : null),
+    {
+      bozUyVisited: progress.bozUyVisited,
+      oymoCreated: progress.oymoCreated,
+      shyrdakCreated: progress.shyrdakCreated,
+      komuzLessonCompleted: progress.komuzLessonCompleted,
+    },
+  );
 
   const today = new Date().toISOString().slice(0, 10);
   const challengeClaimed = progress.dailyChallengeClaimedDateISO === today;
@@ -127,9 +156,17 @@ export function HomeScreen() {
       case 'hero':
         return (
           <View key={id} style={styles.horizontalPad}>
-            <HeroEntrance>
-              <HeroBanner />
-            </HeroEntrance>
+            {continueJourney ? (
+              <ContinueJourneyCard data={continueJourney} onPress={(route) => router.push(route as never)} />
+            ) : (
+              // Every quest and interactive experience genuinely completed
+              // (spec "Avoid showing completed content as if it is new") -
+              // nothing left to continue, so this falls back to the plain
+              // illustrated banner rather than inventing a card.
+              <HeroEntrance>
+                <HeroBanner />
+              </HeroEntrance>
+            )}
           </View>
         );
       case 'profile':
@@ -189,6 +226,7 @@ export function HomeScreen() {
         <ScreenEntrance>
           <HomeHeader
             hasUnreadNotifications={hasUnreadNotifications}
+            greetingName={user?.name}
             onPressMenu={() => router.push('/settings' as never)}
             onPressNotifications={() => router.push('/notifications' as never)}
           />

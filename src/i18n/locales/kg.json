@@ -6,7 +6,8 @@
     "guestName": "Меймман",
     "back": "Артка",
     "cancel": "Жок",
-    "retry": "Кайра аракет кылуу"
+    "retry": "Кайра аракет кылуу",
+    "offline": "Интернет байланышы жок"
   },
   "auth": {
     "signIn": {
@@ -209,8 +210,15 @@
   "home": {
     "header": {
       "tagline": "Кыргыз дүйнөсү телефонуңда.",
+      "greeting": "Салам, {{name}}!",
       "menuLabel": "Меню",
       "notificationsLabel": "Билдирүүлөр"
+    },
+    "continueJourney": {
+      "continueLabel": "Сапарыңды улант",
+      "continueCta": "Улантуу",
+      "discoverLabel": "Сынап көрчү жаңы нерсе бар",
+      "discoverCta": "Ачуу"
     },
     "profile": {
       "editLabel": "Аты-жөнүн оңдоо",

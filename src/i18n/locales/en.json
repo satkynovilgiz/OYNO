@@ -6,7 +6,8 @@
     "guestName": "Guest",
     "back": "Back",
     "cancel": "Cancel",
-    "retry": "Try again"
+    "retry": "Try again",
+    "offline": "No internet connection"
   },
   "auth": {
     "signIn": {
@@ -209,8 +210,15 @@
   "home": {
     "header": {
       "tagline": "The Kyrgyz world in your phone.",
+      "greeting": "Hi, {{name}}!",
       "menuLabel": "Menu",
       "notificationsLabel": "Notifications"
+    },
+    "continueJourney": {
+      "continueLabel": "Continue your journey",
+      "continueCta": "Continue",
+      "discoverLabel": "Something new to try",
+      "discoverCta": "Discover"
     },
     "profile": {
       "editLabel": "Edit name",

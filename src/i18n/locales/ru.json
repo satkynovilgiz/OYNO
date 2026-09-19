@@ -6,7 +6,8 @@
     "guestName": "Гость",
     "back": "Назад",
     "cancel": "Отмена",
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "offline": "Нет подключения к интернету"
   },
   "auth": {
     "signIn": {
@@ -209,8 +210,15 @@
   "home": {
     "header": {
       "tagline": "Кыргызский мир у тебя в телефоне.",
+      "greeting": "Привет, {{name}}!",
       "menuLabel": "Меню",
       "notificationsLabel": "Уведомления"
+    },
+    "continueJourney": {
+      "continueLabel": "Продолжай свой путь",
+      "continueCta": "Продолжить",
+      "discoverLabel": "Есть что попробовать",
+      "discoverCta": "Открыть"
     },
     "profile": {
       "editLabel": "Изменить имя",

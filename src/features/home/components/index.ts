@@ -1,3 +1,4 @@
+export * from './ContinueJourneyCard';
 export * from './CultureGrid';
 export * from './DailyChallengeCard';
 export * from './DailyGiftCard';
