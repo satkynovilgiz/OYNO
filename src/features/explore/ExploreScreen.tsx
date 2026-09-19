@@ -5,7 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AgeExperienceTransition, AnimatedPressable, EmptyState, FadeSlideIn } from '@/components/ui';
+import { AgeExperienceTransition, AnimatedPressable, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import type { SupportedLanguage } from '@/i18n';
@@ -216,11 +216,13 @@ export function ExploreScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <ExploreHeader
-          onPressAvatar={() => router.push('/character-select' as never)}
-          onPressSearch={() => router.push('/explore/search' as never)}
-          onPressCollection={() => router.push('/collection' as never)}
-        />
+        <ScreenEntrance>
+          <ExploreHeader
+            onPressAvatar={() => router.push('/character-select' as never)}
+            onPressSearch={() => router.push('/explore/search' as never)}
+            onPressCollection={() => router.push('/collection' as never)}
+          />
+        </ScreenEntrance>
 
         {isLoading ? (
           <View style={styles.stateBlock}>
@@ -241,11 +243,13 @@ export function ExploreScreen() {
         ) : (
           <>
             <View style={styles.horizontalPad}>
-              <KyrgyzstanMap
-                pins={mapPins}
-                onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
-                onPressFilter={() => setFiltersVisible(true)}
-              />
+              <HeroEntrance>
+                <KyrgyzstanMap
+                  pins={mapPins}
+                  onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
+                  onPressFilter={() => setFiltersVisible(true)}
+                />
+              </HeroEntrance>
             </View>
 
             {filteredRegionsList && (
@@ -287,7 +291,11 @@ export function ExploreScreen() {
             )}
 
             <AgeExperienceTransition style={styles.sectionList}>
-              {getExploreSectionOrder(experience).map(renderSection)}
+              {getExploreSectionOrder(experience).map((id, index) => (
+                <FadeSlideIn key={id} index={index} staggerMs={40}>
+                  {renderSection(id)}
+                </FadeSlideIn>
+              ))}
             </AgeExperienceTransition>
           </>
         )}

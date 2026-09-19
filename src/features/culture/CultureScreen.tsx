@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { AgeExperienceTransition, EmptyState } from '@/components/ui';
+import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
@@ -139,16 +139,20 @@ export function CultureScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <CultureHeader
-          streakDays={progress.streakDays}
-          coins={progress.coins}
-          hasUnreadNotifications={hasUnreadNotifications}
-          onPressAvatar={() => router.push('/character-select' as never)}
-          onPressNotifications={() => router.push('/notifications' as never)}
-        />
+        <ScreenEntrance>
+          <CultureHeader
+            streakDays={progress.streakDays}
+            coins={progress.coins}
+            hasUnreadNotifications={hasUnreadNotifications}
+            onPressAvatar={() => router.push('/character-select' as never)}
+            onPressNotifications={() => router.push('/notifications' as never)}
+          />
+        </ScreenEntrance>
 
         <View style={styles.horizontalPad}>
-          <CultureHero onPress={() => router.push('/collection' as never)} />
+          <HeroEntrance>
+            <CultureHero onPress={() => router.push('/collection' as never)} />
+          </HeroEntrance>
         </View>
 
         {isLoading ? (
@@ -168,7 +172,11 @@ export function CultureScreen() {
           />
         ) : (
           <AgeExperienceTransition style={styles.sectionList}>
-            {getCultureSectionOrder(experience).map(renderSection)}
+            {getCultureSectionOrder(experience).map((id, index) => (
+              <FadeSlideIn key={id} index={index} staggerMs={40}>
+                {renderSection(id)}
+              </FadeSlideIn>
+            ))}
           </AgeExperienceTransition>
         )}
       </ScrollView>

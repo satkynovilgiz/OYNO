@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AgeExperienceTransition } from '@/components/ui';
+import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -127,7 +127,9 @@ export function HomeScreen() {
       case 'hero':
         return (
           <View key={id} style={styles.horizontalPad}>
-            <HeroBanner />
+            <HeroEntrance>
+              <HeroBanner />
+            </HeroEntrance>
           </View>
         );
       case 'profile':
@@ -184,14 +186,20 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <HomeHeader
-          hasUnreadNotifications={hasUnreadNotifications}
-          onPressMenu={() => router.push('/settings' as never)}
-          onPressNotifications={() => router.push('/notifications' as never)}
-        />
+        <ScreenEntrance>
+          <HomeHeader
+            hasUnreadNotifications={hasUnreadNotifications}
+            onPressMenu={() => router.push('/settings' as never)}
+            onPressNotifications={() => router.push('/notifications' as never)}
+          />
+        </ScreenEntrance>
 
         <AgeExperienceTransition style={styles.sectionList}>
-          {getHomeSectionOrder(experience).map(renderSection)}
+          {getHomeSectionOrder(experience).map((id, index) => (
+            <FadeSlideIn key={id} index={index} staggerMs={40}>
+              {renderSection(id)}
+            </FadeSlideIn>
+          ))}
         </AgeExperienceTransition>
       </ScrollView>
 

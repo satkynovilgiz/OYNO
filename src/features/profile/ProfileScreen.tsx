@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
+import { FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import { mockGamesList } from '@/features/games/mockData';
 import type { SupportedLanguage } from '@/i18n';
 import { useDiscoveries } from '@/services/content/discoveriesService';
@@ -129,28 +130,34 @@ export function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <ProfileHeader
-          hasUnreadNotifications={hasUnreadNotifications}
-          onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
-          onPressSettings={() => router.push('/settings' as never)}
-          onPressNotifications={() => router.push('/notifications' as never)}
-        />
-
-        <View style={styles.horizontalPad}>
-          <ProfileHero
-            profile={profile}
-            onPressAvatar={() => router.push('/avatar-editor' as never)}
-            onPressEdit={() => router.push('/settings/account' as never)}
+        <ScreenEntrance>
+          <ProfileHeader
+            hasUnreadNotifications={hasUnreadNotifications}
+            onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
+            onPressSettings={() => router.push('/settings' as never)}
+            onPressNotifications={() => router.push('/notifications' as never)}
           />
-        </View>
-
-        <CurrencyRow profile={profile} />
+        </ScreenEntrance>
 
         <View style={styles.horizontalPad}>
-          <ProfileStatsGrid stats={profileStats} />
+          <HeroEntrance>
+            <ProfileHero
+              profile={profile}
+              onPressAvatar={() => router.push('/avatar-editor' as never)}
+              onPressEdit={() => router.push('/settings/account' as never)}
+            />
+          </HeroEntrance>
         </View>
 
-        <View style={[styles.horizontalPad, styles.row]}>
+        <FadeSlideIn index={0} staggerMs={40}>
+          <CurrencyRow profile={profile} />
+        </FadeSlideIn>
+
+        <FadeSlideIn index={1} staggerMs={40} style={styles.horizontalPad}>
+          <ProfileStatsGrid stats={profileStats} />
+        </FadeSlideIn>
+
+        <FadeSlideIn index={2} staggerMs={40} style={[styles.horizontalPad, styles.row]}>
           <AchievementsPreviewCard
             achievements={profileAchievements}
             unlockedIds={progress.unlockedAchievementIds}
@@ -165,15 +172,17 @@ export function ProfileScreen() {
               if (game.route) router.push(game.route as never);
             }}
           />
-        </View>
+        </FadeSlideIn>
 
-        <ProfileCollectionRow
-          items={collectionItems}
-          onPressItem={() => router.push('/collection' as never)}
-          onPressSeeAll={() => router.push('/collection' as never)}
-        />
+        <FadeSlideIn index={3} staggerMs={40}>
+          <ProfileCollectionRow
+            items={collectionItems}
+            onPressItem={() => router.push('/collection' as never)}
+            onPressSeeAll={() => router.push('/collection' as never)}
+          />
+        </FadeSlideIn>
 
-        <View style={[styles.horizontalPad, styles.row]}>
+        <FadeSlideIn index={4} staggerMs={40} style={[styles.horizontalPad, styles.row]}>
           <DailyActivitySummaryCard
             profile={profile}
             activity={dailyActivity}
@@ -185,7 +194,7 @@ export function ProfileScreen() {
             claimed={giftClaimed}
             onPressClaim={() => useProgressStore.getState().claimDailyGift()}
           />
-        </View>
+        </FadeSlideIn>
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>

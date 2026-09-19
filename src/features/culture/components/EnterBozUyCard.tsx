@@ -37,14 +37,16 @@ export function EnterBozUyCard({ onPress }: EnterBozUyCardProps) {
           style={StyleSheet.absoluteFill}
         />
 
-        <View style={styles.content}>
-          <Text style={styles.title}>{t('culture.enterBozUy.title')}</Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            {t('culture.enterBozUy.subtitle')}
-          </Text>
-        </View>
-        <View style={styles.ctaBadge}>
-          <ArrowRight size={16} color={colors.textPrimary} strokeWidth={2.5} />
+        <View style={styles.overlay} pointerEvents="box-none">
+          <View style={styles.content}>
+            <Text style={styles.title}>{t('culture.enterBozUy.title')}</Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {t('culture.enterBozUy.subtitle')}
+            </Text>
+          </View>
+          <View style={styles.ctaBadge}>
+            <ArrowRight size={16} color={colors.textPrimary} strokeWidth={2.5} />
+          </View>
         </View>
       </AnimatedPressable>
     </FadeSlideIn>
@@ -52,14 +54,17 @@ export function EnterBozUyCard({ onPress }: EnterBozUyCardProps) {
 }
 
 const styles = StyleSheet.create({
+  // Owns sizing/overflow only - no padding here. See TodayDiscoveryCard's
+  // `card`/`overlay` comment: padding directly on the node that also
+  // positions an absolute-fill child makes that child's percentage
+  // width/height fall short of the true edge (Yoga resolves the explicit
+  // 0 inset against the border edge, but percentage size against the
+  // padding-reduced content box). Padding + row layout move to `overlay`.
   card: {
     width: '100%',
     aspectRatio: 2.2,
     borderRadius: radii.xxl,
     overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
   },
   // Explicit width/height alongside the absolute-fill insets - see
   // EditorialCard.tsx's own artwork style comment for why insets alone can
@@ -68,6 +73,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
   },
   content: {
     flex: 1,

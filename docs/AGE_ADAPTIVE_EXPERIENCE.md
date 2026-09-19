@@ -395,6 +395,80 @@ in by using an existing component rather than hand-rolling animation:
   added anywhere - every animation here is either gesture-driven (press,
   scroll) or runs once on mount/enter/value-change and then stops.
 
+### The full-bleed card padding bug (`TodayDiscoveryCard`, `InteractiveCard`,
+`EnterBozUyCard`, `DiscoveriesRow`)
+
+Four cards had a photo that visibly stopped short of the card's bottom/
+trailing edge, leaving a flat-color gap - not a `resizeMode` problem.
+Root cause, confirmed by reading Yoga's actual layout source
+(`AbsoluteLayout.cpp` in `node_modules/react-native`): when an absolutely
+positioned child has an **explicit** inset (`StyleSheet.absoluteFill`'s
+`top/left/right/bottom: 0`), Yoga positions it relative to the parent's
+**border** edge - but resolves that same child's **percentage**
+`width: '100%'`/`height: '100%'` against the parent's **padding-reduced
+content box**. Put `padding` directly on the node that both sizes the
+card (`aspectRatio`/fixed height) and hosts the absolute image, and the
+image's computed size comes up short by exactly the padding amount while
+its start position doesn't compensate - the shortfall shows up entirely
+as a gap on the far edge. Every card that was never reported broken
+(`EditorialCard`, `GameCard`, `HeroCard`, `Game3DShowcaseCard`,
+`CultureGrid`, the Culture/Explore hero screens) already happened to keep
+padding off that node, routing it through a separate nested content
+`View` instead - confirmed by an audit of every file using the
+`absoluteFill + width/height: '100%'` pattern. Fixed by moving `padding`
+(and any `flexDirection`/`justifyContent` needed for the content layout)
+onto a new `overlay` `View` - itself `...StyleSheet.absoluteFill,
+width: '100%', height: '100%'`, but with **no** padding on its own
+parent, so its sizing is exact:
+
+```
+card (sizing/overflow/aspectRatio only, no padding)
+ ├── Image/View artwork - absoluteFill, width/height 100%
+ ├── LinearGradient - absoluteFill
+ └── overlay - absoluteFill, width/height 100%, padding here instead
+      └── actual header/content/CTA layout
+```
+
+## Page-entrance motion (`ScreenEntrance`, `HeroEntrance`)
+
+Home/Games/Explore/Culture/Profile are plain `expo-router` `Stack`
+screens (confirmed above - one flat `<Stack>`, no `Tabs` navigator), so
+every `BottomTabBar` press genuinely remounts the destination screen -
+an on-mount entrance animation is exactly right, no `useFocusEffect`
+gymnastics needed.
+
+- `ScreenEntrance` (`src/components/ui/ScreenEntrance.tsx`) wraps each
+  screen's header (`HomeHeader`, `GamesHeader`, `ExploreHeader`,
+  `CultureHeader`, `ProfileHeader`) - fade + a small upward settle, once
+  per mount.
+- `HeroEntrance` (`src/components/ui/HeroEntrance.tsx`) wraps each
+  screen's hero-weight visual where one exists - `HeroBanner` (Home),
+  `CultureHero` (Culture), `KyrgyzstanMap` (Explore), `ProfileHero`
+  (Profile) - fade + scale from 0.98 to 1, never a translate. Games has
+  no single hero image (header + controls + featured row + grid instead),
+  so it doesn't use this one, deliberately.
+- Both read a new `SCREEN_MOTION_BY_INTENSITY` token
+  (`src/services/motion/motionTokens.ts`), separate from the existing
+  per-card `MOTION_BY_INTENSITY` - a page's own arrival is a single
+  steadier moment than a repeated card pop, so it's tuned a notch slower
+  (300-380ms depending on `animationIntensity`) while staying inside the
+  requested 250-450ms restrained-premium window. Both no-op under Reduce
+  Motion, same convention as every other motion primitive here.
+- `FadeSlideIn` gained an optional `staggerMs` prop (default 55,
+  preserving every existing card-grid call site byte-for-byte). Each
+  screen now wraps its own top-level sections/blocks in
+  `<FadeSlideIn index={i} staggerMs={40}>` at the point they're rendered,
+  giving the whole page a top-to-bottom cascade on arrival distinct from
+  (and layered with) the per-card stagger those sections' own carousels
+  already had. No new "AnimatedSection" component was created - reusing
+  `FadeSlideIn` with a tighter stagger *is* the cleaner implementation,
+  since the mechanics (fade + translateY + reduced-motion + age-adaptive
+  duration) are identical.
+- Horizontal-carousel left-to-right stagger and "CTA arrives with its
+  parent card" were **already true** before this pass - every carousel
+  item and every card's CTA already lives inside a single `FadeSlideIn`
+  per item/card, so nothing further was needed for those two spec points.
+
 ## What was intentionally not built
 
 - **No four separate screens or forked business logic anywhere.** Every
@@ -454,7 +528,7 @@ Every pure decision function above has unit tests, run with `npx jest`:
   than `calm`).
 
 `npx tsc --noEmit` and the full `npx jest` suite were run clean after every
-step in this feature (324 tests passing at the time of writing). Live
+step in this feature (327 tests passing at the time of writing). Live
 device/simulator visual QA across all four modes was **not** performed as
 part of this pass - this environment's browser tooling has repeated
 memory/rendering limitations noted elsewhere in this project's history, so

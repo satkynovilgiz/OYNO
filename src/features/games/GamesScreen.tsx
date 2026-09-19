@@ -6,7 +6,7 @@ import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { EmptyState } from '@/components/ui';
+import { EmptyState, FadeSlideIn, ScreenEntrance } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing, typography } from '@/theme';
@@ -68,14 +68,17 @@ export function GamesScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       >
-        <GamesHeader coins={coins} tokens={gems} />
+        <ScreenEntrance>
+          <GamesHeader coins={coins} tokens={gems} />
+        </ScreenEntrance>
 
-        <SearchBar value={query} onChangeText={setQuery} />
-
-        <CategoryFilters active={category} onSelect={setCategory} />
+        <FadeSlideIn index={0} staggerMs={40} style={styles.controlsGroup}>
+          <SearchBar value={query} onChangeText={setQuery} />
+          <CategoryFilters active={category} onSelect={setCategory} />
+        </FadeSlideIn>
 
         {featured3D.length > 0 ? (
-          <View style={styles.featuredSection}>
+          <FadeSlideIn index={1} staggerMs={40} style={styles.featuredSection}>
             <Text style={styles.featuredTitle}>{t('games.featured3D.title')}</Text>
             <Text style={styles.featuredSubtitle}>{t('games.featured3D.subtitle')}</Text>
             <ScrollView
@@ -87,7 +90,7 @@ export function GamesScreen() {
                 <Game3DShowcaseCard key={game.id} game={game} onPress={handlePressGame} index={index} />
               ))}
             </ScrollView>
-          </View>
+          </FadeSlideIn>
         ) : null}
 
         {filteredGames.length === 0 ? (
@@ -104,7 +107,7 @@ export function GamesScreen() {
             />
           </View>
         ) : otherGames.length > 0 || (category === 'all' && !query) ? (
-          <View style={styles.section}>
+          <FadeSlideIn index={2} staggerMs={40} style={styles.section}>
             <Text style={styles.sectionTitle}>{t('games.allGames.title')}</Text>
             <View style={styles.grid}>
               {otherGames.map((game, index) => (
@@ -112,12 +115,12 @@ export function GamesScreen() {
               ))}
               {category === 'all' && !query ? <ComingSoonCard /> : null}
             </View>
-          </View>
+          </FadeSlideIn>
         ) : null}
 
-        <View style={styles.horizontalPad}>
+        <FadeSlideIn index={3} staggerMs={40} style={styles.horizontalPad}>
           <InviteFriendsBanner onPressInvite={handlePressInvite} />
-        </View>
+        </FadeSlideIn>
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>
@@ -143,6 +146,9 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  controlsGroup: {
+    gap: spacing.lg,
   },
   section: {
     gap: spacing.sm,

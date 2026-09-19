@@ -66,16 +66,18 @@ export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscove
                   style={StyleSheet.absoluteFill}
                 />
 
-                <View style={styles.topRow}>
-                  <Badge label={t(`explore.discoveries.categories.${discovery.category}`)} color={categoryColor} />
-                </View>
-                <View style={styles.bottomBlock}>
-                  <Text style={styles.discoveryTitle} numberOfLines={2}>
-                    {discovery.title}
-                  </Text>
-                  <Text style={[styles.xpText, discovered && styles.xpTextDiscovered]}>
-                    {discovered ? t('explore.discoveries.discoveredLabel') : `+${discovery.xpReward} XP`}
-                  </Text>
+                <View style={styles.overlay} pointerEvents="box-none">
+                  <View style={styles.topRow}>
+                    <Badge label={t(`explore.discoveries.categories.${discovery.category}`)} color={categoryColor} />
+                  </View>
+                  <View style={styles.bottomBlock}>
+                    <Text style={styles.discoveryTitle} numberOfLines={2}>
+                      {discovery.title}
+                    </Text>
+                    <Text style={[styles.xpText, discovered && styles.xpTextDiscovered]}>
+                      {discovered ? t('explore.discoveries.discoveredLabel') : `+${discovery.xpReward} XP`}
+                    </Text>
+                  </View>
                 </View>
               </AnimatedPressable>
             </FadeSlideIn>
@@ -104,13 +106,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
+  // Owns sizing/overflow only - no padding here. See TodayDiscoveryCard's
+  // `card`/`overlay` comment: padding directly on the node that also
+  // positions an absolute-fill child makes that child's percentage
+  // width/height fall short of the true edge (Yoga resolves the explicit
+  // 0 inset against the border edge, but percentage size against the
+  // padding-reduced content box). Padding moves to `overlay` instead.
   card: {
     width: 150,
     height: 130,
     borderRadius: radii.xl,
     overflow: 'hidden',
-    justifyContent: 'space-between',
-    padding: spacing.xs,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
   },
@@ -121,6 +127,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'space-between',
+    padding: spacing.xs,
   },
   cardDiscovered: {
     borderWidth: 2,

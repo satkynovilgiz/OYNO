@@ -27,20 +27,22 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
         <Image source={discovery.imageSource} style={styles.artwork} resizeMode="cover" />
         <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.9)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
 
-        <View style={styles.header}>
-          <Text style={styles.label}>{t('culture.discovery.label')}</Text>
-          {discovery.isNew && <Badge label={t('culture.discovery.newBadge')} color={colors.accentGold} textColor={colors.textPrimary} />}
-        </View>
+        <View style={styles.overlay} pointerEvents="box-none">
+          <View style={styles.header}>
+            <Text style={styles.label}>{t('culture.discovery.label')}</Text>
+            {discovery.isNew && <Badge label={t('culture.discovery.newBadge')} color={colors.accentGold} textColor={colors.textPrimary} />}
+          </View>
 
-        <View style={styles.content}>
-          <Text style={styles.title}>{discovery.title}</Text>
-          <Text style={styles.description} numberOfLines={2}>
-            {discovery.description}
-          </Text>
+          <View style={styles.content}>
+            <Text style={styles.title}>{discovery.title}</Text>
+            <Text style={styles.description} numberOfLines={2}>
+              {discovery.description}
+            </Text>
 
-          <View style={styles.cta}>
-            <Text style={styles.ctaLabel}>{t('culture.discovery.cta')}</Text>
-            <ArrowRight size={14} color={colors.textPrimary} strokeWidth={2.5} />
+            <View style={styles.cta}>
+              <Text style={styles.ctaLabel}>{t('culture.discovery.cta')}</Text>
+              <ArrowRight size={14} color={colors.textPrimary} strokeWidth={2.5} />
+            </View>
           </View>
         </View>
       </AnimatedPressable>
@@ -49,13 +51,19 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
 }
 
 const styles = StyleSheet.create({
+  // Owns sizing/overflow only - no padding here. Yoga resolves an
+  // absolute child's explicit `top/left/right/bottom: 0` inset against
+  // this node's BORDER edge, but resolves that same child's percentage
+  // width/height against its PADDING-reduced content box - so padding
+  // directly on this node would make the full-bleed artwork/overlay
+  // fall short of the true edge on the bottom/trailing side. Padding for
+  // the actual content lives on `overlay` below instead, whose own
+  // parent (this node) has none, so its 100%/100% sizing is exact.
   card: {
     width: '100%',
     aspectRatio: 1.6,
     borderRadius: radii.xxl,
     overflow: 'hidden',
-    justifyContent: 'space-between',
-    padding: spacing.md,
   },
   // Explicit width/height alongside the absolute-fill insets - see
   // EditorialCard.tsx's own artwork style comment for why insets alone can
@@ -64,6 +72,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'space-between',
+    padding: spacing.md,
   },
   header: {
     flexDirection: 'row',

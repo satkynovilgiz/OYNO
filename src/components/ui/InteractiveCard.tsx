@@ -34,21 +34,27 @@ export function InteractiveCard({ imageSource, title, ctaIcon: CtaIcon, onPress,
       <View style={styles.ctaBadge}>
         <CtaIcon size={16} color={colors.textPrimary} strokeWidth={2.25} />
       </View>
-      <Text style={styles.title} numberOfLines={2}>
-        {title}
-      </Text>
+      <View style={styles.overlay} pointerEvents="box-none">
+        <Text style={styles.title} numberOfLines={2}>
+          {title}
+        </Text>
+      </View>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
+  // Owns sizing/overflow only - no padding here. See TodayDiscoveryCard's
+  // `card`/`overlay` comment: padding directly on the node that also
+  // positions an absolute-fill child makes that child's percentage
+  // width/height fall short of the true edge (Yoga resolves the explicit
+  // 0 inset against the border edge, but percentage size against the
+  // padding-reduced content box). Padding moves to `overlay` instead.
   card: {
     width: 148,
     height: 118,
     borderRadius: radii.xl,
     overflow: 'hidden',
-    justifyContent: 'flex-end',
-    padding: spacing.sm,
     backgroundColor: colors.surfaceAlt,
   },
   // Explicit width/height alongside the absolute-fill insets - see
@@ -58,6 +64,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
+    padding: spacing.sm,
   },
   ctaBadge: {
     position: 'absolute',
