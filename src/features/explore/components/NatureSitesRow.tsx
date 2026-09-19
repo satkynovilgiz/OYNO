@@ -11,9 +11,6 @@ export type NatureSiteItem = {
   tagline: string;
 };
 
-/** Matches styles.card's fixed width so the row snaps one card at a time. */
-const NATURE_CARD_WIDTH = 160;
-
 type NatureSitesRowProps = {
   sites: NatureSiteItem[];
   onPressSite?: (id: string) => void;
@@ -40,9 +37,6 @@ export function NatureSitesRow({ sites, onPressSite }: NatureSitesRowProps) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        snapToInterval={NATURE_CARD_WIDTH + spacing.sm}
-        snapToAlignment="start"
-        decelerationRate="fast"
       >
         {sites.map((site, index) => (
           <FadeSlideIn key={site.id} index={index}>

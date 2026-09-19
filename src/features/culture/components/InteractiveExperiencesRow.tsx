@@ -11,9 +11,6 @@ export type InteractiveExperience = {
   imageSource: ImageSourcePropType;
 };
 
-/** Matches InteractiveCard's fixed width so the row snaps one card at a time. */
-const INTERACTIVE_CARD_WIDTH = 148;
-
 type InteractiveExperiencesRowProps = {
   experiences: InteractiveExperience[];
   onPressExperience: (id: string) => void;
@@ -37,9 +34,6 @@ export function InteractiveExperiencesRow({ experiences, onPressExperience }: In
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
-        snapToInterval={INTERACTIVE_CARD_WIDTH + spacing.sm}
-        snapToAlignment="start"
-        decelerationRate="fast"
       >
         {experiences.map((experience) => (
           <InteractiveCard

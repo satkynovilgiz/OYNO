@@ -368,12 +368,19 @@ in by using an existing component rather than hand-rolling animation:
   subtle scroll-linked drift (slower than the scroll) plus a slight
   overscroll zoom, computed entirely on the UI thread via a Reanimated
   scroll handler - no JS work per frame, no-op under Reduce Motion.
-- The 5 home/culture/explore/profile horizontal carousels
+- The 6 home/culture/explore/profile horizontal carousels
   (`GamesCarousel`, `DiscoveriesRow`, `NatureSitesRow`,
   `InteractiveExperiencesRow`, `NewMaterialsRow`, `ProfileCollectionRow`)
-  snap one card at a time (`snapToInterval` matched to each card's own
-  fixed or age-scaled width, `decelerationRate="fast"`) instead of
-  free-scrolling to an arbitrary stopping point.
+  use plain smooth horizontal scrolling, not `snapToInterval` - an earlier
+  pass added per-card snapping here, but `snapToInterval` computes its snap
+  grid from content-origin (x=0), not from the row's own leading
+  `paddingHorizontal` gutter. That mismatch made every snap after the first
+  land `paddingHorizontal` short of the true card boundary (a sliver of the
+  previous card left showing) and could leave the final card's fully-
+  scrolled position unreachable. Removed rather than patched, per the
+  "prefer normal smooth horizontal scrolling" guidance for rows where
+  snapping isn't essential - all six are small thumbnail strips, not a
+  primary swipe-through experience.
 - Game Play/Practice CTAs already routed through the shared `Button`
   component, which already wraps `AnimatedPressable` with a real haptic
   (`medium` for primary, `light` for secondary) - no separate change was

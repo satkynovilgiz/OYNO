@@ -8,9 +8,6 @@ import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import type { ExploreDiscovery } from '../types';
 
-/** Matches styles.card's fixed width so the row snaps one card at a time. */
-const DISCOVERY_CARD_WIDTH = 150;
-
 type DiscoveriesRowProps = {
   discoveries: ExploreDiscovery[];
   discoveredIds?: string[];
@@ -45,9 +42,6 @@ export function DiscoveriesRow({ discoveries, discoveredIds = [], onPressDiscove
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        snapToInterval={DISCOVERY_CARD_WIDTH + spacing.sm}
-        snapToAlignment="start"
-        decelerationRate="fast"
       >
         {discoveries.map((discovery, index) => {
           const categoryColor = colors.discovery[discovery.category];

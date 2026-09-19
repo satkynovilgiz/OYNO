@@ -7,9 +7,6 @@ import { colors, spacing, typography } from '@/theme';
 
 import type { CultureMaterial } from '../types';
 
-/** Matches CompactContentCard's fixed width so the row snaps one card at a time. */
-const COMPACT_CARD_WIDTH = 128;
-
 type NewMaterialsRowProps = {
   materials: CultureMaterial[];
   onPressMaterial?: (material: CultureMaterial) => void;
@@ -36,9 +33,6 @@ export function NewMaterialsRow({ materials, onPressMaterial, onPressSeeAll }: N
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
-        snapToInterval={COMPACT_CARD_WIDTH + spacing.sm}
-        snapToAlignment="start"
-        decelerationRate="fast"
       >
         {materials.map((material) => (
           <CompactContentCard
