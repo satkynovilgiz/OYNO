@@ -1,14 +1,13 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Flame, Pencil, Wand2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { UserAvatar } from '@/components/avatar';
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, FadeSlideIn, ProgressBar } from '@/components/ui';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
-import heroBackground from '@assets/img/OYNO_design/profile/hero_background.png';
 
 import type { ProfileSummary } from '../types';
 
@@ -21,9 +20,12 @@ type ProfileHeroProps = {
 const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.15, medium: 1.5, compact: 1.65, dense: 1.85 };
 const NAME_FONT_SIZE_BY_CARD_SCALE = { large: 28, medium: 24, compact: 21, dense: 19 };
 
-/** Background art (mountains, yurt, horse) sliced from the design
- * reference, right-aligned; a cream fade over the left keeps the avatar
- * and text on a clean, legible surface regardless of what's behind them. */
+/** OYNO's deep-green SPECIAL surface (spec "Task 12... deep forest green,
+ * extremely subtle Kyrgyz ornament, restrained gold details - do NOT
+ * cover the entire background in loud patterns") instead of the
+ * photographic mountains/yurt/horse background this used to have - one
+ * small corner ornament, not a busy scene, so the avatar/name/level/XP
+ * stay the clear focal point. */
 export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHeroProps) {
   const { t } = useTranslation();
   const { config } = useAgeExperience();
@@ -31,14 +33,9 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
 
   return (
     <FadeSlideIn style={[styles.card, { aspectRatio: resolveByCardScale(config.cardScale, ASPECT_RATIO_BY_CARD_SCALE) }, shadows.card]}>
-      <Image source={heroBackground} style={[StyleSheet.absoluteFill, styles.image]} resizeMode="cover" />
-      <LinearGradient
-        colors={[colors.surface, colors.surface, 'rgba(251,243,227,0)']}
-        locations={[0, 0.42, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
+      <View style={styles.ornamentCorner}>
+        <OymoOrnament size={22} color="rgba(232,185,61,0.16)" strokeWidth={1.5} />
+      </View>
 
       <View style={styles.content}>
         <AnimatedPressable
@@ -49,7 +46,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
         >
           <UserAvatar characterId={profile.characterId} avatarConfig={profile.avatarConfig} size="profile" />
           <View style={styles.cameraBadge}>
-            <Wand2 size={14} color={colors.textOnPrimary} strokeWidth={2.25} />
+            <Wand2 size={14} color={colors.textPrimary} strokeWidth={2.25} />
           </View>
         </AnimatedPressable>
 
@@ -59,7 +56,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
               {profile.name}
             </Text>
             <AnimatedPressable onPress={onPressEdit} accessibilityRole="button" accessibilityLabel={t('profile.editLabel')}>
-              <Pencil size={16} color={colors.textSecondary} strokeWidth={2} />
+              <Pencil size={16} color="rgba(255,255,255,0.7)" strokeWidth={2} />
             </AnimatedPressable>
           </View>
           <View style={styles.badgeRow}>
@@ -75,7 +72,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
             {profile.title}
           </Text>
           <View style={styles.xpBlock}>
-            <ProgressBar progress={xpRatio} height={5} />
+            <ProgressBar progress={xpRatio} height={5} trackColor="rgba(255,255,255,0.16)" fillColor={colors.accentGold} />
             <Text style={styles.xpLabel}>{profile.xpCurrent} / {profile.xpMax} XP</Text>
           </View>
         </View>
@@ -88,12 +85,13 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radii.xl,
     overflow: 'hidden',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceFeature,
     justifyContent: 'center',
   },
-  image: {
-    width: '100%',
-    height: '100%',
+  ornamentCorner: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    right: spacing.sm,
   },
   content: {
     flexDirection: 'row',
@@ -111,11 +109,11 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accentGold,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.surface,
+    borderColor: colors.surfaceFeature,
   },
   textBlock: {
     flex: 1,
@@ -128,7 +126,7 @@ const styles = StyleSheet.create({
   },
   name: {
     ...typography.display,
-    color: colors.textPrimary,
+    color: colors.textOnDark,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -137,13 +135,15 @@ const styles = StyleSheet.create({
   },
   level: {
     ...typography.bodyBold,
-    color: colors.primary,
+    color: colors.accentGold,
   },
+  // Secondary to name/level/XP (spec "Task 12... Streak/status should be
+  // secondary") - a quiet translucent chip, not competing for attention.
   streakChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
     borderRadius: radii.pill,
@@ -151,11 +151,11 @@ const styles = StyleSheet.create({
   streakText: {
     ...typography.small,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: colors.textOnDark,
   },
   title: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.7)',
   },
   xpBlock: {
     gap: 2,
@@ -163,6 +163,6 @@ const styles = StyleSheet.create({
   },
   xpLabel: {
     ...typography.small,
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.6)',
   },
 });
