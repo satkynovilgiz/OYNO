@@ -24,9 +24,10 @@ export function DailyActivitySummaryCard({ profile, activity, completed, total }
           {t('profile.dailyActivity.title')}
         </Text>
         <View style={styles.streakChip}>
-          {/* Gold, not danger-red (Section OYNO warm palette) - a streak is
-           * a positive, celebratory number, not a warning. */}
-          <Flame size={13} color={colors.accentGold} strokeWidth={2.25} />
+          {/* Terracotta, not gold - a streak is warmth/consistency, gold
+           * stays reserved for currency/rewards; not danger-red since a
+           * streak is a positive, celebratory number, not a warning. */}
+          <Flame size={13} color={colors.accentTerracotta} strokeWidth={2.25} />
           <Text style={styles.streakText}>{t('profile.dailyActivity.streak', { count: profile.streakDays })}</Text>
         </View>
       </View>

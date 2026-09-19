@@ -13,7 +13,6 @@ export type ProfileSummary = {
   xpCurrent: number;
   xpMax: number;
   coins: number;
-  badges: number;
   tokens: number;
   streakDays: number;
 };

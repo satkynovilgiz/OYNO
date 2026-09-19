@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { colors, radii, spacing, typography } from '@/theme';
 
 import type { ProfileCollectionItem } from '../types';
 
@@ -81,13 +81,7 @@ const styles = StyleSheet.create({
   card: {
     width: 92,
     alignSelf: 'flex-start',
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.xxs,
     gap: 2,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
   },
   image: {
     width: 84,

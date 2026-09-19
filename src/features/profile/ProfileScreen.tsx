@@ -5,9 +5,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
+import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import { mockGamesList } from '@/features/games/mockData';
 import type { SupportedLanguage } from '@/i18n';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useDiscoveries } from '@/services/content/discoveriesService';
 import { xpProgress } from '@/services/progress/levelConfig';
 import { useAppStore } from '@/store/useAppStore';
@@ -20,6 +21,7 @@ import { colors, spacing } from '@/theme';
 
 import {
   AchievementsPreviewCard,
+  CulturalJourneyCard,
   CurrencyRow,
   DailyActivitySummaryCard,
   DailyRewardCard,
@@ -27,9 +29,9 @@ import {
   ProfileCollectionRow,
   ProfileHeader,
   ProfileHero,
-  ProfileStatsGrid,
 } from './components';
 import { achievementsTotal, getCollectionCounts, getCollectionItems, profileAchievements } from './data';
+import { getProfileSectionOrder, type ProfileSectionId } from './profileSections';
 import type { DailyActivityItem, FavoriteGame, ProfileStat, ProfileSummary } from './types';
 
 const QUEST_TOTAL = 5;
@@ -38,6 +40,7 @@ export function ProfileScreen() {
   useTrackScreenView('profile');
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { experience } = useAgeExperience();
   const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
@@ -58,7 +61,6 @@ export function ProfileScreen() {
     xpCurrent,
     xpMax,
     coins: progress.coins,
-    badges: progress.unlockedAchievementIds.length,
     tokens: progress.gems,
     streakDays: progress.streakDays,
   };
@@ -124,6 +126,66 @@ export function ProfileScreen() {
     progress.bozUyVisited,
   ].filter(Boolean).length;
 
+  function renderSection(id: ProfileSectionId) {
+    switch (id) {
+      case 'journey':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <CulturalJourneyCard stats={profileStats} />
+          </View>
+        );
+      case 'achievements':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <AchievementsPreviewCard
+              achievements={profileAchievements}
+              unlockedIds={progress.unlockedAchievementIds}
+              unlocked={progress.unlockedAchievementIds.length}
+              total={achievementsTotal}
+              onPressSeeAll={() => router.push('/achievements' as never)}
+            />
+          </View>
+        );
+      case 'favorites':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <FavoriteGamesCard
+              games={favoriteGames}
+              onPressSeeAll={() => router.push('/games' as never)}
+              onPressGame={(game) => {
+                if (game.route) router.push(game.route as never);
+              }}
+            />
+          </View>
+        );
+      case 'collection':
+        return (
+          <ProfileCollectionRow
+            key={id}
+            items={collectionItems}
+            onPressItem={() => router.push('/collection' as never)}
+            onPressSeeAll={() => router.push('/collection' as never)}
+          />
+        );
+      case 'daily':
+        return (
+          <View key={id} style={[styles.horizontalPad, styles.row]}>
+            <DailyActivitySummaryCard
+              profile={profile}
+              activity={dailyActivity}
+              completed={dailyActivityCompleted}
+              total={dailyActivity.length}
+            />
+            <DailyRewardCard
+              reward={DAILY_GIFT_REWARD}
+              claimed={giftClaimed}
+              onPressClaim={() => useProgressStore.getState().claimDailyGift()}
+            />
+          </View>
+        );
+    }
+  }
+
   return (
     <View style={styles.root}>
       <ScrollView
@@ -149,52 +211,15 @@ export function ProfileScreen() {
           </HeroEntrance>
         </View>
 
-        <FadeSlideIn index={0} staggerMs={40}>
-          <CurrencyRow profile={profile} />
-        </FadeSlideIn>
+        <CurrencyRow profile={profile} />
 
-        <FadeSlideIn index={1} staggerMs={40} style={styles.horizontalPad}>
-          <ProfileStatsGrid stats={profileStats} />
-        </FadeSlideIn>
-
-        <FadeSlideIn index={2} staggerMs={40} style={[styles.horizontalPad, styles.row]}>
-          <AchievementsPreviewCard
-            achievements={profileAchievements}
-            unlockedIds={progress.unlockedAchievementIds}
-            unlocked={progress.unlockedAchievementIds.length}
-            total={achievementsTotal}
-            onPressSeeAll={() => router.push('/achievements' as never)}
-          />
-          <FavoriteGamesCard
-            games={favoriteGames}
-            onPressSeeAll={() => router.push('/games' as never)}
-            onPressGame={(game) => {
-              if (game.route) router.push(game.route as never);
-            }}
-          />
-        </FadeSlideIn>
-
-        <FadeSlideIn index={3} staggerMs={40}>
-          <ProfileCollectionRow
-            items={collectionItems}
-            onPressItem={() => router.push('/collection' as never)}
-            onPressSeeAll={() => router.push('/collection' as never)}
-          />
-        </FadeSlideIn>
-
-        <FadeSlideIn index={4} staggerMs={40} style={[styles.horizontalPad, styles.row]}>
-          <DailyActivitySummaryCard
-            profile={profile}
-            activity={dailyActivity}
-            completed={dailyActivityCompleted}
-            total={dailyActivity.length}
-          />
-          <DailyRewardCard
-            reward={DAILY_GIFT_REWARD}
-            claimed={giftClaimed}
-            onPressClaim={() => useProgressStore.getState().claimDailyGift()}
-          />
-        </FadeSlideIn>
+        <AgeExperienceTransition style={styles.sectionList}>
+          {getProfileSectionOrder(experience).map((id, index) => (
+            <FadeSlideIn key={id} index={index} staggerMs={40}>
+              {renderSection(id)}
+            </FadeSlideIn>
+          ))}
+        </AgeExperienceTransition>
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom }}>
@@ -220,6 +245,9 @@ const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  sectionList: {
+    gap: spacing.lg,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

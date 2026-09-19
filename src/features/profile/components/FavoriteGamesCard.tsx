@@ -17,17 +17,18 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
   const { t } = useTranslation();
 
   return (
-    <View style={styles.card}>
+    <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={styles.title} numberOfLines={1}>
           {t('profile.favoriteGames.title')}
         </Text>
-        <TextButton
-          label={t('common.seeAll')}
-          hideLabel
-          onPress={onPressSeeAll}
-          trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
-        />
+        {games.length > 0 ? (
+          <TextButton
+            label={t('common.seeAll')}
+            onPress={onPressSeeAll}
+            trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
+          />
+        ) : null}
       </View>
 
       {games.length === 0 ? (
@@ -52,16 +53,16 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
                   <Image source={game.thumbnail} style={styles.thumbnail} resizeMode="cover" />
                 ) : (
                   <View style={[styles.thumbnail, styles.thumbnailFallback]}>
-                    <Gamepad2 size={20} color={colors.primary} strokeWidth={1.75} />
+                    <Gamepad2 size={24} color={colors.primary} strokeWidth={1.75} />
                   </View>
                 )}
                 <Text style={styles.gameName} numberOfLines={1}>
                   {game.name}
                 </Text>
-                <Text style={styles.gameMeta}>{t('profile.favoriteGames.played', { count: game.gamesPlayed })}</Text>
                 <View style={styles.winsRow}>
                   <Trophy size={11} color={colors.accentGold} strokeWidth={2.25} />
                   <Text style={styles.gameMeta}>{t('profile.favoriteGames.wins', { count: game.wins })}</Text>
+                  <Text style={styles.gameMeta}>· {t('profile.favoriteGames.played', { count: game.gamesPlayed })}</Text>
                 </View>
               </AnimatedPressable>
             </FadeSlideIn>
@@ -73,49 +74,43 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.sm,
-    gap: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
+  section: {
+    gap: spacing.sm,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing.xxs,
+    gap: spacing.xs,
   },
   title: {
-    ...typography.h2,
+    ...typography.h1,
     color: colors.textPrimary,
     flexShrink: 1,
   },
   list: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   gameItem: {
     flex: 1,
   },
   gamePressable: {
-    gap: 2,
+    gap: spacing.xxs,
   },
   thumbnail: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceAlt,
+    ...shadows.card,
   },
   thumbnailFallback: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   gameName: {
-    ...typography.small,
+    ...typography.body,
     color: colors.textPrimary,
     fontWeight: '700',
     marginTop: 2,
@@ -127,6 +122,6 @@ const styles = StyleSheet.create({
   winsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
   },
 });

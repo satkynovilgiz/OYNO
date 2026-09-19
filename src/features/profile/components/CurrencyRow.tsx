@@ -1,9 +1,9 @@
-import { Award, Coins, Gem, Star } from 'lucide-react-native';
+import { Coins, Gem } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FadeSlideIn, IconChip } from '@/components/ui';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { FadeSlideIn } from '@/components/ui';
+import { colors, radii, spacing, typography } from '@/theme';
 
 import type { ProfileSummary } from '../types';
 
@@ -11,31 +11,26 @@ type CurrencyRowProps = {
   profile: ProfileSummary;
 };
 
+/** Just the two genuine wallet balances - XP already lives on the Hero's
+ * own progress bar and badge count already lives in the Achievements
+ * section below, so showing them a second time here was redundant
+ * (Section "reduce... redundant labels"). Borderless pills instead of
+ * bordered cards - two small chips don't need their own cream rectangles. */
 export function CurrencyRow({ profile }: CurrencyRowProps) {
   const { t } = useTranslation();
 
   const items = [
     { id: 'coins', icon: Coins, color: colors.accentGold, label: t('profile.currencies.coins'), value: profile.coins.toLocaleString('ru-RU') },
-    { id: 'xp', icon: Star, color: colors.primary, label: t('profile.currencies.xp'), value: profile.xpCurrent.toLocaleString('ru-RU') },
-    { id: 'badges', icon: Award, color: colors.accentBrown, label: t('profile.currencies.badges'), value: String(profile.badges) },
     { id: 'tokens', icon: Gem, color: colors.discovery.animals, label: t('profile.currencies.tokens'), value: String(profile.tokens) },
   ] as const;
 
   return (
     <View style={styles.row}>
       {items.map((item, index) => (
-        <FadeSlideIn key={item.id} style={styles.cardWrap} index={index}>
-          <View style={styles.card}>
-            <IconChip icon={item.icon} size={32} iconSize={16} color={item.color} shape="circle" tinted />
-            <View style={styles.textBlock}>
-              <Text style={styles.value} numberOfLines={1}>
-                {item.value}
-              </Text>
-              <Text style={styles.label} numberOfLines={1}>
-                {item.label}
-              </Text>
-            </View>
-          </View>
+        <FadeSlideIn key={item.id} style={styles.chip} index={index}>
+          <item.icon size={16} color={item.color} strokeWidth={2.25} />
+          <Text style={styles.value}>{item.value}</Text>
+          <Text style={styles.label}>{item.label}</Text>
         </FadeSlideIn>
       ))}
     </View>
@@ -45,34 +40,24 @@ export function CurrencyRow({ profile }: CurrencyRowProps) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
   },
-  cardWrap: {
-    flexGrow: 1,
-    flexBasis: '45%',
-  },
-  card: {
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
-  },
-  textBlock: {
-    flexShrink: 1,
+    gap: spacing.xxs,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   label: {
     ...typography.small,
     color: colors.textSecondary,
   },
   value: {
-    ...typography.h2,
+    ...typography.bodyBold,
     color: colors.textPrimary,
   },
 });

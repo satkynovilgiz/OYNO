@@ -18,7 +18,7 @@ type ProfileHeroProps = {
   onPressEdit?: () => void;
 };
 
-const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.35, medium: 1.75, compact: 1.9, dense: 2.1 };
+const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.15, medium: 1.5, compact: 1.65, dense: 1.85 };
 const NAME_FONT_SIZE_BY_CARD_SCALE = { large: 28, medium: 24, compact: 21, dense: 19 };
 
 /** Background art (mountains, yurt, horse) sliced from the design
@@ -66,7 +66,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
             <Text style={styles.level}>{t('profile.level', { level: profile.level })}</Text>
             {profile.streakDays > 0 ? (
               <View style={styles.streakChip}>
-                <Flame size={12} color={colors.accentGold} strokeWidth={2.25} />
+                <Flame size={12} color={colors.accentTerracotta} strokeWidth={2.25} />
                 <Text style={styles.streakText}>{t('profile.dailyActivity.streak', { count: profile.streakDays })}</Text>
               </View>
             ) : null}

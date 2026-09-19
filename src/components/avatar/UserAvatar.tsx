@@ -14,7 +14,7 @@ const SIZE_PX: Record<UserAvatarSize, number> = {
   small: 40,
   medium: 56,
   large: 88,
-  profile: 92,
+  profile: 108,
 };
 
 type UserAvatarProps = {

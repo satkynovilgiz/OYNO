@@ -1,4 +1,5 @@
 export * from './AchievementsPreviewCard';
+export * from './CulturalJourneyCard';
 export * from './CurrencyRow';
 export * from './DailyActivitySummaryCard';
 export * from './DailyRewardCard';
@@ -6,4 +7,3 @@ export * from './FavoriteGamesCard';
 export * from './ProfileCollectionRow';
 export * from './ProfileHeader';
 export * from './ProfileHero';
-export * from './ProfileStatsGrid';

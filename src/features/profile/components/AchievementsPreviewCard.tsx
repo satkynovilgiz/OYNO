@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { FadeSlideIn, TextButton } from '@/components/ui';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
 
@@ -19,30 +19,33 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
   const { t } = useTranslation();
 
   return (
-    <View style={styles.card}>
+    <View style={styles.section}>
       <View style={styles.header}>
-        <Text style={styles.title} numberOfLines={1}>
-          {t('profile.achievements.title')}
-        </Text>
+        <View style={styles.headerText}>
+          <Text style={styles.title} numberOfLines={1}>
+            {t('profile.achievements.title')}
+          </Text>
+          <Text style={styles.unlocked}>{t('profile.achievements.unlocked', { unlocked, total })}</Text>
+        </View>
         <TextButton
           label={t('common.seeAll')}
-          hideLabel
           onPress={onPressSeeAll}
           trailingIcon={<ChevronRight size={14} color={colors.primary} strokeWidth={2.25} />}
         />
       </View>
-      <Text style={styles.unlocked}>{t('profile.achievements.unlocked', { unlocked, total })}</Text>
 
       <View style={styles.grid}>
         {achievements.map((achievement, index) => {
           const isLocked = !!unlockedIds && !unlockedIds.includes(achievement.id);
           return (
             <FadeSlideIn key={achievement.id} style={styles.badgeItem} index={index}>
-              <Image
-                source={achievement.iconSource}
-                style={[styles.badgeImage, !isLocked && styles.badgeUnlocked, isLocked && styles.badgeLocked]}
-                resizeMode="cover"
-              />
+              <View style={[styles.badgeRing, !isLocked && styles.badgeRingUnlocked]}>
+                <Image
+                  source={achievement.iconSource}
+                  style={[styles.badgeImage, isLocked && styles.badgeLocked]}
+                  resizeMode="cover"
+                />
+              </View>
               <Text style={styles.badgeLabel} numberOfLines={2}>
                 {achievement.title}
               </Text>
@@ -55,50 +58,52 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.sm,
-    gap: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
+  section: {
+    gap: spacing.sm,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: spacing.xxs,
+    gap: spacing.xs,
+  },
+  headerText: {
+    flexShrink: 1,
+    gap: 1,
   },
   title: {
-    ...typography.h2,
+    ...typography.h1,
     color: colors.textPrimary,
-    flexShrink: 1,
   },
   unlocked: {
-    ...typography.small,
+    ...typography.caption,
     color: colors.textSecondary,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.md,
   },
   badgeItem: {
     alignItems: 'center',
-    gap: 2,
-    width: 56,
+    gap: spacing.xxs,
+    width: 72,
   },
-  badgeImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  badgeRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    padding: 3,
     backgroundColor: colors.surfaceAlt,
   },
-  badgeUnlocked: {
-    borderWidth: 2,
-    borderColor: colors.accentGold,
+  badgeRingUnlocked: {
+    backgroundColor: colors.accentGold,
+  },
+  badgeImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 31,
+    backgroundColor: colors.surfaceAlt,
   },
   badgeLocked: {
     opacity: 0.35,
