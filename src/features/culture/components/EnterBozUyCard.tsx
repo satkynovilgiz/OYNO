@@ -5,7 +5,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
-import artwork from '@assets/img/OYNO_design/culture/enter_boz_uy.png';
+import artwork from '@assets/img/OYNO_design/culture/enter_boz_uy.jpg';
 
 type EnterBozUyCardProps = {
   onPress?: () => void;

@@ -1,13 +1,6 @@
-import catBozUy from '@assets/img/OYNO_design/culture/cat_boz_uy.png';
 import catClothing from '@assets/img/OYNO_design/culture/cat_clothing.png';
-import catFood from '@assets/img/OYNO_design/culture/cat_food.png';
 import catGames from '@assets/img/OYNO_design/culture/cat_games.png';
 import catHorse from '@assets/img/OYNO_design/culture/cat_horse.png';
-import catKomuz from '@assets/img/OYNO_design/culture/cat_komuz.png';
-import catMusic from '@assets/img/OYNO_design/culture/cat_music.png';
-import catOymo from '@assets/img/OYNO_design/culture/cat_oymo.png';
-import catShyrdak from '@assets/img/OYNO_design/culture/cat_shyrdak.png';
-import catTradition from '@assets/img/OYNO_design/culture/cat_tradition.png';
 import bozUyFeltCovering from '@assets/img/OYNO_design/culture/boz_uy/felt_covering.jpg';
 import bozUyFeltCovering2 from '@assets/img/OYNO_design/culture/boz_uy/felt_covering2.jpg';
 import bozUyInteriorWide from '@assets/img/OYNO_design/culture/boz_uy/interior_wide.jpg';
@@ -31,6 +24,7 @@ import clothingMensOuterwearCase from '@assets/img/OYNO_design/culture/clothing/
 import clothingMensWomensCase from '@assets/img/OYNO_design/culture/clothing/mens_womens_case.jpg';
 import clothingShokuloElechek from '@assets/img/OYNO_design/culture/clothing/shokulo_elechek.jpg';
 import discoveryKomuz from '@assets/img/OYNO_design/culture/discovery_komuz.png';
+import foodYurtFeastLake from '@assets/img/OYNO_design/culture/food/yurt_feast_lake.jpg';
 import horseAtChabysh from '@assets/img/OYNO_design/culture/horse/at_chabysh_1870s.png';
 import horseBerkutchiEagle from '@assets/img/OYNO_design/culture/horse/berkutchi_eagle.jpg';
 import horseEer from '@assets/img/OYNO_design/culture/horse/eer_saddle.jpg';
@@ -41,9 +35,11 @@ import horseKokBoruFlag from '@assets/img/OYNO_design/culture/horse/kok_boru_fla
 import horseKokBoruKazan from '@assets/img/OYNO_design/culture/horse/kok_boru_kazan.jpg';
 import horseKyzKuumai from '@assets/img/OYNO_design/culture/horse/kyz_kuumai.jpg';
 import horseOodarysh from '@assets/img/OYNO_design/culture/horse/oodarysh.jpg';
+import komuzHero from '@assets/img/OYNO_design/culture/komuz/komuz_hero.jpg';
 import materialBoorsok from '@assets/img/OYNO_design/culture/material_boorsok.png';
 import materialKalpak from '@assets/img/OYNO_design/culture/material_kalpak.png';
 import materialKyzKuumai from '@assets/img/OYNO_design/culture/material_kyz_kuumai.png';
+import musicYurtAndInstruments from '@assets/img/OYNO_design/culture/music/yurt_and_instruments.jpg';
 import oymoAdamdynJuzu from '@assets/img/OYNO_design/culture/oymo/adamdyn_juzu.jpg';
 import oymoBalykOyuu from '@assets/img/OYNO_design/culture/oymo/balyk_oyuu.jpg';
 import oymoBulak from '@assets/img/OYNO_design/culture/oymo/bulak.jpg';
@@ -55,11 +51,13 @@ import oymoTekeMuyuz from '@assets/img/OYNO_design/culture/oymo/teke_muyuz.jpg';
 import oymoTortKulak from '@assets/img/OYNO_design/culture/oymo/tort_kulak.jpg';
 import oymoUmaiEne from '@assets/img/OYNO_design/culture/oymo/umai_ene.jpg';
 import oymoUmaiOyumu from '@assets/img/OYNO_design/culture/oymo/umai_oyumu.jpg';
+import oymoWoodcarvingWarmLight from '@assets/img/OYNO_design/culture/oymo/woodcarving_warm_light.jpg';
 import shyrdakAlaKiyizMaking from '@assets/img/OYNO_design/culture/shyrdak/ala_kiyiz_making.jpg';
 import shyrdakAlaKiyizMaking2 from '@assets/img/OYNO_design/culture/shyrdak/ala_kiyiz_making2.jpg';
 import shyrdakColorsPattern from '@assets/img/OYNO_design/culture/shyrdak/colors_pattern.jpg';
 import shyrdakInsideBozUy from '@assets/img/OYNO_design/culture/shyrdak/inside_boz_uy.jpg';
 import shyrdakMosaicCloseup from '@assets/img/OYNO_design/culture/shyrdak/mosaic_closeup.jpg';
+import traditionBlessingCeremony from '@assets/img/OYNO_design/culture/tradition/blessing_ceremony.jpg';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CultureCategoryId, CultureProgress, CultureStatId } from './types';
@@ -76,16 +74,16 @@ import type { CultureCategoryId, CultureProgress, CultureStatId } from './types'
  * for a system that doesn't exist yet.
  */
 export const cultureCategoryImages: Record<CultureCategoryId, ImageSourcePropType> = {
-  'boz-uy': catBozUy,
-  oymo: catOymo,
-  shyrdak: catShyrdak,
-  komuz: catKomuz,
-  music: catMusic,
+  'boz-uy': bozUyYurtCamp,
+  oymo: oymoWoodcarvingWarmLight,
+  shyrdak: shyrdakColorsPattern,
+  komuz: komuzHero,
+  music: musicYurtAndInstruments,
   clothing: catClothing,
   horse: catHorse,
-  food: catFood,
+  food: foodYurtFeastLake,
   games: catGames,
-  tradition: catTradition,
+  tradition: traditionBlessingCeremony,
 };
 
 /** Mock per-category progress - not wired to a real collection-items count. */
