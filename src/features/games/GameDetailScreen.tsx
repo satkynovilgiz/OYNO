@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Gamepad2, Play } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -7,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/character';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, Button, FadeSlideIn, IconButton } from '@/components/ui';
+import { AnimatedPressable, Button, FadeSlideIn, HeroEntrance, IconButton } from '@/components/ui';
 import { getBestScore } from '@/games3d/core/gameBestScore';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -110,29 +111,34 @@ export function GameDetailScreen({
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton
-          icon={ChevronLeft}
-          shape="roundedSquare"
-          accessibilityLabel={t('common.back')}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/games'))}
-        />
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {title}
-        </Text>
-        <View style={{ width: 44 }} />
-      </View>
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.banner, { aspectRatio: bannerAspectRatio }]}>
-          {imageSource ? (
-            <Image source={imageSource} style={styles.bannerImage} resizeMode="cover" />
-          ) : (
-            <View style={styles.bannerFallback}>
-              <Gamepad2 size={32} color={colors.primary} strokeWidth={1.75} />
+        <HeroEntrance>
+          <View style={[styles.hero, { aspectRatio: bannerAspectRatio }]}>
+            {imageSource ? (
+              <Image source={imageSource} style={styles.heroImage} resizeMode="cover" />
+            ) : (
+              <View style={[styles.heroImage, styles.heroFallback]}>
+                <Gamepad2 size={40} color={colors.accentGold} strokeWidth={1.5} />
+              </View>
+            )}
+            <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+
+            <View style={styles.heroOverlay} pointerEvents="box-none">
+              <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
+                <IconButton
+                  icon={ChevronLeft}
+                  shape="roundedSquare"
+                  variant="surface"
+                  accessibilityLabel={t('common.back')}
+                  onPress={() => (router.canGoBack() ? router.back() : router.replace('/games'))}
+                />
+              </View>
+              <Text style={styles.heroTitle} numberOfLines={2}>
+                {title}
+              </Text>
             </View>
-          )}
-        </View>
+          </View>
+        </HeroEntrance>
 
         {isAdult && showCulturalContext ? (
           <FadeSlideIn style={[styles.card, styles.culturalContextCardProminent]} index={0}>
@@ -258,29 +264,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  headerTitle: {
-    ...typography.h2,
-    color: colors.textPrimary,
-    flex: 1,
-    textAlign: 'center',
-  },
   content: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.md,
   },
-  banner: {
+  // Owns sizing/overflow only - no padding here. Padding for the back
+  // button/title lives on `heroOverlay` instead, whose own parent (this
+  // node) has none - see TodayDiscoveryCard's `card`/`overlay` comment
+  // for why padding directly on this node would make the absolute-fill
+  // image/gradient fall short of the true edge.
+  hero: {
     width: '100%',
-    borderRadius: radii.xl,
+    marginHorizontal: -spacing.md,
+    borderBottomLeftRadius: radii.xxl,
+    borderBottomRightRadius: radii.xxl,
     overflow: 'hidden',
     backgroundColor: colors.surfaceAlt,
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+  },
+  heroFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+  },
+  heroTitle: {
+    ...typography.display,
+    color: colors.textOnDark,
   },
   culturalContextCardProminent: {
     borderColor: colors.accentGold,
@@ -291,15 +314,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  bannerFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   card: {
     backgroundColor: colors.surface,

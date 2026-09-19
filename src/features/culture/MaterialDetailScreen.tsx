@@ -1,13 +1,15 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
+import { ChevronLeft } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, Badge } from '@/components/ui';
-import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
+import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
 import type { CultureMaterialRow } from '@/services/content/types';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { colors, radii, spacing, typography } from '@/theme';
 
 type MaterialDetailScreenProps = {
   material: CultureMaterialRow;
@@ -20,6 +22,7 @@ type MaterialDetailScreenProps = {
  * tables aren't unified - see the audit's note on why). */
 export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailScreenProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     track('culture_material_open', { materialId: material.id });
@@ -27,51 +30,124 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
   }, []);
 
   return (
-    <SettingsScreenLayout title={material.title} onPressBack={onPressBack}>
-      <View style={styles.headerBlock}>
-        <Badge label={t(`culture.materials.types.${material.kind}`)} color={colors.surfaceAlt} textColor={colors.primary} />
-        <Badge label={t(`culture.item.accuracy.${material.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
-      </View>
+    <View style={styles.root}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {material.image_url ? (
+          <HeroEntrance>
+            <View style={styles.hero}>
+              <ExpoImage source={{ uri: material.image_url }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
+              <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
 
-      {material.image_url ? (
-        <ExpoImage source={{ uri: material.image_url }} style={styles.hero} contentFit="cover" cachePolicy="disk" />
-      ) : null}
+              <View style={styles.heroOverlay} pointerEvents="box-none">
+                <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
+                  <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                </View>
+                <Text style={styles.heroTitle} numberOfLines={2}>
+                  {material.title}
+                </Text>
+              </View>
+            </View>
+          </HeroEntrance>
+        ) : (
+          <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.sm }]}>
+            <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+            <Text style={styles.plainHeaderTitle} numberOfLines={1}>
+              {material.title}
+            </Text>
+            <View style={{ width: 44 }} />
+          </View>
+        )}
 
-      {material.body ? (
-        <Text style={styles.body}>{material.body}</Text>
-      ) : (
-        <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
-      )}
+        <View style={styles.contentBody}>
+          <View style={styles.headerBlock}>
+            <Badge label={t(`culture.materials.types.${material.kind}`)} color={colors.surfaceAlt} textColor={colors.primary} />
+            <Badge label={t(`culture.item.accuracy.${material.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
+          </View>
 
-      {material.sources && material.sources.length > 0 ? (
-        <View style={styles.field}>
-          <Text style={styles.fieldLabel}>{t('culture.item.sourcesLabel')}</Text>
-          {material.sources.map((url) => (
-            <AnimatedPressable key={url} onPress={() => Linking.openURL(url)} accessibilityRole="link">
-              <Text style={styles.sourceLink} numberOfLines={1}>
-                {url}
-              </Text>
-            </AnimatedPressable>
-          ))}
+          {material.body ? (
+            <Text style={styles.body}>{material.body}</Text>
+          ) : (
+            <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
+          )}
+
+          {material.sources && material.sources.length > 0 ? (
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>{t('culture.item.sourcesLabel')}</Text>
+              {material.sources.map((url) => (
+                <AnimatedPressable key={url} onPress={() => Linking.openURL(url)} accessibilityRole="link">
+                  <Text style={styles.sourceLink} numberOfLines={1}>
+                    {url}
+                  </Text>
+                </AnimatedPressable>
+              ))}
+            </View>
+          ) : null}
         </View>
-      ) : null}
-    </SettingsScreenLayout>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
+  },
+  // Owns sizing/overflow only - no padding here. Padding for the back
+  // button/title lives on `heroOverlay` instead - see TodayDiscoveryCard's
+  // `card`/`overlay` comment for why padding directly on this node would
+  // make the absolute-fill image/gradient fall short of the true edge.
+  hero: {
+    width: '100%',
+    aspectRatio: 1.5,
+    borderBottomLeftRadius: radii.xxl,
+    borderBottomRightRadius: radii.xxl,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceAlt,
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+  },
+  heroTitle: {
+    ...typography.display,
+    color: colors.textOnDark,
+  },
+  plainHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  plainHeaderTitle: {
+    ...typography.h1,
+    color: colors.textPrimary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  contentBody: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+  },
   headerBlock: {
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  hero: {
-    width: '100%',
-    height: 200,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
   },
   body: {
     ...typography.body,
