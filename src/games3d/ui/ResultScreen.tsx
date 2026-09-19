@@ -1,7 +1,7 @@
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/Button';
+import { Button, CompletionSheet } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 export type ResultStat = { label: string; value: string };
@@ -19,51 +19,38 @@ type ResultScreenProps = {
 };
 
 /** Shared result screen (Section 22) - each game supplies its own stat
- * list; this component doesn't assume every game has the same fields. */
+ * list; this component doesn't assume every game has the same fields.
+ * Built on `CompletionSheet` (spec "Task 9... reusable foundation with
+ * variants") for OYNO's premium completion chrome - ornament row, gold
+ * border, restrained scale+fade entrance - instead of the plain white
+ * system-alert sheet this used to be. Same props for all 5 games; only
+ * the presentation changed. */
 export function ResultScreen({ visible, title, banner, stats, onReplay, onExit }: ResultScreenProps) {
   const { t } = useTranslation();
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
-          <Text style={styles.title}>{title}</Text>
-          {banner ? <Text style={styles.banner}>{banner}</Text> : null}
+    <CompletionSheet visible={visible}>
+      <Text style={styles.title}>{title}</Text>
+      {banner ? <Text style={styles.banner}>{banner}</Text> : null}
 
-          <View style={styles.statsGrid}>
-            {stats.map((stat) => (
-              <View key={stat.label} style={styles.statCard}>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
+      <View style={styles.statsGrid}>
+        {stats.map((stat) => (
+          <View key={stat.label} style={styles.statCard}>
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
           </View>
-
-          <View style={styles.actions}>
-            <Button label={t('games3d.result.replay')} onPress={onReplay} />
-            <Button label={t('games3d.result.exit')} variant="secondary" onPress={onExit} />
-          </View>
-        </View>
+        ))}
       </View>
-    </Modal>
+
+      <View style={styles.actions}>
+        <Button label={t('games3d.result.replay')} onPress={onReplay} />
+        <Button label={t('games3d.result.exit')} variant="secondary" onPress={onExit} />
+      </View>
+    </CompletionSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(20,14,8,0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheet: {
-    width: 380,
-    maxWidth: '85%',
-    backgroundColor: colors.surface,
-    borderRadius: radii.xxl,
-    padding: spacing.xl,
-    gap: spacing.lg,
-  },
   title: {
     ...typography.h1,
     color: colors.textPrimary,
@@ -71,7 +58,7 @@ const styles = StyleSheet.create({
   },
   banner: {
     ...typography.small,
-    color: colors.primary,
+    color: colors.accentGoldPressed,
     fontWeight: '700',
     textAlign: 'center',
     marginTop: -spacing.sm,
@@ -81,11 +68,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
     justifyContent: 'center',
+    width: '100%',
   },
   statCard: {
     minWidth: 90,
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: radii.lg,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
@@ -101,5 +89,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: spacing.sm,
+    width: '100%',
   },
 });

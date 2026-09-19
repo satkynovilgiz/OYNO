@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import { TriangleAlert } from 'lucide-react-native';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
+import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance, Skeleton } from '@/components/ui';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
@@ -156,8 +156,12 @@ export function CultureScreen() {
         </View>
 
         {isLoading ? (
-          <View style={styles.stateBlock}>
-            <ActivityIndicator color={colors.primary} />
+          <View style={styles.horizontalPad}>
+            <Skeleton height={180} borderRadius={22} style={styles.skeletonSpacing} />
+            <View style={styles.skeletonRow}>
+              <Skeleton height={100} style={styles.skeletonFlex} />
+              <Skeleton height={100} style={styles.skeletonFlex} />
+            </View>
           </View>
         ) : hasError ? (
           <EmptyState
@@ -214,9 +218,14 @@ const styles = StyleSheet.create({
   stack: {
     gap: spacing.sm,
   },
-  stateBlock: {
-    paddingVertical: spacing.xxl,
-    alignItems: 'center',
-    justifyContent: 'center',
+  skeletonSpacing: {
+    marginBottom: spacing.sm,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  skeletonFlex: {
+    flex: 1,
   },
 });

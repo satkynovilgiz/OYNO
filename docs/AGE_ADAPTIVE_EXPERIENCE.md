@@ -429,6 +429,32 @@ card (sizing/overflow/aspectRatio only, no padding)
       └── actual header/content/CTA layout
 ```
 
+## Home's "Continue your journey" card
+
+Home's hero slot (previously a static illustrated banner with no
+interactivity) now shows one personalized continuation card, decided by
+`resolveContinueJourney()` (`src/features/home/continueJourney.ts`) from
+real, already-tracked state only:
+
+1. An active quest with a genuinely incomplete step wins - the only
+   mechanic in the app with real resumable progress. Uses the exact same
+   `findNextIncompleteStep`/`resolveStepRoute` Explore itself uses, so the
+   CTA lands on the same next step.
+2. Otherwise, the first not-yet-tried interactive experience (Оймо/Боз
+   үй/Шырдак/Комуз, in `INTERACTIVE_EXPERIENCES`'s own order) becomes a
+   "Discover" prompt.
+3. If the quest is complete and every interactive experience has been
+   tried, the function returns `null` rather than inventing a card - Home
+   falls back to the plain `HeroBanner` illustration in that case, since
+   there's genuinely nothing left to continue or discover.
+
+`ContinueJourneyCard` only renders whichever of these is true - it never
+decides anything itself, and progress only ever appears on the `quest`
+variant, since that's the only one with real progress to show. The header
+also greets a signed-in user by their real account name (`HomeHeader`'s
+`greetingName` prop) - guests keep the plain tagline rather than a
+greeting with no real name to use.
+
 ## Page-entrance motion (`ScreenEntrance`, `HeroEntrance`)
 
 Home/Games/Explore/Culture/Profile are plain `expo-router` `Stack`
@@ -528,7 +554,7 @@ Every pure decision function above has unit tests, run with `npx jest`:
   than `calm`).
 
 `npx tsc --noEmit` and the full `npx jest` suite were run clean after every
-step in this feature (327 tests passing at the time of writing). Live
+step in this feature (339 tests passing at the time of writing). Live
 device/simulator visual QA across all four modes was **not** performed as
 part of this pass - this environment's browser tooling has repeated
 memory/rendering limitations noted elsewhere in this project's history, so

@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import { ChevronRight, SlidersHorizontal, TriangleAlert } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AgeExperienceTransition, AnimatedPressable, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
+import { AgeExperienceTransition, AnimatedPressable, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance, Skeleton } from '@/components/ui';
 import type { CharacterId } from '@/components/character';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import type { SupportedLanguage } from '@/i18n';
@@ -225,8 +225,12 @@ export function ExploreScreen() {
         </ScreenEntrance>
 
         {isLoading ? (
-          <View style={styles.stateBlock}>
-            <ActivityIndicator color={colors.primary} />
+          <View style={styles.horizontalPad}>
+            <Skeleton height={220} borderRadius={28} style={styles.skeletonSpacing} />
+            <View style={styles.skeletonRow}>
+              <Skeleton width={150} height={130} borderRadius={20} />
+              <Skeleton width={150} height={130} borderRadius={20} />
+            </View>
           </View>
         ) : hasError ? (
           <EmptyState
@@ -342,10 +346,12 @@ const styles = StyleSheet.create({
   horizontalPad: {
     paddingHorizontal: spacing.md,
   },
-  stateBlock: {
-    paddingVertical: spacing.xxl,
-    alignItems: 'center',
-    justifyContent: 'center',
+  skeletonSpacing: {
+    marginBottom: spacing.sm,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
   filteredTitle: {
     ...typography.h2,
