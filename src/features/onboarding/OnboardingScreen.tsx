@@ -43,7 +43,7 @@ type OnboardingScreenProps = {
 export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const scrollRef = useRef<Animated.ScrollView>(null);
   const scrollX = useSharedValue(0);
   const [index, setIndex] = useState(0);
@@ -53,7 +53,20 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
     scrollX.value = event.contentOffset.x;
   });
 
+  // A tap sets `index` immediately (not waiting on onMomentumScrollEnd,
+  // which doesn't reliably fire after a programmatic animated `scrollTo`
+  // on web) so the button/pagination update at once for a normal, one-tap-
+  // at-a-time press. `lastNavigationRef` guards against a second tap
+  // landing before the previous `scrollTo` animation has had time to
+  // settle, which would let `index` race ahead to a page the ScrollView
+  // hadn't actually reached yet (the animation's own scrollTo calls can
+  // override each other mid-flight). A real swipe still reconciles through
+  // `handleMomentumScrollEnd` regardless.
+  const lastNavigationRef = useRef(0);
   const goToIndex = (nextIndex: number) => {
+    const now = Date.now();
+    if (now - lastNavigationRef.current < 400) return;
+    lastNavigationRef.current = now;
     scrollRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
     setIndex(nextIndex);
   };
@@ -75,6 +88,7 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
     <View style={styles.root}>
       <Animated.ScrollView
         ref={scrollRef}
+        style={styles.pager}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -83,7 +97,14 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         scrollEventThrottle={16}
       >
         {onboardingSlideImages.map((slide, slideIndex) => (
-          <OnboardingSlide key={slide.id} slide={slide} slideIndex={slideIndex} scrollX={scrollX} screenWidth={screenWidth} />
+          <OnboardingSlide
+            key={slide.id}
+            slide={slide}
+            slideIndex={slideIndex}
+            scrollX={scrollX}
+            screenWidth={screenWidth}
+            screenHeight={screenHeight}
+          />
         ))}
       </Animated.ScrollView>
 
@@ -118,13 +139,14 @@ type OnboardingSlideProps = {
   slideIndex: number;
   scrollX: SharedValue<number>;
   screenWidth: number;
+  screenHeight: number;
 };
 
 /** Content fades/rises in as its page becomes active and eases out toward
  * the neighbours (spec "subtle transitions between onboarding pages"),
  * driven by the shared horizontal scroll offset rather than the
  * momentum-end index so it tracks the finger during the swipe itself. */
-function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth }: OnboardingSlideProps) {
+function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth, screenHeight }: OnboardingSlideProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -147,8 +169,12 @@ function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth }: Onboarding
   });
 
   return (
-    <View style={[styles.slide, { width: screenWidth }]}>
-      <Animated.Image source={slide.image} style={[StyleSheet.absoluteFill, imageStyle]} resizeMode="cover" />
+    <View style={[styles.slide, { width: screenWidth, height: screenHeight }]}>
+      <Animated.Image
+        source={slide.image}
+        style={[StyleSheet.absoluteFill, styles.slideImage, imageStyle]}
+        resizeMode="cover"
+      />
       <LinearGradient
         colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.25)', 'rgba(19,32,24,0.94)']}
         locations={[0.35, 0.62, 1]}
@@ -201,10 +227,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
   },
-  slide: {
+  // The ScrollView's own viewport needs an explicit height on web - without
+  // it, its cross-axis size is undefined, so a horizontal row of pages with
+  // no independently-anchored height collapses toward its shortest in-flow
+  // content (see `slide` below) instead of filling the screen.
+  pager: {
     flex: 1,
+  },
+  // `flex: 1` here (RN Web -> CSS `flex-basis: 0%`) used to win over the
+  // inline `width: screenWidth` on the ScrollView's main (horizontal) axis,
+  // so each page got flex-distributed/shrunk instead of holding its full
+  // page width - the total row still summed correctly, but individual
+  // pages came out narrower than one viewport, exposing a strip of the
+  // next slide at rest. `flexShrink: 0` keeps the explicit width
+  // authoritative on the main axis. Height is now passed in explicitly too
+  // (`useWindowDimensions().height`, alongside width) rather than relying
+  // on cross-axis stretch: the slide's only in-flow child is its text
+  // overlay (the image/gradient are position:absolute and don't contribute
+  // to intrinsic size), so without an explicit height the box collapses to
+  // that text block's height and the absolute-fill image resolves against
+  // a mismatched ancestor instead of this slide.
+  slide: {
+    flexShrink: 0,
     justifyContent: 'flex-end',
     backgroundColor: colors.surfaceFeature,
+    overflow: 'hidden',
+  },
+  // `StyleSheet.absoluteFill` alone (inset positioning only, no explicit
+  // size) doesn't stretch an `Image` on web: per the CSS spec, an
+  // absolutely-positioned *replaced element* (`<img>`) with 'auto'
+  // width/height falls back to its intrinsic pixel size instead of filling
+  // from insets the way a plain `View` does. Without this, the image
+  // rendered at its native 941x1672 source resolution starting at the
+  // slide's top-left corner instead of covering the full slide box - which
+  // both left resizeMode="cover" unable to do its job and left a gap on
+  // the right exposing the next slide underneath.
+  slideImage: {
+    width: '100%',
+    height: '100%',
   },
   wordmarkBadge: {
     position: 'absolute',
