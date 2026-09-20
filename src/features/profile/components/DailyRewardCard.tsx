@@ -43,11 +43,11 @@ export function DailyRewardCard({ reward, claimed = false, onPressClaim }: Daily
         <View style={styles.rewardsBlock}>
           <View style={styles.rewardRow}>
             <Star size={16} color={colors.primary} strokeWidth={2} />
-            <Text style={styles.rewardText}>+{reward.xp} XP</Text>
+            <Text style={styles.rewardText}>{t('profile.reward.xpValue', { xp: reward.xp })}</Text>
           </View>
           <View style={styles.rewardRow}>
             <Coins size={16} color={colors.accentGold} strokeWidth={2} />
-            <Text style={styles.rewardText}>+{reward.coins}</Text>
+            <Text style={styles.rewardText}>{t('profile.reward.coinsValue', { coins: reward.coins })}</Text>
           </View>
         </View>
       </View>

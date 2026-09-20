@@ -10,7 +10,7 @@ import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
-import type { GameListItem } from '../types';
+import { gameTitleKey, type GameListItem } from '../types';
 
 /** Same card, same route, same data for every age (spec "adapt
  * presentation/explanation, not cultural identity... preserve gameplay/
@@ -77,7 +77,7 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
         hoverEffect
         haptic={isPlayable ? 'light' : false}
         accessibilityRole="button"
-        accessibilityLabel={game.name}
+        accessibilityLabel={t(gameTitleKey(game.id))}
         accessibilityState={{ disabled: !isPlayable }}
       >
         {game.thumbnail ? (
@@ -105,7 +105,7 @@ export function GameCard({ game, onPress, index = 0 }: GameCardProps) {
               style={[styles.name, { fontSize: resolveByCardScale(config.cardScale, TITLE_FONT_SIZE_BY_CARD_SCALE) }]}
               numberOfLines={1}
             >
-              {game.name}
+              {t(gameTitleKey(game.id))}
             </Text>
             {isPlayable ? (
               <View style={[styles.playBadge, isLargeCard && styles.playBadgeLarge]}>

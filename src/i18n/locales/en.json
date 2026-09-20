@@ -7,9 +7,15 @@
     "back": "Back",
     "cancel": "Cancel",
     "retry": "Try again",
-    "offline": "No internet connection"
+    "offline": "No internet connection",
+    "unknownError": "Something went wrong."
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "The app ran into an unexpected error. Sorry - please try again."
   },
   "auth": {
+    "emailLabel": "Email",
     "signIn": {
       "title": "Sign in",
       "emailError": "Please enter your email.",
@@ -79,7 +85,8 @@
     "sections": {
       "account": "Account",
       "general": "General",
-      "support": "Support"
+      "support": "Support",
+      "admin": "Admin"
     },
     "rows": {
       "account": "Account",
@@ -91,7 +98,8 @@
       "game": "Game settings",
       "data": "Cache / Data",
       "help": "Help",
-      "about": "About OYNO"
+      "about": "About OYNO",
+      "adminPanel": "Admin panel"
     },
     "signOut": {
       "rowLabel": "Sign out",
@@ -130,7 +138,9 @@
       "privacyPolicy": "Privacy policy",
       "termsOfUse": "Terms of use",
       "licenses": "Licenses",
-      "unavailable": "This document isn't ready yet."
+      "unavailable": "This document isn't ready yet.",
+      "updateInfo": "Update: {{info}}",
+      "embeddedBuild": "embedded (no OTA update applied)"
     },
     "data": {
       "title": "Cache / Data",
@@ -281,6 +291,20 @@
   "games": {
     "title": "Games",
     "subtitle": "Play and learn our national games",
+    "titles": {
+      "toguz-korgool": "Toguz Korgool",
+      "chuko": "Chuko",
+      "ordo": "Ordo",
+      "besh-tash": "Besh Tash",
+      "arkan-tartysh": "Arkan Tartysh",
+      "ak-terek-kok-terek": "Ak Terek – Kok Terek",
+      "zholuk-tashtamay": "Zholuk Tashtamay",
+      "zhaa-atuu": "Archery",
+      "kyz-kuumay": "Kyz Kuumai",
+      "kok-boru": "Kok Boru",
+      "beshbarmak-challenge": "Beshbarmak Challenge",
+      "cooking-world": "Boz Uy Cooking World"
+    },
     "searchPlaceholder": "Search for a game...",
     "filterLabel": "Filter",
     "categories": {
@@ -333,6 +357,7 @@
   },
   "beshTash": {
     "title": "Besh Tash",
+    "howToPlayTip": "Play with one hand only: toss a stone, then grab another one from the ground before it lands.",
     "hand": "In hand",
     "ground": "On the ground",
     "toss": "Toss!",
@@ -889,6 +914,7 @@
     "editLabel": "Edit profile",
     "editAvatarLabel": "Edit avatar",
     "level": "Level {{level}}",
+    "xpProgress": "{{current}} / {{max}} XP",
     "xpRemaining": "{{count}} XP left",
     "rankTitle": "Explorer of Kyrgyz culture",
     "currencies": {
@@ -916,6 +942,12 @@
       "unlockedTitle": "New achievement!",
       "unlockedCta": "Nice!",
       "requirementLabel": "How to unlock",
+      "titles": {
+        "firstWin": "First Victory",
+        "traveler": "Traveler",
+        "bozUyGuest": "Boz Üy Guest",
+        "komuzchu": "Komuzchu"
+      },
       "requirements": {
         "firstWin": "Win one game",
         "traveler": "Complete one quest",
@@ -956,7 +988,9 @@
     "reward": {
       "title": "Daily reward",
       "cta": "Claim",
-      "claimedLabel": "Claimed"
+      "claimedLabel": "Claimed",
+      "xpValue": "+{{xp}} XP",
+      "coinsValue": "+{{coins}}"
     }
   },
   "legal": {
@@ -1093,6 +1127,7 @@
     },
     "pause": {
       "title": "Paused",
+      "button": "Pause",
       "resume": "Resume",
       "restart": "Restart",
       "exit": "Exit",
@@ -1126,7 +1161,7 @@
       "tutorial2": "Hold to draw the bow",
       "tutorial3": "Release to shoot!",
       "miss": "MISS",
-      "aboutDescription": "Жаа атуу is Kyrgyz archery. This is a mobile-adapted target round, not a historical reconstruction.",
+      "aboutDescription": "Jaa Atuu is Kyrgyz archery. This is a mobile-adapted target round, not a historical reconstruction.",
       "aboutObjective": "Hit the center of the target with all 5 arrows."
     },
     "intro": {
@@ -1141,7 +1176,7 @@
       "you": "You",
       "ai": "Opponent",
       "captures": "Captures",
-      "aboutDescription": "Ордо is a Kyrgyz circle game - knock pieces out of the ring from outside it, then capture the khan in the center.",
+      "aboutDescription": "Ordo is a Kyrgyz circle game - knock pieces out of the ring from outside it, then capture the khan in the center.",
       "aboutObjective": "Clear 3 pieces, then capture the khan before your opponent does.",
       "practiceLabel": "PRACTICE",
       "practiceGuidance": "Drag back to aim, release to throw",

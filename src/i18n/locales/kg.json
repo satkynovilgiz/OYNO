@@ -7,9 +7,15 @@
     "back": "Артка",
     "cancel": "Жок",
     "retry": "Кайра аракет кылуу",
-    "offline": "Интернет байланышы жок"
+    "offline": "Интернет байланышы жок",
+    "unknownError": "Белгисиз ката кетти."
+  },
+  "errorBoundary": {
+    "title": "Бир нерсе туура эмес болду",
+    "message": "Колдонмодо күтүлбөгөн ката пайда болду. Кечиресиз - кайра аракет кылып көрүңүз."
   },
   "auth": {
+    "emailLabel": "Email",
     "signIn": {
       "title": "Кирүү",
       "emailError": "Email жазыңыз.",
@@ -79,7 +85,8 @@
     "sections": {
       "account": "Аккаунт",
       "general": "Жалпы",
-      "support": "Колдоо"
+      "support": "Колдоо",
+      "admin": "Админ"
     },
     "rows": {
       "account": "Аккаунт",
@@ -91,7 +98,8 @@
       "game": "Оюн жөндөөлөрү",
       "data": "Кэш / Дайындар",
       "help": "Жардам",
-      "about": "OYNO жөнүндө"
+      "about": "OYNO жөнүндө",
+      "adminPanel": "Админ панели"
     },
     "signOut": {
       "rowLabel": "Чыгуу",
@@ -130,7 +138,9 @@
       "privacyPolicy": "Купуялык саясаты",
       "termsOfUse": "Колдонуу шарттары",
       "licenses": "Лицензиялар",
-      "unavailable": "Бул документ азырынча даяр эмес."
+      "unavailable": "Бул документ азырынча даяр эмес.",
+      "updateInfo": "Жаңылоо: {{info}}",
+      "embeddedBuild": "камтылган курулуш (OTA жаңылоо колдонулган жок)"
     },
     "data": {
       "title": "Кэш / Дайындар",
@@ -281,6 +291,20 @@
   "games": {
     "title": "Оюндар",
     "subtitle": "Улуттук оюндарыбызды ойнойбуз жана үйрөнөбүз",
+    "titles": {
+      "toguz-korgool": "Тогуз коргоол",
+      "chuko": "Чүкө",
+      "ordo": "Ордо",
+      "besh-tash": "Беш таш",
+      "arkan-tartysh": "Аркан тартыш",
+      "ak-terek-kok-terek": "Ак терек — көк терек",
+      "zholuk-tashtamay": "Жоолук таштамай",
+      "zhaa-atuu": "Жаа атуу",
+      "kyz-kuumay": "Кыз куумай",
+      "kok-boru": "Көк бөрү",
+      "beshbarmak-challenge": "Бешбармак Challenge",
+      "cooking-world": "Боз үй Cooking World"
+    },
     "searchPlaceholder": "Оюн издеңиз...",
     "filterLabel": "Фильтр",
     "categories": {
@@ -333,6 +357,7 @@
   },
   "beshTash": {
     "title": "Беш таш",
+    "howToPlayTip": "Бир колуң менен гана ойно: ташты ыргытып, түшкөнчө жерден башка ташты ала кой.",
     "hand": "Колдо",
     "ground": "Жерде",
     "toss": "Ыргыт!",
@@ -889,6 +914,7 @@
     "editLabel": "Профилди оңдоо",
     "editAvatarLabel": "Аватарды өзгөртүү",
     "level": "Деңгээл {{level}}",
+    "xpProgress": "{{current}} / {{max}} XP",
     "xpRemaining": "{{count}} XP калды",
     "rankTitle": "Кыргыз маданиятын изилдөөчү",
     "currencies": {
@@ -916,6 +942,12 @@
       "unlockedTitle": "Жаңы жетишкендик!",
       "unlockedCta": "Сонун!",
       "requirementLabel": "Кантип ачуу керек",
+      "titles": {
+        "firstWin": "Биринчи жеңиш",
+        "traveler": "Саякатчы",
+        "bozUyGuest": "Боз үйдүн коногу",
+        "komuzchu": "Комузчу"
+      },
       "requirements": {
         "firstWin": "Бир оюндан жеңип чык",
         "traveler": "Бир квестти аяктоо",
@@ -956,7 +988,9 @@
     "reward": {
       "title": "Күнүмдүк сыйлык",
       "cta": "Алуу",
-      "claimedLabel": "Алынды"
+      "claimedLabel": "Алынды",
+      "xpValue": "+{{xp}} XP",
+      "coinsValue": "+{{coins}}"
     }
   },
   "legal": {
@@ -1093,6 +1127,7 @@
     },
     "pause": {
       "title": "Тыныгуу",
+      "button": "Тыныгуу",
       "resume": "Улантуу",
       "restart": "Кайра баштоо",
       "exit": "Оюндан чыгуу",

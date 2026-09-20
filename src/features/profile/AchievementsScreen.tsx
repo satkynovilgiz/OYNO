@@ -63,7 +63,7 @@ export function AchievementsScreen({ unlockedIds, onPressBack }: AchievementsScr
                   haptic="light"
                   onPress={() => setSelected(achievement)}
                   accessibilityRole="button"
-                  accessibilityLabel={achievement.title}
+                  accessibilityLabel={t(achievement.titleKey)}
                 >
                   <View style={styles.badgeStage}>
                     <Image
@@ -78,7 +78,7 @@ export function AchievementsScreen({ unlockedIds, onPressBack }: AchievementsScr
                     ) : null}
                   </View>
                   <Text style={[styles.label, !unlocked && styles.labelLocked]} numberOfLines={2}>
-                    {achievement.title}
+                    {t(achievement.titleKey)}
                   </Text>
                 </AnimatedPressable>
               </FadeSlideIn>

@@ -1,7 +1,8 @@
 import type { CharacterEmotion, CharacterId } from '@/components/character/characterAssets';
+import type { LocalizedText } from '@/features/explore/types';
 
 export type GameIntroLine = {
-  text: string;
+  text: LocalizedText;
   emotion: CharacterEmotion;
 };
 
@@ -15,84 +16,241 @@ export type GameHostConfig = {
  * short copy in the same voice as the spec's given examples (Бөрү's чүкө
  * line and Айдана's "Бул оюнда стратегия маанилүү" are pulled verbatim from
  * the spec; the rest are new lines written to match, not sourced facts, so
- * feel free to revise wording later.
+ * feel free to revise wording later. `text` is per-language content (the
+ * same `LocalizedText` shape used for Explore/Culture discovery titles),
+ * not an i18n UI key - resolved the same way at the call site:
+ * `line.text[language] ?? line.text.kg`.
  */
 export const gameHostCharacters: Record<string, GameHostConfig> = {
   'toguz-korgool': {
     characterId: 'bek',
     lines: [
-      { text: 'Тогуз коргоолго кана баштайлы!', emotion: 'happy' },
-      { text: 'Ойлонуп ойногон уттурбайт.', emotion: 'focused' },
+      {
+        text: {
+          kg: 'Тогуз коргоолго кана баштайлы!',
+          ru: 'Давай начнём партию в тогуз коргоол!',
+          en: "Let's start a game of Toguz Korgool!",
+        },
+        emotion: 'happy',
+      },
+      {
+        text: {
+          kg: 'Ойлонуп ойногон уттурбайт.',
+          ru: 'Кто играет с умом, тот не проигрывает.',
+          en: 'Play with your head, and you won’t lose.',
+        },
+        emotion: 'focused',
+      },
     ],
   },
   'arkan-tartysh': {
     characterId: 'bek',
     lines: [
-      { text: 'Күчүңдү сынап көрөлү!', emotion: 'happy' },
-      { text: 'Биримдик менен күч — жеңиштин сыры ушул.', emotion: 'focused' },
+      {
+        text: {
+          kg: 'Күчүңдү сынап көрөлү!',
+          ru: 'Давай проверим твою силу!',
+          en: "Let's test your strength!",
+        },
+        emotion: 'happy',
+      },
+      {
+        text: {
+          kg: 'Биримдик менен күч — жеңиштин сыры ушул.',
+          ru: 'Сила в единстве — вот секрет победы.',
+          en: 'Strength in unity - that’s the secret to winning.',
+        },
+        emotion: 'focused',
+      },
     ],
   },
   'zhaa-atuu': {
     characterId: 'bek',
     lines: [
-      { text: 'Жааны так тартып, көздөй атайлы!', emotion: 'focused' },
-      { text: 'Дал төп тийгизе аласыңбы?', emotion: 'winking' },
+      {
+        text: {
+          kg: 'Жааны так тартып, көздөй атайлы!',
+          ru: 'Натяни лук точно и цель на мишень!',
+          en: "Draw the bow steady and aim true!",
+        },
+        emotion: 'focused',
+      },
+      {
+        text: {
+          kg: 'Дал төп тийгизе аласыңбы?',
+          ru: 'Сможешь попасть точно в цель?',
+          en: 'Think you can hit the bullseye?',
+        },
+        emotion: 'winking',
+      },
     ],
   },
   ordo: {
     characterId: 'aidana',
     lines: [
-      { text: 'Бул оюнда стратегия маанилүү.', emotion: 'focused' },
-      { text: 'Чүкөлөрдү тыкыр эсептеп ойно.', emotion: 'thinking' },
+      {
+        text: {
+          kg: 'Бул оюнда стратегия маанилүү.',
+          ru: 'В этой игре важна стратегия.',
+          en: 'Strategy matters in this game.',
+        },
+        emotion: 'focused',
+      },
+      {
+        text: {
+          kg: 'Чүкөлөрдү тыкыр эсептеп ойно.',
+          ru: 'Считай ходы с чүкө внимательно.',
+          en: 'Count your shots carefully.',
+        },
+        emotion: 'thinking',
+      },
     ],
   },
   'besh-tash': {
     characterId: 'aidana',
     lines: [
-      { text: 'Беш ташты колдон түшүрбөй кармай аласыңбы?', emotion: 'surprised' },
-      { text: 'Көңүл буруп, шашылба.', emotion: 'focused' },
+      {
+        text: {
+          kg: 'Беш ташты колдон түшүрбөй кармай аласыңбы?',
+          ru: 'Сможешь удержать все пять камешков, не уронив?',
+          en: 'Can you keep all five stones from falling?',
+        },
+        emotion: 'surprised',
+      },
+      {
+        text: {
+          kg: 'Көңүл буруп, шашылба.',
+          ru: 'Будь внимателен и не торопись.',
+          en: 'Stay focused, and don’t rush.',
+        },
+        emotion: 'focused',
+      },
     ],
   },
   chuko: {
     characterId: 'boru',
     lines: [
-      { text: 'Кана, чүкө ойнойбузбу? 😄', emotion: 'laughing' },
-      { text: 'Так ыргытып, жутуп ал!', emotion: 'happy' },
+      {
+        text: {
+          kg: 'Кана, чүкө ойнойбузбу? 😄',
+          ru: 'Ну что, сыграем в чүкө? 😄',
+          en: 'So, shall we play chuko? 😄',
+        },
+        emotion: 'laughing',
+      },
+      {
+        text: {
+          kg: 'Так ыргытып, жутуп ал!',
+          ru: 'Точно подбрось и поймай!',
+          en: 'Toss it just right and grab it!',
+        },
+        emotion: 'happy',
+      },
     ],
   },
   'zholuk-tashtamay': {
     characterId: 'boru',
     lines: [
-      { text: 'Жоолукту токтоосуз кармап кал!', emotion: 'surprised' },
-      { text: 'Кыймылың тез болсун!', emotion: 'happy' },
+      {
+        text: {
+          kg: 'Жоолукту токтоосуз кармап кал!',
+          ru: 'Хватай платок без промедления!',
+          en: 'Grab the handkerchief without hesitating!',
+        },
+        emotion: 'surprised',
+      },
+      {
+        text: {
+          kg: 'Кыймылың тез болсун!',
+          ru: 'Двигайся быстрее!',
+          en: 'Move fast!',
+        },
+        emotion: 'happy',
+      },
     ],
   },
   'cooking-world': {
     characterId: 'aiana',
     lines: [
-      { text: 'Ашканага кош келдиң!', emotion: 'happy' },
-      { text: 'Даамдуу тамак майда-чүйдөсүнө көңүл бурат.', emotion: 'focused' },
+      {
+        text: {
+          kg: 'Ашканага кош келдиң!',
+          ru: 'Добро пожаловать на кухню!',
+          en: 'Welcome to the kitchen!',
+        },
+        emotion: 'happy',
+      },
+      {
+        text: {
+          kg: 'Даамдуу тамак майда-чүйдөсүнө көңүл бурат.',
+          ru: 'Вкусная еда любит внимание к деталям.',
+          en: 'Tasty food is all about the details.',
+        },
+        emotion: 'focused',
+      },
     ],
   },
   'beshbarmak-challenge': {
     characterId: 'aiana',
     lines: [
-      { text: 'Бешбармак — коноктордун сыйы!', emotion: 'happy' },
-      { text: 'Кайсы ингредиентти биринчи кошобуз?', emotion: 'thinking' },
+      {
+        text: {
+          kg: 'Бешбармак — коноктордун сыйы!',
+          ru: 'Бешбармак — угощение для гостей!',
+          en: 'Beshbarmak - a dish fit for guests!',
+        },
+        emotion: 'happy',
+      },
+      {
+        text: {
+          kg: 'Кайсы ингредиентти биринчи кошобуз?',
+          ru: 'Какой ингредиент добавим первым?',
+          en: 'Which ingredient goes in first?',
+        },
+        emotion: 'thinking',
+      },
     ],
   },
   'kyz-kuumay': {
     characterId: 'tulpar',
     lines: [
-      { text: 'Атка минип, аны кубалап көр!', emotion: 'happy' },
-      { text: 'Ылдамдык менен эптүүлүк керек.', emotion: 'focused' },
+      {
+        text: {
+          kg: 'Атка минип, аны кубалап көр!',
+          ru: 'Садись на коня и догони её!',
+          en: 'Get on your horse and catch her!',
+        },
+        emotion: 'happy',
+      },
+      {
+        text: {
+          kg: 'Ылдамдык менен эптүүлүк керек.',
+          ru: 'Нужны скорость и ловкость.',
+          en: 'You’ll need speed and skill.',
+        },
+        emotion: 'focused',
+      },
     ],
   },
   'ak-terek-kok-terek': {
     characterId: 'elchi',
     lines: [
-      { text: 'Команданы тандап, оюнду баштайлы!', emotion: 'happy' },
-      { text: 'Кимдин командасы күчтүү экенин көрөлү!', emotion: 'winking' },
+      {
+        text: {
+          kg: 'Команданы тандап, оюнду баштайлы!',
+          ru: 'Выбери команду, и начнём игру!',
+          en: "Pick a team, and let's begin!",
+        },
+        emotion: 'happy',
+      },
+      {
+        text: {
+          kg: 'Кимдин командасы күчтүү экенин көрөлү!',
+          ru: 'Посмотрим, чья команда сильнее!',
+          en: "Let's see whose team is stronger!",
+        },
+        emotion: 'winking',
+      },
     ],
   },
 };

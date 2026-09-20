@@ -84,7 +84,7 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
           </View>
 
           <Animated.View style={contentStyle}>
-            <Text style={styles.title}>{achievement?.title}</Text>
+            <Text style={styles.title}>{achievement ? t(achievement.titleKey) : null}</Text>
           </Animated.View>
 
           <Button label={t('profile.achievements.unlockedCta')} onPress={onDismiss} />

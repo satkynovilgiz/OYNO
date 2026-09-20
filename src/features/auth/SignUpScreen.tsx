@@ -63,7 +63,7 @@ export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignI
           placeholder={t('auth.signUp.namePlaceholder')}
         />
         <TextField
-          label="Email"
+          label={t('auth.emailLabel')}
           value={email}
           onChangeText={setEmail}
           error={errors.email}

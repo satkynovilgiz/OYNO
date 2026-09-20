@@ -80,9 +80,9 @@ export function SettingsScreen({ onPressBack, onNavigate, onPressAdmin, onSignOu
 
         {adminRole && (
           <>
-            <Text style={styles.sectionLabel}>Admin</Text>
+            <Text style={styles.sectionLabel}>{t('settings.sections.admin')}</Text>
             <View style={styles.group}>
-              <SettingsRow icon={Wrench} label="Admin panel" onPress={onPressAdmin} />
+              <SettingsRow icon={Wrench} label={t('settings.rows.adminPanel')} onPress={onPressAdmin} />
             </View>
           </>
         )}

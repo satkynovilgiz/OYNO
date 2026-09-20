@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { ForgotPasswordScreen } from '@/features/auth/ForgotPasswordScreen';
 import { authService, AuthError } from '@/services/auth';
 
 export default function ForgotPasswordRoute() {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +21,7 @@ export default function ForgotPasswordRoute() {
           await authService.requestPasswordReset(email);
           router.push({ pathname: '/verify-reset-code', params: { email } } as never);
         } catch (err) {
-          setError(err instanceof AuthError ? err.message : 'Белгисиз ката кетти.');
+          setError(err instanceof AuthError ? err.message : t('common.unknownError'));
         } finally {
           setIsSubmitting(false);
         }

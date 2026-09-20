@@ -22,10 +22,10 @@ import type { ProfileAchievement, ProfileCollectionItem } from './types';
  * questCompletedCount >= 1, bozUyVisited, cultureDiscoveryCount >= 1) -
  * shown only for locked achievements, never an invented requirement. */
 export const profileAchievements: ProfileAchievement[] = [
-  { id: 'first-win', title: 'Биринчи жеңиш', iconSource: badgeFirstWin, requirementKey: 'profile.achievements.requirements.firstWin' },
-  { id: 'traveler', title: 'Саякатчы', iconSource: badgeTraveler, requirementKey: 'profile.achievements.requirements.traveler' },
-  { id: 'boz-uy-guest', title: 'Боз үйдүн коногу', iconSource: badgeBozUyGuest, requirementKey: 'profile.achievements.requirements.bozUyGuest' },
-  { id: 'komuzchu', title: 'Комузчу', iconSource: badgeKomuzchu, requirementKey: 'profile.achievements.requirements.komuzchu' },
+  { id: 'first-win', titleKey: 'profile.achievements.titles.firstWin', iconSource: badgeFirstWin, requirementKey: 'profile.achievements.requirements.firstWin' },
+  { id: 'traveler', titleKey: 'profile.achievements.titles.traveler', iconSource: badgeTraveler, requirementKey: 'profile.achievements.requirements.traveler' },
+  { id: 'boz-uy-guest', titleKey: 'profile.achievements.titles.bozUyGuest', iconSource: badgeBozUyGuest, requirementKey: 'profile.achievements.requirements.bozUyGuest' },
+  { id: 'komuzchu', titleKey: 'profile.achievements.titles.komuzchu', iconSource: badgeKomuzchu, requirementKey: 'profile.achievements.requirements.komuzchu' },
 ];
 /** The real catalog size - was hardcoded to 50 (the design spec's eventual
  * full catalog, never built) which made the Achievements screen show a

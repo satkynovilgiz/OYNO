@@ -30,7 +30,10 @@ export type ProfileStat = {
 
 export type ProfileAchievement = {
   id: string;
-  title: string;
+  /** i18n key for the achievement name (matches `requirementKey` below in
+   * shape) - never a raw string, so switching language actually changes
+   * it. */
+  titleKey: string;
   iconSource: ImageSourcePropType;
   /** i18n key for the real unlock condition (matches the exact predicate
    * in src/services/progress/achievements.ts) - shown only for locked

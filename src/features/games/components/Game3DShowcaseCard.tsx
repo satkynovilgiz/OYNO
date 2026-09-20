@@ -7,7 +7,7 @@ import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
-import type { GameListItem } from '../types';
+import { gameTitleKey, type GameListItem } from '../types';
 
 type Game3DShowcaseCardProps = {
   game: GameListItem;
@@ -34,7 +34,7 @@ export function Game3DShowcaseCard({ game, onPress, index = 0 }: Game3DShowcaseC
         hoverEffect
         haptic="light"
         accessibilityRole="button"
-        accessibilityLabel={game.name}
+        accessibilityLabel={t(gameTitleKey(game.id))}
       >
         {game.thumbnail ? (
           <Image source={game.thumbnail} style={styles.artwork} resizeMode="cover" />
@@ -51,7 +51,7 @@ export function Game3DShowcaseCard({ game, onPress, index = 0 }: Game3DShowcaseC
 
         <View style={styles.content}>
           <Text style={styles.name} numberOfLines={1}>
-            {game.name}
+            {t(gameTitleKey(game.id))}
           </Text>
           <View style={styles.ctaRow}>
             <View style={styles.playPill}>

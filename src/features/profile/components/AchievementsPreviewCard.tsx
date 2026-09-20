@@ -52,7 +52,7 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
                 ) : null}
               </View>
               <Text style={styles.badgeLabel} numberOfLines={2}>
-                {achievement.title}
+                {t(achievement.titleKey)}
               </Text>
             </FadeSlideIn>
           );

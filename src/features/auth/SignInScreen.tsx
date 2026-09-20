@@ -54,7 +54,7 @@ export function SignInScreen({
 
       <View style={styles.form}>
         <TextField
-          label="Email"
+          label={t('auth.emailLabel')}
           value={email}
           onChangeText={setEmail}
           error={errors.email}

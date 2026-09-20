@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
-import type { GameListItem } from '@/features/games/types';
+import { gameTitleKey, type GameListItem } from '@/features/games/types';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
@@ -54,7 +54,7 @@ export function GamesCarousel({ games, onPressGame, onPressSeeAll }: GamesCarous
               hoverEffect
               haptic="light"
               accessibilityRole="button"
-              accessibilityLabel={game.name}
+              accessibilityLabel={t(gameTitleKey(game.id))}
             >
               <View>
                 <Image
@@ -81,7 +81,7 @@ export function GamesCarousel({ games, onPressGame, onPressSeeAll }: GamesCarous
                 style={[styles.name, { fontSize: resolveByCardScale(config.cardScale, NAME_FONT_SIZE_BY_CARD_SCALE) }]}
                 numberOfLines={1}
               >
-                {game.name}
+                {t(gameTitleKey(game.id))}
               </Text>
             </AnimatedPressable>
           </FadeSlideIn>

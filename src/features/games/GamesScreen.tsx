@@ -21,7 +21,7 @@ import {
   SearchBar,
 } from './components';
 import { mockGamesList } from './mockData';
-import type { GameListItem } from './types';
+import { gameTitleKey, type GameListItem } from './types';
 
 export function GamesScreen() {
   useTrackScreenView('games');
@@ -36,10 +36,10 @@ export function GamesScreen() {
     const normalizedQuery = query.trim().toLowerCase();
     return mockGamesList.filter((game) => {
       const matchesCategory = category === 'all' || game.category === category;
-      const matchesQuery = !normalizedQuery || game.name.toLowerCase().includes(normalizedQuery);
+      const matchesQuery = !normalizedQuery || t(gameTitleKey(game.id)).toLowerCase().includes(normalizedQuery);
       return matchesCategory && matchesQuery;
     });
-  }, [query, category]);
+  }, [query, category, t]);
 
   // 3D games get their own showcase row instead of a per-card badge
   // (Section "Clearly distinguish 3D games... without a cheap '3D' badge

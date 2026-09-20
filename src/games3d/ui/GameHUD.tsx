@@ -65,7 +65,7 @@ export function GameHUD({ title, onPause, primaryStat, secondaryStat, timerValue
           onPress={onPause}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="pause"
+          accessibilityLabel={t('games3d.pause.button')}
           style={styles.pauseButton}
         >
           <Pause size={18} color={colors.accentGold} strokeWidth={2.25} />

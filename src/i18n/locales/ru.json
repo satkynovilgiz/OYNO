@@ -7,9 +7,15 @@
     "back": "Назад",
     "cancel": "Отмена",
     "retry": "Повторить",
-    "offline": "Нет подключения к интернету"
+    "offline": "Нет подключения к интернету",
+    "unknownError": "Что-то пошло не так."
+  },
+  "errorBoundary": {
+    "title": "Что-то пошло не так",
+    "message": "В приложении произошла непредвиденная ошибка. Извините - попробуйте ещё раз."
   },
   "auth": {
+    "emailLabel": "Email",
     "signIn": {
       "title": "Вход",
       "emailError": "Введите email.",
@@ -79,7 +85,8 @@
     "sections": {
       "account": "Аккаунт",
       "general": "Общее",
-      "support": "Поддержка"
+      "support": "Поддержка",
+      "admin": "Админ"
     },
     "rows": {
       "account": "Аккаунт",
@@ -91,7 +98,8 @@
       "game": "Настройки игры",
       "data": "Кэш / Данные",
       "help": "Помощь",
-      "about": "Об OYNO"
+      "about": "Об OYNO",
+      "adminPanel": "Панель администратора"
     },
     "signOut": {
       "rowLabel": "Выйти",
@@ -130,7 +138,9 @@
       "privacyPolicy": "Политика конфиденциальности",
       "termsOfUse": "Условия использования",
       "licenses": "Лицензии",
-      "unavailable": "Этот документ пока не готов."
+      "unavailable": "Этот документ пока не готов.",
+      "updateInfo": "Обновление: {{info}}",
+      "embeddedBuild": "встроенная сборка (OTA-обновление не применялось)"
     },
     "data": {
       "title": "Кэш / Данные",
@@ -281,6 +291,20 @@
   "games": {
     "title": "Игры",
     "subtitle": "Играем и изучаем наши национальные игры",
+    "titles": {
+      "toguz-korgool": "Тогуз коргоол",
+      "chuko": "Чуко",
+      "ordo": "Ордо",
+      "besh-tash": "Беш таш",
+      "arkan-tartysh": "Аркан тартыш",
+      "ak-terek-kok-terek": "Ак терек — кок терек",
+      "zholuk-tashtamay": "Жоолук таштамай",
+      "zhaa-atuu": "Стрельба из лука",
+      "kyz-kuumay": "Кыз куумай",
+      "kok-boru": "Кок бору",
+      "beshbarmak-challenge": "Бешбармак Challenge",
+      "cooking-world": "Боз Үй Cooking World"
+    },
     "searchPlaceholder": "Найти игру...",
     "filterLabel": "Фильтр",
     "categories": {
@@ -333,6 +357,7 @@
   },
   "beshTash": {
     "title": "Беш таш",
+    "howToPlayTip": "Играй только одной рукой: подбрось камешек и подхвати другой с земли, пока он не упал.",
     "hand": "В руке",
     "ground": "На земле",
     "toss": "Подбрось!",
@@ -889,6 +914,7 @@
     "editLabel": "Редактировать профиль",
     "editAvatarLabel": "Изменить аватар",
     "level": "Уровень {{level}}",
+    "xpProgress": "{{current}} / {{max}} XP",
     "xpRemaining": "Осталось {{count}} XP",
     "rankTitle": "Исследователь кыргызской культуры",
     "currencies": {
@@ -916,6 +942,12 @@
       "unlockedTitle": "Новое достижение!",
       "unlockedCta": "Отлично!",
       "requirementLabel": "Как открыть",
+      "titles": {
+        "firstWin": "Первая победа",
+        "traveler": "Путешественник",
+        "bozUyGuest": "Гость Боз Үй",
+        "komuzchu": "Комузчу"
+      },
       "requirements": {
         "firstWin": "Выиграйте одну игру",
         "traveler": "Завершите один квест",
@@ -956,7 +988,9 @@
     "reward": {
       "title": "Ежедневная награда",
       "cta": "Забрать",
-      "claimedLabel": "Получено"
+      "claimedLabel": "Получено",
+      "xpValue": "+{{xp}} XP",
+      "coinsValue": "+{{coins}}"
     }
   },
   "legal": {
@@ -1093,6 +1127,7 @@
     },
     "pause": {
       "title": "Пауза",
+      "button": "Пауза",
       "resume": "Продолжить",
       "restart": "Заново",
       "exit": "Выйти",

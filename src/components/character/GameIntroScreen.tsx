@@ -4,11 +4,12 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { AnimatedPressable, Button } from '@/components/ui';
+import type { SupportedLanguage } from '@/i18n';
 import { hasSeenGameIntro, markGameIntroSeen } from '@/services/ageExperience/gameIntroSeen';
 import { resolveGameIntroPresentation } from '@/services/ageExperience/guideCharacterGating';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, spacing, typography } from '@/theme';
-import { getGameHostConfig } from '@games/gameHostCharacters';
+import { getGameHostConfig, type GameIntroLine } from '@games/gameHostCharacters';
 
 import { CharacterAvatar } from './CharacterAvatar';
 
@@ -35,8 +36,13 @@ type Step = { kind: 'line'; index: number } | { kind: 'howToPlay' };
  * themselves never change by age (never made to sound childish or
  * different per age), only how often/how much of it plays.
  */
+function lineText(line: GameIntroLine, language: SupportedLanguage): string {
+  return line.text[language] ?? line.text.kg;
+}
+
 export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language as SupportedLanguage;
   const { config } = useAgeExperience();
   const host = getGameHostConfig(gameId);
   const [presentation, setPresentation] = useState<'full' | 'condensed' | 'skip' | 'loading'>('loading');
@@ -109,7 +115,7 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
               <Text style={styles.condensedName}>{t(`character.names.${host.characterId}`)}</Text>
               {line ? (
                 <Text style={styles.condensedLine} numberOfLines={2}>
-                  {line.text}
+                  {lineText(line, language)}
                 </Text>
               ) : null}
             </View>
@@ -160,7 +166,7 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
           <Text style={styles.name}>{t(`character.names.${host.characterId}`)}</Text>
 
           {step.kind === 'line' && currentLine ? (
-            <Text style={styles.line}>{currentLine.text}</Text>
+            <Text style={styles.line}>{lineText(currentLine, language)}</Text>
           ) : (
             <>
               <Text style={styles.howToPlayLabel}>{t('gameIntro.howToPlay')}</Text>

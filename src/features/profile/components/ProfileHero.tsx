@@ -73,7 +73,7 @@ export function ProfileHero({ profile, onPressAvatar, onPressEdit }: ProfileHero
           </Text>
           <View style={styles.xpBlock}>
             <ProgressBar progress={xpRatio} height={5} trackColor="rgba(255,255,255,0.16)" fillColor={colors.accentGold} />
-            <Text style={styles.xpLabel}>{profile.xpCurrent} / {profile.xpMax} XP</Text>
+            <Text style={styles.xpLabel}>{t('profile.xpProgress', { current: profile.xpCurrent, max: profile.xpMax })}</Text>
           </View>
         </View>
       </View>

@@ -22,8 +22,10 @@ export type GamePlayers =
 export type GameDuration = { minMinutes: number; maxMinutes: number };
 
 export type GameListItem = {
+  /** Also the i18n key under `games.titles.<id>` - the display name is
+   * never stored here, it's always looked up through t() at render time so
+   * it tracks the selected language (spec "Games hub localization gap"). */
   id: string;
-  name: string;
   /** Omit only when no real cover art exists yet (e.g. Kok Boru - see
    * docs/DESIGN_ASSET_AUDIT.md for the exact spec needed) - GameCard falls
    * back to a plain icon chip instead of a broken/blank image. */
@@ -40,3 +42,10 @@ export type GameListItem = {
    * "Clearly distinguish 3D games... without a cheap badge"). */
   is3D?: boolean;
 };
+
+/** The one place that turns a `GameListItem.id` into its display name -
+ * every card/list/search that shows a game's name goes through this
+ * instead of each re-typing the `games.titles.${id}` template literal. */
+export function gameTitleKey(id: string): string {
+  return `games.titles.${id}`;
+}

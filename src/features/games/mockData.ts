@@ -15,7 +15,6 @@ import type { GameListItem } from './types';
 export const mockGamesList: GameListItem[] = [
   {
     id: 'toguz-korgool',
-    name: 'Тогуз коргоол',
     thumbnail: toguzKorgool,
     category: 'logic',
     difficulty: 'medium',
@@ -25,7 +24,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'chuko',
-    name: 'Чүкө',
     thumbnail: chuko,
     category: 'national',
     difficulty: 'easy',
@@ -36,7 +34,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'ordo',
-    name: 'Ордо',
     thumbnail: ordo,
     category: 'national',
     difficulty: 'medium',
@@ -47,7 +44,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'besh-tash',
-    name: 'Беш таш',
     thumbnail: beshTash,
     category: 'skill',
     difficulty: 'easy',
@@ -57,7 +53,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'arkan-tartysh',
-    name: 'Аркан тартыш',
     thumbnail: arkanTartysh,
     category: 'team',
     difficulty: 'medium',
@@ -67,7 +62,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'ak-terek-kok-terek',
-    name: 'Ак терек — көк терек',
     thumbnail: akTerekKokTerek,
     category: 'team',
     difficulty: 'easy',
@@ -76,7 +70,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'zholuk-tashtamay',
-    name: 'Жоолук таштамай',
     thumbnail: zholukTashtamay,
     category: 'national',
     difficulty: 'easy',
@@ -85,7 +78,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'zhaa-atuu',
-    name: 'Жаа атуу',
     thumbnail: zhaaAtuu,
     category: 'skill',
     difficulty: 'medium',
@@ -96,7 +88,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'kyz-kuumay',
-    name: 'Кыз куумай',
     thumbnail: kyzKuumay,
     category: 'horse',
     difficulty: 'medium',
@@ -107,7 +98,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'kok-boru',
-    name: 'Көк бору',
     // No cover art exists yet - see docs/DESIGN_ASSET_AUDIT.md for the
     // exact spec (cinematic horse+rider composition, same illustrated
     // style as the other 3D game covers) needed before this can be
@@ -122,7 +112,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'beshbarmak-challenge',
-    name: 'Бешбармак Challenge',
     thumbnail: beshbarmak,
     category: 'cooking',
     difficulty: 'easy',
@@ -131,7 +120,6 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'cooking-world',
-    name: 'Бой үй Cooking World',
     thumbnail: cookingWorld,
     category: 'cooking',
     difficulty: 'easy',

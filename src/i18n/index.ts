@@ -47,6 +47,17 @@ i18n
     supportedLngs: SUPPORTED_LANGUAGES as unknown as string[],
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
+    // `fallbackLng` silently renders Kyrgyz for any key missing from the
+    // active language - fine as a production safety net, but it means a
+    // key added to one locale and forgotten in another shows no error, just
+    // the wrong language, in exactly the shape reported as a bug. Surface
+    // it loudly in dev instead of finding out from a screenshot.
+    saveMissing: __DEV__,
+    missingKeyHandler: __DEV__
+      ? (languages, _namespace, key) => {
+          console.warn(`[i18n] Missing key "${key}" for language(s): ${languages.join(', ')}`);
+        }
+      : undefined,
   });
 
 export default i18n;

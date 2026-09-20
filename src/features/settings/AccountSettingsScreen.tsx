@@ -75,7 +75,7 @@ export function AccountSettingsScreen({
           onChangeText={setName}
           placeholder={t('settings.account.namePlaceholder')}
         />
-        <TextField label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
+        <TextField label={t('auth.emailLabel')} value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {savedNotice && !hasChanges ? <Text style={styles.saved}>{t('settings.account.savedLabel')}</Text> : null}

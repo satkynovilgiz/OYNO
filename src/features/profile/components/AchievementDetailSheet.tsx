@@ -42,7 +42,7 @@ export function AchievementDetailSheet({ achievement, unlocked, onClose }: Achie
                 <Image source={achievement.iconSource} style={[styles.badgeImage, !unlocked && styles.badgeLocked]} resizeMode="contain" />
               </View>
 
-              <Text style={styles.title}>{achievement.title}</Text>
+              <Text style={styles.title}>{t(achievement.titleKey)}</Text>
 
               <View style={[styles.statusPill, unlocked ? styles.statusPillUnlocked : styles.statusPillLocked]}>
                 {unlocked ? (

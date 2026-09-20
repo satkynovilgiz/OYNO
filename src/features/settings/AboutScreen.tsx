@@ -21,18 +21,18 @@ type AboutScreenProps = {
  * guessing from what's visually rendered. `Updates.updateId` is null when
  * running the embedded (non-OTA) bundle, e.g. a fresh install or dev
  * build. */
-function formatUpdateInfo(): string {
+function formatUpdateInfo(embeddedBuildLabel: string): string {
   if (!Updates.isEmbeddedLaunch && Updates.updateId) {
     const created = Updates.createdAt ? new Date(Updates.createdAt).toLocaleString() : '—';
     return `${Updates.updateId.slice(0, 8)} · ${created}`;
   }
-  return 'embedded (no OTA update applied)';
+  return embeddedBuildLabel;
 }
 
 export function AboutScreen({ onPressBack }: AboutScreenProps) {
   const { t } = useTranslation();
   const version = Constants.expoConfig?.version ?? '—';
-  const updateInfo = formatUpdateInfo();
+  const updateInfo = formatUpdateInfo(t('settings.about.embeddedBuild'));
 
   /** Licenses (third-party OSS attributions) still have no real content
    * generated yet, so it keeps the honest "not available yet" notice.
@@ -49,7 +49,7 @@ export function AboutScreen({ onPressBack }: AboutScreenProps) {
       <View style={styles.hero}>
         <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
         <Text style={styles.version}>{t('settings.about.version', { version })}</Text>
-        <Text style={styles.updateInfo}>Update: {updateInfo}</Text>
+        <Text style={styles.updateInfo}>{t('settings.about.updateInfo', { info: updateInfo })}</Text>
       </View>
 
       <Text style={styles.mission}>{t('settings.about.mission')}</Text>

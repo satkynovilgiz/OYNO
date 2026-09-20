@@ -3,6 +3,7 @@ import { Component, type ReactNode } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui';
+import i18n from '@/i18n';
 import { captureException } from '@/services/monitoring/sentry';
 import { colors, spacing, typography } from '@/theme';
 
@@ -60,11 +61,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.error) {
       return (
         <View style={styles.root}>
-          <Text style={styles.title}>Бир нерсе туура эмес болду</Text>
-          <Text style={styles.message}>
-            Колдонмодо күтүлбөгөн ката пайда болду. Кечиресиз - кайра аракет кылып көрүңүз.
-          </Text>
-          <Button label="Кайра аракет кыл" onPress={this.handleRetry} />
+          <Text style={styles.title}>{i18n.t('errorBoundary.title')}</Text>
+          <Text style={styles.message}>{i18n.t('errorBoundary.message')}</Text>
+          <Button label={i18n.t('common.retry')} onPress={this.handleRetry} />
         </View>
       );
     }

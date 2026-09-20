@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import { mockGamesList } from '@/features/games/mockData';
+import { gameTitleKey } from '@/features/games/types';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useDiscoveries } from '@/services/content/discoveriesService';
@@ -82,7 +83,7 @@ export function ProfileScreen() {
     .filter((game) => (progress.gameStats[game.id]?.played ?? 0) > 0)
     .map((game) => ({
       id: game.id,
-      name: game.name,
+      name: t(gameTitleKey(game.id)),
       thumbnail: game.thumbnail,
       gamesPlayed: progress.gameStats[game.id].played,
       wins: progress.gameStats[game.id].won,

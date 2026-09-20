@@ -4,6 +4,7 @@ import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable, Button, TextField } from '@/components/ui';
+import type { SupportedLanguage } from '@/i18n';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
@@ -16,7 +17,8 @@ type HelpScreenProps = {
 };
 
 export function HelpScreen({ onPressBack }: HelpScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language as SupportedLanguage;
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<FaqCategory | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -25,15 +27,21 @@ export function HelpScreen({ onPressBack }: HelpScreenProps) {
 
   const filteredFaq = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return faqItems.filter((item) => {
-      const matchesCategory = !activeCategory || item.category === activeCategory;
-      const matchesQuery =
-        !normalizedQuery ||
-        item.question.toLowerCase().includes(normalizedQuery) ||
-        item.answer.toLowerCase().includes(normalizedQuery);
-      return matchesCategory && matchesQuery;
-    });
-  }, [query, activeCategory]);
+    return faqItems
+      .map((item) => ({
+        ...item,
+        question: item.question[language] ?? item.question.kg,
+        answer: item.answer[language] ?? item.answer.kg,
+      }))
+      .filter((item) => {
+        const matchesCategory = !activeCategory || item.category === activeCategory;
+        const matchesQuery =
+          !normalizedQuery ||
+          item.question.toLowerCase().includes(normalizedQuery) ||
+          item.answer.toLowerCase().includes(normalizedQuery);
+        return matchesCategory && matchesQuery;
+      });
+  }, [query, activeCategory, language]);
 
   const handleSendMessage = () => {
     const mailSubject = encodeURIComponent(subject || t('settings.help.defaultSubject'));
