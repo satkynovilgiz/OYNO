@@ -8,7 +8,11 @@
     "cancel": "Жок",
     "retry": "Кайра аракет кылуу",
     "offline": "Интернет байланышы жок",
-    "unknownError": "Белгисиз ката кетти."
+    "unknownError": "Белгисиз ката кетти.",
+    "otpEnterCode": "Ырастоо кодун жазуу",
+    "otpCode": "Ырастоо коду",
+    "showPassword": "Сырсөздү көрсөтүү",
+    "hidePassword": "Сырсөздү жашыруу"
   },
   "errorBoundary": {
     "title": "Бир нерсе туура эмес болду",

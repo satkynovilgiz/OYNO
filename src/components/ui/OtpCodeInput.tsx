@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { colors, radii, spacing, typography } from '@/theme';
@@ -22,6 +23,7 @@ type OtpCodeInputProps = {
  * RN pattern for this since native OS-level per-box focus isn't a real
  * thing. */
 export function OtpCodeInput({ value, onChangeText, length = 8, error, autoFocus }: OtpCodeInputProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
   const digits = Array.from({ length }, (_, i) => value[i] ?? '');
   const activeIndex = Math.min(value.length, length - 1);
@@ -31,7 +33,7 @@ export function OtpCodeInput({ value, onChangeText, length = 8, error, autoFocus
       style={styles.row}
       onPress={() => inputRef.current?.focus()}
       accessibilityRole="button"
-      accessibilityLabel="Ырастоо кодун жазуу"
+      accessibilityLabel={t('common.otpEnterCode')}
     >
       {digits.map((digit, i) => (
         <View
@@ -55,7 +57,7 @@ export function OtpCodeInput({ value, onChangeText, length = 8, error, autoFocus
         autoFocus={autoFocus}
         maxLength={length}
         style={styles.hiddenInput}
-        accessibilityLabel="Ырастоо коду"
+        accessibilityLabel={t('common.otpCode')}
         autoComplete="one-time-code"
         textContentType="oneTimeCode"
       />

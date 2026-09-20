@@ -8,7 +8,11 @@
     "cancel": "Отмена",
     "retry": "Повторить",
     "offline": "Нет подключения к интернету",
-    "unknownError": "Что-то пошло не так."
+    "unknownError": "Что-то пошло не так.",
+    "otpEnterCode": "Ввести код подтверждения",
+    "otpCode": "Код подтверждения",
+    "showPassword": "Показать пароль",
+    "hidePassword": "Скрыть пароль"
   },
   "errorBoundary": {
     "title": "Что-то пошло не так",

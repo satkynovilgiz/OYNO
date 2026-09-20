@@ -8,7 +8,11 @@
     "cancel": "Cancel",
     "retry": "Try again",
     "offline": "No internet connection",
-    "unknownError": "Something went wrong."
+    "unknownError": "Something went wrong.",
+    "otpEnterCode": "Enter verification code",
+    "otpCode": "Verification code",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "errorBoundary": {
     "title": "Something went wrong",

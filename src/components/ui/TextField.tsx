@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   StyleSheet,
   Text,
@@ -46,6 +47,7 @@ export function TextField({
   multiline = false,
   numberOfLines = 4,
 }: TextFieldProps) {
+  const { t } = useTranslation();
   const [isObscured, setIsObscured] = useState(secure);
 
   return (
@@ -70,7 +72,7 @@ export function TextField({
           <AnimatedPressable
             onPress={() => setIsObscured((prev) => !prev)}
             accessibilityRole="button"
-            accessibilityLabel={isObscured ? 'Сырсөздү көрсөтүү' : 'Сырсөздү жашыруу'}
+            accessibilityLabel={isObscured ? t('common.showPassword') : t('common.hidePassword')}
             style={styles.toggle}
           >
             {isObscured ? (
