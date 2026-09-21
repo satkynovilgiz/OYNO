@@ -1245,5 +1245,49 @@
     "practice": {
       "exit": "Exit Practice"
     }
+  },
+  "search": {
+    "entryLabel": "Search",
+    "title": "Search",
+    "placeholder": "Search games, culture, places...",
+    "clearLabel": "Clear",
+    "cancelLabel": "Cancel",
+    "recentTitle": "Recent searches",
+    "clearRecent": "Clear",
+    "suggestedTitle": "Suggested discoveries",
+    "emptyTitle": "Search OYNO",
+    "emptyDescription": "Find games, culture, places and materials - try Komuz, Ysyk-Kol or Ordo.",
+    "noResultsTitle": "No results",
+    "noResultsDescription": "Try a different word, or check the spelling.",
+    "groups": {
+      "games": "Games",
+      "culture": "Culture",
+      "places": "Places",
+      "materials": "Materials"
+    }
+  },
+  "saved": {
+    "entryLabel": "Saved",
+    "title": "Saved",
+    "filters": {
+      "all": "All",
+      "games": "Games",
+      "culture": "Culture",
+      "places": "Places"
+    },
+    "emptyTitle": "Nothing saved yet",
+    "emptyDescription": "Tap the heart on any game, culture item or place to save it here.",
+    "emptyFilterTitle": "Nothing here yet",
+    "emptyFilterDescription": "You haven't saved anything in this category yet.",
+    "removeLabel": "Remove from Saved",
+    "saveLabel": "Save",
+    "contentTypes": {
+      "game": "Game",
+      "region": "Place",
+      "nature": "Place",
+      "culture_material": "Material",
+      "culture_item": "Culture",
+      "interactive_experience": "Culture"
+    }
   }
 }

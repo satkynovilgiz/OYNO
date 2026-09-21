@@ -13,6 +13,7 @@ import { useQuestSteps } from '@/services/content/questStepsService';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
 import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
+import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
 
@@ -24,6 +25,7 @@ export default function ExploreLocationRoute() {
   const { data: questRow } = useCurrentQuest();
   const { data: questSteps } = useQuestSteps(questRow?.id);
   const progress = useProgressStore();
+  const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
 
   const row = regions?.find((item) => item.id === id);
   const isLoading = regionsLoading || discoveriesLoading;
@@ -131,11 +133,11 @@ export default function ExploreLocationRoute() {
       heroImage={heroImage}
       discoveries={localizedDiscoveries}
       discoveredIds={progress.discoveredExploreIds}
-      isFavorite={progress.favoriteIds.includes(`${row.kind}:${row.id}`)}
+      isFavorite={favoriteIds.includes(favoriteKey(row.kind, row.id))}
       relatedQuest={relatedQuest}
       onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       onPressDiscovery={(discoveryId) => useProgressStore.getState().discoverExploreItem(discoveryId)}
-      onToggleFavorite={() => useProgressStore.getState().toggleFavorite(row.kind, row.id)}
+      onToggleFavorite={() => useFavoritesStore.getState().toggleFavorite(row.kind, row.id)}
       onPressRelatedQuest={() => router.push('/explore' as never)}
     />
   );

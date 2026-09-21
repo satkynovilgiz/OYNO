@@ -21,6 +21,7 @@ import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
+import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -116,6 +117,15 @@ export default function RootLayout() {
   useEffect(() => {
     if (authStatus === 'loading') return;
     void useAvatarStore.getState().load();
+  }, [authStatus]);
+
+  // Same race, same reason: the Saved screen and every heart/save toggle
+  // across Games/Culture/Explore read this on mount, and guests now get a
+  // real local favorites list (see useFavoritesStore) instead of the old
+  // Explore-only mechanism's silent no-op for signed-out users.
+  useEffect(() => {
+    if (authStatus === 'loading') return;
+    void useFavoritesStore.getState().load();
   }, [authStatus]);
 
   // Guests have no server row for register_push_token to attach to (it

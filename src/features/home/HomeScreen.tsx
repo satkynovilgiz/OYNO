@@ -228,6 +228,7 @@ export function HomeScreen() {
             hasUnreadNotifications={hasUnreadNotifications}
             greetingName={user?.name}
             onPressMenu={() => router.push('/settings' as never)}
+            onPressSearch={() => router.push('/search' as never)}
             onPressNotifications={() => router.push('/notifications' as never)}
           />
         </ScreenEntrance>

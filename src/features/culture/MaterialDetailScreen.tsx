@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Heart } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
 import type { CultureMaterialRow } from '@/services/content/types';
+import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type MaterialDetailScreenProps = {
@@ -23,6 +24,8 @@ type MaterialDetailScreenProps = {
 export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_material', material.id)));
+  const onToggleFavorite = () => void useFavoritesStore.getState().toggleFavorite('culture_material', material.id);
 
   useEffect(() => {
     track('culture_material_open', { materialId: material.id });
@@ -41,6 +44,13 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
               <View style={styles.heroOverlay} pointerEvents="box-none">
                 <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
                   <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                  <IconButton
+                    icon={Heart}
+                    shape="roundedSquare"
+                    variant={isFavorite ? 'primary' : 'surface'}
+                    accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                    onPress={onToggleFavorite}
+                  />
                 </View>
                 <Text style={styles.heroTitle} numberOfLines={2}>
                   {material.title}
@@ -54,7 +64,13 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
             <Text style={styles.plainHeaderTitle} numberOfLines={1}>
               {material.title}
             </Text>
-            <View style={{ width: 44 }} />
+            <IconButton
+              icon={Heart}
+              shape="roundedSquare"
+              variant={isFavorite ? 'primary' : 'surface'}
+              accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+              onPress={onToggleFavorite}
+            />
           </View>
         )}
 
@@ -123,6 +139,7 @@ const styles = StyleSheet.create({
   },
   heroTopRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   heroTitle: {
     ...typography.display,

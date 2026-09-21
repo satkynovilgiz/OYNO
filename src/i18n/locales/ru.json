@@ -1245,5 +1245,49 @@
     "practice": {
       "exit": "Выйти из тренировки"
     }
+  },
+  "search": {
+    "entryLabel": "Поиск",
+    "title": "Поиск",
+    "placeholder": "Поиск игр, культуры, мест...",
+    "clearLabel": "Очистить",
+    "cancelLabel": "Отмена",
+    "recentTitle": "Недавние запросы",
+    "clearRecent": "Очистить",
+    "suggestedTitle": "Рекомендуем",
+    "emptyTitle": "Поиск по OYNO",
+    "emptyDescription": "Находи игры, культуру, места и материалы - попробуй Комуз, Ысык-Көл или Ордо.",
+    "noResultsTitle": "Ничего не найдено",
+    "noResultsDescription": "Попробуй другое слово или проверь написание.",
+    "groups": {
+      "games": "Игры",
+      "culture": "Культура",
+      "places": "Места",
+      "materials": "Материалы"
+    }
+  },
+  "saved": {
+    "entryLabel": "Сохранённое",
+    "title": "Сохранённое",
+    "filters": {
+      "all": "Все",
+      "games": "Игры",
+      "culture": "Культура",
+      "places": "Места"
+    },
+    "emptyTitle": "Пока ничего не сохранено",
+    "emptyDescription": "Нажми на сердечко у любой игры, элемента культуры или места, чтобы сохранить его здесь.",
+    "emptyFilterTitle": "Здесь пока пусто",
+    "emptyFilterDescription": "В этой категории ты ещё ничего не сохранил(а).",
+    "removeLabel": "Убрать из сохранённого",
+    "saveLabel": "Сохранить",
+    "contentTypes": {
+      "game": "Игра",
+      "region": "Место",
+      "nature": "Место",
+      "culture_material": "Материал",
+      "culture_item": "Культура",
+      "interactive_experience": "Культура"
+    }
   }
 }

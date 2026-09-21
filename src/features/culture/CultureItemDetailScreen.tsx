@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Heart } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
+import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 /** Picks the simple-depth summary matching the app's current language -
@@ -49,6 +50,8 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
   const { t, i18n } = useTranslation();
   const { config } = useAgeExperience();
   const insets = useSafeAreaInsets();
+  const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_item', item.id)));
+  const onToggleFavorite = () => void useFavoritesStore.getState().toggleFavorite('culture_item', item.id);
 
   // 'simple' depth (child/preteen) shows just the condensed summary when
   // one is stored (in the current language) for this item; 'standard'/
@@ -91,6 +94,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
               <View style={styles.heroOverlay} pointerEvents="box-none">
                 <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
                   <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                  <IconButton
+                    icon={Heart}
+                    shape="roundedSquare"
+                    variant={isFavorite ? 'primary' : 'surface'}
+                    accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                    onPress={onToggleFavorite}
+                  />
                 </View>
                 <Text style={styles.heroTitle} numberOfLines={2}>
                   {item.title}
@@ -104,7 +114,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
             <Text style={styles.plainHeaderTitle} numberOfLines={1}>
               {item.title}
             </Text>
-            <View style={{ width: 44 }} />
+            <IconButton
+              icon={Heart}
+              shape="roundedSquare"
+              variant={isFavorite ? 'primary' : 'surface'}
+              accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+              onPress={onToggleFavorite}
+            />
           </View>
         )}
 
@@ -202,6 +218,7 @@ const styles = StyleSheet.create({
   },
   heroTopRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   heroTitle: {
     ...typography.display,

@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, Gamepad2, Play } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Gamepad2, Heart, Play } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
@@ -46,6 +46,8 @@ type GameDetailScreenProps = {
    * section then simply doesn't render, rather than showing invented text. */
   culturalContextItemId?: string;
   cultureRoute: string;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
   onPressPractice: () => void;
   onPressPlay: () => void;
 };
@@ -78,6 +80,8 @@ export function GameDetailScreen({
   showBestScore = false,
   culturalContextItemId,
   cultureRoute,
+  isFavorite,
+  onToggleFavorite,
   onPressPractice,
   onPressPlay,
 }: GameDetailScreenProps) {
@@ -131,6 +135,13 @@ export function GameDetailScreen({
                   variant="surface"
                   accessibilityLabel={t('common.back')}
                   onPress={() => (router.canGoBack() ? router.back() : router.replace('/games'))}
+                />
+                <IconButton
+                  icon={Heart}
+                  shape="roundedSquare"
+                  variant={isFavorite ? 'primary' : 'surface'}
+                  accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                  onPress={onToggleFavorite}
                 />
               </View>
               <Text style={styles.heroTitle} numberOfLines={2}>
@@ -300,6 +311,7 @@ const styles = StyleSheet.create({
   },
   heroTopRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   heroTitle: {
     ...typography.display,

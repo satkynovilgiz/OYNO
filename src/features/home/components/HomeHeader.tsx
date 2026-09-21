@@ -1,4 +1,4 @@
-import { Bell, Menu } from 'lucide-react-native';
+import { Bell, Menu, Search } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
@@ -15,20 +15,29 @@ type HomeHeaderProps = {
    * nonexistent history"). */
   greetingName?: string;
   onPressMenu?: () => void;
+  onPressSearch?: () => void;
   onPressNotifications?: () => void;
 };
 
-export function HomeHeader({ hasUnreadNotifications, greetingName, onPressMenu, onPressNotifications }: HomeHeaderProps) {
+export function HomeHeader({ hasUnreadNotifications, greetingName, onPressMenu, onPressSearch, onPressNotifications }: HomeHeaderProps) {
   const { t } = useTranslation();
 
   return (
     <View style={styles.row}>
-      <IconButton
-        icon={Menu}
-        shape="roundedSquare"
-        accessibilityLabel={t('home.header.menuLabel')}
-        onPress={onPressMenu}
-      />
+      <View style={styles.actions}>
+        <IconButton
+          icon={Menu}
+          shape="roundedSquare"
+          accessibilityLabel={t('home.header.menuLabel')}
+          onPress={onPressMenu}
+        />
+        <IconButton
+          icon={Search}
+          shape="roundedSquare"
+          accessibilityLabel={t('search.entryLabel')}
+          onPress={onPressSearch}
+        />
+      </View>
 
       <View style={styles.center}>
         <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
@@ -53,6 +62,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   center: {
     flex: 1,

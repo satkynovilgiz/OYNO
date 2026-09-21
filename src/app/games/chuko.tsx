@@ -6,6 +6,7 @@ import chukoThumbnail from '@assets/img/games/chuko/thumbnail.png';
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { ChukoGame } from '@/games3d/games/chuko/ChukoGame';
 import type { ChukoMode } from '@/games3d/games/chuko/ChukoTypes';
+import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 
 const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3', 'games3d.chuko.tutorial4'];
 
@@ -13,6 +14,7 @@ export default function ChukoRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ChukoMode | null>(null);
   const [difficulty, setDifficulty] = useState<GameDetailDifficulty>('normal');
+  const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('game', 'chuko')));
 
   if (!mode) {
     return (
@@ -28,6 +30,8 @@ export default function ChukoRoute() {
         onChangeDifficulty={setDifficulty}
         showBestScore
         cultureRoute="/culture/games"
+        isFavorite={isFavorite}
+        onToggleFavorite={() => void useFavoritesStore.getState().toggleFavorite('game', 'chuko')}
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}
       />

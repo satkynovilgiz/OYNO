@@ -1245,5 +1245,49 @@
     "practice": {
       "exit": "Көнүгүүдөн чыгуу"
     }
+  },
+  "search": {
+    "entryLabel": "Издөө",
+    "title": "Издөө",
+    "placeholder": "Оюндарды, маданиятты, жерлерди издеңиз...",
+    "clearLabel": "Тазалоо",
+    "cancelLabel": "Жок",
+    "recentTitle": "Акыркы издөөлөр",
+    "clearRecent": "Тазалоо",
+    "suggestedTitle": "Сунушталган ачылыштар",
+    "emptyTitle": "OYNOдон издөө",
+    "emptyDescription": "Оюндарды, маданиятты, жерлерди жана материалдарды тап - Комуз, Ысык-Көл же Ордо деп жазып көр.",
+    "noResultsTitle": "Эч нерсе табылган жок",
+    "noResultsDescription": "Башка сөз менен изде же жазылышын текшер.",
+    "groups": {
+      "games": "Оюндар",
+      "culture": "Маданият",
+      "places": "Жерлер",
+      "materials": "Материалдар"
+    }
+  },
+  "saved": {
+    "entryLabel": "Сакталгандар",
+    "title": "Сакталгандар",
+    "filters": {
+      "all": "Баары",
+      "games": "Оюндар",
+      "culture": "Маданият",
+      "places": "Жерлер"
+    },
+    "emptyTitle": "Азырынча эч нерсе сакталган жок",
+    "emptyDescription": "Каалаган оюндун, маданият нерсенин же жердин жүрөк белгисин басып, бул жерге сакта.",
+    "emptyFilterTitle": "Бул жерде азырынча бош",
+    "emptyFilterDescription": "Бул категорияда сен азырынча эч нерсе сактаган жоксуң.",
+    "removeLabel": "Сакталгандардан алып салуу",
+    "saveLabel": "Сактоо",
+    "contentTypes": {
+      "game": "Оюн",
+      "region": "Жер",
+      "nature": "Жер",
+      "culture_material": "Материал",
+      "culture_item": "Маданият",
+      "interactive_experience": "Маданият"
+    }
   }
 }

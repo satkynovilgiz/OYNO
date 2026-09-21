@@ -1,4 +1,4 @@
-import { Bell, ChevronLeft, Settings } from 'lucide-react-native';
+import { Bell, ChevronLeft, Heart, Settings } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -9,6 +9,7 @@ import { colors, spacing, typography } from '@/theme';
 type ProfileHeaderProps = {
   hasUnreadNotifications: boolean;
   onPressBack?: () => void;
+  onPressSaved?: () => void;
   onPressSettings?: () => void;
   onPressNotifications?: () => void;
 };
@@ -16,6 +17,7 @@ type ProfileHeaderProps = {
 export function ProfileHeader({
   hasUnreadNotifications,
   onPressBack,
+  onPressSaved,
   onPressSettings,
   onPressNotifications,
 }: ProfileHeaderProps) {
@@ -37,6 +39,7 @@ export function ProfileHeader({
       </View>
 
       <View style={styles.actions}>
+        <IconButton icon={Heart} accessibilityLabel={t('saved.entryLabel')} onPress={onPressSaved} />
         <IconButton icon={Settings} accessibilityLabel={t('profile.settingsLabel')} onPress={onPressSettings} />
         <IconButton
           icon={Bell}
