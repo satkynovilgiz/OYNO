@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance, Skeleton } from '@/components/ui';
+import { collections } from '@/features/collections/collectionsData';
+import { CollectionsRow } from '@/features/collections/components/CollectionsRow';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
@@ -128,6 +130,14 @@ export function CultureScreen() {
             key={id}
             materials={materials}
             onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
+          />
+        );
+      case 'collections':
+        return (
+          <CollectionsRow
+            key={id}
+            collections={collections}
+            onPressCollection={(collectionId) => router.push(`/collections/${collectionId}` as never)}
           />
         );
     }

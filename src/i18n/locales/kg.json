@@ -1266,6 +1266,10 @@
       "materials": "Материалдар"
     }
   },
+  "collections": {
+    "sectionTitle": "Тандамалар",
+    "relatedDiscovery": "Толук категорияны көрүү"
+  },
   "saved": {
     "entryLabel": "Сакталгандар",
     "title": "Сакталгандар",

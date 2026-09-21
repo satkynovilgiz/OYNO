@@ -1266,6 +1266,10 @@
       "materials": "Материалы"
     }
   },
+  "collections": {
+    "sectionTitle": "Подборки",
+    "relatedDiscovery": "Смотреть всю категорию"
+  },
   "saved": {
     "entryLabel": "Сохранённое",
     "title": "Сохранённое",

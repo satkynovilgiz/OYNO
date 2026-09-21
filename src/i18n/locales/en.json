@@ -1266,6 +1266,10 @@
       "materials": "Materials"
     }
   },
+  "collections": {
+    "sectionTitle": "Collections",
+    "relatedDiscovery": "Explore the full category"
+  },
   "saved": {
     "entryLabel": "Saved",
     "title": "Saved",

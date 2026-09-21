@@ -9,7 +9,7 @@ import type { AgeExperience } from '@/services/ageExperience/types';
  * categories/materials are still loading, so it can't be part of a
  * loaded-content reorder without changing loading-state behavior).
  */
-export type CultureSectionId = 'categories' | 'interactive' | 'bozUy' | 'todayDiscovery' | 'progressQuiz' | 'newMaterials';
+export type CultureSectionId = 'categories' | 'interactive' | 'bozUy' | 'todayDiscovery' | 'progressQuiz' | 'newMaterials' | 'collections';
 
 export const ALL_CULTURE_SECTIONS: CultureSectionId[] = [
   'categories',
@@ -18,6 +18,7 @@ export const ALL_CULTURE_SECTIONS: CultureSectionId[] = [
   'todayDiscovery',
   'progressQuiz',
   'newMaterials',
+  'collections',
 ];
 
 /**
@@ -36,10 +37,10 @@ export const ALL_CULTURE_SECTIONS: CultureSectionId[] = [
  *   ever being hidden.
  */
 const CULTURE_SECTION_ORDER: Record<AgeExperience, CultureSectionId[]> = {
-  child: ['interactive', 'bozUy', 'categories', 'todayDiscovery', 'progressQuiz', 'newMaterials'],
-  preteen: ['categories', 'interactive', 'todayDiscovery', 'progressQuiz', 'bozUy', 'newMaterials'],
-  teen: ['categories', 'newMaterials', 'progressQuiz', 'interactive', 'todayDiscovery', 'bozUy'],
-  adult: ['todayDiscovery', 'newMaterials', 'categories', 'progressQuiz', 'interactive', 'bozUy'],
+  child: ['interactive', 'bozUy', 'categories', 'todayDiscovery', 'progressQuiz', 'newMaterials', 'collections'],
+  preteen: ['categories', 'interactive', 'todayDiscovery', 'progressQuiz', 'bozUy', 'newMaterials', 'collections'],
+  teen: ['categories', 'newMaterials', 'collections', 'progressQuiz', 'interactive', 'todayDiscovery', 'bozUy'],
+  adult: ['todayDiscovery', 'collections', 'newMaterials', 'categories', 'progressQuiz', 'interactive', 'bozUy'],
 };
 
 export function getCultureSectionOrder(experience: AgeExperience): CultureSectionId[] {
