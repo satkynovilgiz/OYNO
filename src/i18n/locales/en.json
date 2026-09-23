@@ -1268,7 +1268,17 @@
   },
   "collections": {
     "sectionTitle": "Collections",
-    "relatedDiscovery": "Explore the full category"
+    "relatedDiscovery": "Explore the full category",
+    "status": {
+      "explore": "Explore",
+      "continue": "Continue",
+      "completed": "Completed"
+    },
+    "progress": "{{completed}} / {{total}} completed",
+    "progressScope": "Counts interactive experiences and games.",
+    "completeEyebrow": "Collection completed",
+    "completeBody": "You've finished every experience in this story.",
+    "nextCollection": "Next collection"
   },
   "saved": {
     "entryLabel": "Saved",
@@ -1370,6 +1380,26 @@
       "cta": "Start",
       "allDone": "You've been everywhere so far — wonderful!"
     },
-    "summary": "{{earned}} of {{total}} stamps collected"
+    "summary": "{{earned}} of {{total}} stamps collected",
+    "passport": {
+      "kicker": "Nature sites",
+      "title": "Discovery Passport",
+      "progress": "{{unlocked}} / {{total}} Nature Sites discovered",
+      "completeTitle": "Passport complete",
+      "completeBody": "You've been to every nature site.",
+      "subtitle": {
+        "child": "Visit a place, get a stamp!",
+        "preteen": "Every nature site adds a stamp to your passport.",
+        "teen": "Collect every stamp — explore Kyrgyzstan's wild places.",
+        "adult": "A record of the nature sites you've visited."
+      }
+    },
+    "collections": {
+      "empty": "Finish a collection’s interactive experiences and games to complete it."
+    }
+  },
+  "share": {
+    "action": "Share",
+    "message": "I discovered {{title}} in OYNO!"
   }
 }

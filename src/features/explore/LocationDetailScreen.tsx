@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Compass, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, Share, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -11,6 +11,7 @@ import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useHeroParallax } from '@/services/motion/useHeroParallax';
+import { useShareCard } from '@/services/share/useShareCard';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { DiscoveriesRow } from './components';
@@ -87,11 +88,16 @@ export function LocationDetailScreen({
   // exploration/photography first, quest (more gamified) further down.
   const questFirst = config.characterProminence === 'primary' || config.characterProminence === 'frequent';
 
+  const { share, shareHost } = useShareCard();
+
+  // Share card = this destination's own hero art (or its tone), its name
+  // and a "Place" label; plain text on builds/platforms without image
+  // sharing (see useShareCard).
   function handleShare() {
-    // Rejects on web with no Web Share API, or when the user backs out of
-    // the native sheet - neither is a real error worth surfacing (same
-    // convention as GamesScreen's invite-friends share).
-    Share.share({ message: t('explore.locationDetail.shareMessage', { name: locationName }) }).catch(() => {});
+    void share(
+      { title: locationName, label: t('saved.contentTypes.region'), imageSource: heroImage, fallbackTone: tone },
+      t('explore.locationDetail.shareMessage', { name: locationName }),
+    );
   }
 
   const questCard = relatedQuest ? (
@@ -217,6 +223,7 @@ export function LocationDetailScreen({
           {!questFirst ? questCard : null}
         </View>
       </Animated.ScrollView>
+      {shareHost}
     </View>
   );
 }

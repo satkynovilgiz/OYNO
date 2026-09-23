@@ -30,6 +30,9 @@ type EditorialCardProps = {
    * badge with a gold accent once complete, instead of plain caption text
    * (Section "Show progress... as a small elegant progress indicator"). */
   progress?: { current: number; total: number };
+  /** Max title lines for a `standard` card (default 1) - for rows whose
+   * titles are long editorial phrases that must not truncate. */
+  titleLines?: number;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -39,7 +42,7 @@ type EditorialCardProps = {
  * the bottom") - the default "browse content" card family (Culture
  * categories). A thin gold highlight frames the artwork instead of a
  * heavy beige container around it. */
-export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio = 4 / 3, size = 'standard', progress, style }: EditorialCardProps) {
+export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio = 4 / 3, size = 'standard', progress, titleLines = 1, style }: EditorialCardProps) {
   const { config } = useAgeExperience();
   const isFeature = size === 'feature';
   const isComplete = !!progress && progress.total > 0 && progress.current >= progress.total;
@@ -59,7 +62,7 @@ export function EditorialCard({ imageSource, title, meta, onPress, aspectRatio =
       <LinearGradient colors={gradient.colors} locations={gradient.locations} style={StyleSheet.absoluteFill} />
 
       <View style={styles.content}>
-        <Text style={[styles.title, { fontSize: titleFontSize }]} numberOfLines={isFeature ? 2 : 1}>
+        <Text style={[styles.title, { fontSize: titleFontSize }]} numberOfLines={isFeature ? 2 : titleLines}>
           {title}
         </Text>
         {meta ? (

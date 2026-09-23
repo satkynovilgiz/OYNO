@@ -5,7 +5,9 @@ import { EditorialCard, FadeSlideIn } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
 import { colors, spacing, typography } from '@/theme';
 
+import { computeCollectionProgress, type CollectionProgress } from '../collectionProgress';
 import type { Collection } from '../collectionsData';
+import { useCollectionSignals } from '../useCollectionProgress';
 
 type CollectionsRowProps = {
   collections: Collection[];
@@ -23,6 +25,16 @@ function resolveLocalized(text: { kg: string; ru: string; en: string }, language
 export function CollectionsRow({ collections, onPressCollection }: CollectionsRowProps) {
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
+  const signals = useCollectionSignals();
+
+  /** "Explore" / "Continue · 1/2" / "Completed" - only from real progress;
+   * a collection with nothing trackable shows no badge at all. */
+  function statusLabel(progress: CollectionProgress): string | undefined {
+    if (progress.status === 'untracked') return undefined;
+    if (progress.status === 'completed') return `✓ ${t('collections.status.completed')}`;
+    if (progress.status === 'inProgress') return `${t('collections.status.continue')} · ${progress.completed}/${progress.total}`;
+    return t('collections.status.explore');
+  }
 
   if (collections.length === 0) return null;
 
@@ -32,12 +44,20 @@ export function CollectionsRow({ collections, onPressCollection }: CollectionsRo
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {collections.map((collection) => (
           <View key={collection.id} style={styles.card}>
-            <EditorialCard
-              imageSource={collection.heroImage}
-              title={resolveLocalized(collection.title, language)}
-              aspectRatio={4 / 3}
-              onPress={() => onPressCollection(collection.id)}
-            />
+            {(() => {
+              const progress = computeCollectionProgress(collection, signals);
+              return (
+                <EditorialCard
+                  imageSource={collection.heroImage}
+                  title={resolveLocalized(collection.title, language)}
+                  titleLines={2}
+                  meta={statusLabel(progress)}
+                  progress={progress.total > 0 ? { current: progress.completed, total: progress.total } : undefined}
+                  aspectRatio={4 / 3}
+                  onPress={() => onPressCollection(collection.id)}
+                />
+              );
+            })()}
           </View>
         ))}
       </ScrollView>

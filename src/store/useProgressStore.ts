@@ -79,6 +79,9 @@ type CachedShape = ProgressFields & {
   discoveredExploreIds: string[];
   unlockedAchievementIds: AchievementId[];
   visitedRegionIds: string[];
+  /** region id -> ISO `user_region_visits.visited_at`. Optional so caches
+   * written before this field existed still parse. */
+  regionVisitDates?: Record<string, string>;
   completedQuestStepIds: string[];
 };
 
@@ -156,6 +159,10 @@ type ProgressState = ProgressFields & {
   unlockedAchievementIds: AchievementId[];
   lastUnlockedAchievementId: AchievementId | null;
   visitedRegionIds: string[];
+  /** region id -> when it was first visited (the real server timestamp,
+   * `user_region_visits.visited_at`). Read by the Discovery Passport to
+   * date its stamps; a region with no entry simply shows no date. */
+  regionVisitDates: Record<string, string>;
   completedQuestStepIds: string[];
   load: () => Promise<void>;
   recordGamePlayed: (gameId: string) => Promise<void>;
@@ -192,6 +199,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       discoveredExploreIds: current.discoveredExploreIds,
       unlockedAchievementIds,
       visitedRegionIds: current.visitedRegionIds,
+      regionVisitDates: current.regionVisitDates,
       completedQuestStepIds: current.completedQuestStepIds,
     };
   }
@@ -242,6 +250,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     unlockedAchievementIds: [],
     lastUnlockedAchievementId: null,
     visitedRegionIds: [],
+    regionVisitDates: {},
     completedQuestStepIds: [],
 
     load: async () => {
@@ -252,6 +261,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
           discoveredExploreIds: [],
           unlockedAchievementIds: [],
           visitedRegionIds: [],
+          regionVisitDates: {},
           completedQuestStepIds: [],
           isLoaded: true,
           error: null,
@@ -264,7 +274,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
           supabase.from('user_game_stats').select('game_id, played, won'),
           supabase.from('user_achievements').select('achievement_id'),
           supabase.from('user_discoveries').select('discovery_id'),
-          supabase.from('user_region_visits').select('region_id'),
+          supabase.from('user_region_visits').select('region_id, visited_at'),
           supabase.from('user_quest_steps').select('step_id'),
         ]);
         if (progressRes.error) throw progressRes.error;
@@ -276,6 +286,10 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         const unlockedAchievementIds = (achievementsRes.data ?? []).map((r) => r.achievement_id as AchievementId);
         const discoveredExploreIds = (discoveriesRes.data ?? []).map((r) => r.discovery_id as string);
         const visitedRegionIds = (regionVisitsRes.data ?? []).map((r) => r.region_id as string);
+        const regionVisitDates: Record<string, string> = {};
+        for (const row of regionVisitsRes.data ?? []) {
+          if (row.visited_at) regionVisitDates[row.region_id as string] = row.visited_at as string;
+        }
         const completedQuestStepIds = (questStepsRes.data ?? []).map((r) => r.step_id as string);
         const fields = mapRow(progressRes.data as ProgressRow);
 
@@ -285,11 +299,12 @@ export const useProgressStore = create<ProgressState>((set, get) => {
           unlockedAchievementIds,
           discoveredExploreIds,
           visitedRegionIds,
+          regionVisitDates,
           completedQuestStepIds,
           isLoaded: true,
           error: null,
         });
-        void writeCache({ ...fields, gameStats, unlockedAchievementIds, discoveredExploreIds, visitedRegionIds, completedQuestStepIds });
+        void writeCache({ ...fields, gameStats, unlockedAchievementIds, discoveredExploreIds, visitedRegionIds, regionVisitDates, completedQuestStepIds });
       } catch {
         // Offline or a real failure - fall back to the last successful
         // fetch so the UI shows real (if stale) numbers instead of
@@ -297,7 +312,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         // through callAction and fail honestly rather than faking a
         // local update while offline.
         const cached = await readCache();
-        if (cached) set({ ...cached, isLoaded: true, error: 'offline' });
+        if (cached) set({ ...cached, regionVisitDates: cached.regionVisitDates ?? {}, isLoaded: true, error: 'offline' });
         else set({ isLoaded: true, error: 'offline' });
       }
     },
@@ -355,7 +370,12 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       const { error } = await supabase.rpc('visit_explore_region', { p_region_id: regionId });
       if (error) return;
       if (isNew) {
-        set({ visitedRegionIds: [...get().visitedRegionIds, regionId] });
+        // The RPC just inserted the visit with visited_at = now(); mirror
+        // that locally until the next load() reads the stored timestamp.
+        set({
+          visitedRegionIds: [...get().visitedRegionIds, regionId],
+          regionVisitDates: { ...get().regionVisitDates, [regionId]: new Date().toISOString() },
+        });
         void writeCache(cacheSnapshot(get(), get().unlockedAchievementIds));
         track('region_opened', { regionId });
       }

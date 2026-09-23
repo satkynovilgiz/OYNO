@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
-import { ChevronLeft, Heart } from 'lucide-react-native';
+import { ChevronLeft, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
+import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
@@ -52,6 +53,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_item', item.id)));
   const onToggleFavorite = () => void useFavoritesStore.getState().toggleFavorite('culture_item', item.id);
+  const { share, shareHost } = useShareCard();
 
   // 'simple' depth (child/preteen) shows just the condensed summary when
   // one is stored (in the current language) for this item; 'standard'/
@@ -74,6 +76,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
   const remainingImages = item.image_url ? images : images?.slice(1);
   const hasRemainingGallery = !!remainingImages && remainingImages.length > 0;
 
+  function handleShare() {
+    void share(
+      { title: item.title, label: t('saved.contentTypes.culture_item'), imageSource: heroSource as ImageSourcePropType | null },
+      t('share.message', { title: item.title }),
+    );
+  }
+
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -94,13 +103,16 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
               <View style={styles.heroOverlay} pointerEvents="box-none">
                 <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
                   <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-                  <IconButton
-                    icon={Heart}
-                    shape="roundedSquare"
-                    variant={isFavorite ? 'primary' : 'surface'}
-                    accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                    onPress={onToggleFavorite}
-                  />
+                  <View style={styles.headerActions}>
+                    <IconButton icon={Share2} shape="roundedSquare" variant="surface" accessibilityLabel={t('share.action')} onPress={handleShare} />
+                    <IconButton
+                      icon={Heart}
+                      shape="roundedSquare"
+                      variant={isFavorite ? 'primary' : 'surface'}
+                      accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                      onPress={onToggleFavorite}
+                    />
+                  </View>
                 </View>
                 <Text style={styles.heroTitle} numberOfLines={2}>
                   {item.title}
@@ -114,13 +126,16 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
             <Text style={styles.plainHeaderTitle} numberOfLines={1}>
               {item.title}
             </Text>
-            <IconButton
-              icon={Heart}
-              shape="roundedSquare"
-              variant={isFavorite ? 'primary' : 'surface'}
-              accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-              onPress={onToggleFavorite}
-            />
+            <View style={styles.headerActions}>
+              <IconButton icon={Share2} shape="roundedSquare" accessibilityLabel={t('share.action')} onPress={handleShare} />
+              <IconButton
+                icon={Heart}
+                shape="roundedSquare"
+                variant={isFavorite ? 'primary' : 'surface'}
+                accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                onPress={onToggleFavorite}
+              />
+            </View>
           </View>
         )}
 
@@ -179,6 +194,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           ) : null}
         </View>
       </ScrollView>
+      {shareHost}
     </View>
   );
 }
@@ -215,6 +231,10 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'space-between',
     padding: spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
   heroTopRow: {
     flexDirection: 'row',

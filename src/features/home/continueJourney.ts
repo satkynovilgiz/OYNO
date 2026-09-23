@@ -52,6 +52,13 @@ const COMPLETION_KEY_BY_EXPERIENCE: Record<string, keyof InteractiveCompletionFl
  *    returns null rather than inventing a card (spec "Avoid showing
  *    completed content as if it is new").
  */
+/** Whether an interactive experience has its real completion flag set -
+ * shared with Collections progress so both read the same four flags. */
+export function isInteractiveExperienceCompleted(experienceId: string, flags: InteractiveCompletionFlags): boolean {
+  const key = COMPLETION_KEY_BY_EXPERIENCE[experienceId];
+  return key ? flags[key] : false;
+}
+
 export function resolveContinueJourney(
   quest: { title: string; subtitle: string; current: number; total: number; completed: boolean } | null,
   questSteps: QuestStep[],

@@ -16,6 +16,7 @@ import type { AgeExperience } from '@/services/ageExperience/types';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { buildImageChallenge } from '@/services/daily/dailyDiscovery';
+import { useShareCard } from '@/services/share/useShareCard';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
@@ -263,6 +264,7 @@ function DailyCompletedState({ discovery, experience }: { discovery: TodayDiscov
   const experienceRoute = experienceRef ? routeForInteractiveExperience(experienceRef.id) : null;
   const relatedGame = mockGamesList.find((game) => game.id === RELATED_GAME_BY_ITEM[item.id] && game.route);
   const itemRoute = `/culture/item/${item.id}`;
+  const { share, shareHost } = useShareCard();
 
   const primary =
     experienceRef && experienceRoute
@@ -302,8 +304,18 @@ function DailyCompletedState({ discovery, experience }: { discovery: TodayDiscov
 
       <View style={styles.secondaryRow}>
         {primary.route !== itemRoute ? <SecondaryLink label={t('daily.done.readMore')} onPress={() => router.push(itemRoute as never)} /> : null}
+        <SecondaryLink
+          label={t('share.action')}
+          onPress={() =>
+            void share(
+              { title: item.title, label: t('daily.overline'), imageSource: discovery.imageSource, completedLabel: t('daily.entry.done') },
+              t('share.message', { title: item.title }),
+            )
+          }
+        />
         <SecondaryLink label={t('daily.done.home')} onPress={() => router.replace('/home')} />
       </View>
+      {shareHost}
     </View>
   );
 }

@@ -10,7 +10,10 @@ import { AgeExperienceTransition, AnimatedPressable, FadeSlideIn, HeroEntrance, 
 import { formatDayLabel } from '@/features/daily/formatDayLabel';
 import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import { cultureItemImages } from '@/features/culture/data';
-import { discoveryImages } from '@/features/explore/data';
+import { computeCollectionProgress } from '@/features/collections/collectionProgress';
+import { collections } from '@/features/collections/collectionsData';
+import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
+import { discoveryImages, natureSiteImages } from '@/features/explore/data';
 import { mockGamesList } from '@/features/games/mockData';
 import { profileAchievements } from '@/features/profile/data';
 import type { SupportedLanguage } from '@/i18n';
@@ -27,7 +30,9 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
+import { CollectionsJourneySection } from './components/CollectionsJourneySection';
 import { JourneyStamp } from './components/JourneyStamp';
+import { PassportSection } from './components/PassportSection';
 import {
   buildJourneySummary,
   getJourneySectionOrder,
@@ -36,6 +41,7 @@ import {
   type JourneyStamp as JourneyStampData,
   type NextDiscovery,
 } from './journeyData';
+import { buildPassport } from './passport';
 
 const CHAPTER_NUMERALS = ['I', 'II', 'III', 'IV'];
 
@@ -77,6 +83,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   const { data: discoveries } = useDiscoveries();
   const { data: cultureItems } = useAllCultureItems();
   const { discovery: today } = useTodayDiscovery();
+  const collectionSignals = useCollectionSignals();
 
   const summary = useMemo(
     () =>
@@ -108,7 +115,14 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
 
   // Chapter numerals follow the on-screen order of the stamp pages (the
   // "next" suggestion isn't a chapter), so they always read I, II, III, IV.
-  const chapterPages: JourneySectionId[] = getJourneySectionOrder(experience).filter((id) => id !== 'next');
+  const passport = buildPassport(regions ?? [], progress.visitedRegionIds, progress.regionVisitDates, (id) => natureSiteImages[id], language);
+  const collectionEntries = collections.map((collection) => ({ collection, progress: computeCollectionProgress(collection, collectionSignals) }));
+
+  // Passport and Collections are their own kinds of page, not numbered
+  // chapters - numerals stay I-IV on the four stamp chapters.
+  const chapterPages: JourneySectionId[] = getJourneySectionOrder(experience).filter(
+    (id) => id !== 'next' && id !== 'passport' && id !== 'collections',
+  );
   const chapterOf = (id: JourneySectionId) => CHAPTER_NUMERALS[chapterPages.indexOf(id)] ?? '';
 
   const totalPossible =
@@ -148,6 +162,10 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
     switch (id) {
       case 'next':
         return <NextDiscoveryCard key={id} next={next} />;
+      case 'passport':
+        return <PassportSection key={id} passport={passport} experience={experience} />;
+      case 'collections':
+        return <CollectionsJourneySection key={id} entries={collectionEntries} editorial={isAdult} />;
       case 'discovered':
         return (
           <JourneyPage
