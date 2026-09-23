@@ -3,6 +3,7 @@ import catGames from '@assets/img/OYNO_design/culture/cat_games.png';
 import catHorse from '@assets/img/OYNO_design/culture/cat_horse.png';
 import bozUyFeltCovering from '@assets/img/OYNO_design/culture/boz_uy/felt_covering.jpg';
 import bozUyFeltCovering2 from '@assets/img/OYNO_design/culture/boz_uy/felt_covering2.jpg';
+import bozUyYurtBuildersAlpineMeadow from '@assets/img/OYNO_design/culture/boz_uy/yurt_builders_alpine_meadow.jpg';
 import bozUyInteriorWide from '@assets/img/OYNO_design/culture/boz_uy/interior_wide.jpg';
 import bozUyTunduk from '@assets/img/OYNO_design/culture/boz_uy/tunduk_roof_crown.jpg';
 import bozUyTunduqFromInside from '@assets/img/OYNO_design/culture/boz_uy/tunduk_from_inside.jpg';
@@ -108,7 +109,7 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'boz-uy-overview': [bozUyTushKiyiz, bozUyTunduk, bozUyWallHanging, bozUyYurtCamp],
   'boz-uy-tunduk': [bozUyTunduqFromInside, bozUyTunduk],
   'boz-uy-karkas': [bozUyWoodenFrame],
-  'boz-uy-kiyiz-jabuu': [bozUyFeltCovering, bozUyFeltCovering2],
+  'boz-uy-kiyiz-jabuu': [bozUyYurtBuildersAlpineMeadow, bozUyFeltCovering, bozUyFeltCovering2],
   'boz-uy-ichki-jasalga': [bozUyInteriorWide, bozUyTushKiyiz, bozUyWallHanging],
   'oymo-umai-ene': [oymoUmaiEne],
   'oymo-balyk-oyuu': [oymoBalykOyuu],
