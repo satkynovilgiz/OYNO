@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { ArrowRight, ChevronLeft, Compass, Gamepad2, Medal, Sparkles, type LucideIcon } from 'lucide-react-native';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AgeExperienceTransition, AnimatedPressable, FadeSlideIn, HeroEntrance, IconButton, ProgressBar } from '@/components/ui';
+import { formatDayLabel } from '@/features/daily/formatDayLabel';
 import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import { cultureItemImages } from '@/features/culture/data';
 import { discoveryImages } from '@/features/explore/data';
@@ -35,6 +36,8 @@ import {
   type JourneyStamp as JourneyStampData,
   type NextDiscovery,
 } from './journeyData';
+
+const CHAPTER_NUMERALS = ['I', 'II', 'III', 'IV'];
 
 const STAMP_SIZE_BY_CARD_SCALE = { large: 88, medium: 76, compact: 68, dense: 64 };
 
@@ -103,30 +106,41 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   const next = pickNextDiscovery(summary, todayStamp);
   const { level } = xpProgress(progress.xp);
 
-  function formatDate(dateKey: string): string {
-    const [y, m, d] = dateKey.split('-').map(Number);
-    const locale = language === 'kg' ? 'ky-KG' : language === 'ru' ? 'ru-RU' : 'en-US';
-    try {
-      return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
-    } catch {
-      return dateKey;
-    }
-  }
+  // Chapter numerals follow the on-screen order of the stamp pages (the
+  // "next" suggestion isn't a chapter), so they always read I, II, III, IV.
+  const chapterPages: JourneySectionId[] = getJourneySectionOrder(experience).filter((id) => id !== 'next');
+  const chapterOf = (id: JourneySectionId) => CHAPTER_NUMERALS[chapterPages.indexOf(id)] ?? '';
 
-  function renderStamps(stamps: JourneyStampData[], withDates = false) {
+  const totalPossible =
+    summary.discovered.experiences.length +
+    summary.discovered.dailyItems.length +
+    summary.explored.regionsTotal +
+    summary.explored.discoveriesTotal +
+    summary.played.total +
+    summary.achievements.total;
+
+  function renderStamps(
+    stamps: JourneyStampData[],
+    { withDates = false, tone = 'light', fallbackIcon }: { withDates?: boolean; tone?: 'light' | 'dark'; fallbackIcon?: LucideIcon } = {},
+  ) {
     return (
-      <View style={styles.stampGrid}>
-        {stamps.map((stamp, index) => (
-          <JourneyStamp
-            key={stamp.id}
-            stamp={withDates && stamp.detail ? { ...stamp, detail: formatDate(stamp.detail) } : stamp}
-            size={stampSize}
-            index={index}
-            showDetail={!isChild}
-            onPress={stamp.route ? () => go(stamp.route) : undefined}
-          />
-        ))}
-      </View>
+      <StampGrid stampSize={stampSize}>
+        {(slotWidth) =>
+          stamps.map((stamp, index) => (
+            <JourneyStamp
+              key={stamp.id}
+              stamp={withDates && stamp.detail ? { ...stamp, detail: formatDayLabel(stamp.detail, language) } : stamp}
+              size={stampSize}
+              slotWidth={slotWidth}
+              index={index}
+              tone={tone}
+              fallbackIcon={fallbackIcon}
+              showDetail={!isChild}
+              onPress={stamp.route ? () => go(stamp.route) : undefined}
+            />
+          ))
+        }
+      </StampGrid>
     );
   }
 
@@ -139,6 +153,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
           <JourneyPage
             key={id}
             icon={Sparkles}
+            chapter={chapterOf('discovered')}
+            tone="paper"
             title={t('journey.discovered.title')}
             earned={summary.discovered.earned}
             total={summary.discovered.experiences.length + summary.discovered.dailyItems.length}
@@ -152,7 +168,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
             {summary.discovered.dailyItems.length > 0 ? (
               <>
                 <Text style={styles.subheading}>{t('journey.discovered.daily')}</Text>
-                {renderStamps(summary.discovered.dailyItems, true)}
+                {renderStamps(summary.discovered.dailyItems, { withDates: true })}
               </>
             ) : null}
           </JourneyPage>
@@ -162,6 +178,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
           <JourneyPage
             key={id}
             icon={Compass}
+            chapter={chapterOf('explored')}
+            tone="warm"
             title={t('journey.explored.title')}
             earned={summary.explored.regionsVisited + summary.explored.discoveriesFound}
             total={summary.explored.regionsTotal + summary.explored.discoveriesTotal}
@@ -193,6 +211,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
           <JourneyPage
             key={id}
             icon={Gamepad2}
+            chapter={chapterOf('played')}
+            tone="paper"
             title={t('journey.played.title')}
             earned={summary.played.distinctPlayed}
             total={summary.played.total}
@@ -201,7 +221,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
             emptyHint={summary.played.distinctPlayed === 0 ? t('journey.played.empty') : null}
             note={!isChild && summary.played.sessions > 0 ? t('journey.played.sessions', { count: summary.played.sessions }) : null}
           >
-            {renderStamps(summary.played.games)}
+            {renderStamps(summary.played.games, { fallbackIcon: Gamepad2 })}
           </JourneyPage>
         );
       case 'achievements':
@@ -209,6 +229,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
           <JourneyPage
             key={id}
             icon={Medal}
+            chapter={chapterOf('achievements')}
+            tone="feature"
             title={t('journey.achievements.title')}
             earned={summary.achievements.unlocked}
             total={summary.achievements.total}
@@ -217,7 +239,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
             emptyHint={summary.achievements.unlocked === 0 ? t('journey.achievements.empty') : null}
             note={null}
           >
-            {renderStamps(summary.achievements.stamps)}
+            {renderStamps(summary.achievements.stamps, { tone: 'dark' })}
           </JourneyPage>
         );
     }
@@ -265,6 +287,12 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
               <Text style={styles.totalValue}>{summary.totalStamps}</Text>
               <Text style={styles.totalLabel}>{t('journey.stampsLabel')}</Text>
             </View>
+            {totalPossible > 0 ? (
+              <View style={styles.summaryBar}>
+                <ProgressBar progress={summary.totalStamps / totalPossible} height={4} fillColor={colors.accentGold} trackColor="rgba(255,255,255,0.14)" />
+                <Text style={styles.summaryText}>{t('journey.summary', { earned: summary.totalStamps, total: totalPossible })}</Text>
+              </View>
+            ) : null}
 
             <View style={styles.counterRow}>
               {counters.map(({ id, icon: Icon, label, value }) => (
@@ -294,8 +322,30 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   );
 }
 
+/** Measures its width and splits it into equal slots, so every row of
+ * stamps spreads edge to edge instead of bunching left with a ragged gap -
+ * at 375, 390 and 430 alike. */
+function StampGrid({ stampSize, children }: { stampSize: number; children: (slotWidth: number | undefined) => ReactNode }) {
+  const [width, setWidth] = useState(0);
+  const minSlot = stampSize + spacing.sm;
+  const columns = width > 0 ? Math.max(2, Math.floor(width / minSlot)) : 0;
+  const slotWidth = columns > 0 ? Math.floor(width / columns) : undefined;
+
+  return (
+    <View style={styles.stampGrid} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+      {children(slotWidth)}
+    </View>
+  );
+}
+
 type JourneyPageProps = {
   icon: LucideIcon;
+  /** Roman numeral - each stamp page is a chapter of the journal. */
+  chapter: string;
+  /** `paper`: plain cream journal page. `warm`: the sand-toned "map" page
+   * (Explore). `feature`: the deep-green page the medals are pressed onto -
+   * so consecutive chapters never look like the same box repeated. */
+  tone: 'paper' | 'warm' | 'feature';
   title: string;
   earned: number;
   total: number;
@@ -306,25 +356,38 @@ type JourneyPageProps = {
   children: ReactNode;
 };
 
-/** One passport page - a warm paper surface with a stitched-edge header,
- * not a bordered stat tile. */
-function JourneyPage({ icon: Icon, title, earned, total, showBar, editorial, emptyHint, note, children }: JourneyPageProps) {
+/** One journal chapter - a numbered header with an oymo seal, a dashed
+ * "stitch", then its stamps. Tone varies per chapter (see `tone`). */
+function JourneyPage({ icon: Icon, chapter, tone, title, earned, total, showBar, editorial, emptyHint, note, children }: JourneyPageProps) {
+  const isFeature = tone === 'feature';
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, tone === 'warm' && styles.pageWarm, isFeature && styles.pageFeature]}>
       <View style={styles.pageHeader}>
-        <View style={styles.pageIcon}>
-          <Icon size={18} color={colors.accentTerracotta} strokeWidth={2} />
+        <View style={[styles.chapterSeal, isFeature && styles.chapterSealFeature]}>
+          <Text style={[styles.chapterText, isFeature && styles.chapterTextFeature]}>{chapter}</Text>
         </View>
-        <Text style={[styles.pageTitle, editorial && styles.pageTitleEditorial]}>{title}</Text>
-        {total > 0 ? (
-          <Text style={styles.pageCount}>
-            {earned}/{total}
-          </Text>
-        ) : null}
+        <View style={styles.pageHeaderText}>
+          <View style={styles.pageKicker}>
+            <Icon size={13} color={isFeature ? colors.accentGold : colors.accentTerracotta} strokeWidth={2.25} />
+            {total > 0 ? (
+              <Text style={[styles.pageCount, isFeature && styles.pageCountFeature]}>
+                {earned} / {total}
+              </Text>
+            ) : null}
+          </View>
+          <Text style={[styles.pageTitle, editorial && styles.pageTitleEditorial, isFeature && styles.pageTitleFeature]}>{title}</Text>
+        </View>
       </View>
-      {showBar && total > 0 ? <ProgressBar progress={earned / total} height={6} fillColor={colors.accentGold} trackColor={colors.surfaceAlt} /> : null}
-      <View style={styles.stitch} />
-      {emptyHint ? <Text style={[styles.pageHint, editorial && styles.pageHintEditorial]}>{emptyHint}</Text> : null}
+      {showBar && total > 0 ? (
+        <ProgressBar
+          progress={earned / total}
+          height={5}
+          fillColor={colors.accentGold}
+          trackColor={isFeature ? 'rgba(255,255,255,0.14)' : 'rgba(139,107,61,0.18)'}
+        />
+      ) : null}
+      <View style={[styles.stitch, isFeature && styles.stitchFeature]} />
+      {emptyHint ? <Text style={[styles.pageHint, editorial && styles.pageHintEditorial, isFeature && styles.pageHintFeature]}>{emptyHint}</Text> : null}
       {note ? <Text style={[styles.pageNote, editorial && styles.pageHintEditorial]}>{note}</Text> : null}
       {children}
     </View>
@@ -518,38 +581,84 @@ const styles = StyleSheet.create({
   sections: {
     gap: spacing.lg,
   },
+  summaryBar: {
+    alignSelf: 'stretch',
+    gap: spacing.xxs,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  summaryText: {
+    ...typography.small,
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+  },
+  // Plain paper chapters sit straight on the screen's cream - no card
+  // chrome - so only the warm/feature chapters read as distinct surfaces.
   page: {
-    backgroundColor: colors.surface,
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+  pageWarm: {
+    backgroundColor: colors.surfaceWarm,
     borderRadius: radii.xl,
     padding: spacing.md,
-    gap: spacing.sm,
+  },
+  pageFeature: {
+    backgroundColor: colors.surfaceFeature,
+    borderRadius: radii.xl,
+    padding: spacing.md,
   },
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  pageIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.surfaceWarm,
+  pageHeaderText: {
+    flex: 1,
+  },
+  pageKicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  chapterSeal: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1.5,
+    borderColor: colors.accentGoldPressed,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chapterSealFeature: {
+    borderColor: colors.accentGold,
+  },
+  chapterText: {
+    fontFamily: fontFamily.wordmark,
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.accentBrown,
+  },
+  chapterTextFeature: {
+    color: colors.accentGold,
+  },
   pageTitle: {
-    ...typography.h2,
+    ...typography.h1,
     color: colors.textPrimary,
-    flex: 1,
   },
   pageTitleEditorial: {
     fontFamily: fontFamily.wordmark,
-    fontSize: 19,
+  },
+  pageTitleFeature: {
+    color: colors.textOnDark,
   },
   pageCount: {
-    ...typography.caption,
+    ...typography.small,
     color: colors.textSecondary,
-    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  pageCountFeature: {
+    color: 'rgba(255,255,255,0.7)',
   },
   // A dashed "stitch" line under the page header - passport-page detail.
   stitch: {
@@ -557,6 +666,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.border,
+  },
+  stitchFeature: {
+    borderColor: 'rgba(232,185,61,0.35)',
+  },
+  pageHintFeature: {
+    color: 'rgba(255,255,255,0.75)',
   },
   pageHint: {
     ...typography.caption,
@@ -580,7 +695,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     rowGap: spacing.md,
-    columnGap: spacing.xs,
   },
   nextWrap: {
     gap: spacing.sm,

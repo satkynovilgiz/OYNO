@@ -1307,7 +1307,8 @@
       "question": "Which picture shows “{{title}}”?",
       "optionLabel": "Picture {{index}}",
       "correct": "That's right!",
-      "tryAgain": "Not quite — try again."
+      "tryAgain": "Not quite — try again.",
+      "eyebrow": "A small challenge"
     },
     "complete": "Mark as discovered",
     "completeHint": "Find the right picture first.",
@@ -1316,7 +1317,10 @@
       "tomorrow": "A new discovery will be here tomorrow.",
       "readMore": "Read the full entry",
       "tryIt": "Try it yourself",
-      "play": "Play"
+      "play": "Play",
+      "eyebrow": "Today completed",
+      "impact": "Daily discoveries in your passport: {{count}}",
+      "home": "Back to Home"
     },
     "unavailableTitle": "Today's discovery couldn't load",
     "unavailableDescription": "Check your connection and try again later."
@@ -1365,6 +1369,7 @@
       "title": "Next discovery",
       "cta": "Start",
       "allDone": "You've been everywhere so far — wonderful!"
-    }
+    },
+    "summary": "{{earned}} of {{total}} stamps collected"
   }
 }
