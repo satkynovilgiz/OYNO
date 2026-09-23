@@ -40,7 +40,7 @@ export function LearningJourneySection({ editorial }: { editorial: boolean }) {
     <View style={styles.section}>
       <Text style={[styles.title, editorial && styles.editorial]}>{t('challenges.journeySection')}</Text>
       {completed.length === 0 ? (
-        <AnimatedPressable onPress={() => router.push('/challenges' as never)} accessibilityRole="button" accessibilityLabel={t('challenges.journeyEmpty')}>
+        <AnimatedPressable onPress={() => router.push('/challenges' as never)} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('challenges.journeyEmpty')}>
           <Text style={styles.hint}>{t('challenges.journeyEmpty')} →</Text>
         </AnimatedPressable>
       ) : (

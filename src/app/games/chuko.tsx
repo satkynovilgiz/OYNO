@@ -8,6 +8,8 @@ import { ChukoGame } from '@/games3d/games/chuko/ChukoGame';
 import type { ChukoMode } from '@/games3d/games/chuko/ChukoTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'games3d.chuko.tutorial3', 'games3d.chuko.tutorial4'];
 
 export default function ChukoRoute() {

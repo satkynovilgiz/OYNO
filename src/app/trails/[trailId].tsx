@@ -1,28 +1,19 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
 
+import { NotFoundState } from '@/components/system/NotFoundState';
 import { TrailDetailScreen } from '@/features/trails/TrailDetailScreen';
 import { getTrail } from '@/features/trails/trailsData';
-import { colors } from '@/theme';
+
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
 export default function TrailRoute() {
-  const { t } = useTranslation();
   const { trailId } = useLocalSearchParams<{ trailId: string }>();
   const trail = getTrail(trailId ?? '');
 
   if (!trail) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.message}>{t('explore.locationDetail.notFound')}</Text>
-      </View>
-    );
+    return <NotFoundState onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))} />;
   }
 
   return <TrailDetailScreen trail={trail} onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))} />;
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-  message: { color: colors.textSecondary },
-});

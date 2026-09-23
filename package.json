@@ -87,7 +87,8 @@
       "<rootDir>/src/store/**/*.test.ts",
       "<rootDir>/src/games3d/**/*.test.ts",
       "<rootDir>/src/features/**/*.test.ts",
-      "<rootDir>/src/i18n/**/*.test.ts"
+      "<rootDir>/src/i18n/**/*.test.ts",
+      "<rootDir>/src/components/**/*.test.ts"
     ]
   },
   "private": true

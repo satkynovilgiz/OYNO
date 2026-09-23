@@ -8,6 +8,8 @@ import { OrdoGame } from '@/games3d/games/ordo/OrdoGame';
 import type { OrdoMode } from '@/games3d/games/ordo/OrdoTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 const TUTORIAL_STEPS = ['games3d.ordo.tutorial1', 'games3d.ordo.tutorial2', 'games3d.ordo.tutorial3'];
 
 export default function OrdoRoute() {

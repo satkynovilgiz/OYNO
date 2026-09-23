@@ -5,6 +5,8 @@ import { InteractiveMapScreen } from '@/features/explore/map/InteractiveMapScree
 import { getTrail } from '@/features/trails/trailsData';
 import type { SupportedLanguage } from '@/i18n';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 export default function ExploreMapRoute() {
   const { i18n } = useTranslation();
   // Opened from a Guided Trail (/explore/map?trail=<id>): highlight only

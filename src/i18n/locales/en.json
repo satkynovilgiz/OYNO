@@ -12,11 +12,13 @@
     "otpEnterCode": "Enter verification code",
     "otpCode": "Verification code",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "notFound": "This page doesn't exist or is no longer available."
   },
   "errorBoundary": {
     "title": "Something went wrong",
-    "message": "The app ran into an unexpected error. Sorry - please try again."
+    "message": "The app ran into an unexpected error. Sorry - please try again.",
+    "screenMessage": "This screen couldn't load. The rest of OYNO still works - try again or go back."
   },
   "auth": {
     "emailLabel": "Email",

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
+import { NotFoundState } from '@/components/system/NotFoundState';
 import { discoveryImages, natureSiteImages } from '@/features/explore/data';
 import { LocationDetailScreen, type RelatedQuest } from '@/features/explore/LocationDetailScreen';
 import type { ExploreLocation } from '@/features/explore/types';
@@ -18,6 +19,8 @@ import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
+
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
 export default function ExploreLocationRoute() {
   const { t, i18n } = useTranslation();
@@ -72,9 +75,10 @@ export default function ExploreLocationRoute() {
 
   if (!row) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.message}>{t('explore.locationDetail.notFound')}</Text>
-      </View>
+      <NotFoundState
+        message={t('explore.locationDetail.notFound')}
+        onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
+      />
     );
   }
 

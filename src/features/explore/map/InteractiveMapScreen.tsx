@@ -21,6 +21,7 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { colors, fontFamily, radii, shadows, spacing, typography } from '@/theme';
 
 import { KYRGYZSTAN_PATH, MAP_VIEWBOX_HEIGHT, MAP_VIEWBOX_WIDTH, projectLonLat } from './kyrgyzstanGeometry';
+import { pinNudge, spreadPins, type PinSpread } from './pinSpread';
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -122,6 +123,17 @@ export function InteractiveMapScreen({
   const [frameWidth, setFrameWidth] = useState(0);
   const mapHeight = frameWidth * (MAP_VIEWBOX_HEIGHT / MAP_VIEWBOX_WIDTH);
   const frameHeight = Math.round(mapHeight * 1.3);
+
+  // Close pins (Ala-Too / Suusamyr / Son-Köl) are nudged apart so their
+  // touch targets never overlap at phone width; the nudge fades on zoom.
+  const pinSpreads = useMemo(
+    () =>
+      spreadPins(
+        places.map((place) => ({ x: (place.x / MAP_VIEWBOX_WIDTH) * frameWidth, y: (place.y / MAP_VIEWBOX_HEIGHT) * mapHeight })),
+        pin.hit,
+      ),
+    [places, frameWidth, mapHeight, pin.hit],
+  );
 
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
@@ -247,13 +259,14 @@ export function InteractiveMapScreen({
                   </G>
                 </Svg>
 
-                {places.map((place) => (
+                {places.map((place, index) => (
                   <MapPin
                     key={place.id}
                     place={place}
                     left={(place.x / MAP_VIEWBOX_WIDTH) * frameWidth}
                     top={(place.y / MAP_VIEWBOX_HEIGHT) * mapHeight}
                     scale={scale}
+                    spread={pinSpreads[index]}
                     size={pin.size}
                     hit={pin.hit}
                     labelSize={pin.label}
@@ -329,6 +342,7 @@ type MapPinProps = {
   left: number;
   top: number;
   scale: SharedValue<number>;
+  spread: PinSpread;
   size: number;
   hit: number;
   labelSize: number;
@@ -341,12 +355,15 @@ type MapPinProps = {
 };
 
 /** One destination pin. Counter-scaled against the map zoom so it stays the
- * same size on screen while the country grows underneath it. */
-function MapPin({ place, left, top, scale, size, hit, labelSize, labelSide, showLabel, dimmed, editorial, selected, onPress }: MapPinProps) {
+ * same size on screen while the country grows underneath it; `spread`
+ * keeps it clear of a too-close neighbour at low zoom. */
+function MapPin({ place, left, top, scale, spread, size, hit, labelSize, labelSide, showLabel, dimmed, editorial, selected, onPress }: MapPinProps) {
   const { t } = useTranslation();
-  const counterScale = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 / scale.value }],
-  }));
+  const counterScale = useAnimatedStyle(() => {
+    // The parent map is scaled, so divide the screen-px nudge by the zoom.
+    const nudge = pinNudge(spread, hit, scale.value);
+    return { transform: [{ translateX: nudge.x / scale.value }, { translateY: nudge.y / scale.value }, { scale: 1 / scale.value }] };
+  });
   const visited = place.unlocked;
 
   return (

@@ -7,6 +7,8 @@ import { useQuizQuestions } from '@/services/content/quizService';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 function isToday(dateISO: string | null): boolean {
   if (!dateISO) return false;
   return dateISO === new Date().toISOString().slice(0, 10);

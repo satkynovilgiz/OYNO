@@ -5,6 +5,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
 import { Button, FadeSlideIn } from '@/components/ui';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 import chestImage from '@assets/img/OYNO_design/profile/reward_chest.png';
 
@@ -20,14 +21,16 @@ export function DailyRewardCard({ reward, claimed = false, onPressClaim }: Daily
   const { t } = useTranslation();
   const ready = !claimed;
   const chestScale = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    if (ready) {
+    // Reduce Motion: the chest stays still (no endless pulse).
+    if (ready && !reducedMotion) {
       chestScale.value = withRepeat(withSequence(withTiming(1.06, { duration: 900 }), withTiming(1, { duration: 900 })), -1, true);
     } else {
       chestScale.value = withTiming(1, { duration: 200 });
     }
-  }, [ready, chestScale]);
+  }, [ready, reducedMotion, chestScale]);
 
   const chestStyle = useAnimatedStyle(() => ({ transform: [{ scale: chestScale.value }] }));
 

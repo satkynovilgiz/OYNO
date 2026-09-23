@@ -8,6 +8,8 @@ import { JaaAtuuGame } from '@/games3d/games/jaa-atuu/JaaAtuuGame';
 import type { JaaAtuuMode } from '@/games3d/games/jaa-atuu/JaaAtuuTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 const TUTORIAL_STEPS = ['games3d.jaaAtuu.tutorial1', 'games3d.jaaAtuu.tutorial2', 'games3d.jaaAtuu.tutorial3'];
 // mockGamesList's id for this game (kebab-case, different romanization
 // than the games3d registry's own `jaa_atuu`) - favoriting must key off

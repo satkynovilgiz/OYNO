@@ -13,7 +13,7 @@ import bozUyWoodenFrame from '@assets/img/OYNO_design/culture/boz_uy/wooden_fram
 import bozUyYurtCamp from '@assets/img/OYNO_design/culture/boz_uy/yurt_camp.jpg';
 import clothingAkKalpakCloseup from '@assets/img/OYNO_design/culture/clothing/ak_kalpak_closeup.jpg';
 import clothingBeldemchiChyptama from '@assets/img/OYNO_design/culture/clothing/beldemchi_chyptama.jpg';
-import clothingChapanNooruz from '@assets/img/OYNO_design/culture/clothing/chapan_nooruz.png';
+import clothingChapanNooruz from '@assets/img/OYNO_design/culture/clothing/chapan_nooruz.jpg';
 import clothingElechekCloseup from '@assets/img/OYNO_design/culture/clothing/elechek_closeup.jpg';
 import clothingExhibitHallWide from '@assets/img/OYNO_design/culture/clothing/exhibit_hall_wide.jpg';
 import clothingHeadwearPanel from '@assets/img/OYNO_design/culture/clothing/headwear_panel.jpg';
@@ -25,7 +25,7 @@ import clothingMensOuterwearCase from '@assets/img/OYNO_design/culture/clothing/
 import clothingMensWomensCase from '@assets/img/OYNO_design/culture/clothing/mens_womens_case.jpg';
 import clothingShokuloElechek from '@assets/img/OYNO_design/culture/clothing/shokulo_elechek.jpg';
 import foodYurtFeastLake from '@assets/img/OYNO_design/culture/food/yurt_feast_lake.jpg';
-import horseAtChabysh from '@assets/img/OYNO_design/culture/horse/at_chabysh_1870s.png';
+import horseAtChabysh from '@assets/img/OYNO_design/culture/horse/at_chabysh_1870s.jpg';
 import horseBerkutchiEagle from '@assets/img/OYNO_design/culture/horse/berkutchi_eagle.jpg';
 import horseEer from '@assets/img/OYNO_design/culture/horse/eer_saddle.jpg';
 import horseHorsemanSteppe from '@assets/img/OYNO_design/culture/horse/horseman_steppe.jpg';

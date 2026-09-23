@@ -26,7 +26,7 @@ import type { ExploreMapPin } from './types';
 
 /**
  * Pin tap-target placement on KyrgyzstanMap, measured directly against the
- * pins already painted into map_terrain.png (sliced from the design
+ * pins already painted into map_terrain.jpg (sliced from the design
  * reference "Illustrated Kyrgyzstan Adventure Map.png") - KyrgyzstanMap
  * renders that art as-is and places an invisible tap target at each of
  * these coordinates rather than drawing a second pin on top. `color`/

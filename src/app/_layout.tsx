@@ -18,6 +18,7 @@ import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
 import { ErrorBoundary } from '@/components/system/ErrorBoundary';
 import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { ReminderSync } from '@/components/system/ReminderSync';
+import { SilentErrorBoundary } from '@/components/system/SilentErrorBoundary';
 import { WidgetSync } from '@/components/system/WidgetSync';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
@@ -203,9 +204,17 @@ export default function RootLayout() {
             />
             <OfflineBanner />
             {/* Native iOS widgets read a shared snapshot; only iOS has them. */}
-            {Platform.OS === 'ios' && flagsReady ? <WidgetSync /> : null}
+            {Platform.OS === 'ios' && flagsReady ? (
+              <SilentErrorBoundary name="widgets">
+                <WidgetSync />
+              </SilentErrorBoundary>
+            ) : null}
             {/* Local reminders exist only on phones (no web scheduling). */}
-            {Platform.OS !== 'web' && flagsReady ? <ReminderSync /> : null}
+            {Platform.OS !== 'web' && flagsReady ? (
+              <SilentErrorBoundary name="reminders">
+                <ReminderSync />
+              </SilentErrorBoundary>
+            ) : null}
           </QueryClientProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

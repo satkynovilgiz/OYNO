@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { existsSync } from 'fs';
+import { join } from 'path';
 
 import { getCollection } from '@/features/collections/collectionsData';
 import { cultureItemImages } from '@/features/culture/data';
@@ -9,7 +11,7 @@ import ru from '@/i18n/locales/ru.json';
 import { recordCompletion, useChallengeStore } from '@/store/useChallengeStore';
 
 import { collectionQuestionIds, journeyQuestionIds, pickDailyQuestionIds, scoreAnswers, validateQuestion } from './challengeLogic';
-import { QUESTION_BANK, type ChallengeQuestion } from './questionBank';
+import { QUESTION_BANK, routeForSource, type ChallengeQuestion } from './questionBank';
 
 // Real culture_materials ids (verified against the live table).
 const MATERIAL_IDS = ['komuz-discovery', 'kalpak-history', 'boorsok-cooking', 'kyz-kuumai-game'];
@@ -61,6 +63,28 @@ describe('question bank', () => {
       expect(entry?.question).toBeTruthy();
       expect(entry?.explanation).toBeTruthy();
       if (question.kind === 'multiple') for (const option of question.options) expect(entry?.options?.[option.id]).toBeTruthy();
+    }
+  });
+  it.each([
+    ['kg', kg],
+    ['ru', ru],
+    ['en', en],
+  ] as const)('no question repeats an answer label in %s', (_lang, locale) => {
+    const questions = (locale as { challenges: { questions: Record<string, { options?: Record<string, string> }> } }).challenges.questions;
+    for (const question of QUESTION_BANK) {
+      if (question.kind !== 'multiple') continue;
+      const labels = question.options.map((option) => questions[question.id]?.options?.[option.id]?.trim().toLowerCase());
+      expect(new Set(labels).size).toBe(labels.length);
+    }
+  });
+
+  it('every "Learn more" link opens an existing screen', () => {
+    const appDir = join(__dirname, '../../app');
+    const routeFiles: Record<string, string> = { explore: 'explore/[id].tsx', material: 'culture/material/[materialId].tsx', item: 'culture/item/[itemId].tsx' };
+    for (const question of QUESTION_BANK) {
+      const route = routeForSource(question);
+      const kind = route.startsWith('/explore/') ? 'explore' : route.startsWith('/culture/material/') ? 'material' : 'item';
+      expect(existsSync(join(appDir, routeFiles[kind]))).toBe(true);
     }
   });
 });

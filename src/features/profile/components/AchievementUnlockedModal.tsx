@@ -13,6 +13,7 @@ import Animated, {
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button } from '@/components/ui';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
@@ -31,9 +32,21 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
   const glowOpacity = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(8);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (!achievement) return;
+
+    // Reduce Motion: show the badge and a steady glow at once - no spring,
+    // no endless breathing loop.
+    if (reducedMotion) {
+      badgeScale.value = 1;
+      glowScale.value = 1.15;
+      glowOpacity.value = 0.55;
+      contentOpacity.value = withTiming(1, { duration: 150 });
+      contentTranslateY.value = 0;
+      return;
+    }
 
     badgeScale.value = 0.4;
     glowScale.value = 0.8;
@@ -52,7 +65,7 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
         withRepeat(withSequence(withTiming(1.25, { duration: 900 }), withTiming(1.1, { duration: 900 })), -1, true),
       ),
     );
-  }, [achievement, badgeScale, glowScale, glowOpacity, contentOpacity, contentTranslateY]);
+  }, [achievement, reducedMotion, badgeScale, glowScale, glowOpacity, contentOpacity, contentTranslateY]);
 
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badgeScale.value }] }));
   const glowStyle = useAnimatedStyle(() => ({

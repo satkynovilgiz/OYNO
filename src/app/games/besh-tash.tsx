@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { GameIntroScreen } from '@/components/character';
 import { BeshTashScreen } from '@games/beshTash/screens/BeshTashScreen';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 export default function BeshTashRoute() {
   const { t } = useTranslation();
   const [introDone, setIntroDone] = useState(false);

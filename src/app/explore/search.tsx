@@ -4,6 +4,8 @@ import { SearchScreen } from '@/features/explore/SearchScreen';
 import { useDiscoveries } from '@/services/content/discoveriesService';
 import type { SearchItem } from '@/services/explore/search';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 export default function ExploreSearchRoute() {
   const { data: discoveries } = useDiscoveries();
 

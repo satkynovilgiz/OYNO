@@ -1,35 +1,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
 
+import { NotFoundState } from '@/components/system/NotFoundState';
 import { CollectionDetailScreen } from '@/features/collections/CollectionDetailScreen';
 import { getCollection } from '@/features/collections/collectionsData';
-import { colors } from '@/theme';
+
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
 export default function CollectionRoute() {
-  const { t } = useTranslation();
   const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
   const collection = getCollection(collectionId ?? '');
+  const onPressBack = () => (router.canGoBack() ? router.back() : router.replace('/culture'));
 
-  if (!collection) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.message}>{t('culture.loadError')}</Text>
-      </View>
-    );
-  }
+  if (!collection) return <NotFoundState onPressBack={onPressBack} />;
 
-  return <CollectionDetailScreen collection={collection} onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/culture'))} />;
+  return <CollectionDetailScreen collection={collection} onPressBack={onPressBack} />;
 }
-
-const styles = StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  message: {
-    color: colors.textSecondary,
-  },
-});

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
+import { NotFoundState } from '@/components/system/NotFoundState';
 import { cultureItemAudio } from '@/features/culture/audioData';
 import { cultureItemImages } from '@/features/culture/data';
 import { CultureItemDetailScreen } from '@/features/culture/CultureItemDetailScreen';
@@ -11,6 +12,8 @@ import { useCultureItem } from '@/services/content/cultureItemsService';
 import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
+
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
 export default function CultureItemRoute() {
   const { t } = useTranslation();
@@ -38,9 +41,10 @@ export default function CultureItemRoute() {
 
   if (error || !item) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.message}>{t('culture.loadError')}</Text>
-      </View>
+      <NotFoundState
+        message={error ? t('culture.loadError') : undefined}
+        onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/culture'))}
+      />
     );
   }
 

@@ -6,6 +6,8 @@ import { KokBoruGame } from '@/games3d/games/kok-boru/KokBoruGame';
 import type { KokBoruMode } from '@/games3d/games/kok-boru/KokBoruTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 
+export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
+
 const TUTORIAL_STEPS = ['games3d.kokBoru.tutorial1', 'games3d.kokBoru.tutorial2', 'games3d.kokBoru.tutorial3'];
 
 export default function KokBoruRoute() {

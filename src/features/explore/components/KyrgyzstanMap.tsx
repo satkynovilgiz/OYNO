@@ -8,7 +8,7 @@ import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { IconButton } from '@/components/ui/IconButton';
 import type { RegionState } from '@/services/explore/regionState';
 import { colors, radii, shadows } from '@/theme';
-import mapTerrain from '@assets/img/OYNO_design/explore/map_terrain.png';
+import mapTerrain from '@assets/img/OYNO_design/explore/map_terrain.jpg';
 
 import { RegionStateBadge } from './RegionStateBadge';
 
@@ -30,7 +30,7 @@ type KyrgyzstanMapProps = {
 const MIN_SCALE = 1;
 const MAX_SCALE = 3;
 
-// map_terrain.png is sliced straight from the design reference (docs:
+// map_terrain.jpg is sliced straight from the design reference (docs:
 // "Illustrated Kyrgyzstan Adventure Map.png") - it already has the pins and
 // labels painted in, so this renders that art as-is and overlays invisible,
 // accessible tap targets at the same coordinates rather than drawing a

@@ -1,9 +1,9 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import journeyImage from '@assets/img/welcome/Kyrgyz Golden Hour Journey.png';
-import cultureImage from '@assets/img/welcome/Golden Hour Music in a Kyrgyz Yurt.png';
-import playImage from '@assets/img/welcome/Golden Hour Buzkashi in the Mountains.png';
-import welcomeImage from '@assets/img/welcome/Golden Hour at a Kyrgyz Mountain Lake.png';
+import journeyImage from '@assets/img/welcome/Kyrgyz Golden Hour Journey.jpg';
+import cultureImage from '@assets/img/welcome/Golden Hour Music in a Kyrgyz Yurt.jpg';
+import playImage from '@assets/img/welcome/Golden Hour Buzkashi in the Mountains.jpg';
+import welcomeImage from '@assets/img/welcome/Golden Hour at a Kyrgyz Mountain Lake.jpg';
 
 export type OnboardingSlideId = 'welcome' | 'culture' | 'play' | 'journey';
 

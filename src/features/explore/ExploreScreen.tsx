@@ -97,7 +97,7 @@ export function ExploreScreen() {
     })
     .filter((pin): pin is NonNullable<typeof pin> => pin !== null);
 
-  // The map's pins are baked into map_terrain.png itself (see
+  // The map's pins are baked into map_terrain.jpg itself (see
   // KyrgyzstanMap's own comment) - filtering mapPins only removes invisible
   // tap targets/state badges, it can never visually hide a baked pin. This
   // list is the actual visible effect of a filter, shown only while a
