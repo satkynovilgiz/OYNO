@@ -11,13 +11,14 @@ import { useTrailSignals } from '@/features/trails/useTrailSignals';
 import type { SupportedLanguage } from '@/i18n';
 import { useCultureMaterials } from '@/services/content/cultureService';
 import { useExploreRegions } from '@/services/content/exploreService';
+import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { buildWidgetSnapshot, type WidgetSnapshot } from '@/services/widgets/widgetSnapshot';
 import { useProgressStore } from '@/store/useProgressStore';
 
 /** The widget snapshot from live app state - the same sources Home,
  * Daily, Passport and Trails use (no separate calculation). */
 export function useWidgetSnapshot(): WidgetSnapshot {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
   const { discovery } = useTodayDiscovery();
   const { recommendation, display } = useHomeRecommendation();
@@ -29,9 +30,23 @@ export function useWidgetSnapshot(): WidgetSnapshot {
 
   return useMemo(() => {
     const passport = buildPassport(regions ?? [], visitedRegionIds, regionVisitDates, (id) => natureSiteImages[id], language);
+    const now = new Date();
     return buildWidgetSnapshot({
       language,
-      now: new Date(),
+      now,
+      localDate: localDateKey(now),
+      labels: {
+        daily: t('appearance.widgets.types.daily'),
+        dailyDone: t('daily.entry.done'),
+        minutes: discovery ? t('daily.minutes', { count: discovery.minutes }) : '',
+        journey: t('appearance.widgets.types.journey'),
+        passport: t('appearance.widgets.types.passport'),
+        passportProgress: t('explore.map.summary', { unlocked: passport.unlocked, total: passport.total }),
+        trail: t('appearance.widgets.types.trail'),
+        noTrail: t('appearance.widgets.noActiveTrail'),
+        cultureOfDay: t('appearance.widgets.types.cultureOfDay'),
+        openApp: t('appearance.widgets.openApp'),
+      },
       daily: discovery ? { itemId: discovery.item.id, title: discovery.item.title, minutes: discovery.minutes, isCompleted: discovery.isCompleted } : null,
       journey: { eyebrow: display.eyebrow, title: display.title, progress: recommendation.progress, route: recommendation.route },
       passport: { unlocked: passport.unlocked, total: passport.total },

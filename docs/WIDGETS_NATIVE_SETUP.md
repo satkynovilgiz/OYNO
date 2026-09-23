@@ -1,35 +1,75 @@
-# OYNO widgets - native setup still required
+# OYNO native iOS widgets
 
-The in-app Widget Gallery (`/appearance/widgets`) and the widget data layer
-(`src/services/widgets/widgetSnapshot.ts`, fed by
-`src/features/appearance/useWidgetSnapshot.ts`) are done. Real Home Screen /
-Lock Screen widgets are **not** in the app yet, because iOS widgets are a
-separate native WidgetKit extension that cannot ship in JavaScript or via an
-EAS OTA update, and do not run in Expo Go.
+Real Home Screen and Lock Screen widgets (WidgetKit + SwiftUI), generated
+at `expo prebuild` by the `@bacons/apple-targets` config plugin - there is
+still **no committed `ios/` folder** (Continuous Native Generation).
 
-## What's missing (native, needs a new build)
+**They do NOT work in Expo Go.** They exist only in a development or
+production build that includes the widget extension.
 
-1. **Widget extension target.** This project uses Continuous Native
-   Generation (no committed `ios/` folder), so the target has to be generated
-   by a config plugin at prebuild time - e.g. `@bacons/apple-targets`
-   (`npx create-target widget`), producing `targets/widget/` with the
-   SwiftUI `Widget` + `TimelineProvider` code and an `expo-target.config.js`.
-2. **App Group** shared by the app and the extension (e.g.
-   `group.<bundle id>.widgets`), added to both entitlements via the same
-   plugin / `ios.entitlements` in app.json.
-3. **Writing the snapshot** from the app into that App Group so the widget
-   can read it: a tiny native module (or the target plugin's
-   `ExtensionStorage`) that stores `JSON.stringify(buildWidgetSnapshot(...))`
-   under one key in the shared `UserDefaults(suiteName:)`, then calls
-   `WidgetCenter.shared.reloadAllTimelines()`. Call it whenever the snapshot
-   changes (the hook already produces it).
-4. **SwiftUI widgets** that decode `WidgetSnapshot` (version 1) and render
-   Daily OYNO, Continue Journey, Passport, Guided Trail and Culture of the
-   Day in the `systemSmall`, `systemMedium`, `accessoryInline`,
-   `accessoryCircular` and `accessoryRectangular` families, matching the
-   gallery previews. Artwork must be bundled into the extension's asset
-   catalog (widgets can't load the app's JS assets).
-5. **`npx expo prebuild` + a new EAS development/production build.**
+## Pieces
 
-Until then the gallery says plainly that widgets arrive with a future full
-app update, and nothing claims they are installed.
+| Piece | Where |
+| --- | --- |
+| Widget target config | `targets/widget/expo-target.config.js` (type `widget`, iOS 16+, bundle id `<app>.widget`) |
+| SwiftUI widgets | `targets/widget/OYNOWidgets.swift` (5 widgets) |
+| Snapshot model + timeline | `targets/widget/OYNOWidgetData.swift` |
+| App Group (declared once) | `app.json` -> `ios.entitlements['com.apple.security.application-groups']` = `group.com.ilgizsatkynov.oyno.widgets` |
+| Snapshot built from app state | `src/services/widgets/widgetSnapshot.ts` (`buildWidgetSnapshot`) + `src/features/appearance/useWidgetSnapshot.ts` |
+| Snapshot bridge (JS -> App Group) | `src/services/widgets/widgetBridge.ts` + `src/components/system/WidgetSync.tsx` |
+
+The App Group string appears only in app.json. The widget target mirrors
+it from the Expo config; the JS bridge reads it via `expo-constants`; the
+Swift side derives it from its own bundle id (`<app>.widget` ->
+`group.<app>.widgets`).
+
+## Data flow
+
+1. `WidgetSync` (mounted in the root layout, iOS only) builds the snapshot
+   with the same hook the in-app Widget Gallery uses - no progress is
+   recalculated anywhere else, and nothing in Swift.
+2. `publishWidgetSnapshot` writes it as JSON to the shared
+   `UserDefaults(suiteName: group)` under `oyno.widgetSnapshot.v1`, then
+   calls `WidgetCenter.shared.reloadAllTimelines()` (via
+   `ExtensionStorage.reloadWidget()`). It only writes when something the
+   widgets show changed (timestamp ignored) and debounces 1.5 s.
+3. Each widget reads the snapshot. Missing/unknown-version snapshot -> an
+   "Open OYNO" fallback; Daily from a previous day is never shown as today;
+   anything older than 3 days falls back too. Timelines also refresh just
+   after local midnight.
+
+## Widgets and families
+
+| Widget | Families | Tap opens |
+| --- | --- | --- |
+| Daily OYNO | systemSmall, systemMedium, accessoryRectangular, accessoryInline | `/daily` |
+| Continue Journey | systemSmall, systemMedium, accessoryRectangular | Home recommendation route |
+| Discovery Passport | systemSmall, accessoryCircular, accessoryRectangular, accessoryInline | `/journey` |
+| Guided Trail | systemSmall, accessoryRectangular | `/trails/<id>` (or `/explore`) |
+| Culture of the Day | systemSmall, systemMedium | `/culture/material/<id>` |
+
+Deep links use the app scheme: `oyno://daily`, `oyno://trails/horse-culture`.
+
+## Localization
+
+All widget text comes pre-localized (KG/RU/EN) inside the snapshot
+(`labels`) from the app's own i18n, in the language saved in the snapshot.
+Only the no-snapshot fallback and the widget-picker name/description use a
+small KG/RU/EN table in Swift, chosen from the device language.
+
+## Required to build
+
+1. Set your Apple Team ID once in app.json: `"ios": { "appleTeamId": "XXXXXXXXXX" }`
+   (Apple Developer account -> Membership). Prebuild warns until it's set.
+2. Make sure the App Group exists for the app id in the Apple Developer
+   portal - EAS credentials can register it; otherwise add
+   `group.com.ilgizsatkynov.oyno.widgets` under Identifiers -> App Groups
+   and enable it for both `com.ilgizsatkynov.oyno` and
+   `com.ilgizsatkynov.oyno.widget`.
+3. Build (Xcode 16+ on the EAS builders):
+   - `npx eas-cli build --profile development --platform ios` (dev client)
+   - `npx eas-cli build --profile preview --platform ios`
+   - local alternative: `npx expo prebuild -p ios --clean && npx expo run:ios`
+
+An EAS **update** cannot add or change the widget extension - it only
+changes the JS that writes the snapshot.

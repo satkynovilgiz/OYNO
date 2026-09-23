@@ -5,6 +5,19 @@ import { buildWidgetSnapshot, type WidgetSnapshotInput } from './widgetSnapshot'
 const base: WidgetSnapshotInput = {
   language: 'kg',
   now: new Date('2026-09-23T08:00:00Z'),
+  localDate: '2026-09-23',
+  labels: {
+    daily: 'Күндүн ачылышы',
+    dailyDone: 'Бүгүн ачылды',
+    minutes: '1 мүнөт',
+    journey: 'Саякатыңды улант',
+    passport: 'Паспорт',
+    passportProgress: '6 жерден 2 ачылды',
+    trail: 'Саякат',
+    noTrail: 'Азырынча саякат башталган жок',
+    cultureOfDay: 'Күндүн маданияты',
+    openApp: 'OYNOну ач',
+  },
   daily: { itemId: 'boz-uy-kiyiz-jabuu', title: 'Кийиз жабуулар', minutes: 1, isCompleted: false },
   journey: { eyebrow: 'Бүгүн', title: 'Кийиз жабуулар', progress: null, route: '/daily' },
   passport: { unlocked: 2, total: 6 },
@@ -34,6 +47,16 @@ describe('buildWidgetSnapshot', () => {
   it('takes Culture of the Day from the real today_discovery material only', () => {
     expect(buildWidgetSnapshot(base).cultureOfDay?.id).toBe('komuz-discovery');
     expect(buildWidgetSnapshot({ ...base, cultureMaterials: [base.cultureMaterials[0]] }).cultureOfDay).toBeNull();
+  });
+
+  it('points every widget at a real route', () => {
+    expect(buildWidgetSnapshot(base).routes).toEqual({
+      daily: '/daily',
+      journey: '/daily',
+      passport: '/journey',
+      trail: '/trails/nomad-life',
+      cultureOfDay: '/culture/material/komuz-discovery',
+    });
   });
 
   it('is JSON-serializable for a native widget extension', () => {

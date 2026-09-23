@@ -20,6 +20,8 @@ Notifications.setNotificationHandler({
  * authenticated session from _layout.tsx, same pattern as the other
  * per-authStatus loaders there.
  *
+ * Does not request permission itself (see the reminders flow).
+ *
  * Every failure mode here is expected, not exceptional, so this never
  * throws: Expo Go on Android can't do remote push at all from SDK 53+
  * (getExpoPushTokenAsync throws), a user can decline the permission
@@ -36,10 +38,11 @@ export async function registerForPushNotifications(): Promise<void> {
       });
     }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    const finalStatus =
-      existingStatus === 'granted' ? existingStatus : (await Notifications.requestPermissionsAsync()).status;
-    if (finalStatus !== 'granted') return;
+    // Never prompts: OYNO asks for notification permission only when the
+    // user turns on a reminder (Settings -> Reminders). If it's granted,
+    // this just keeps the push token registered.
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return;
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
     if (!projectId) return;

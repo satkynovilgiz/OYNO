@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance, Skeleton } from '@/components/ui';
+import { ChallengesEntryCard } from '@/features/challenges/ChallengesEntryCard';
 import { collections } from '@/features/collections/collectionsData';
 import { CollectionsRow } from '@/features/collections/components/CollectionsRow';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -122,6 +123,7 @@ export function CultureScreen() {
           <View key={id} style={[styles.horizontalPad, styles.stack]}>
             <CultureProgressCard progress={cultureProgress} />
             <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
+            <ChallengesEntryCard />
           </View>
         );
       case 'newMaterials':

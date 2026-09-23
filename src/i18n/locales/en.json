@@ -104,7 +104,8 @@
       "help": "Help",
       "about": "About OYNO",
       "adminPanel": "Admin panel",
-      "appearance": "Appearance"
+      "appearance": "Appearance",
+      "reminders": "Reminders"
     },
     "signOut": {
       "rowLabel": "Sign out",
@@ -1578,7 +1579,263 @@
         "cultureOfDay": "Culture of the Day"
       },
       "noActiveTrail": "No trail started yet",
-      "noData": "Loading…"
+      "noData": "Loading…",
+      "openApp": "Open OYNO for today's discovery"
     }
+  },
+  "reminders": {
+    "title": "Reminders",
+    "daily": "Daily OYNO",
+    "dailyHint": "Once a day at your chosen time",
+    "journey": "Continue Journey",
+    "journeyHint": "Every other day, only when there is something to continue",
+    "trail": "Trail reminders",
+    "trailHint": "Every third day while a trail is unfinished",
+    "onePerDay": "At most one reminder a day. When Daily OYNO is on, it comes first.",
+    "time": "Reminder time",
+    "quietHours": "Quiet hours",
+    "quietHint": "No reminders during this time",
+    "quietFrom": "From",
+    "quietTo": "Until",
+    "earlier": "{{label}}: 15 minutes earlier",
+    "later": "{{label}}: 15 minutes later",
+    "permissionDenied": "Notifications are off. Turn them on for OYNO in your phone settings.",
+    "phoneOnly": "Reminders work in the OYNO phone app only.",
+    "copy": {
+      "dailyTitle": "Today's OYNO is ready",
+      "dailyBody": "Discover today's Kyrgyz culture story.",
+      "journeyTitle": "Continue your journey",
+      "journeyBody": "Next up: {{title}}",
+      "trailTitle": "Your trail is waiting",
+      "trailBody": "Pick up “{{title}}” where you left off."
+    }
+  },
+  "challenges": {
+    "title": "Knowledge Challenges",
+    "subtitle": "Check what you've discovered in OYNO",
+    "entry": "Test your knowledge",
+    "daily": {
+      "title": "Daily Challenge",
+      "description": "{{count}} questions for today"
+    },
+    "culture": {
+      "title": "Culture Challenges"
+    },
+    "journey": {
+      "title": "Journey Challenge",
+      "description": "About places and discoveries you've already explored",
+      "locked": "Visit a few more places or finish a Daily OYNO to unlock this challenge."
+    },
+    "start": "Start",
+    "retry": "Try again",
+    "best": "Best: {{correct}} / {{total}}",
+    "doneToday": "Today: {{correct}} / {{total}}",
+    "questionOf": "Question {{index}} of {{total}}",
+    "true": "True",
+    "false": "False",
+    "pictureLabel": "Picture {{index}}",
+    "correct": "Correct!",
+    "incorrect": "Good try - the answer is: {{answer}}",
+    "incorrectImage": "Good try - the right picture is marked.",
+    "learnMore": "Learn more",
+    "next": "Next",
+    "finish": "See results",
+    "resultTitle": "{{correct}} / {{total}} correct",
+    "resultBody": "Every answer is a chance to learn something new.",
+    "reviewed": "Questions reviewed",
+    "sources": "Sources",
+    "exploreNext": "Explore next",
+    "backToChallenges": "Back to challenges",
+    "shareTitle": "Kyrgyz Culture Challenge",
+    "answerCorrectA11y": "Correct answer",
+    "answerWrongA11y": "Incorrect answer",
+    "journeySection": "Learning",
+    "journeyEmpty": "Take your first Knowledge Challenge.",
+    "questions": {
+      "tunduk-flag": {
+        "question": "What is shown on Kyrgyzstan's state flag?",
+        "explanation": "The tunduk is a symbol of Kyrgyz national identity - it appears on the state flag.",
+        "options": {
+          "tunduk": "The tunduk",
+          "komuz": "A komuz",
+          "horse": "A horse"
+        }
+      },
+      "tunduk-parts": {
+        "question": "The tunduk has two parts: the alkak (outer ring) and…?",
+        "explanation": "The crossed lattice inside the alkak is called the chamgarak.",
+        "options": {
+          "kerege": "Kerege",
+          "chamgarak": "Chamgarak",
+          "uuk": "Uuk"
+        }
+      },
+      "tunduk-position": {
+        "question": "The tunduk sits at the bottom of the boz uy's wall.",
+        "explanation": "No - the tunduk is the round smoke opening at the top of the roof, the most sacred part of the home."
+      },
+      "kerege-wall": {
+        "question": "Which part of the boz uy's wooden frame works as the wall?",
+        "explanation": "The kerege is the lattice frame that forms the wall; the uuk poles run from the kerege up to the tunduk.",
+        "options": {
+          "uuk": "Uuk",
+          "tunduk": "Tunduk",
+          "kerege": "Kerege"
+        }
+      },
+      "tuurduk": {
+        "question": "What is the felt that covers the kerege called?",
+        "explanation": "The tuurduk covers the kerege; the üzük are the large front and back felt pieces.",
+        "options": {
+          "tuurduk": "Tuurduk",
+          "uzuk": "Üzük",
+          "chamgarak": "Chamgarak"
+        }
+      },
+      "tor": {
+        "question": "What is the most honoured place behind the hearth called?",
+        "explanation": "The tör is the place of honour, kept for the head of the family or a respected guest.",
+        "options": {
+          "kerege": "Kerege",
+          "tor": "Tör",
+          "chamgarak": "Chamgarak"
+        }
+      },
+      "image-tunduk": {
+        "question": "Which picture shows a tunduk?",
+        "explanation": "The tunduk is the round opening at the top of the boz uy's roof."
+      },
+      "kok-boru-unesco": {
+        "question": "Kök Börü was added to UNESCO's Intangible Cultural Heritage list in 2017.",
+        "explanation": "True - it was inscribed in December 2017."
+      },
+      "kok-boru-rules": {
+        "question": "Who developed Kök Börü's modern unified rules in 1996?",
+        "explanation": "They were developed by film director Bolot Shamshiev.",
+        "options": {
+          "kashgari": "Mahmud Kashgari",
+          "shamshiev": "Bolot Shamshiev",
+          "simakov": "G. N. Simakov"
+        }
+      },
+      "kyz-kuumai": {
+        "question": "What does the game Kyz kuumai show?",
+        "explanation": "Kyz kuumai shows a girl's riding skill - a Kyrgyz girl was expected to ride as well as any young man.",
+        "options": {
+          "riding": "A girl's horse-riding skill",
+          "yurt": "How fast a yurt is built",
+          "song": "Singing skill"
+        }
+      },
+      "kymyz": {
+        "question": "Which drink is made from the milk of the Kyrgyz horse?",
+        "explanation": "The horse gave meat, milk (kymyz), hide and strength.",
+        "options": {
+          "ayran": "Ayran",
+          "kymyz": "Kymyz",
+          "tea": "Tea"
+        }
+      },
+      "hooves": {
+        "question": "Kyrgyz horses have hooves so strong they need no shoeing, even on long journeys.",
+        "explanation": "True - it can also graze year-round and get through winter on little hay."
+      },
+      "saddle-dowry": {
+        "question": "A decorated saddle was once given as part of a bride's dowry.",
+        "explanation": "True - a saddle showed its owner's standing and taste."
+      },
+      "image-kok-boru": {
+        "question": "Which picture shows Kök Börü?",
+        "explanation": "Kök Börü is the game where the unity of horse and rider shows most clearly."
+      },
+      "shyrdak-unesco": {
+        "question": "In which year was the craft of shyrdak and ala-kiyiz added to UNESCO's list?",
+        "explanation": "In 2012 - to the Intangible Cultural Heritage list.",
+        "options": {
+          "y2017": "2017",
+          "y2012": "2012",
+          "y1979": "1979"
+        }
+      },
+      "shyrdak-edges": {
+        "question": "What do the white-and-black edges of a shyrdak stand for?",
+        "explanation": "The edges always finish in white and black - the snowy peaks of the Kyrgyz mountains.",
+        "options": {
+          "peaks": "Snowy mountain peaks",
+          "rivers": "Rivers",
+          "clouds": "Clouds"
+        }
+      },
+      "shyrdak-blue": {
+        "question": "In a shyrdak, what does blue stand for?",
+        "explanation": "Blue is Tengri's sacred colour - the sky and the cosmos. White means purity, yellow wealth.",
+        "options": {
+          "purity": "Purity",
+          "wealth": "Wealth",
+          "sky": "The sky and the cosmos"
+        }
+      },
+      "kochkor-muyuz": {
+        "question": "The kochkor müyüz (ram's horn) element sets Kyrgyz ornament apart from other peoples' ornament.",
+        "explanation": "True - no pattern is made without the kochkor müyüz."
+      },
+      "umai-ene": {
+        "question": "Umai Ene is traditionally seen as the protector of…?",
+        "explanation": "Umai Ene is the sacred mother seen as protector of children and childbirth.",
+        "options": {
+          "children": "Children and childbirth",
+          "horses": "Horses",
+          "travelers": "Travellers"
+        }
+      },
+      "komuz-strings": {
+        "question": "How many strings does the komuz have?",
+        "explanation": "The komuz is the oldest Kyrgyz three-stringed plucked instrument.",
+        "options": {
+          "two": "Two",
+          "three": "Three",
+          "four": "Four"
+        }
+      },
+      "komuz-kashgari": {
+        "question": "The komuz is mentioned in Mahmud Kashgari's 11th-century dictionary, Dīwān Lughāt al-Turk.",
+        "explanation": "True - it appears in that 11th-century dictionary."
+      },
+      "son-kol-altitude": {
+        "question": "How high above sea level is Son-Köl?",
+        "explanation": "Son-Köl lies at 3,016 m, in Naryn Region.",
+        "options": {
+          "m2000": "2,000 m",
+          "m3016": "3,016 m",
+          "m4895": "4,895 m"
+        }
+      },
+      "sary-chelek-depth": {
+        "question": "Sary-Chelek is Kyrgyzstan's deepest lake after Issyk-Kul.",
+        "explanation": "True - it is 244 m deep."
+      },
+      "lenin-peak": {
+        "question": "The highest peak of the Chong Alay range is Lenin Peak (7,137 m).",
+        "explanation": "True. The Achik-Tash alpine camp is here too."
+      },
+      "arslanbob-forest": {
+        "question": "Arslanbob is known for the world's largest… forest?",
+        "explanation": "Arslanbob is the world's largest walnut forest - some trees are over a thousand years old.",
+        "options": {
+          "spruce": "Spruce",
+          "walnut": "Walnut",
+          "juniper": "Juniper"
+        }
+      },
+      "suusamyr-valley": {
+        "question": "Suusamyr is a high mountain lake.",
+        "explanation": "No - Suusamyr is a wide summer-pasture valley, a main grazing land for livestock."
+      },
+      "image-son-kol": {
+        "question": "Which picture shows Son-Köl?",
+        "explanation": "Son-Köl is a high mountain lake formed by glaciers."
+      }
+    },
+    "questionCount": "{{count}} questions"
   }
 }

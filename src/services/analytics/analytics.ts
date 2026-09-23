@@ -39,7 +39,10 @@ export type AnalyticsEventName =
   | 'explore_filter_used'
   | 'age_group_selected'
   | 'home_recommendation_shown'
-  | 'home_recommendation_opened';
+  | 'home_recommendation_opened'
+  | 'reminder_enabled'
+  | 'reminder_disabled'
+  | 'reminder_opened';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

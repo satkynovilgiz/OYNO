@@ -34,6 +34,7 @@ import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
 import { CollectionsJourneySection } from './components/CollectionsJourneySection';
+import { LearningJourneySection } from './components/LearningJourneySection';
 import { TrailsJourneySection } from './components/TrailsJourneySection';
 import { JourneyStamp } from './components/JourneyStamp';
 import { PassportSection } from './components/PassportSection';
@@ -127,7 +128,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   // Passport and Collections are their own kinds of page, not numbered
   // chapters - numerals stay I-IV on the four stamp chapters.
   const chapterPages: JourneySectionId[] = getJourneySectionOrder(experience).filter(
-    (id) => id !== 'next' && id !== 'passport' && id !== 'collections' && id !== 'trails',
+    (id) => id !== 'next' && id !== 'passport' && id !== 'collections' && id !== 'trails' && id !== 'learning',
   );
   const chapterOf = (id: JourneySectionId) => CHAPTER_NUMERALS[chapterPages.indexOf(id)] ?? '';
 
@@ -172,6 +173,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
         return <PassportSection key={id} passport={passport} experience={experience} />;
       case 'trails':
         return <TrailsJourneySection key={id} entries={trailEntries} editorial={isAdult} />;
+      case 'learning':
+        return <LearningJourneySection key={id} editorial={isAdult} />;
       case 'collections':
         return <CollectionsJourneySection key={id} entries={collectionEntries} editorial={isAdult} />;
       case 'discovered':

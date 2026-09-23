@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, type ReactNode } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -16,11 +17,14 @@ import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
 import { ErrorBoundary } from '@/components/system/ErrorBoundary';
 import { OfflineBanner } from '@/components/system/OfflineBanner';
+import { ReminderSync } from '@/components/system/ReminderSync';
+import { WidgetSync } from '@/components/system/WidgetSync';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
+import { useChallengeStore } from '@/store/useChallengeStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { onConnectionRestored } from '@/services/offline/networkStatus';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
@@ -166,6 +170,7 @@ export default function RootLayout() {
             // Re-seeds downloaded content into the query cache before any
             // screen asks for it, so an offline start shows real data.
             useOfflineStore.getState().load(),
+            useChallengeStore.getState().load(),
           ]);
           // Online at start: upgrade downloads saved by an older cache version.
           void useOfflineStore.getState().refreshAll(true);
@@ -197,6 +202,10 @@ export default function RootLayout() {
               onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
             />
             <OfflineBanner />
+            {/* Native iOS widgets read a shared snapshot; only iOS has them. */}
+            {Platform.OS === 'ios' && flagsReady ? <WidgetSync /> : null}
+            {/* Local reminders exist only on phones (no web scheduling). */}
+            {Platform.OS !== 'web' && flagsReady ? <ReminderSync /> : null}
           </QueryClientProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
