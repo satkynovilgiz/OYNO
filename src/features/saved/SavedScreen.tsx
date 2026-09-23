@@ -1,4 +1,4 @@
-import { ChevronLeft, Heart } from 'lucide-react-native';
+import { ArrowDownToLine, ChevronLeft, ChevronRight, Heart } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -18,6 +18,7 @@ import {
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
 import { useExploreRegions } from '@/services/content/exploreService';
+import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { useFavoritesStore, type FavoriteContentType } from '@/store/useFavoritesStore';
 import { colors, spacing, typography } from '@/theme';
 
@@ -38,6 +39,7 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
   const [filter, setFilter] = useState<SavedFilter>('all');
 
   const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
+  const offlineCount = useOfflineStore((state) => Object.keys(state.manifest.entries).length);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const { data: categories } = useCultureCategories();
@@ -88,6 +90,19 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        <AnimatedPressable
+          style={styles.offlineEntry}
+          onPress={() => onPressItem('/offline')}
+          hoverEffect
+          accessibilityRole="button"
+          accessibilityLabel={t('offline.library.title')}
+        >
+          <ArrowDownToLine size={16} color={colors.primary} strokeWidth={2.25} />
+          <Text style={styles.offlineEntryText}>{t('offline.library.title')}</Text>
+          {offlineCount > 0 ? <Text style={styles.offlineEntryCount}>{offlineCount}</Text> : null}
+          <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+        </AnimatedPressable>
+
         {savedItems.length === 0 ? (
           <EmptyState icon={Heart} title={t('saved.emptyTitle')} description={t('saved.emptyDescription')} />
         ) : visibleItems.length === 0 ? (
@@ -113,6 +128,25 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
 }
 
 const styles = StyleSheet.create({
+  offlineEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  offlineEntryText: {
+    ...typography.bodyBold,
+    color: colors.primary,
+    flex: 1,
+  },
+  offlineEntryCount: {
+    ...typography.caption,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
   root: {
     flex: 1,
     backgroundColor: colors.background,

@@ -14,6 +14,9 @@ import { computeCollectionProgress } from '@/features/collections/collectionProg
 import { collections } from '@/features/collections/collectionsData';
 import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
 import { discoveryImages, natureSiteImages } from '@/features/explore/data';
+import { computeTrailProgress } from '@/features/trails/trailProgress';
+import { trails } from '@/features/trails/trailsData';
+import { useTrailSignals } from '@/features/trails/useTrailSignals';
 import { mockGamesList } from '@/features/games/mockData';
 import { profileAchievements } from '@/features/profile/data';
 import type { SupportedLanguage } from '@/i18n';
@@ -31,6 +34,7 @@ import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
 import { CollectionsJourneySection } from './components/CollectionsJourneySection';
+import { TrailsJourneySection } from './components/TrailsJourneySection';
 import { JourneyStamp } from './components/JourneyStamp';
 import { PassportSection } from './components/PassportSection';
 import {
@@ -84,6 +88,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   const { data: cultureItems } = useAllCultureItems();
   const { discovery: today } = useTodayDiscovery();
   const collectionSignals = useCollectionSignals();
+  const trailSignals = useTrailSignals();
 
   const summary = useMemo(
     () =>
@@ -117,11 +122,12 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   // "next" suggestion isn't a chapter), so they always read I, II, III, IV.
   const passport = buildPassport(regions ?? [], progress.visitedRegionIds, progress.regionVisitDates, (id) => natureSiteImages[id], language);
   const collectionEntries = collections.map((collection) => ({ collection, progress: computeCollectionProgress(collection, collectionSignals) }));
+  const trailEntries = trails.map((trail) => ({ trail, progress: computeTrailProgress(trail, trailSignals) }));
 
   // Passport and Collections are their own kinds of page, not numbered
   // chapters - numerals stay I-IV on the four stamp chapters.
   const chapterPages: JourneySectionId[] = getJourneySectionOrder(experience).filter(
-    (id) => id !== 'next' && id !== 'passport' && id !== 'collections',
+    (id) => id !== 'next' && id !== 'passport' && id !== 'collections' && id !== 'trails',
   );
   const chapterOf = (id: JourneySectionId) => CHAPTER_NUMERALS[chapterPages.indexOf(id)] ?? '';
 
@@ -164,6 +170,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
         return <NextDiscoveryCard key={id} next={next} />;
       case 'passport':
         return <PassportSection key={id} passport={passport} experience={experience} />;
+      case 'trails':
+        return <TrailsJourneySection key={id} entries={trailEntries} editorial={isAdult} />;
       case 'collections':
         return <CollectionsJourneySection key={id} entries={collectionEntries} editorial={isAdult} />;
       case 'discovered':

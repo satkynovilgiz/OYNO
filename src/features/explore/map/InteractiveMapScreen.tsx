@@ -70,7 +70,17 @@ function clamp(value: number, min: number, max: number) {
  * before. Pinch/pan/double-tap zoom, clamped so the country can't drift
  * off-screen; pins stay a constant size while zooming.
  */
-export function InteractiveMapScreen({ onPressBack }: { onPressBack: () => void }) {
+export function InteractiveMapScreen({
+  onPressBack,
+  highlightIds,
+  highlightTitle,
+}: {
+  onPressBack: () => void;
+  /** When opened from a Guided Trail: only these destinations stay
+   * prominent; the rest are dimmed (never hidden). */
+  highlightIds?: string[];
+  highlightTitle?: string;
+}) {
   useTrackScreenView('explore_map');
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
@@ -209,6 +219,11 @@ export function InteractiveMapScreen({ onPressBack }: { onPressBack: () => void 
               })}
             </Text>
           </View>
+          {highlightTitle ? (
+            <Text style={styles.trailChip} numberOfLines={1}>
+              {t('explore.map.trailFilter', { title: highlightTitle })}
+            </Text>
+          ) : null}
         </View>
       </View>
 
@@ -246,6 +261,7 @@ export function InteractiveMapScreen({ onPressBack }: { onPressBack: () => void 
                     showLabel={pin.alwaysLabel || place.id === selectedId}
                     editorial={isAdult}
                     selected={place.id === selectedId}
+                    dimmed={!!highlightIds && !highlightIds.includes(place.id)}
                     onPress={() => setSelectedId(place.id)}
                   />
                 ))}
@@ -318,6 +334,7 @@ type MapPinProps = {
   labelSize: number;
   labelSide: 'top' | 'bottom' | 'left' | 'right';
   showLabel: boolean;
+  dimmed: boolean;
   editorial: boolean;
   selected: boolean;
   onPress: () => void;
@@ -325,7 +342,7 @@ type MapPinProps = {
 
 /** One destination pin. Counter-scaled against the map zoom so it stays the
  * same size on screen while the country grows underneath it. */
-function MapPin({ place, left, top, scale, size, hit, labelSize, labelSide, showLabel, editorial, selected, onPress }: MapPinProps) {
+function MapPin({ place, left, top, scale, size, hit, labelSize, labelSide, showLabel, dimmed, editorial, selected, onPress }: MapPinProps) {
   const { t } = useTranslation();
   const counterScale = useAnimatedStyle(() => ({
     transform: [{ scale: 1 / scale.value }],
@@ -333,7 +350,7 @@ function MapPin({ place, left, top, scale, size, hit, labelSize, labelSide, show
   const visited = place.unlocked;
 
   return (
-    <Animated.View style={[styles.pinAnchor, { left: left - hit / 2, top: top - hit / 2, width: hit, height: hit }, counterScale]}>
+    <Animated.View style={[styles.pinAnchor, { left: left - hit / 2, top: top - hit / 2, width: hit, height: hit }, dimmed && styles.pinDimmed, counterScale]}>
       <AnimatedPressable
         style={[styles.pinHit, { width: hit, height: hit }]}
         onPress={onPress}
@@ -474,6 +491,14 @@ const styles = StyleSheet.create({
   pinAnchor: {
     position: 'absolute',
     alignItems: 'center',
+  },
+  pinDimmed: {
+    opacity: 0.3,
+  },
+  trailChip: {
+    ...typography.small,
+    color: colors.primary,
+    marginTop: 2,
   },
   pinHit: {
     alignItems: 'center',

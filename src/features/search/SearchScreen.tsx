@@ -8,19 +8,23 @@ import { AnimatedPressable, EmptyState, IconButton, TextButton } from '@/compone
 import { mockGamesList } from '@/features/games/mockData';
 import type { SupportedLanguage } from '@/i18n';
 import {
+  type CatalogItem,
   buildCultureCategoryCatalog,
   buildCultureItemCatalog,
   buildCultureMaterialCatalog,
   buildExploreCatalog,
   buildGameCatalog,
   buildInteractiveExperienceCatalog,
-  type CatalogItem,
+  buildTrailCatalog,
 } from '@/services/content/contentCatalog';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { addRecentSearch, clearRecentSearches, getRecentSearches, saveRecentSearches } from '@/services/search/recentSearches';
 import { groupSearchResults, searchCatalog, type SearchResultGroup } from '@/services/search/globalSearch';
+import { computeTrailProgress } from '@/features/trails/trailProgress';
+import { trails } from '@/features/trails/trailsData';
+import { useTrailSignals } from '@/features/trails/useTrailSignals';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { SearchResultRow } from './components/SearchResultRow';
@@ -31,7 +35,7 @@ type SearchScreenProps = {
 };
 
 const DEBOUNCE_MS = 200;
-const GROUP_ORDER: SearchResultGroup[] = ['games', 'culture', 'places', 'materials'];
+const GROUP_ORDER: SearchResultGroup[] = ['trails', 'games', 'culture', 'places', 'materials'];
 // A small, honest "suggested" set - games already flagged `featured` in
 // their real catalog data, plus the 4 interactive experiences - never a
 // fabricated popularity ranking (no real search-analytics exist to base
@@ -60,6 +64,7 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
   const { data: materials } = useCultureMaterials();
   const { data: items } = useAllCultureItems();
   const { data: regions } = useExploreRegions();
+  const trailSignals = useTrailSignals();
 
   const catalog = useMemo<CatalogItem[]>(
     () => [
@@ -69,9 +74,16 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
       ...buildCultureMaterialCatalog(materials ?? []),
       ...buildExploreCatalog(regions ?? [], language),
       ...buildInteractiveExperienceCatalog(t),
+      ...buildTrailCatalog(trails, language, (trail) => {
+        const progress = computeTrailProgress(trail, trailSignals);
+        if (progress.status === 'untracked') return t('trails.searchLabel');
+        return progress.status === 'completed'
+          ? `${t('trails.searchLabel')} · ${t('trails.status.completed')}`
+          : `${t('trails.searchLabel')} · ${t('trails.progress', { completed: progress.completed, total: progress.total })}`;
+      }),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [categories, materials, items, regions, language],
+    [categories, materials, items, regions, language, trailSignals],
   );
 
   const suggested = useMemo(

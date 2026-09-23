@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DownloadButton } from '@/components/offline/DownloadButton';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, CompactContentCard, EditorialCard, HeroCard, IconButton, InteractiveCard, ProgressBar } from '@/components/ui';
 import { cultureItemImages, cultureMaterialImages } from '@/features/culture/data';
@@ -15,6 +16,7 @@ import { gameTitleKey } from '@/features/games/types';
 import type { SupportedLanguage } from '@/i18n';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureMaterials } from '@/services/content/cultureService';
+import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useShareCard } from '@/services/share/useShareCard';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -44,8 +46,11 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
   const language = i18n.language as SupportedLanguage;
   const insets = useSafeAreaInsets();
 
-  const { data: items, isLoading: itemsLoading } = useAllCultureItems();
-  const { data: materials, isLoading: materialsLoading } = useCultureMaterials();
+  const itemsQuery = useAllCultureItems();
+  const materialsQuery = useCultureMaterials();
+  const { data: items, isLoading: itemsLoading } = itemsQuery;
+  const { data: materials, isLoading: materialsLoading } = materialsQuery;
+  const waitingForNetwork = isWaitingForNetwork(itemsQuery) || isWaitingForNetwork(materialsQuery);
   const isLoading = itemsLoading || materialsLoading;
 
   const signals = useCollectionSignals();
@@ -102,6 +107,10 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
 
         <Text style={styles.intro}>{resolveLocalized(collection.intro, language)}</Text>
 
+        <View style={styles.horizontalPad}>
+          <DownloadButton kind="collection" contentId={collection.id} title={resolveLocalized(collection.title, language)} />
+        </View>
+
         {progress.total > 0 ? (
           <View style={styles.progressBlock}>
             <View style={styles.progressRow}>
@@ -113,7 +122,11 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
           </View>
         ) : null}
 
-        {isLoading ? (
+        {waitingForNetwork ? (
+          <View style={styles.offlineNote}>
+            <Text style={styles.offlineNoteText}>{t('offline.notAvailable')}</Text>
+          </View>
+        ) : isLoading ? (
           <ActivityIndicator color={colors.primary} style={styles.loading} />
         ) : (
           <>
@@ -320,6 +333,16 @@ const styles = StyleSheet.create({
     ...typography.bodyBold,
     color: colors.textPrimary,
     flex: 1,
+  },
+  offlineNote: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+    alignItems: 'center',
+  },
+  offlineNoteText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   progressBlock: {
     paddingHorizontal: spacing.md,

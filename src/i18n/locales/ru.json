@@ -290,6 +290,22 @@
       "explore": "Исследовать",
       "culture": "Культура",
       "profile": "Профиль"
+    },
+    "journey": {
+      "continueYourJourney": "Продолжи путешествие",
+      "continue": "Продолжить",
+      "exploreNext": "Исследуй дальше",
+      "today": "Сегодня",
+      "recentlyExplored": "Недавно изучено",
+      "complete": "Путешествие завершено",
+      "completeTitle": "Пока ты открыл(а) всё!",
+      "exploreTitle": "Исследуй Кыргызстан",
+      "progress": "Выполнено {{completed}} из {{total}}",
+      "start": "Начать",
+      "explore": "Исследовать",
+      "passportTitle": "Паспорт природы",
+      "playAgain": "Сыграть ещё",
+      "playedTimes": "Сыграно: {{count}}"
     }
   },
   "games": {
@@ -823,7 +839,8 @@
       "closePreview": "Закрыть",
       "explore": "Исследовать",
       "pinDiscovered": "открыто",
-      "pinNotDiscovered": "не открыто"
+      "pinNotDiscovered": "не открыто",
+      "trailFilter": "Маршрут: {{title}}"
     },
     "progress": {
       "title": "Прогресс исследования Кыргызстана",
@@ -1271,7 +1288,8 @@
       "games": "Игры",
       "culture": "Культура",
       "places": "Места",
-      "materials": "Материалы"
+      "materials": "Материалы",
+      "trails": "Маршруты"
     }
   },
   "collections": {
@@ -1425,6 +1443,70 @@
       "noVoice": "На этом устройстве нет русского голоса, поэтому прослушивание недоступно.",
       "noContentInLanguage": "Этот материал пока есть только на кыргызском, поэтому озвучки на русском нет.",
       "noEngine": "Прослушивание недоступно на этом устройстве."
+    }
+  },
+  "offline": {
+    "banner": "Офлайн-режим",
+    "download": "Скачать для офлайна",
+    "downloading": "Загрузка…",
+    "available": "Доступно офлайн",
+    "remove": "Удалить загрузку",
+    "retry": "Повторить",
+    "removeAll": "Удалить все",
+    "removeAllConfirmTitle": "Удалить все загрузки?",
+    "removeAllConfirmMessage": "Удалятся только офлайн-копии. Прогресс, избранное и паспорт останутся.",
+    "notAvailable": "Этот материал пока недоступен офлайн.",
+    "notAvailableHint": "Откроется, когда появится интернет. Чтобы открывать офлайн, скачай заранее.",
+    "library": {
+      "title": "Офлайн-загрузки",
+      "places": "Места",
+      "collections": "Коллекции",
+      "culture": "Культура",
+      "count": "Загружено: {{count}}",
+      "storage": "{{size}} на устройстве",
+      "storageNote": "Фото, встроенные в приложение, не копируются и не учитываются.",
+      "emptyTitle": "Пока нет загрузок",
+      "emptyDescription": "Открой место или коллекцию и нажми «Скачать для офлайна»."
+    },
+    "a11y": {
+      "download": "Скачать {{title}} для офлайна",
+      "available": "{{title}} доступно офлайн",
+      "remove": "Удалить офлайн-копию: {{title}}",
+      "retry": "Повторить загрузку: {{title}}"
+    }
+  },
+  "trails": {
+    "sectionTitle": "Маршруты-путешествия",
+    "kicker": "Культурный маршрут",
+    "progress": "Пройдено {{completed}} из {{total}}",
+    "progressScope": "Учитываются места, практики, игры и коллекции; шаги для чтения - часть пути.",
+    "continue": "Продолжить путешествие",
+    "seeOnMap": "Показать на карте",
+    "download": "Скачать маршрут",
+    "showAll": "Все шаги ({{count}})",
+    "completeEyebrow": "Путешествие завершено",
+    "completeBody": "Ты прошёл(ла) все шаги этого маршрута.",
+    "completedLabel": "Путешествие завершено",
+    "journeyEmpty": "Начни один из маршрутов в разделе «Исследовать».",
+    "searchLabel": "Маршрут",
+    "status": {
+      "start": "Начать",
+      "continue": "Продолжить",
+      "completed": "Завершено"
+    },
+    "state": {
+      "completed": "Пройдено",
+      "todo": "Впереди",
+      "info": "Прочитать",
+      "next": "Следующий шаг"
+    },
+    "stepTypes": {
+      "destination": "Место",
+      "culture_item": "Культура",
+      "culture_material": "Материал",
+      "interactive_experience": "Сделай сам",
+      "game": "Игра",
+      "collection": "Коллекция"
     }
   }
 }

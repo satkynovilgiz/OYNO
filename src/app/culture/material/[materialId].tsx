@@ -2,14 +2,21 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
 import { MaterialDetailScreen } from '@/features/culture/MaterialDetailScreen';
 import { useCultureMaterial } from '@/services/content/cultureService';
+import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { colors } from '@/theme';
 
 export default function CultureMaterialRoute() {
   const { t } = useTranslation();
   const { materialId } = useLocalSearchParams<{ materialId: string }>();
-  const { data: material, isLoading, error } = useCultureMaterial(materialId ?? '');
+  const materialQuery = useCultureMaterial(materialId ?? '');
+  const { data: material, isLoading, error } = materialQuery;
+
+  if (isWaitingForNetwork(materialQuery)) {
+    return <OfflineUnavailable onRetry={() => void materialQuery.refetch()} />;
+  }
 
   if (isLoading) {
     return (

@@ -208,9 +208,9 @@ export function pickNextDiscovery(summary: JourneySummary, today: JourneyStamp |
   return null;
 }
 
-export type JourneySectionId = 'next' | 'passport' | 'discovered' | 'explored' | 'played' | 'collections' | 'achievements';
+export type JourneySectionId = 'next' | 'passport' | 'trails' | 'discovered' | 'explored' | 'played' | 'collections' | 'achievements';
 
-export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'discovered', 'explored', 'played', 'collections', 'achievements'];
+export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'trails', 'discovered', 'explored', 'played', 'collections', 'achievements'];
 
 /**
  * Same sections for every age, different emphasis (spec "Child → simpler,
@@ -222,10 +222,10 @@ export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'di
  * suggestion last.
  */
 const JOURNEY_SECTION_ORDER: Record<AgeExperience, JourneySectionId[]> = {
-  child: ['next', 'passport', 'played', 'achievements', 'discovered', 'collections', 'explored'],
-  preteen: ['next', 'passport', 'played', 'explored', 'collections', 'achievements', 'discovered'],
-  teen: ['next', 'passport', 'explored', 'played', 'collections', 'achievements', 'discovered'],
-  adult: ['discovered', 'passport', 'explored', 'collections', 'played', 'achievements', 'next'],
+  child: ['next', 'passport', 'trails', 'played', 'achievements', 'discovered', 'collections', 'explored'],
+  preteen: ['next', 'passport', 'trails', 'played', 'explored', 'collections', 'achievements', 'discovered'],
+  teen: ['next', 'passport', 'trails', 'explored', 'played', 'collections', 'achievements', 'discovered'],
+  adult: ['discovered', 'passport', 'trails', 'explored', 'collections', 'played', 'achievements', 'next'],
 };
 
 export function getJourneySectionOrder(experience: AgeExperience): JourneySectionId[] {

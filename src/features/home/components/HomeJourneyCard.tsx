@@ -1,80 +1,80 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
-import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, HeroEntrance, ProgressBar } from '@/components/ui';
-import type { ContinueJourneyCardData } from '@/features/home/continueJourney';
+import type { HomeRecommendation } from '@/features/home/homeRecommendation';
+import type { HomeRecommendationDisplay } from '@/features/home/useHomeRecommendation';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
-import { colors, radii, spacing, typography } from '@/theme';
-import questBackground from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
+import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
-type ContinueJourneyCardProps = {
-  data: ContinueJourneyCardData;
-  onPress: (ctaRoute: string) => void;
+type HomeJourneyCardProps = {
+  recommendation: HomeRecommendation;
+  display: HomeRecommendationDisplay;
+  onPress: () => void;
 };
 
-const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.2, medium: 1.6, compact: 1.75, dense: 1.95 };
+/** Artwork proportion per card scale - child gets the biggest picture. */
+const ASPECT_RATIO_BY_CARD_SCALE = { large: 1.05, medium: 1.45, compact: 1.75, dense: 1.95 };
 
-/** Home's one primary personalized moment (spec "Task 7... Show ONE
- * strong primary continuation card rather than several competing cards")
- * - `data` already encodes which of the two genuinely-real states applies
- * (an in-progress quest, or a not-yet-tried interactive experience); this
- * component only renders it, never decides it (see continueJourney.ts).
- * Progress only ever renders for the `quest` variant, since that's the
- * only case with real progress to show. */
-export function ContinueJourneyCard({ data, onPress }: ContinueJourneyCardProps) {
-  const { t } = useTranslation();
-  const { config } = useAgeExperience();
+/**
+ * Home's single "Continue Your Journey" card (spec "Do not render several
+ * competing continue cards") - it only renders what
+ * buildHomeJourneyRecommendation decided; it never decides. Progress is
+ * drawn only when the recommendation carries a real, measurable count.
+ * Age: child - biggest artwork, one clear action; teen - compact progress
+ * card; adult - calmer editorial serif title.
+ */
+export function HomeJourneyCard({ recommendation, display, onPress }: HomeJourneyCardProps) {
+  const { experience, config } = useAgeExperience();
   const aspectRatio = resolveByCardScale(config.cardScale, ASPECT_RATIO_BY_CARD_SCALE);
-  const isQuest = data.kind === 'quest';
-  const imageSource = isQuest ? questBackground : data.imageSource;
-  const title = isQuest ? data.title : t(data.titleKey);
-  const eyebrow = isQuest ? t('home.continueJourney.continueLabel') : t('home.continueJourney.discoverLabel');
-  const ctaLabel = isQuest ? t('home.continueJourney.continueCta') : t('home.continueJourney.discoverCta');
+  const progress = recommendation.progress;
+  const isChild = experience === 'child';
 
   return (
     <HeroEntrance>
       <AnimatedPressable
         style={[styles.card, { aspectRatio }]}
-        onPress={() => onPress(data.ctaRoute)}
+        onPress={onPress}
         pressScale={0.98}
         hoverEffect
         haptic="light"
         accessibilityRole="button"
-        accessibilityLabel={title}
+        accessibilityLabel={`${display.eyebrow}: ${display.title}. ${display.ctaLabel}`}
       >
-        <Image source={imageSource} style={styles.artwork} resizeMode="cover" />
-        <LinearGradient colors={['rgba(19,32,24,0.05)', 'rgba(19,32,24,0.88)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
+        <Image source={display.imageSource} style={styles.artwork} resizeMode="cover" />
+        <LinearGradient colors={['rgba(19,32,24,0.05)', 'rgba(19,32,24,0.9)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
 
         <View style={styles.overlay} pointerEvents="box-none">
           <View style={styles.eyebrowRow}>
             <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.5} />
-            <Text style={styles.eyebrow}>{eyebrow}</Text>
+            <Text style={styles.eyebrow}>{display.eyebrow}</Text>
           </View>
 
           <View style={styles.bottomBlock}>
-            <Text style={styles.title} numberOfLines={2}>
-              {title}
+            <Text style={[styles.title, experience === 'adult' && styles.titleEditorial]} numberOfLines={2}>
+              {display.title}
             </Text>
-            {isQuest ? (
-              <>
-                <Text style={styles.subtitle} numberOfLines={1}>
-                  {data.subtitle}
+            {display.subtitle && !isChild ? (
+              <Text style={styles.subtitle} numberOfLines={1}>
+                {display.subtitle}
+              </Text>
+            ) : null}
+            {progress && progress.total > 0 ? (
+              <View style={styles.progressBlock}>
+                <ProgressBar progress={progress.completed / progress.total} height={5} fillColor={colors.accentGold} />
+                <Text style={styles.progressLabel}>
+                  {progress.completed} / {progress.total}
                 </Text>
-                <View style={styles.progressBlock}>
-                  <ProgressBar progress={data.total > 0 ? data.current / data.total : 0} height={5} fillColor={colors.accentGold} />
-                  <Text style={styles.progressLabel}>
-                    {data.current} / {data.total}
-                  </Text>
-                </View>
-              </>
+              </View>
             ) : null}
 
-            <View style={styles.cta}>
-              <Text style={styles.ctaLabel}>{ctaLabel}</Text>
+            <View style={[styles.cta, isChild && styles.ctaChild]}>
+              <Text style={styles.ctaLabel} numberOfLines={1}>
+                {display.ctaLabel}
+              </Text>
               <ChevronRight size={16} color={colors.textPrimary} strokeWidth={2.5} />
             </View>
           </View>
@@ -128,6 +128,9 @@ const styles = StyleSheet.create({
     ...typography.display,
     color: colors.textOnDark,
   },
+  titleEditorial: {
+    fontFamily: fontFamily.wordmark,
+  },
   subtitle: {
     ...typography.body,
     color: 'rgba(255,255,255,0.85)',
@@ -151,10 +154,16 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radii.pill,
     marginTop: spacing.sm,
+    maxWidth: '100%',
+  },
+  ctaChild: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   ctaLabel: {
     ...typography.caption,
     color: colors.textPrimary,
     fontWeight: '700',
+    flexShrink: 1,
   },
 });

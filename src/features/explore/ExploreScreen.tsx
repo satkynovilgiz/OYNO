@@ -20,6 +20,7 @@ import { filterRegions, type ExploreFilterId } from '@/services/explore/filters'
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
 import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
 import { useProgressStore } from '@/store/useProgressStore';
+import { TrailsRow } from '@/features/trails/TrailsRow';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import {
@@ -202,6 +203,8 @@ export function ExploreScreen() {
             <CurrentQuestCard quest={quest} onPress={handlePressQuest} />
           </View>
         ) : null;
+      case 'trails':
+        return <TrailsRow key={id} />;
       case 'natureSites':
         return <NatureSitesRow key={id} sites={natureSites} onPressSite={(siteId) => router.push(`/explore/${siteId}` as never)} />;
       case 'discoveries':

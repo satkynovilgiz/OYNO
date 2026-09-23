@@ -4,7 +4,7 @@ import { supabase } from '@/services/supabase/client';
 
 import type { DiscoveryRow } from './types';
 
-async function fetchDiscoveries(): Promise<DiscoveryRow[]> {
+export async function fetchDiscoveries(): Promise<DiscoveryRow[]> {
   const { data, error } = await supabase.from('discoveries').select('*').eq('published', true).order('sort_order');
   if (error) throw error;
   return data;

@@ -22,6 +22,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
+import { onConnectionRestored } from '@/services/offline/networkStatus';
+import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -161,7 +163,12 @@ export default function RootLayout() {
             useAppStore.getState().loadAgeGroup(),
             useNotificationsStore.getState().load(),
             useDailyDiscoveryStore.getState().load(),
+            // Re-seeds downloaded content into the query cache before any
+            // screen asks for it, so an offline start shows real data.
+            useOfflineStore.getState().load(),
           ]);
+          // Online at start: upgrade downloads saved by an older cache version.
+          void useOfflineStore.getState().refreshAll(true);
         } catch (error) {
           if (__DEV__) console.warn('[boot] one or more stores failed to load, continuing with defaults', error);
         }
@@ -169,6 +176,10 @@ export default function RootLayout() {
       () => setFlagsReady(true),
     );
   }, []);
+
+  // Connection back: refresh offline copies in the background (a failed
+  // refresh keeps the existing copy - downloads are never silently lost).
+  useEffect(() => onConnectionRestored(() => void useOfflineStore.getState().refreshAll()), []);
 
   return (
     <ErrorBoundary>

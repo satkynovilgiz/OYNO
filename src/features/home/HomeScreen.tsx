@@ -1,17 +1,15 @@
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
+import { AgeExperienceTransition, FadeSlideIn, ScreenEntrance } from '@/components/ui';
 import { BottomTabBar, type TabId } from '@/components/navigation/BottomTabBar';
+import { track } from '@/services/analytics/analytics';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
-import { useCurrentQuest } from '@/services/content/exploreService';
-import { useDiscoveries } from '@/services/content/discoveriesService';
-import { useQuestSteps } from '@/services/content/questStepsService';
 import { xpProgress } from '@/services/progress/levelConfig';
-import type { QuestStep } from '@/services/explore/questSteps';
 import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -21,21 +19,21 @@ import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
-  ContinueJourneyCard,
   CultureGrid,
   DailyChallengeCard,
   DailyGiftCard,
   DailyProgressCard,
   GamesCarousel,
-  HeroBanner,
   HomeHeader,
+  HomeJourneyCard,
   ProfileSummaryCard,
+  RecentlyExploredRow,
   TodayDiscoveryEntryCard,
 } from './components';
-import { resolveContinueJourney } from './continueJourney';
 import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
 import { cultureTileAssets, mockGames } from './mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
+import { useHomeRecommendation } from './useHomeRecommendation';
 
 /** Home's own tile ids map onto Culture's category routes 1:1, except
  * "culture" (the hub itself) and "map" (a different feature entirely). */
@@ -70,30 +68,19 @@ export function HomeScreen() {
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
   const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
   const progress = useProgressStore();
-  const { data: questRow } = useCurrentQuest();
-  const { data: questStepRows } = useQuestSteps(questRow?.id);
-  const { data: discoveries } = useDiscoveries();
   const { isLoading: todayLoading, discovery: todayDiscovery } = useTodayDiscovery();
+  const { recommendation, display: recommendationDisplay, recent } = useHomeRecommendation();
 
-  const questSteps: QuestStep[] = (questStepRows ?? []).map((s) => ({
-    id: s.id,
-    questId: s.quest_id,
-    stepOrder: s.step_order,
-    stepType: s.step_type,
-    targetId: s.target_id,
-  }));
-  const continueJourney = resolveContinueJourney(
-    questRow ? { title: questRow.title, subtitle: questRow.subtitle, current: progress.questFoundCount, total: questRow.total_count, completed: progress.questCompleted } : null,
-    questSteps,
-    progress.completedQuestStepIds,
-    (step) => (step.stepType === 'DISCOVER_ITEM' ? ((discoveries ?? []).find((d) => d.id === step.targetId)?.region_id ?? null) : null),
-    {
-      bozUyVisited: progress.bozUyVisited,
-      oymoCreated: progress.oymoCreated,
-      shyrdakCreated: progress.shyrdakCreated,
-      komuzLessonCompleted: progress.komuzLessonCompleted,
-    },
-  );
+  // Product analytics only: which kind of content was recommended/opened -
+  // content type + id, never content text or user data.
+  useEffect(() => {
+    track('home_recommendation_shown', { contentType: recommendation.kind, contentId: recommendation.contentId ?? '' });
+  }, [recommendation.kind, recommendation.contentId]);
+
+  function openRecommendation() {
+    track('home_recommendation_opened', { contentType: recommendation.kind, contentId: recommendation.contentId ?? '' });
+    router.push(recommendation.route as never);
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const challengeClaimed = progress.dailyChallengeClaimedDateISO === today;
@@ -159,20 +146,17 @@ export function HomeScreen() {
       case 'hero':
         return (
           <View key={id} style={styles.horizontalPad}>
-            {continueJourney ? (
-              <ContinueJourneyCard data={continueJourney} onPress={(route) => router.push(route as never)} />
-            ) : (
-              // Every quest and interactive experience genuinely completed
-              // (spec "Avoid showing completed content as if it is new") -
-              // nothing left to continue, so this falls back to the plain
-              // illustrated banner rather than inventing a card.
-              <HeroEntrance>
-                <HeroBanner />
-              </HeroEntrance>
-            )}
+            {/* The ONE "Continue Your Journey" card (useHomeRecommendation),
+                plus real recent activity when there is any. */}
+            <View style={styles.heroStack}>
+              <HomeJourneyCard recommendation={recommendation} display={recommendationDisplay} onPress={openRecommendation} />
+              <RecentlyExploredRow items={recent} onPress={(route) => router.push(route as never)} />
+            </View>
           </View>
         );
       case 'today':
+        // Already today's recommendation above - don't show Daily twice.
+        if (recommendation.kind === 'daily') return null;
         return (
           <View key={id} style={styles.horizontalPad}>
             <TodayDiscoveryEntryCard discovery={todayDiscovery} isLoading={todayLoading} onPress={() => router.push('/daily' as never)} />
@@ -273,6 +257,9 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  heroStack: {
     gap: spacing.sm,
   },
   horizontalPad: {

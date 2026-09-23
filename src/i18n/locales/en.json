@@ -290,6 +290,22 @@
       "explore": "Explore",
       "culture": "Culture",
       "profile": "Profile"
+    },
+    "journey": {
+      "continueYourJourney": "Continue Your Journey",
+      "continue": "Continue",
+      "exploreNext": "Explore next",
+      "today": "Today",
+      "recentlyExplored": "Recently explored",
+      "complete": "Journey complete",
+      "completeTitle": "You've discovered everything so far!",
+      "exploreTitle": "Explore Kyrgyzstan",
+      "progress": "{{completed}} of {{total}} completed",
+      "start": "Start",
+      "explore": "Explore",
+      "passportTitle": "Nature Passport",
+      "playAgain": "Play again",
+      "playedTimes": "Played {{count}}×"
     }
   },
   "games": {
@@ -823,7 +839,8 @@
       "closePreview": "Close",
       "explore": "Explore",
       "pinDiscovered": "discovered",
-      "pinNotDiscovered": "not discovered"
+      "pinNotDiscovered": "not discovered",
+      "trailFilter": "Trail: {{title}}"
     },
     "progress": {
       "title": "Kyrgyzstan exploration progress",
@@ -1271,7 +1288,8 @@
       "games": "Games",
       "culture": "Culture",
       "places": "Places",
-      "materials": "Materials"
+      "materials": "Materials",
+      "trails": "Trails"
     }
   },
   "collections": {
@@ -1425,6 +1443,70 @@
       "noVoice": "This device has no English voice, so listening isn't available.",
       "noContentInLanguage": "This content is only written in Kyrgyz so far, so there's no English narration yet.",
       "noEngine": "Listening isn't available on this device."
+    }
+  },
+  "offline": {
+    "banner": "Offline mode",
+    "download": "Download for offline",
+    "downloading": "Downloading…",
+    "available": "Available offline",
+    "remove": "Remove download",
+    "retry": "Retry",
+    "removeAll": "Remove all",
+    "removeAllConfirmTitle": "Remove all downloads?",
+    "removeAllConfirmMessage": "Only the offline copies are removed. Your progress, saved items and passport stay as they are.",
+    "notAvailable": "This content isn't available offline yet.",
+    "notAvailableHint": "It will open once you're back online. Download it ahead of time to use it offline.",
+    "library": {
+      "title": "Offline Downloads",
+      "places": "Places",
+      "collections": "Collections",
+      "culture": "Culture",
+      "count": "{{count}} downloaded",
+      "storage": "{{size}} stored",
+      "storageNote": "Photos built into the app aren't copied, so they aren't counted.",
+      "emptyTitle": "No downloads yet",
+      "emptyDescription": "Open a place or collection and tap \"Download for offline\"."
+    },
+    "a11y": {
+      "download": "Download {{title}} for offline use",
+      "available": "{{title}} available offline",
+      "remove": "Remove the offline copy of {{title}}",
+      "retry": "Retry downloading {{title}}"
+    }
+  },
+  "trails": {
+    "sectionTitle": "Guided Trails",
+    "kicker": "Cultural trail",
+    "progress": "{{completed}} / {{total}} completed",
+    "progressScope": "Places, interactive experiences, games and collections are counted; reading stops are part of the path.",
+    "continue": "Continue Journey",
+    "seeOnMap": "See on the map",
+    "download": "Download Trail",
+    "showAll": "Show all steps ({{count}})",
+    "completeEyebrow": "Journey completed",
+    "completeBody": "You've completed every step of this trail.",
+    "completedLabel": "Journey completed",
+    "journeyEmpty": "Start one of the trails in Explore.",
+    "searchLabel": "Trail",
+    "status": {
+      "start": "Start",
+      "continue": "Continue",
+      "completed": "Completed"
+    },
+    "state": {
+      "completed": "Done",
+      "todo": "To do",
+      "info": "Read",
+      "next": "Next step"
+    },
+    "stepTypes": {
+      "destination": "Place",
+      "culture_item": "Culture",
+      "culture_material": "Material",
+      "interactive_experience": "Try it yourself",
+      "game": "Game",
+      "collection": "Collection"
     }
   }
 }

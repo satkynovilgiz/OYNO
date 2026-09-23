@@ -10,9 +10,9 @@ import type { AgeExperience } from '@/services/ageExperience/types';
  * the screen's primary navigation surface and carries its own filter
  * state that shouldn't be reordered away from what it filters.
  */
-export type ExploreSectionId = 'progress' | 'quest' | 'natureSites' | 'discoveries';
+export type ExploreSectionId = 'progress' | 'quest' | 'trails' | 'natureSites' | 'discoveries';
 
-export const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = ['progress', 'quest', 'natureSites', 'discoveries'];
+export const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = ['progress', 'quest', 'trails', 'natureSites', 'discoveries'];
 
 /**
  * Section priority per AgeExperience, following the same axes as
@@ -27,12 +27,16 @@ export const ALL_EXPLORE_SECTIONS: ExploreSectionId[] = ['progress', 'quest', 'n
  * - adult: nature sites and discoveries read as curated recommendations
  *   first; the fetch-quest (more gamified) moves toward the end without
  *   ever being hidden.
+ *
+ * `trails` (Guided Trails) sits right after each age's lead section - a
+ * guided path is the natural next step after the quest (child) or the
+ * nature sites (teen/adult).
  */
 const EXPLORE_SECTION_ORDER: Record<AgeExperience, ExploreSectionId[]> = {
-  child: ['quest', 'discoveries', 'natureSites', 'progress'],
-  preteen: ['discoveries', 'quest', 'natureSites', 'progress'],
-  teen: ['natureSites', 'discoveries', 'quest', 'progress'],
-  adult: ['natureSites', 'discoveries', 'progress', 'quest'],
+  child: ['quest', 'trails', 'discoveries', 'natureSites', 'progress'],
+  preteen: ['discoveries', 'quest', 'trails', 'natureSites', 'progress'],
+  teen: ['natureSites', 'trails', 'discoveries', 'quest', 'progress'],
+  adult: ['natureSites', 'trails', 'discoveries', 'progress', 'quest'],
 };
 
 export function getExploreSectionOrder(experience: AgeExperience): ExploreSectionId[] {

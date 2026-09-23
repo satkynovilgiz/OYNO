@@ -4,7 +4,7 @@ import { supabase } from '@/services/supabase/client';
 
 import type { CultureItemRow } from './types';
 
-async function fetchCultureItems(categoryId: string): Promise<CultureItemRow[]> {
+export async function fetchCultureItems(categoryId: string): Promise<CultureItemRow[]> {
   const { data, error } = await supabase
     .from('culture_items')
     .select('*')
@@ -14,13 +14,13 @@ async function fetchCultureItems(categoryId: string): Promise<CultureItemRow[]> 
   return data;
 }
 
-async function fetchCultureItem(id: string): Promise<CultureItemRow | null> {
+export async function fetchCultureItem(id: string): Promise<CultureItemRow | null> {
   const { data, error } = await supabase.from('culture_items').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   return data;
 }
 
-async function fetchAllCultureItems(): Promise<CultureItemRow[]> {
+export async function fetchAllCultureItems(): Promise<CultureItemRow[]> {
   const { data, error } = await supabase.from('culture_items').select('*').order('sort_order');
   if (error) throw error;
   return data;

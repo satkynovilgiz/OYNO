@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
 import { discoveryImages, natureSiteImages } from '@/features/explore/data';
 import { LocationDetailScreen, type RelatedQuest } from '@/features/explore/LocationDetailScreen';
 import type { ExploreLocation } from '@/features/explore/types';
@@ -14,14 +15,17 @@ import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/type
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
 import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
+import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
 
 export default function ExploreLocationRoute() {
   const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: regions, isLoading: regionsLoading, error: regionsError } = useExploreRegions();
-  const { data: discoveries, isLoading: discoveriesLoading } = useDiscoveries();
+  const regionsQuery = useExploreRegions();
+  const discoveriesQuery = useDiscoveries();
+  const { data: regions, isLoading: regionsLoading, error: regionsError } = regionsQuery;
+  const { data: discoveries, isLoading: discoveriesLoading } = discoveriesQuery;
   const { data: questRow } = useCurrentQuest();
   const { data: questSteps } = useQuestSteps(questRow?.id);
   const progress = useProgressStore();
@@ -37,6 +41,18 @@ export default function ExploreLocationRoute() {
     void useProgressStore.getState().advanceQuestStep('VISIT_LOCATION', row.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row?.id]);
+
+  // Offline with nothing downloaded: say so, don't spin forever.
+  if (isWaitingForNetwork(regionsQuery) || isWaitingForNetwork(discoveriesQuery)) {
+    return (
+      <OfflineUnavailable
+        onRetry={() => {
+          void regionsQuery.refetch();
+          void discoveriesQuery.refetch();
+        }}
+      />
+    );
+  }
 
   if (isLoading) {
     return (

@@ -4,6 +4,7 @@ import { cultureCategoryImages, cultureItemImages, cultureMaterialImages } from 
 import type { CultureCategoryId } from '@/features/culture/types';
 import { INTERACTIVE_EXPERIENCES, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
 import { gameTitleKey, type GameListItem } from '@/features/games/types';
+import type { Trail } from '@/features/trails/trailsData';
 import type { SupportedLanguage } from '@/i18n';
 import { mapExploreRegionName, type CultureCategoryRow, type CultureItemRow, type CultureMaterialRow, type ExploreRegionRow } from '@/services/content/types';
 
@@ -18,7 +19,7 @@ import { mapExploreRegionName, type CultureCategoryRow, type CultureItemRow, typ
  * turn each content type into a title/thumbnail/route, instead of Search
  * and Saved each re-deriving it slightly differently.
  */
-export type CatalogContentType = 'game' | 'region' | 'nature' | 'culture_category' | 'culture_material' | 'culture_item' | 'interactive_experience';
+export type CatalogContentType = 'game' | 'region' | 'nature' | 'culture_category' | 'culture_material' | 'culture_item' | 'interactive_experience' | 'trail';
 
 export type CatalogItem = {
   contentType: CatalogContentType;
@@ -130,5 +131,20 @@ export function buildInteractiveExperienceCatalog(t: TFunction): CatalogItem[] {
     thumbnail: experience.imageSource,
     route: routeForInteractiveExperience(experience.id),
     searchText: allLanguageValues(t, experience.titleKey),
+  }));
+}
+
+/** Guided Trails as search results. `metadata` is supplied by the caller
+ * (real progress like "3/5 completed" only when the trail has trackable
+ * progress) so this builder never computes progress itself. */
+export function buildTrailCatalog(trails: Trail[], language: SupportedLanguage, metadataFor: (trail: Trail) => string | null): CatalogItem[] {
+  return trails.map((trail) => ({
+    contentType: 'trail',
+    id: trail.id,
+    title: resolveLocalized(trail.title, language),
+    metadata: metadataFor(trail),
+    thumbnail: trail.heroImage,
+    route: `/trails/${trail.id}`,
+    searchText: [trail.title.kg, trail.title.ru, trail.title.en],
   }));
 }

@@ -17,7 +17,9 @@ const FILTER_BY_CONTENT_TYPE: Record<FavoriteContentType, SavedFilter> = {
 };
 
 export function filterForContentType(contentType: CatalogContentType): SavedFilter | null {
-  if (contentType === 'culture_category') return null;
+  // Categories and trails aren't favoritable (trails: see useFavoritesStore
+  // - the favorites table/RPC only accepts its existing content types).
+  if (contentType === 'culture_category' || contentType === 'trail') return null;
   return FILTER_BY_CONTENT_TYPE[contentType];
 }
 

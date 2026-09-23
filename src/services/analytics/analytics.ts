@@ -37,7 +37,9 @@ export type AnalyticsEventName =
   | 'quest_step_completed'
   | 'explore_search'
   | 'explore_filter_used'
-  | 'age_group_selected';
+  | 'age_group_selected'
+  | 'home_recommendation_shown'
+  | 'home_recommendation_opened';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

@@ -1,4 +1,5 @@
-export * from './ContinueJourneyCard';
+export * from './HomeJourneyCard';
+export * from './RecentlyExploredRow';
 export * from './CultureGrid';
 export * from './DailyChallengeCard';
 export * from './DailyGiftCard';

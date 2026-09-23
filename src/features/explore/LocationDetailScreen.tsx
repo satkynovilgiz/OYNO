@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
+import { DownloadButton } from '@/components/offline/DownloadButton';
 import { AnimatedPressable, FadeSlideIn, IconButton, ProgressBar } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
@@ -191,6 +192,8 @@ export function LocationDetailScreen({
             contentKey={`region:${location.id}`}
             narration={{ lang: 'kg', text: joinNarration([location.name.kg, location.tagline, ...(isChild ? location.facts.slice(0, 2) : location.facts)]) }}
           />
+
+          {location.kind === 'nature' ? <DownloadButton kind="nature" contentId={location.id} title={locationName} /> : null}
 
           {questFirst ? questCard : null}
 
