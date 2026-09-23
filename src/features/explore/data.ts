@@ -53,6 +53,21 @@ export const discoveryImages: Record<string, ImageSourcePropType> = {
   'beshbarmak-dish': discoveryBeshbarmak,
 };
 
+/** Real-world position of each nature destination (`explore_regions.id`),
+ * for the interactive map only - approximate public coordinates of the
+ * lake/valley/range itself, projected through `projectLonLat`
+ * (features/explore/map/kyrgyzstanGeometry.ts). Layout data, like
+ * `exploreMapPins` above - names, taglines and photos still come from the
+ * existing destination rows and `natureSiteImages`. */
+export const natureSiteCoordinates: Record<string, { lat: number; lon: number }> = {
+  'son-kol': { lat: 41.83, lon: 75.13 },
+  suusamyr: { lat: 42.18, lon: 73.95 },
+  alay: { lat: 39.68, lon: 73.2 },
+  'sary-chelek': { lat: 41.86, lon: 71.96 },
+  arslanbob: { lat: 41.33, lon: 72.94 },
+  'ala-too': { lat: 42.55, lon: 74.5 },
+};
+
 /** Real photography per nature destination (`explore_regions.id`, kind
  * 'nature') - the single mapping shared by the Explore "Nature sites" cards
  * and the destination detail hero, so card -> detail keeps one visual

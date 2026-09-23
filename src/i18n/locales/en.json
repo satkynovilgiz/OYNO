@@ -815,7 +815,15 @@
     "loadError": "Content failed to load. Please try again.",
     "map": {
       "recenterLabel": "Recenter",
-      "filterLabel": "Filter"
+      "filterLabel": "Filter",
+      "title": "Map of Kyrgyzstan",
+      "entry": "Explore the Map",
+      "summary": "{{unlocked}} / {{total}} places discovered",
+      "gestureHint": "Pinch or double-tap to zoom",
+      "closePreview": "Close",
+      "explore": "Explore",
+      "pinDiscovered": "discovered",
+      "pinNotDiscovered": "not discovered"
     },
     "progress": {
       "title": "Kyrgyzstan exploration progress",

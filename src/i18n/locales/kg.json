@@ -815,7 +815,15 @@
     "loadError": "Мазмун жүктөлгөн жок. Кайра аракет кылыңыз.",
     "map": {
       "recenterLabel": "Ортого келтирүү",
-      "filterLabel": "Чыпкалоо"
+      "filterLabel": "Чыпкалоо",
+      "title": "Кыргызстандын картасы",
+      "entry": "Картаны изилдөө",
+      "summary": "{{total}} жерден {{unlocked}} ачылды",
+      "gestureHint": "Чоңойтуу үчүн эки манжа менен тарт же эки жолу бас",
+      "closePreview": "Жабуу",
+      "explore": "Изилдөө",
+      "pinDiscovered": "ачылган",
+      "pinNotDiscovered": "ачыла элек"
     },
     "progress": {
       "title": "Кыргызстанды изилдөө прогресси",

@@ -815,7 +815,15 @@
     "loadError": "Не удалось загрузить контент. Попробуйте снова.",
     "map": {
       "recenterLabel": "Центрировать",
-      "filterLabel": "Фильтр"
+      "filterLabel": "Фильтр",
+      "title": "Карта Кыргызстана",
+      "entry": "Исследовать карту",
+      "summary": "Открыто {{unlocked}} из {{total}} мест",
+      "gestureHint": "Разведите пальцы или нажмите дважды, чтобы приблизить",
+      "closePreview": "Закрыть",
+      "explore": "Исследовать",
+      "pinDiscovered": "открыто",
+      "pinNotDiscovered": "не открыто"
     },
     "progress": {
       "title": "Прогресс исследования Кыргызстана",

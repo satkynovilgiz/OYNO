@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronRight, SlidersHorizontal, TriangleAlert } from 'lucide-react-native';
+import { ChevronRight, Map as MapIcon, SlidersHorizontal, TriangleAlert } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -261,6 +261,18 @@ export function ExploreScreen() {
                   onPressFilter={() => setFiltersVisible(true)}
                 />
               </HeroEntrance>
+              <AnimatedPressable
+                style={styles.mapEntry}
+                onPress={() => router.push('/explore/map' as never)}
+                pressScale={0.98}
+                hoverEffect
+                accessibilityRole="button"
+                accessibilityLabel={t('explore.map.entry')}
+              >
+                <MapIcon size={16} color={colors.primary} strokeWidth={2.25} />
+                <Text style={styles.mapEntryText}>{t('explore.map.entry')}</Text>
+                <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
+              </AnimatedPressable>
             </View>
 
             {filteredRegionsList && (
@@ -349,6 +361,22 @@ const styles = StyleSheet.create({
   },
   sectionList: {
     gap: spacing.lg,
+  },
+  mapEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(47,82,51,0.35)',
+    backgroundColor: colors.surface,
+  },
+  mapEntryText: {
+    ...typography.bodyBold,
+    color: colors.primary,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
