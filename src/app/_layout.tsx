@@ -21,6 +21,7 @@ import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
+import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -159,6 +160,7 @@ export default function RootLayout() {
             useAppStore.getState().loadOnboardingFlags(),
             useAppStore.getState().loadAgeGroup(),
             useNotificationsStore.getState().load(),
+            useDailyDiscoveryStore.getState().load(),
           ]);
         } catch (error) {
           if (__DEV__) console.warn('[boot] one or more stores failed to load, continuing with defaults', error);

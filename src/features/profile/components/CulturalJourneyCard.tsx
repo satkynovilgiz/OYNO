@@ -1,8 +1,9 @@
+import { ArrowRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { FadeSlideIn, ProgressRing } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, ProgressRing } from '@/components/ui';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -11,6 +12,8 @@ import type { ProfileStat } from '../types';
 
 type CulturalJourneyCardProps = {
   stats: ProfileStat[];
+  /** Opens the full "My OYNO Journey" passport (/journey). */
+  onPress?: () => void;
 };
 
 const RING_SIZE_BY_CARD_SCALE = { large: 64, medium: 52, compact: 46, dense: 42 };
@@ -24,13 +27,21 @@ const RING_SIZE_BY_CARD_SCALE = { large: 64, medium: 52, compact: 46, dense: 42 
  * rectangles as the default for everything") - the one section on Profile
  * that isn't another cream card, so it reads as a distinct, valued
  * moment rather than a dashboard tile. */
-export function CulturalJourneyCard({ stats }: CulturalJourneyCardProps) {
+export function CulturalJourneyCard({ stats, onPress }: CulturalJourneyCardProps) {
   const { t } = useTranslation();
   const { config } = useAgeExperience();
   const ringSize = resolveByCardScale(config.cardScale, RING_SIZE_BY_CARD_SCALE);
 
   return (
-    <View style={styles.card}>
+    <AnimatedPressable
+      style={styles.card}
+      onPress={onPress}
+      disabled={!onPress}
+      pressScale={0.99}
+      hoverEffect
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={t('journey.entryCta')}
+    >
       <View style={styles.ornamentRow}>
         <OymoOrnament size={13} color={colors.accentGold} strokeWidth={1.5} />
       </View>
@@ -51,7 +62,14 @@ export function CulturalJourneyCard({ stats }: CulturalJourneyCardProps) {
           </FadeSlideIn>
         ))}
       </View>
-    </View>
+
+      {onPress ? (
+        <View style={styles.cta}>
+          <Text style={styles.ctaLabel}>{t('journey.entryCta')}</Text>
+          <ArrowRight size={14} color={colors.accentGold} strokeWidth={2.5} />
+        </View>
+      ) : null}
+    </AnimatedPressable>
   );
 }
 
@@ -95,5 +113,17 @@ const styles = StyleSheet.create({
   value: {
     ...typography.bodyBold,
     color: colors.textOnDark,
+  },
+  cta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xxs,
+    marginTop: spacing.sm,
+  },
+  ctaLabel: {
+    ...typography.caption,
+    color: colors.accentGold,
+    fontWeight: '700',
   },
 });

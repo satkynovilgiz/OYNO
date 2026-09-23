@@ -4,9 +4,9 @@ import type { AgeExperience } from '@/services/ageExperience/types';
  * on-screen order. Kept in one enum-like list so `HOME_SECTION_ORDER` below
  * can be checked (by its own test) to always be a full permutation - Home
  * stays the same single screen for every age, only the order changes. */
-export type HomeSectionId = 'hero' | 'profile' | 'games' | 'dailyRow' | 'culture' | 'dailyProgress';
+export type HomeSectionId = 'hero' | 'today' | 'profile' | 'games' | 'dailyRow' | 'culture' | 'dailyProgress';
 
-export const ALL_HOME_SECTIONS: HomeSectionId[] = ['hero', 'profile', 'games', 'dailyRow', 'culture', 'dailyProgress'];
+export const ALL_HOME_SECTIONS: HomeSectionId[] = ['hero', 'today', 'profile', 'games', 'dailyRow', 'culture', 'dailyProgress'];
 
 /**
  * Section priority per AgeExperience (spec "Make Home adapt to
@@ -21,12 +21,16 @@ export const ALL_HOME_SECTIONS: HomeSectionId[] = ['hero', 'profile', 'games', '
  * - adult: a featured cultural story leads, then an explore-style
  *   recommendation slot and compact progress; games are available but not
  *   dominant, pushed toward the end.
+ *
+ * `today` (the Daily OYNO entry card) sits right after each experience's
+ * lead section - visible without scrolling far, but never displacing what
+ * already leads Home for that age.
  */
 const HOME_SECTION_ORDER: Record<AgeExperience, HomeSectionId[]> = {
-  child: ['hero', 'profile', 'games', 'dailyRow', 'culture', 'dailyProgress'],
-  preteen: ['games', 'dailyRow', 'culture', 'profile', 'hero', 'dailyProgress'],
-  teen: ['games', 'dailyRow', 'culture', 'dailyProgress', 'hero', 'profile'],
-  adult: ['culture', 'hero', 'dailyProgress', 'profile', 'games', 'dailyRow'],
+  child: ['hero', 'today', 'profile', 'games', 'dailyRow', 'culture', 'dailyProgress'],
+  preteen: ['games', 'today', 'dailyRow', 'culture', 'profile', 'hero', 'dailyProgress'],
+  teen: ['games', 'today', 'dailyRow', 'culture', 'dailyProgress', 'hero', 'profile'],
+  adult: ['culture', 'today', 'hero', 'dailyProgress', 'profile', 'games', 'dailyRow'],
 };
 
 export function getHomeSectionOrder(experience: AgeExperience): HomeSectionId[] {

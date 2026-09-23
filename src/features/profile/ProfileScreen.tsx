@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
 import { mockGamesList } from '@/features/games/mockData';
+import { progressGameIdFor } from '@/features/games/progressGameIds';
 import { gameTitleKey } from '@/features/games/types';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -80,13 +81,13 @@ export function ProfileScreen() {
   ];
 
   const favoriteGames: FavoriteGame[] = mockGamesList
-    .filter((game) => (progress.gameStats[game.id]?.played ?? 0) > 0)
+    .filter((game) => (progress.gameStats[progressGameIdFor(game.id)]?.played ?? 0) > 0)
     .map((game) => ({
       id: game.id,
       name: t(gameTitleKey(game.id)),
       thumbnail: game.thumbnail,
-      gamesPlayed: progress.gameStats[game.id].played,
-      wins: progress.gameStats[game.id].won,
+      gamesPlayed: progress.gameStats[progressGameIdFor(game.id)].played,
+      wins: progress.gameStats[progressGameIdFor(game.id)].won,
       route: game.route,
     }));
 
@@ -132,7 +133,7 @@ export function ProfileScreen() {
       case 'journey':
         return (
           <View key={id} style={styles.horizontalPad}>
-            <CulturalJourneyCard stats={profileStats} />
+            <CulturalJourneyCard stats={profileStats} onPress={() => router.push('/journey' as never)} />
           </View>
         );
       case 'achievements':

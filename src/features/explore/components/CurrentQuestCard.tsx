@@ -8,7 +8,7 @@ import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
-import questBackground from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
+import questBackground from '@assets/img/OYNO_design/explore/quest_golden_valley_shyrdaks.jpg';
 
 import type { ExploreQuest } from '../types';
 

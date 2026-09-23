@@ -7,3 +7,4 @@ export * from './GamesCarousel';
 export * from './HeroBanner';
 export * from './HomeHeader';
 export * from './ProfileSummaryCard';
+export * from './TodayDiscoveryEntryCard';

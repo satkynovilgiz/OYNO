@@ -12,6 +12,7 @@ import { useDiscoveries } from '@/services/content/discoveriesService';
 import { useQuestSteps } from '@/services/content/questStepsService';
 import { xpProgress } from '@/services/progress/levelConfig';
 import type { QuestStep } from '@/services/explore/questSteps';
+import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
@@ -29,6 +30,7 @@ import {
   HeroBanner,
   HomeHeader,
   ProfileSummaryCard,
+  TodayDiscoveryEntryCard,
 } from './components';
 import { resolveContinueJourney } from './continueJourney';
 import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
@@ -71,6 +73,7 @@ export function HomeScreen() {
   const { data: questRow } = useCurrentQuest();
   const { data: questStepRows } = useQuestSteps(questRow?.id);
   const { data: discoveries } = useDiscoveries();
+  const { isLoading: todayLoading, discovery: todayDiscovery } = useTodayDiscovery();
 
   const questSteps: QuestStep[] = (questStepRows ?? []).map((s) => ({
     id: s.id,
@@ -147,7 +150,7 @@ export function HomeScreen() {
     }
   }
 
-  // Same six sections, same underlying data, for every AgeExperience - only
+  // Same seven sections, same underlying data, for every AgeExperience - only
   // their order changes (spec "Make Home adapt to AgeExperience... Section
   // ordering/presentation responds to AgeExperience... do not duplicate
   // HomeScreen or change underlying progress/game logic").
@@ -167,6 +170,12 @@ export function HomeScreen() {
                 <HeroBanner />
               </HeroEntrance>
             )}
+          </View>
+        );
+      case 'today':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <TodayDiscoveryEntryCard discovery={todayDiscovery} isLoading={todayLoading} onPress={() => router.push('/daily' as never)} />
           </View>
         );
       case 'profile':

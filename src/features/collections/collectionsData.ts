@@ -1,7 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 
 import bozUyYurtCamp from '@assets/img/OYNO_design/culture/boz_uy/yurt_camp.jpg';
-import horseHorsemanSteppe from '@assets/img/OYNO_design/culture/horse/horseman_steppe.jpg';
+import horseEagleHunterGoldenHour from '@assets/img/OYNO_design/culture/horse/eagle_hunter_golden_hour.jpg';
 import oymoWoodcarvingWarmLight from '@assets/img/OYNO_design/culture/oymo/woodcarving_warm_light.jpg';
 
 import type { LocalizedText } from '@/features/explore/types';
@@ -67,7 +67,7 @@ export const collections: Collection[] = [
   {
     id: 'horse-culture',
     relatedCategoryId: 'horse',
-    heroImage: horseHorsemanSteppe,
+    heroImage: horseEagleHunterGoldenHour,
     title: {
       kg: 'Ат жана кыргыз маданияты',
       ru: 'Конная культура кыргызов',

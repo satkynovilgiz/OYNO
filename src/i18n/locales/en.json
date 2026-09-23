@@ -1293,5 +1293,78 @@
       "culture_item": "Culture",
       "interactive_experience": "Culture"
     }
+  },
+  "daily": {
+    "overline": "TODAY'S DISCOVERY",
+    "minutes": "{{count}} min",
+    "entry": {
+      "overline": "Today",
+      "title": "Today's Discovery",
+      "open": "Open",
+      "done": "Discovered today"
+    },
+    "challenge": {
+      "question": "Which picture shows “{{title}}”?",
+      "optionLabel": "Picture {{index}}",
+      "correct": "That's right!",
+      "tryAgain": "Not quite — try again."
+    },
+    "complete": "Mark as discovered",
+    "completeHint": "Find the right picture first.",
+    "done": {
+      "title": "Today's discovery is done",
+      "tomorrow": "A new discovery will be here tomorrow.",
+      "readMore": "Read the full entry",
+      "tryIt": "Try it yourself",
+      "play": "Play"
+    },
+    "unavailableTitle": "Today's discovery couldn't load",
+    "unavailableDescription": "Check your connection and try again later."
+  },
+  "journey": {
+    "entryCta": "Open my journey",
+    "title": "My Journey",
+    "subtitle": {
+      "child": "Your culture passport",
+      "preteen": "Your path through Kyrgyz culture",
+      "teen": "Every stamp is a step forward",
+      "adult": "A journal of your travels through Kyrgyz culture"
+    },
+    "level": "Level {{level}}",
+    "stampsLabel": "Stamps collected",
+    "guestNote": "Sign in to keep your journey saved.",
+    "counters": {
+      "discovered": "Discovered",
+      "explored": "Explored",
+      "played": "Played",
+      "achievements": "Medals"
+    },
+    "discovered": {
+      "title": "Discovered",
+      "empty": "Make your first discovery — build a boz uy or open today's discovery.",
+      "daily": "Daily discoveries",
+      "cultureCount": "Culture discoveries: {{count}}"
+    },
+    "explored": {
+      "title": "Explored",
+      "empty": "Open the map and visit your first region.",
+      "regions": "Regions",
+      "discoveries": "Finds"
+    },
+    "played": {
+      "title": "Played",
+      "empty": "Play your first traditional game.",
+      "sessions": "Total sessions: {{count}}",
+      "detail": "Plays: {{played}} · Wins: {{won}}"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "empty": "Earn your first medal!"
+    },
+    "next": {
+      "title": "Next discovery",
+      "cta": "Start",
+      "allDone": "You've been everywhere so far — wonderful!"
+    }
   }
 }
