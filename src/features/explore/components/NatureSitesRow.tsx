@@ -59,15 +59,12 @@ export function NatureSitesRow({ sites, onPressSite }: NatureSitesRowProps) {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{t('explore.natureSites.title')}</Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.list}
-        snapToInterval={cardWidth + GAP}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        disableIntervalMomentum
-      >
+      {/* Plain smooth scrolling on purpose - no snapToInterval. Its snap
+          grid starts at content x=0, not after `list`'s leading gutter, so
+          snaps land off-grid (previous-card sliver) and the last card can
+          become unreachable; the app-wide fix in 0304192 removed it from
+          every carousel (see docs/AGE_ADAPTIVE_EXPERIENCE.md). */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.list}>
         {sites.map((site, index) => (
           <FadeSlideIn key={site.id} index={index} style={shadows.card}>
             <AnimatedPressable

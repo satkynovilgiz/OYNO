@@ -13,6 +13,12 @@ import discoveryBeshbarmak from '@assets/img/OYNO_design/explore/discovery_beshb
 import discoveryBozUy from '@assets/img/OYNO_design/explore/discovery_boz_uy.png';
 import discoveryTooTeke from '@assets/img/OYNO_design/explore/discovery_too_teke.png';
 import discoveryYsykKol from '@assets/img/OYNO_design/explore/discovery_ysyk_kol.png';
+import natureAlaToo from '@assets/img/OYNO_design/explore/nature/ala_too.jpg';
+import natureAlay from '@assets/img/OYNO_design/explore/nature/alay.jpg';
+import natureArslanbob from '@assets/img/OYNO_design/explore/nature/arslanbob.jpg';
+import natureSaryChelek from '@assets/img/OYNO_design/explore/nature/sary_chelek.jpg';
+import natureSonKol from '@assets/img/OYNO_design/explore/nature/son_kol.jpg';
+import natureSuusamyr from '@assets/img/OYNO_design/explore/nature/suusamyr.jpg';
 import questBoruGoldenValley from '@assets/img/OYNO_design/explore/quest_boru_golden_valley.jpg';
 import questBoruShyrdak from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
@@ -48,14 +54,18 @@ export const discoveryImages: Record<string, ImageSourcePropType> = {
 };
 
 /** Real photography per nature destination (`explore_regions.id`, kind
- * 'nature'), shared by the Explore "Nature sites" cards and the destination
- * detail hero so card -> detail keeps one visual identity. Empty on
- * purpose: none of the six sites (son-kol, suusamyr, alay, sary-chelek,
- * arslanbob, ala-too) has a photo of that actual place in the project yet,
- * and a generic lake/mountain stand-in would misrepresent a real location
- * (same rule as the detail screen's hero). Add `'<id>': require(...)` here
- * as real photos arrive - both surfaces pick them up automatically. */
-export const natureSiteImages: Record<string, ImageSourcePropType> = {};
+ * 'nature') - the single mapping shared by the Explore "Nature sites" cards
+ * and the destination detail hero, so card -> detail keeps one visual
+ * identity. A site missing here falls back to its designed tone card
+ * rather than a generic stand-in photo. */
+export const natureSiteImages: Record<string, ImageSourcePropType> = {
+  'son-kol': natureSonKol,
+  suusamyr: natureSuusamyr,
+  alay: natureAlay,
+  'sary-chelek': natureSaryChelek,
+  arslanbob: natureArslanbob,
+  'ala-too': natureAlaToo,
+};
 
 /** Flat tones for a location with no photo, indexed by its position among
  * locations of the same kind - the Nature card fallback and the detail
