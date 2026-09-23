@@ -1,6 +1,7 @@
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
@@ -8,8 +9,8 @@ import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
-import questBackground from '@assets/img/OYNO_design/explore/quest_golden_valley_shyrdaks.jpg';
 
+import { questBackgroundFor } from '../data';
 import type { ExploreQuest } from '../types';
 
 type CurrentQuestCardProps = {
@@ -40,7 +41,10 @@ export function CurrentQuestCard({ quest, onPress }: CurrentQuestCardProps) {
         accessibilityLabel={quest.title}
       >
       <View style={styles.background} />
-      <Image source={questBackground} style={styles.artwork} resizeMode="cover" />
+      {/* Full-bleed, cover-cropped from the right edge so Börü and the
+          shyrdak (right third of the art) stay in frame at every card
+          aspect ratio, while the darker left side sits under the text. */}
+      <Image source={questBackgroundFor(quest.id)} style={styles.artwork} contentFit="cover" contentPosition="right" />
       <LinearGradient
         colors={['rgba(20,28,12,0.9)', 'rgba(20,28,12,0.55)', 'rgba(20,28,12,0)']}
         start={{ x: 0, y: 0 }}
@@ -85,11 +89,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tiles.culture,
   },
   artwork: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: '62%',
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
   },
   content: {
     paddingHorizontal: spacing.md,

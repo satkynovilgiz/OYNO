@@ -13,6 +13,8 @@ import discoveryBeshbarmak from '@assets/img/OYNO_design/explore/discovery_beshb
 import discoveryBozUy from '@assets/img/OYNO_design/explore/discovery_boz_uy.png';
 import discoveryTooTeke from '@assets/img/OYNO_design/explore/discovery_too_teke.png';
 import discoveryYsykKol from '@assets/img/OYNO_design/explore/discovery_ysyk_kol.png';
+import questBoruGoldenValley from '@assets/img/OYNO_design/explore/quest_boru_golden_valley.jpg';
+import questBoruShyrdak from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
 import type { ExploreMapPin } from './types';
 
@@ -44,3 +46,15 @@ export const discoveryImages: Record<string, ImageSourcePropType> = {
   'too-teke': discoveryTooTeke,
   'beshbarmak-dish': discoveryBeshbarmak,
 };
+
+/** Background artwork per quest, keyed by `quests.id` - same bundled-image
+ * lookup reasoning as `discoveryImages` above (a quest row has no image
+ * column). Quests without their own entry keep the original generic
+ * Börü/shyrdak banner. */
+export const questBackgroundImages: Record<string, ImageSourcePropType> = {
+  'lost-shyrdak': questBoruGoldenValley,
+};
+
+export function questBackgroundFor(questId: string): ImageSourcePropType {
+  return questBackgroundImages[questId] ?? questBoruShyrdak;
+}
