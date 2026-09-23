@@ -31,7 +31,7 @@ import {
   NatureSitesRow,
   RegionProgressCard,
 } from './components';
-import { discoveryImages, exploreMapPins } from './data';
+import { discoveryImages, exploreMapPins, natureSiteImages } from './data';
 import { getExploreSectionOrder, type ExploreSectionId } from './exploreSections';
 import type { ExploreDiscovery } from './types';
 
@@ -112,12 +112,19 @@ export function ExploreScreen() {
           }))
       : null;
 
+  // Tone index = position among ALL nature rows, exactly how the detail
+  // route picks its fallback tone, so a photo-less card and its detail
+  // hero share one color even while a filter hides some sites.
+  const allNatureIds = (regions ?? []).filter((region) => region.kind === 'nature').map((region) => region.id);
   const natureSites = (regions ?? [])
     .filter((region) => region.kind === 'nature' && filteredRegionIds.has(region.id))
     .map((region) => ({
       id: region.id,
       name: mapExploreRegionName(region)[language] ?? region.name_kg,
       tagline: region.tagline,
+      imageSource: natureSiteImages[region.id] ?? null,
+      toneIndex: Math.max(0, allNatureIds.indexOf(region.id)),
+      visited: progress.visitedRegionIds.includes(region.id),
     }));
 
   const homeDiscoveries: ExploreDiscovery[] = discoveryList.map((d) => ({

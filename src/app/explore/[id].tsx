@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { discoveryImages } from '@/features/explore/data';
+import { discoveryImages, natureSiteImages } from '@/features/explore/data';
 import { LocationDetailScreen, type RelatedQuest } from '@/features/explore/LocationDetailScreen';
 import type { ExploreLocation } from '@/features/explore/types';
 import { track } from '@/services/analytics/analytics';
@@ -108,7 +108,9 @@ export default function ExploreLocationRoute() {
   // A real photo only when one of this region's own discoveries has
   // bundled art - never a generic/unrelated stand-in for "cinematic
   // photography" (spec "Do not fabricate missing information").
-  const heroImage = localizedDiscoveries.find((d) => d.imageSource)?.imageSource ?? null;
+  // Nature destinations use their own mapped photo (the same one their
+  // Explore card shows) when one exists.
+  const heroImage = localizedDiscoveries.find((d) => d.imageSource)?.imageSource ?? natureSiteImages[row.id] ?? null;
 
   // "Related quest" only when the active quest's next real, incomplete
   // step genuinely targets this location or a discovery inside it -

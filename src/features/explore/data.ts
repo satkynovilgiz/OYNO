@@ -47,6 +47,22 @@ export const discoveryImages: Record<string, ImageSourcePropType> = {
   'beshbarmak-dish': discoveryBeshbarmak,
 };
 
+/** Real photography per nature destination (`explore_regions.id`, kind
+ * 'nature'), shared by the Explore "Nature sites" cards and the destination
+ * detail hero so card -> detail keeps one visual identity. Empty on
+ * purpose: none of the six sites (son-kol, suusamyr, alay, sary-chelek,
+ * arslanbob, ala-too) has a photo of that actual place in the project yet,
+ * and a generic lake/mountain stand-in would misrepresent a real location
+ * (same rule as the detail screen's hero). Add `'<id>': require(...)` here
+ * as real photos arrive - both surfaces pick them up automatically. */
+export const natureSiteImages: Record<string, ImageSourcePropType> = {};
+
+/** Flat tones for a location with no photo, indexed by its position among
+ * locations of the same kind - the Nature card fallback and the detail
+ * hero fallback read the same list, so a photo-less destination keeps the
+ * same color from card to detail. */
+export const LOCATION_TONES = [colors.tiles.culture, colors.tiles.food, colors.tiles.music, colors.tiles.map];
+
 /** Background artwork per quest, keyed by `quests.id` - same bundled-image
  * lookup reasoning as `discoveryImages` above (a quest row has no image
  * column). Quests without their own entry keep the original generic

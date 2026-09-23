@@ -14,10 +14,11 @@ import { useHeroParallax } from '@/services/motion/useHeroParallax';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { DiscoveriesRow } from './components';
+import { LOCATION_TONES } from './data';
 import type { ExploreDiscovery, ExploreLocation } from './types';
 import type { RegionState } from '@/services/explore/regionState';
 
-const TONES = [colors.tiles.culture, colors.tiles.food, colors.tiles.music, colors.tiles.map];
+const TONES = LOCATION_TONES;
 
 const HERO_ASPECT_RATIO_BY_CARD_SCALE = { large: 1.1, medium: 1.35, compact: 1.55, dense: 1.8 };
 
