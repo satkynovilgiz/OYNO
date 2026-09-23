@@ -8,6 +8,10 @@ export type DailyTextBlock = {
    * the full detail screen uses), or null for an unlabeled lead paragraph. */
   labelKey: string | null;
   text: string;
+  /** The language this text is actually written in - the simple summary
+   * is authored per language, the other fields are Kyrgyz. Used by the
+   * audio guide so it never reads text with the wrong voice. */
+  lang: SupportedLanguage;
 };
 
 const LABEL_KEY_BY_FIELD: Record<DailyTextField, string> = {
@@ -61,7 +65,7 @@ export function buildDailyTextBlocks(item: CultureItemRow, experience: AgeExperi
 
   if (depth.sentences !== null) {
     const summary = simpleSummary(item, language);
-    if (summary) return [{ labelKey: null, text: summary }];
+    if (summary) return [{ labelKey: null, text: summary, lang: language }];
   }
 
   const fields = DAILY_TEXT_FIELDS.filter((field) => !!item[field]?.trim()).slice(0, depth.blocks);
@@ -70,6 +74,7 @@ export function buildDailyTextBlocks(item: CultureItemRow, experience: AgeExperi
     return {
       labelKey: depth.sentences !== null && index === 0 ? null : LABEL_KEY_BY_FIELD[field],
       text: depth.sentences !== null ? firstSentences(raw, depth.sentences) : raw,
+      lang: 'kg' as const,
     };
   });
 }

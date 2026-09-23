@@ -1,11 +1,12 @@
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Pause, Play } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
+import { useAudioGuideStore } from '@/services/audioGuide/useAudioGuideStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type KomuzPlaylistProps = {
@@ -18,17 +19,27 @@ export function KomuzPlaylist({ tracks }: KomuzPlaylistProps) {
   const player = useAudioPlayer(tracks[activeIndex]?.source);
   const status = useAudioPlayerStatus(player);
 
+  // One sound at a time: a melody and the audio guide never play together.
+  const guideSession = useAudioGuideStore((state) => state.sessionKey);
+  useEffect(() => {
+    if (guideSession && player.playing) player.pause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guideSession]);
+  const stopGuide = () => useAudioGuideStore.getState().stop();
+
   const handlePressTrack = (index: number) => {
     if (index === activeIndex) {
       if (status.playing) {
         player.pause();
       } else {
+        stopGuide();
         player.play();
       }
       return;
     }
     setActiveIndex(index);
     player.replace(tracks[index].source);
+    stopGuide();
     player.play();
   };
 

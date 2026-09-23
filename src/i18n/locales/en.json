@@ -1401,5 +1401,22 @@
   "share": {
     "action": "Share",
     "message": "I discovered {{title}} in OYNO!"
+  },
+  "audioGuide": {
+    "listen": "Listen",
+    "listenWithTime": "Listen · {{count}} min",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart",
+    "stop": "Stop listening",
+    "speed": "Speed {{rate}}×",
+    "nowListening": "Audio guide",
+    "finished": "Finished",
+    "error": "Audio couldn't play",
+    "unavailable": {
+      "noVoice": "This device has no English voice, so listening isn't available.",
+      "noContentInLanguage": "This content is only written in Kyrgyz so far, so there's no English narration yet.",
+      "noEngine": "Listening isn't available on this device."
+    }
   }
 }

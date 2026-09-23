@@ -6,8 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
+import { joinNarration } from '@/services/audioGuide/narration';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -79,6 +81,11 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
             <Badge label={t(`culture.materials.types.${material.kind}`)} color={colors.surfaceAlt} textColor={colors.primary} />
             <Badge label={t(`culture.item.accuracy.${material.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
           </View>
+
+          {material.body ? (
+            // Materials are Kyrgyz-authored (single title/body columns).
+            <AudioGuidePlayer contentKey={`culture_material:${material.id}`} narration={{ lang: 'kg', text: joinNarration([material.title, material.body]) }} />
+          ) : null}
 
           {material.body ? (
             <Text style={styles.body}>{material.body}</Text>

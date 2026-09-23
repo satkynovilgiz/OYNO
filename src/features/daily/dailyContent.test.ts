@@ -28,12 +28,12 @@ describe('firstSentences', () => {
 
 describe('buildDailyTextBlocks', () => {
   it('gives a child one short unlabeled excerpt of the stored text', () => {
-    expect(buildDailyTextBlocks(base, 'child', 'kg')).toEqual([{ labelKey: null, text: 'First sentence. Second sentence.' }]);
+    expect(buildDailyTextBlocks(base, 'child', 'kg')).toEqual([{ labelKey: null, text: 'First sentence. Second sentence.', lang: 'kg' }]);
   });
 
   it('prefers the pre-authored simple summary in the current language', () => {
     const item = { ...base, simple_summary_en: 'Simple English summary.' } as CultureItemRow;
-    expect(buildDailyTextBlocks(item, 'child', 'en')).toEqual([{ labelKey: null, text: 'Simple English summary.' }]);
+    expect(buildDailyTextBlocks(item, 'child', 'en')).toEqual([{ labelKey: null, text: 'Simple English summary.', lang: 'en' }]);
     // no Kyrgyz summary stored -> falls back to the excerpt, never a translation
     expect(buildDailyTextBlocks(item, 'child', 'kg')[0].text).toBe('First sentence. Second sentence.');
   });

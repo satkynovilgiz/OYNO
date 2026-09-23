@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, EmptyState, FadeSlideIn, IconButton, Skeleton } from '@/components/ui';
 import { interactiveExperienceForCategory, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
@@ -15,6 +16,7 @@ import type { SupportedLanguage } from '@/i18n';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
+import { joinNarration, type Narration } from '@/services/audioGuide/narration';
 import { buildImageChallenge } from '@/services/daily/dailyDiscovery';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
@@ -142,6 +144,11 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
   }
 
   const [leadBlock, ...moreBlocks] = discovery.textBlocks;
+  // Narrate the title + the story blocks shown below, only when they're all
+  // in one language (a Kyrgyz field never gets read with a ru/en voice).
+  const blockLangs = new Set(discovery.textBlocks.map((block) => block.lang));
+  const narration: Narration | null =
+    blockLangs.size === 1 ? { lang: discovery.textBlocks[0].lang, text: joinNarration([item.title, ...discovery.textBlocks.map((block) => block.text)]) } : null;
   const dayLabel = formatDayLabel(discovery.dateKey, language);
 
   return (
@@ -196,6 +203,9 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
         </View>
 
         <View style={styles.sheet}>
+          {/* "Listen · 2 min" - shown only when audio genuinely works here. */}
+          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} hideWhenUnavailable />
+
           {leadBlock ? (
             <FadeSlideIn>
               {leadBlock.labelKey ? <Text style={styles.blockLabel}>{t(leadBlock.labelKey)}</Text> : null}

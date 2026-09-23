@@ -5,10 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { KomuzPlaylist } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
+import { joinNarration, type Narration } from '@/services/audioGuide/narration';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
@@ -66,6 +68,12 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
     config.learningDepth,
   );
   const filledFields = DETAIL_FIELDS.filter((field) => !!item[field.key]);
+
+  // Listen reads exactly what this screen shows below: the simple summary
+  // (authored in the app language) or the Kyrgyz-authored field texts.
+  const narration: Narration = simpleSummary
+    ? { lang: i18n.language as SupportedLanguage, text: joinNarration([item.title, simpleSummary]) }
+    : { lang: 'kg', text: joinNarration([item.title, ...filledFields.map((field) => item[field.key] as string)]) };
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
   // The primary photo (admin-uploaded image_url, falling back to the first
@@ -147,6 +155,8 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
             ) : null}
             <Badge label={t(`culture.item.accuracy.${item.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
           </View>
+
+          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} />
 
           {hasRemainingGallery ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>

@@ -6,10 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
+import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AnimatedPressable, FadeSlideIn, IconButton, ProgressBar } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { joinNarration } from '@/services/audioGuide/narration';
 import { useHeroParallax } from '@/services/motion/useHeroParallax';
 import { useShareCard } from '@/services/share/useShareCard';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -182,6 +184,14 @@ export function LocationDetailScreen({
         </View>
 
         <View style={styles.body}>
+          {/* Tagline and facts are Kyrgyz-authored (explore_regions); the
+              name is read in its Kyrgyz form to match. Only facts this
+              screen actually shows are read. */}
+          <AudioGuidePlayer
+            contentKey={`region:${location.id}`}
+            narration={{ lang: 'kg', text: joinNarration([location.name.kg, location.tagline, ...(isChild ? location.facts.slice(0, 2) : location.facts)]) }}
+          />
+
           {questFirst ? questCard : null}
 
           <FadeSlideIn style={styles.progressBlock} index={1}>
