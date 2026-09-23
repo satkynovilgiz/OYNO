@@ -17,7 +17,8 @@ export default function SettingsRoute() {
           router.push('/sign-up' as never);
           return;
         }
-        router.push(`/settings/${section}` as never);
+        // Appearance is its own top-level area (/appearance), not a settings sub-page.
+        router.push((section === 'appearance' ? '/appearance' : `/settings/${section}`) as never);
       }}
       onPressAdmin={() => router.push('/admin' as never)}
       onSignOut={signOut}

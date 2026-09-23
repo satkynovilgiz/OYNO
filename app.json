@@ -47,7 +47,18 @@
       "@sentry/react-native",
       "expo-image",
       "expo-status-bar",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "OYNO админ панелине сүрөт жүктөө үчүн сүрөт китепканаңызга кирүү керек.",
+          "savePhotosPermission": "OYNO тандаган тушкагазыңды сүрөттөрүңө сактоо үчүн уруксат керек.",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": [
+            "photo"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

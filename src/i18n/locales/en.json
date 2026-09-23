@@ -103,7 +103,8 @@
       "data": "Cache / Data",
       "help": "Help",
       "about": "About OYNO",
-      "adminPanel": "Admin panel"
+      "adminPanel": "Admin panel",
+      "appearance": "Appearance"
     },
     "signOut": {
       "rowLabel": "Sign out",
@@ -1507,6 +1508,77 @@
       "interactive_experience": "Try it yourself",
       "game": "Game",
       "collection": "Collection"
+    }
+  },
+  "appearance": {
+    "title": "Appearance",
+    "subtitle": "Wallpapers and widgets",
+    "wallpapers": {
+      "title": "Wallpapers",
+      "entryDescription": "Kyrgyzstan's nature and culture, for your phone.",
+      "filters": {
+        "all": "All",
+        "favorites": "Favorites",
+        "nature": "Nature",
+        "culture": "Culture",
+        "ornament": "Ornament"
+      },
+      "items": {
+        "sonKol": "Son-Köl",
+        "alaToo": "Ala-Too",
+        "alay": "Alay",
+        "arslanbob": "Arslanbob",
+        "saryChelek": "Sary-Chelek",
+        "suusamyr": "Suusamyr",
+        "bozUy": "Boz Uy",
+        "yurtCamp": "Yurts on the Jailoo",
+        "komuz": "Komuz",
+        "horseCulture": "Horse Culture",
+        "oymo": "Oymo Carving",
+        "shyrdak": "Shyrdak",
+        "shyrdakMosaic": "Shyrdak Mosaic"
+      },
+      "a11yCard": "{{name}} wallpaper, {{category}}",
+      "a11yPreview": "Preview of the {{name}} wallpaper",
+      "favorite": "Add {{name}} to favorites",
+      "unfavorite": "Remove {{name}} from favorites",
+      "save": "Save Wallpaper",
+      "saveHint": "Saves to Photos - then set it as your wallpaper from your phone's settings.",
+      "saveHintLandscape": "Saves to Photos. When you set it as your wallpaper, move the photo to choose the part you like.",
+      "result": {
+        "saved": "Saved to Photos ✓",
+        "denied": "OYNO needs permission to save to Photos.",
+        "unsupported": "Saving arrives with the next app update. For now you can save it through Share.",
+        "error": "The wallpaper couldn't be saved. Please try again.",
+        "downloaded": "Downloaded ✓"
+      },
+      "shareMessage": "OYNO wallpaper: {{name}}",
+      "noFavoritesTitle": "No favorite wallpapers yet",
+      "noFavoritesDescription": "Open a wallpaper and tap the heart."
+    },
+    "widgets": {
+      "title": "OYNO Widgets",
+      "entryDescription": "Daily discovery, journey and passport - at a glance.",
+      "previewNote": "These previews show your real progress. Home Screen and Lock Screen widgets arrive with the next full app update.",
+      "homeScreen": "Home Screen",
+      "lockScreen": "Lock Screen",
+      "lockCaption": "Inline · Circular · Rectangular",
+      "families": {
+        "small": "Small",
+        "medium": "Medium",
+        "inline": "Inline",
+        "circular": "Circular",
+        "rectangular": "Rectangular"
+      },
+      "types": {
+        "daily": "Daily OYNO",
+        "journey": "Continue Journey",
+        "passport": "Passport",
+        "trail": "Guided Trail",
+        "cultureOfDay": "Culture of the Day"
+      },
+      "noActiveTrail": "No trail started yet",
+      "noData": "Loading…"
     }
   }
 }

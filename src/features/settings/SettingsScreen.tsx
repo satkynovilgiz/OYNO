@@ -1,18 +1,4 @@
-import {
-  Bell,
-  ChevronLeft,
-  CircleUser,
-  Database,
-  Gamepad2,
-  Globe,
-  HelpCircle,
-  Info,
-  LogOut,
-  Lock,
-  ShieldCheck,
-  Sparkles,
-  Wrench,
-} from 'lucide-react-native';
+import { Bell, ChevronLeft, CircleUser, Database, Gamepad2, Globe, HelpCircle, Info, Lock, LogOut, Palette, ShieldCheck, Sparkles, Wrench } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +13,7 @@ import { SettingsRow } from './components/SettingsRow';
 type SettingsScreenProps = {
   onPressBack: () => void;
   onNavigate: (
-    section: 'account' | 'language' | 'experience' | 'notifications' | 'privacy' | 'security' | 'game' | 'data' | 'help' | 'about',
+    section: 'account' | 'language' | 'experience' | 'appearance' | 'notifications' | 'privacy' | 'security' | 'game' | 'data' | 'help' | 'about',
   ) => void;
   onPressAdmin: () => void;
   onSignOut: () => Promise<void>;
@@ -61,6 +47,7 @@ export function SettingsScreen({ onPressBack, onNavigate, onPressAdmin, onSignOu
           <SettingsRow icon={CircleUser} label={t('settings.rows.account')} onPress={() => onNavigate('account')} />
           <SettingsRow icon={Globe} label={t('settings.rows.language')} onPress={() => onNavigate('language')} />
           <SettingsRow icon={Sparkles} label={t('settings.rows.experience')} onPress={() => onNavigate('experience')} />
+          <SettingsRow icon={Palette} label={t('settings.rows.appearance')} onPress={() => onNavigate('appearance')} />
         </View>
 
         <Text style={styles.sectionLabel}>{t('settings.sections.general')}</Text>
