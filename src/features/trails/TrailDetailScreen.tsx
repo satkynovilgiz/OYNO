@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, HeroCard, IconButton, ProgressBar } from '@/components/ui';
 import { natureSiteCoordinates } from '@/features/explore/data';
@@ -134,6 +135,10 @@ export function TrailDetailScreen({ trail, onPressBack }: TrailDetailScreenProps
             <Text style={styles.scope}>{t('trails.progressScope')}</Text>
           </View>
         ) : null}
+
+        <View style={styles.pad}>
+          <AddToJournalButton type="trail" id={trail.id} title={title} />
+        </View>
 
         {isComplete ? (
           <View style={[styles.pad]}>

@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { NativeModules, PixelRatio, Platform, Share, StyleSheet, TurboModuleRegistry, View } from 'react-native';
 
 import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH, ShareCard, type ShareCardContent } from '@/components/share/ShareCard';
+import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 
 /** Target export size - a 4:5 social post. */
 export const SHARE_IMAGE_WIDTH = 1080;
@@ -49,6 +50,7 @@ export function useShareCard(): { share: (content: ShareCardContent, fallbackMes
   async function share(next: ShareCardContent, fallbackMessage: string) {
     if (content) return;
     if (!imageShareSupported()) {
+      recordDiagnostic('native_unavailable', 'image_share');
       await shareText(fallbackMessage);
       return;
     }

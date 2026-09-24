@@ -4,6 +4,8 @@ import i18n from 'i18next';
 import { AppState, Platform } from 'react-native';
 import { create } from 'zustand';
 
+import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
+
 import type { AudioPlan, VoiceInfo } from './narration';
 
 type SpeechModule = typeof import('expo-speech');
@@ -22,6 +24,7 @@ function getSpeech(): SpeechModule | null {
       Platform.OS === 'web' ? typeof window !== 'undefined' && 'speechSynthesis' in window : !!requireOptionalNativeModule('ExpoSpeech');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     speechModule = available ? (require('expo-speech') as SpeechModule) : null;
+    if (!speechModule) recordDiagnostic('native_unavailable', 'speech');
   } catch {
     speechModule = null;
   }

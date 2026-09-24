@@ -38,6 +38,10 @@ const MUST_NOT_HAVE_CLIENT_WRITE_POLICY = [
   'admin_roles',
   'admin_audit_log',
   'culture_quiz_questions',
+  'user_daily_completions',
+  'user_challenge_results',
+  'beta_feedback',
+  'user_journal_entries',
 ];
 
 describe('database security invariants (static migration lint)', () => {

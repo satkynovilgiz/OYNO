@@ -5,6 +5,9 @@ import { track } from '@/services/analytics/analytics';
 import type { AchievementId } from '@/services/progress/types';
 import { safeJsonParse } from '@/services/storage/safeJson';
 import { supabase } from '@/services/supabase/client';
+import { mergeVisits } from '@/services/sync/mergeRules';
+import { addPendingVisit, readPendingVisits } from '@/services/sync/outbox';
+import { requestAccountSync } from '@/services/sync/syncTrigger';
 import { useAuthStore } from '@/store/useAuthStore';
 
 const CACHE_KEY = 'oyno.progress.cache';
@@ -83,7 +86,12 @@ type CachedShape = ProgressFields & {
    * written before this field existed still parse. */
   regionVisitDates?: Record<string, string>;
   completedQuestStepIds: string[];
+  /** Whose account this cache holds. A cache written for another account
+   * (or before this field existed) is never shown to the current user. */
+  ownerId?: string;
 };
+
+export const PROGRESS_CACHE_KEY = CACHE_KEY;
 
 const DEFAULT_FIELDS: ProgressFields = {
   xp: 0,
@@ -131,13 +139,27 @@ function mapRow(row: ProgressRow): ProgressFields {
   };
 }
 
+function currentUserId(): string | undefined {
+  return useAuthStore.getState().user?.id;
+}
+
 async function readCache(): Promise<CachedShape | null> {
   const raw = await AsyncStorage.getItem(CACHE_KEY).catch(() => null);
-  return safeJsonParse<CachedShape | null>(raw, null);
+  const cached = safeJsonParse<CachedShape | null>(raw, null);
+  const userId = currentUserId();
+  return cached && userId && cached.ownerId === userId ? cached : null;
 }
 
 async function writeCache(state: CachedShape) {
-  await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(state)).catch(() => {});
+  const ownerId = currentUserId();
+  if (!ownerId) return;
+  await AsyncStorage.setItem(CACHE_KEY, JSON.stringify({ ...state, ownerId })).catch(() => {});
+}
+
+/** Visits waiting in the sync outbox (a guest's, or made offline). */
+async function pendingVisitSet() {
+  const pending = await readPendingVisits();
+  return { ids: Object.keys(pending), dates: pending };
 }
 
 /** True only for a real signed-in user - guests have no Supabase session,
@@ -254,19 +276,30 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     completedQuestStepIds: [],
 
     load: async () => {
+      const pending = await pendingVisitSet();
       if (!isRealUser()) {
+        // Guests have no server progress, but places they open are kept
+        // (sync outbox) so Passport/Journey/Map work and the visits merge
+        // into their account when they sign in.
         set({
           ...DEFAULT_FIELDS,
           gameStats: {},
           discoveredExploreIds: [],
           unlockedAchievementIds: [],
-          visitedRegionIds: [],
-          regionVisitDates: {},
+          visitedRegionIds: pending.ids,
+          regionVisitDates: pending.dates,
           completedQuestStepIds: [],
           isLoaded: true,
           error: null,
         });
         return;
+      }
+      // Render the last-known account progress immediately; the server
+      // fetch below replaces it in the background (never a blank wait).
+      const cachedFirst = await readCache();
+      if (cachedFirst && !get().isLoaded) {
+        const visits = mergeVisits({ ids: cachedFirst.visitedRegionIds, dates: cachedFirst.regionVisitDates ?? {} }, pending);
+        set({ ...cachedFirst, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, error: null });
       }
       try {
         const [progressRes, gameStatsRes, achievementsRes, discoveriesRes, regionVisitsRes, questStepsRes] = await Promise.all([
@@ -292,6 +325,10 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         }
         const completedQuestStepIds = (questStepsRes.data ?? []).map((r) => r.step_id as string);
         const fields = mapRow(progressRes.data as ProgressRow);
+        // Visits not yet on the server stay visible (union, earliest date).
+        const visits = mergeVisits({ ids: visitedRegionIds, dates: regionVisitDates }, pending);
+        visitedRegionIds.splice(0, visitedRegionIds.length, ...visits.ids);
+        Object.assign(regionVisitDates, visits.dates);
 
         set({
           ...fields,
@@ -312,8 +349,10 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         // through callAction and fail honestly rather than faking a
         // local update while offline.
         const cached = await readCache();
-        if (cached) set({ ...cached, regionVisitDates: cached.regionVisitDates ?? {}, isLoaded: true, error: 'offline' });
-        else set({ isLoaded: true, error: 'offline' });
+        if (cached) {
+          const visits = mergeVisits({ ids: cached.visitedRegionIds, dates: cached.regionVisitDates ?? {} }, pending);
+          set({ ...cached, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, error: 'offline' });
+        } else set({ visitedRegionIds: pending.ids, regionVisitDates: pending.dates, isLoaded: true, error: 'offline' });
       }
     },
 
@@ -362,23 +401,24 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     },
 
     // No progress reward here (visiting isn't itself XP-earning), so this
-    // doesn't go through callAction/applyProgress like the reward actions -
-    // it just records the visit and updates the local id list on success.
+    // doesn't go through callAction/applyProgress like the reward actions.
+    // Local first for everyone: the visit shows at once (also offline and
+    // for guests) and waits in the sync outbox; the sync layer sends it to
+    // the idempotent visit_explore_region RPC and removes it only once
+    // the server accepted it - so a retry can never double-record.
     visitExploreRegion: async (regionId) => {
-      if (!isRealUser()) return;
-      const isNew = !get().visitedRegionIds.includes(regionId);
-      const { error } = await supabase.rpc('visit_explore_region', { p_region_id: regionId });
-      if (error) return;
-      if (isNew) {
-        // The RPC just inserted the visit with visited_at = now(); mirror
-        // that locally until the next load() reads the stored timestamp.
-        set({
-          visitedRegionIds: [...get().visitedRegionIds, regionId],
-          regionVisitDates: { ...get().regionVisitDates, [regionId]: new Date().toISOString() },
-        });
+      if (get().visitedRegionIds.includes(regionId)) return;
+      const now = new Date().toISOString();
+      set({
+        visitedRegionIds: [...get().visitedRegionIds, regionId],
+        regionVisitDates: { ...get().regionVisitDates, [regionId]: now },
+      });
+      await addPendingVisit(regionId, now);
+      if (isRealUser()) {
         void writeCache(cacheSnapshot(get(), get().unlockedAchievementIds));
-        track('region_opened', { regionId });
+        requestAccountSync('local_change');
       }
+      track('region_opened', { regionId });
     },
 
     discoverExploreItem: async (id) => {

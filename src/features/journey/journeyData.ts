@@ -208,9 +208,9 @@ export function pickNextDiscovery(summary: JourneySummary, today: JourneyStamp |
   return null;
 }
 
-export type JourneySectionId = 'next' | 'passport' | 'trails' | 'discovered' | 'explored' | 'played' | 'collections' | 'learning' | 'achievements';
+export type JourneySectionId = 'next' | 'passport' | 'trails' | 'discovered' | 'explored' | 'played' | 'collections' | 'learning' | 'journal' | 'achievements';
 
-export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'trails', 'discovered', 'explored', 'played', 'collections', 'learning', 'achievements'];
+export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'trails', 'discovered', 'explored', 'played', 'collections', 'learning', 'journal', 'achievements'];
 
 /**
  * Same sections for every age, different emphasis (spec "Child → simpler,
@@ -222,10 +222,10 @@ export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'tr
  * suggestion last.
  */
 const JOURNEY_SECTION_ORDER: Record<AgeExperience, JourneySectionId[]> = {
-  child: ['next', 'passport', 'trails', 'played', 'achievements', 'learning', 'discovered', 'collections', 'explored'],
-  preteen: ['next', 'passport', 'trails', 'played', 'explored', 'collections', 'learning', 'achievements', 'discovered'],
-  teen: ['next', 'passport', 'trails', 'explored', 'played', 'collections', 'learning', 'achievements', 'discovered'],
-  adult: ['discovered', 'passport', 'trails', 'explored', 'collections', 'learning', 'played', 'achievements', 'next'],
+  child: ['next', 'passport', 'trails', 'played', 'achievements', 'journal', 'learning', 'discovered', 'collections', 'explored'],
+  preteen: ['next', 'passport', 'trails', 'played', 'explored', 'collections', 'journal', 'learning', 'achievements', 'discovered'],
+  teen: ['next', 'passport', 'trails', 'explored', 'played', 'collections', 'learning', 'journal', 'achievements', 'discovered'],
+  adult: ['discovered', 'passport', 'trails', 'explored', 'collections', 'journal', 'learning', 'played', 'achievements', 'next'],
 };
 
 export function getJourneySectionOrder(experience: AgeExperience): JourneySectionId[] {

@@ -34,6 +34,7 @@ import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
 import { CollectionsJourneySection } from './components/CollectionsJourneySection';
+import { JournalJourneySection } from './components/JournalJourneySection';
 import { LearningJourneySection } from './components/LearningJourneySection';
 import { TrailsJourneySection } from './components/TrailsJourneySection';
 import { JourneyStamp } from './components/JourneyStamp';
@@ -175,6 +176,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
         return <TrailsJourneySection key={id} entries={trailEntries} editorial={isAdult} />;
       case 'learning':
         return <LearningJourneySection key={id} editorial={isAdult} />;
+      case 'journal':
+        return <JournalJourneySection key={id} editorial={isAdult} />;
       case 'collections':
         return <CollectionsJourneySection key={id} entries={collectionEntries} editorial={isAdult} />;
       case 'discovered':

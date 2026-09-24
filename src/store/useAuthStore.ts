@@ -22,6 +22,26 @@ export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'gues
 
 const GUEST_MODE_KEY = 'oyno.auth.guestMode';
 
+/**
+ * Account-state hooks, registered by the sync layer
+ * (services/sync/accountLifecycle.ts) - kept as a registration seam so
+ * this store doesn't import every other store. `beforeSignOut` runs while
+ * the session still exists (a last sync), then clears the account's local
+ * state so the next person on the device never sees it.
+ */
+export type AccountHooks = {
+  beforeSignOut?: (userId: string) => Promise<void>;
+  afterAccountDeleted?: (userId: string) => Promise<void>;
+  afterSessionLost?: (userId: string) => Promise<void>;
+};
+
+let accountHooks: AccountHooks = {};
+let signingOut = false;
+
+export function registerAccountHooks(hooks: AccountHooks): void {
+  accountHooks = hooks;
+}
+
 type AuthState = {
   status: AuthStatus;
   user: AuthUser | null;
@@ -48,7 +68,7 @@ type AuthState = {
   clearError: () => void;
 };
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   status: 'loading',
   user: null,
   isSubmitting: false,
@@ -128,9 +148,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signOut: async () => {
-    await authService.signOut();
-    await AsyncStorage.removeItem(GUEST_MODE_KEY);
-    set({ status: 'unauthenticated', user: null });
+    const userId = get().user?.id;
+    signingOut = true;
+    try {
+      if (userId) await accountHooks.beforeSignOut?.(userId).catch(() => {});
+      await authService.signOut();
+      await AsyncStorage.removeItem(GUEST_MODE_KEY);
+      set({ status: 'unauthenticated', user: null });
+    } finally {
+      signingOut = false;
+    }
   },
 
   verifyEmail: async (email, code) => {
@@ -161,7 +188,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   deleteAccount: async (password) => {
     set({ isSubmitting: true, error: null });
     try {
+      const userId = get().user?.id;
       await authService.deleteAccount(password);
+      if (userId) await accountHooks.afterAccountDeleted?.(userId).catch(() => {});
       await AsyncStorage.removeItem(GUEST_MODE_KEY);
       set({ status: 'unauthenticated', user: null, isSubmitting: false });
       return true;
@@ -211,6 +240,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 // Session doesn't carry.
 supabase.auth.onAuthStateChange((event) => {
   if (event === 'SIGNED_OUT') {
+    const { status, user } = useAuthStore.getState();
+    // Our own signOut() already cleaned up; this is the session ending
+    // underneath the app (password reset elsewhere, expired refresh token).
+    if (status === 'authenticated' && !signingOut && user?.id) void accountHooks.afterSessionLost?.(user.id).catch(() => {});
     useAuthStore.setState((state) => (state.status === 'authenticated' ? { status: 'unauthenticated', user: null } : {}));
   }
 });

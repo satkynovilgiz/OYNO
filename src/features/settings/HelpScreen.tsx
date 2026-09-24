@@ -1,10 +1,11 @@
-import { ChevronDown, ChevronUp, Search } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, ChevronUp, MessageSquareWarning, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AnimatedPressable, Button, TextField } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
+import { useFeedbackStore } from '@/store/useFeedbackStore';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
@@ -53,6 +54,21 @@ export function HelpScreen({ onPressBack }: HelpScreenProps) {
 
   return (
     <SettingsScreenLayout title={t('settings.help.title')} onPressBack={onPressBack}>
+      <AnimatedPressable
+        style={styles.feedbackEntry}
+        onPress={() => useFeedbackStore.getState().open({ source: 'settings' })}
+        accessibilityRole="button"
+        accessibilityLabel={t('feedback.helpEntry')}
+        accessibilityHint={t('feedback.helpEntryHint')}
+      >
+        <MessageSquareWarning size={20} color={colors.primary} strokeWidth={2} />
+        <View style={styles.feedbackEntryText}>
+          <Text style={styles.feedbackEntryTitle}>{t('feedback.helpEntry')}</Text>
+          <Text style={styles.feedbackEntryHint}>{t('feedback.helpEntryHint')}</Text>
+        </View>
+        <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
+      </AnimatedPressable>
+
       <View style={styles.searchRow}>
         <Search size={16} color={colors.textMuted} strokeWidth={2} />
         <TextInput
@@ -140,6 +156,18 @@ function CategoryChip({ label, isActive, onPress }: { label: string; isActive: b
 }
 
 const styles = StyleSheet.create({
+  feedbackEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+  },
+  feedbackEntryText: { flex: 1, gap: 2 },
+  feedbackEntryTitle: { ...typography.bodyBold, color: colors.textPrimary },
+  feedbackEntryHint: { ...typography.small, fontWeight: '500', color: colors.textSecondary },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',

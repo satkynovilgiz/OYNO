@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
@@ -157,6 +158,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           </View>
 
           <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} />
+          <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
 
           {hasRemainingGallery ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>

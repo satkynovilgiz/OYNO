@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { DownloadButton } from '@/components/offline/DownloadButton';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, CompactContentCard, EditorialCard, HeroCard, IconButton, InteractiveCard, ProgressBar } from '@/components/ui';
@@ -107,8 +108,9 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
 
         <Text style={styles.intro}>{resolveLocalized(collection.intro, language)}</Text>
 
-        <View style={styles.horizontalPad}>
+        <View style={[styles.horizontalPad, styles.actions]}>
           <DownloadButton kind="collection" contentId={collection.id} title={resolveLocalized(collection.title, language)} />
+          <AddToJournalButton type="collection" id={collection.id} title={resolveLocalized(collection.title, language)} />
         </View>
 
         {progress.total > 0 ? (
@@ -300,6 +302,9 @@ const styles = StyleSheet.create({
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
+  },
+  actions: {
+    gap: spacing.sm,
   },
   row: {
     paddingHorizontal: spacing.md,

@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
+import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { DownloadButton } from '@/components/offline/DownloadButton';
 import { AnimatedPressable, FadeSlideIn, IconButton, ProgressBar } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
@@ -193,7 +194,12 @@ export function LocationDetailScreen({
             narration={{ lang: 'kg', text: joinNarration([location.name.kg, location.tagline, ...(isChild ? location.facts.slice(0, 2) : location.facts)]) }}
           />
 
-          {location.kind === 'nature' ? <DownloadButton kind="nature" contentId={location.id} title={locationName} /> : null}
+          {location.kind === 'nature' ? (
+            <View style={styles.secondaryActions}>
+              <DownloadButton kind="nature" contentId={location.id} title={locationName} />
+              <AddToJournalButton type="nature_site" id={location.id} title={locationName} />
+            </View>
+          ) : null}
 
           {questFirst ? questCard : null}
 
@@ -289,6 +295,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textOnDark,
     opacity: 0.9,
+  },
+  secondaryActions: {
+    gap: spacing.sm,
   },
   body: {
     padding: spacing.md,

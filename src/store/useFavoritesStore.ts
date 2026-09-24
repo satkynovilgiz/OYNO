@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
-import { supabase } from '@/services/supabase/client';
+import { recordFavoriteOp } from '@/services/sync/outbox';
+import { requestAccountSync } from '@/services/sync/syncTrigger';
 import { useAuthStore } from '@/store/useAuthStore';
 
 const CACHE_KEY = 'oyno.favorites.cache';
@@ -33,6 +34,8 @@ function parseFavoriteKey(key: string): FavoriteRef {
 
 type CachedShape = { favoriteIds: string[] };
 
+export const FAVORITES_CACHE_KEY = CACHE_KEY;
+
 function isRealUser(): boolean {
   return useAuthStore.getState().status === 'authenticated';
 }
@@ -51,42 +54,29 @@ type FavoritesState = {
   favoriteIds: string[];
   load: () => Promise<void>;
   isFavorite: (contentType: FavoriteContentType, contentId: string) => boolean;
-  /** Returns the new favorited state (true = now favorited). Guests get a
-   * real, working, locally-persisted toggle here - unlike the old
-   * Explore-only mechanism this replaces, which silently no-op'd
-   * (`return null`) for anyone not signed in. Signed-in sync happens in
-   * the background; a transient failure keeps the optimistic local change
-   * rather than snapping the heart back, and self-heals on the next
-   * successful `load()`. */
+  /** Returns the new favorited state (true = now favorited). Instant and
+   * local for everyone (guests included); the edit is recorded in the
+   * sync outbox and a signed-in account is updated in the background by
+   * the sync layer - offline edits wait there and are sent on reconnect. */
   toggleFavorite: (contentType: FavoriteContentType, contentId: string) => Promise<boolean>;
   favoriteRefs: () => FavoriteRef[];
+  /** Sync layer only: the merged account favorites (wallpapers excluded). */
+  applySynced: (favoriteIds: string[]) => void;
+  /** Sign-out: forget the previous account's favorites on this device. */
+  reset: () => void;
 };
 
 export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   isLoaded: false,
   favoriteIds: [],
 
+  // Local first: the device's last-known favorites render immediately
+  // (also offline); the sync layer reconciles a signed-in account with the
+  // server afterwards (services/sync/syncEngine.ts).
   load: async () => {
     const cached = await readCache();
-
-    if (!isRealUser()) {
-      set({ favoriteIds: cached?.favoriteIds ?? [], isLoaded: true });
-      return;
-    }
-
-    const { data, error } = await supabase.from('user_favorites').select('target_type, target_id');
-    if (!error && data) {
-      const favoriteIds = data.map((row) => favoriteKey(row.target_type as FavoriteContentType, row.target_id as string));
-      set({ favoriteIds, isLoaded: true });
-      void writeCache({ favoriteIds });
-      return;
-    }
-
-    // Offline or a genuine failure - fall back to cache (same pattern as
-    // useProgressStore.load()'s own offline fallback), so a real device
-    // trying this while unreachable still sees its last-known favorites
-    // instead of an empty list.
     set({ favoriteIds: cached?.favoriteIds ?? [], isLoaded: true });
+    if (isRealUser()) requestAccountSync('app_start');
   },
 
   isFavorite: (contentType, contentId) => get().favoriteIds.includes(favoriteKey(contentType, contentId)),
@@ -97,21 +87,19 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
     const willFavorite = !current.includes(key);
     const nextFavoriteIds = willFavorite ? [...current, key] : current.filter((id) => id !== key);
 
-    // Optimistic local update first, for guests and signed-in users alike
-    // - a heart should respond instantly, and guests need this to be the
-    // only persistence they get (same rule useAvatarStore.save() follows
-    // for its own guest path).
     set({ favoriteIds: nextFavoriteIds });
     void writeCache({ favoriteIds: nextFavoriteIds });
-
-    if (!isRealUser()) return willFavorite;
-
-    const { error } = await supabase.rpc('toggle_favorite', { p_target_type: contentType, p_target_id: contentId });
-    if (error && __DEV__) {
-      console.warn('[favorites] server sync failed, keeping local toggle:', error.message);
-    }
+    await recordFavoriteOp(key, { favorited: willFavorite, at: new Date().toISOString(), origin: isRealUser() ? 'account' : 'guest' });
+    if (isRealUser()) requestAccountSync('local_change');
     return willFavorite;
   },
 
   favoriteRefs: () => get().favoriteIds.map(parseFavoriteKey),
+
+  applySynced: (favoriteIds) => {
+    set({ favoriteIds, isLoaded: true });
+    void writeCache({ favoriteIds });
+  },
+
+  reset: () => set({ favoriteIds: [], isLoaded: true }),
 }));

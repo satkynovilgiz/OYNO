@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
+import { requestAccountSync } from '@/services/sync/syncTrigger';
 
 const STORAGE_KEY = 'oyno.challenges.v1';
 
@@ -12,6 +13,9 @@ export type ChallengeResult = {
   lastTotal: number;
   bestCorrect: number;
   attempts: number;
+  /** When this record last changed (decides the "last result" on a
+   * cross-device merge). Optional: records saved before sync existed. */
+  updatedAt?: string;
 };
 
 type ChallengeData = {
@@ -31,6 +35,7 @@ export function recordCompletion(previous: ChallengeResult | undefined, correct:
     lastTotal: total,
     bestCorrect: Math.max(previous?.bestCorrect ?? 0, correct),
     attempts: (previous?.attempts ?? 0) + 1,
+    updatedAt: now,
   };
 }
 
@@ -42,12 +47,18 @@ type ChallengeState = ChallengeData & {
   storedDailyIds: (date: string) => string[] | null;
   start: (challengeId: string) => void;
   complete: (challengeId: string, correct: number, total: number) => void;
+  /** Sync layer only: replace results with an already-merged set. */
+  replaceResults: (results: Record<string, ChallengeResult>) => void;
+  /** Sign-out: forget this account's results (server keeps them). */
+  reset: () => void;
 };
 
 /**
- * Knowledge Challenge progress, on this device, kept apart from
+ * Knowledge Challenge progress, kept apart from
  * Culture/Explore discovery progress (useProgressStore) - challenges never
- * mark content as discovered.
+ * mark content as discovered. Persisted on the device; for a signed-in
+ * user the sync layer (services/sync) merges finished results with the
+ * account (best score never lowered, completed wins).
  */
 export const useChallengeStore = create<ChallengeState>((set, get) => {
   function persist() {
@@ -85,6 +96,12 @@ export const useChallengeStore = create<ChallengeState>((set, get) => {
     complete: (challengeId, correct, total) => {
       set({ results: { ...get().results, [challengeId]: recordCompletion(get().results[challengeId], correct, total, new Date().toISOString()) } });
       persist();
+      requestAccountSync('local_change');
     },
+    replaceResults: (results) => {
+      set({ results });
+      persist();
+    },
+    reset: () => set({ daily: null, results: {}, isLoaded: true }),
   };
 });

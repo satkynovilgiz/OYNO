@@ -19,6 +19,9 @@ export type ShareCardContent = {
   fallbackTone?: string;
   /** Shown only for genuinely completed content (Daily, Collection). */
   completedLabel?: string | null;
+  /** A short line the user typed for this card themselves (Journal) -
+   * never filled in automatically from private text. */
+  excerpt?: string | null;
 };
 
 type ShareCardProps = ShareCardContent & {
@@ -33,7 +36,7 @@ type ShareCardProps = ShareCardContent & {
  * content being shared.
  */
 export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
-  { title, label, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, onImageReady },
+  { title, label, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, excerpt, onImageReady },
   ref,
 ) {
   return (
@@ -63,6 +66,11 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
         <Text style={styles.title} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7}>
           {title}
         </Text>
+        {excerpt ? (
+          <Text style={styles.excerpt} numberOfLines={3}>
+            {`“${excerpt}”`}
+          </Text>
+        ) : null}
         {completedLabel ? (
           <View style={styles.completed}>
             <OymoOrnament size={10} color={colors.textPrimary} strokeWidth={2} />
@@ -125,6 +133,12 @@ const styles = StyleSheet.create({
     lineHeight: 40,
     fontWeight: '700',
     color: colors.textOnDark,
+  },
+  excerpt: {
+    fontSize: 17,
+    lineHeight: 24,
+    fontStyle: 'italic',
+    color: 'rgba(255,255,255,0.9)',
   },
   completed: {
     flexDirection: 'row',

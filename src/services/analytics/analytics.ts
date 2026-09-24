@@ -42,7 +42,11 @@ export type AnalyticsEventName =
   | 'home_recommendation_opened'
   | 'reminder_enabled'
   | 'reminder_disabled'
-  | 'reminder_opened';
+  | 'reminder_opened'
+  | 'sync_started'
+  | 'sync_completed'
+  | 'sync_failed'
+  | 'sync_conflict_merged';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

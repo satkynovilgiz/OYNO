@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
+import { requestAccountSync } from '@/services/sync/syncTrigger';
 
 const STORAGE_KEY = 'oyno.daily.completions';
 /** Enough history for Journey to list recent daily discoveries without the
@@ -26,16 +27,21 @@ type DailyDiscoveryState = {
   completions: DailyCompletions;
   load: () => Promise<void>;
   complete: (dateKey: string, itemId: string) => Promise<void>;
+  /** Sync layer only: replace with an already-merged record. */
+  replaceAll: (completions: DailyCompletions) => Promise<void>;
+  /** Sign-out: forget this account's completions (server keeps them). */
+  reset: () => void;
 };
 
 /**
- * Local, per-device record of which days' discoveries were completed
+ * Record of which days' discoveries were completed
  * (spec "Persist completion by local calendar date"). Deliberately NOT a
  * streak - OYNO already has one server-side (`user_progress.streak_days`),
  * and completing a discovery feeds it through the existing
  * `discoverCulture()` action instead of starting a second counter (spec
  * "If a streak already exists in the project, integrate carefully rather
- * than creating another one"). Works the same for guests.
+ * than creating another one"). Works the same for guests; for a signed-in
+ * user the sync layer (services/sync) merges it with the account.
  */
 export const useDailyDiscoveryStore = create<DailyDiscoveryState>((set, get) => ({
   isLoaded: false,
@@ -53,5 +59,13 @@ export const useDailyDiscoveryStore = create<DailyDiscoveryState>((set, get) => 
     if (completions === get().completions) return;
     set({ completions });
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(completions)).catch(() => {});
+    requestAccountSync('local_change');
   },
+
+  replaceAll: async (completions) => {
+    set({ completions });
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(completions)).catch(() => {});
+  },
+
+  reset: () => set({ completions: {}, isLoaded: true }),
 }));

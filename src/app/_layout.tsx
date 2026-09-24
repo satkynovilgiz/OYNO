@@ -1,10 +1,10 @@
 import '@/i18n';
 
-import { QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, QueryClientProvider } from '@tanstack/react-query';
 import { router, Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -29,6 +29,11 @@ import { useChallengeStore } from '@/store/useChallengeStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { onConnectionRestored } from '@/services/offline/networkStatus';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
+import { onAccountSignedIn, onGuestSession } from '@/services/sync/accountLifecycle';
+import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
+import { flushFeedbackQueue } from '@/services/feedback/feedbackQueue';
+import { FeedbackSheet } from '@/features/feedback/FeedbackSheet';
+import { scheduleAccountSync } from '@/services/sync/syncEngine';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -68,6 +73,11 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
   const hasChosenAgeGroup = useAppStore((state) => state.hasChosenAgeGroup);
 
+  // Beta feedback diagnostic trail: which screen is open (sanitized path only).
+  useEffect(() => {
+    recordDiagnostic('route', pathname);
+  }, [pathname]);
+
   useEffect(() => {
     if (!flagsReady) return;
     const redirect = decideRouteGuardRedirect({
@@ -83,6 +93,9 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
 
   return children;
 }
+
+/** Foreground sync at most this often (changes from another device). */
+const FOREGROUND_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
 export default function RootLayout() {
   const [flagsReady, setFlagsReady] = useState(false);
@@ -184,8 +197,45 @@ export default function RootLayout() {
   }, []);
 
   // Connection back: refresh offline copies in the background (a failed
-  // refresh keeps the existing copy - downloads are never silently lost).
-  useEffect(() => onConnectionRestored(() => void useOfflineStore.getState().refreshAll()), []);
+  // refresh keeps the existing copy - downloads are never silently lost)
+  // and send any account changes made while offline.
+  useEffect(
+    () =>
+      onConnectionRestored(() => {
+        void useOfflineStore.getState().refreshAll();
+        scheduleAccountSync('reconnect');
+        // Beta reports written offline go out now (deduplicated server-side).
+        void flushFeedbackQueue(useAuthStore.getState().user?.id ?? null);
+      }),
+    [],
+  );
+
+  // Connection changes for the feedback diagnostic trail; plus one send
+  // attempt at start for reports queued in an earlier session.
+  useEffect(() => {
+    void flushFeedbackQueue(useAuthStore.getState().user?.id ?? null);
+    return onlineManager.subscribe((isOnline) => recordDiagnostic(isOnline ? 'online' : 'offline'));
+  }, []);
+
+  // Cross-device account sync (services/sync). Never awaited by the UI:
+  // local state is already rendered; this reconciles in the background.
+  const userId = useAuthStore((state) => state.user?.id);
+  useEffect(() => {
+    if (authStatus === 'authenticated' && userId) void onAccountSignedIn(userId);
+    else if (authStatus === 'guest') void onGuestSession();
+  }, [authStatus, userId]);
+
+  // Back in the foreground: pick up changes made on another device.
+  useEffect(() => {
+    let lastRun = 0;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || useAuthStore.getState().status !== 'authenticated') return;
+      if (Date.now() - lastRun < FOREGROUND_SYNC_INTERVAL_MS) return;
+      lastRun = Date.now();
+      scheduleAccountSync('foreground');
+    });
+    return () => subscription.remove();
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -210,6 +260,9 @@ export default function RootLayout() {
               </SilentErrorBoundary>
             ) : null}
             {/* Local reminders exist only on phones (no web scheduling). */}
+            <SilentErrorBoundary name="feedback">
+              <FeedbackSheet />
+            </SilentErrorBoundary>
             {Platform.OS !== 'web' && flagsReady ? (
               <SilentErrorBoundary name="reminders">
                 <ReminderSync />
