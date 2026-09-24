@@ -9,7 +9,8 @@ import wordmark from '@assets/img/OYNO_design/wordmark.png';
 type HomeHeaderProps = {
   hasUnreadNotifications: boolean;
   /** The real signed-in account's display name - omitted for guests, who
-   * see the tagline instead of a greeting with no real name to use. */
+   * see the localized tagline instead of a greeting with no real name
+   * (the original Home behaviour: "САЛАМ, БЕК!" only for a real name). */
   greetingName?: string;
   onPressMenu?: () => void;
   onPressSearch?: () => void;
@@ -17,47 +18,39 @@ type HomeHeaderProps = {
 };
 
 /**
- * Home header - the OYNO wordmark + greeting are the visual centre; menu,
- * search and notifications are quieter secondary controls, all the same
- * shape and size (40 pt visual, 44 pt touch). The centre column is kept
- * clear of the side controls on every width, and the greeting stays on one
- * line (scales down rather than wrapping under the logo).
+ * The original OYNO Home header at its original, full native scale: menu +
+ * search (44 pt rounded squares), the full-size OYNO wordmark with the
+ * localized greeting / tagline under it, and notifications - the same
+ * layout as the original header: the centre takes all remaining width, and
+ * the greeting wraps to two centred lines rather than shrinking.
  */
 export function HomeHeader({ hasUnreadNotifications, greetingName, onPressMenu, onPressSearch, onPressNotifications }: HomeHeaderProps) {
   const { t } = useTranslation();
-  // A short greeting for everyone ("САЛАМ, БЕК!" / guests: the existing guest
-  // name) - one line on every width; the long tagline no longer competes.
-  const greeting = t('home.header.greeting', { name: greetingName ?? t('common.guestName') });
+  const line = greetingName ? t('home.header.greeting', { name: greetingName }) : t('home.header.tagline');
 
   return (
     <View style={styles.row}>
       <View style={styles.side}>
-        <IconButton icon={Menu} size={40} iconSize={19} accessibilityLabel={t('home.header.menuLabel')} onPress={onPressMenu} />
-        <IconButton icon={Search} size={40} iconSize={19} accessibilityLabel={t('search.entryLabel')} onPress={onPressSearch} />
+        <IconButton icon={Menu} shape="roundedSquare" accessibilityLabel={t('home.header.menuLabel')} onPress={onPressMenu} />
+        <IconButton icon={Search} shape="roundedSquare" accessibilityLabel={t('search.entryLabel')} onPress={onPressSearch} />
       </View>
 
-      <View style={styles.center} accessible accessibilityRole="header" accessibilityLabel={`OYNO. ${greeting}`}>
+      <View style={styles.center} accessible accessibilityRole="header" accessibilityLabel={`OYNO. ${line}`}>
         <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
-        <Text style={styles.greeting} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-          {greeting}
+        <Text style={styles.tagline} numberOfLines={2}>
+          {line}
         </Text>
       </View>
 
-      <View style={[styles.side, styles.sideRight]}>
-        <IconButton icon={Bell} size={40} iconSize={19} accessibilityLabel={t('home.header.notificationsLabel')} showBadge={hasUnreadNotifications} onPress={onPressNotifications} />
-      </View>
+      <IconButton icon={Bell} accessibilityLabel={t('home.header.notificationsLabel')} showBadge={hasUnreadNotifications} onPress={onPressNotifications} />
     </View>
   );
 }
 
-const SIDE_WIDTH = 40 * 2 + spacing.xs;
-
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, gap: spacing.xs },
-  // Both sides reserve the same width so the logo is truly centred.
-  side: { width: SIDE_WIDTH, flexDirection: 'row', gap: spacing.xs },
-  sideRight: { justifyContent: 'flex-end' },
-  center: { flex: 1, alignItems: 'center', minWidth: 0 },
-  wordmark: { width: 132, height: 26 },
-  greeting: { ...typography.overline, fontSize: 10, letterSpacing: 0.4, color: colors.textSecondary, marginTop: 2, maxWidth: '100%', textAlign: 'center' },
+  row: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: spacing.md, gap: spacing.xs },
+  side: { flexDirection: 'row', gap: spacing.xs },
+  center: { flex: 1, alignItems: 'center', paddingTop: spacing.xxs, minWidth: 0 },
+  wordmark: { width: 170, height: 30, maxWidth: '100%' },
+  tagline: { ...typography.overline, color: colors.textSecondary, marginTop: spacing.xxs, textAlign: 'center' },
 });

@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   sectionList: {
-    gap: 28,
+    gap: spacing.xxl,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

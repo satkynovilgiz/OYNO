@@ -60,20 +60,20 @@ export function HomeProgressSection({
             </View>
           </View>
         </View>
-        <ProgressBar progress={xpRatio} height={6} fillColor={rewarding ? colors.accentGold : undefined} />
+        <ProgressBar progress={xpRatio} height={8} fillColor={rewarding ? colors.accentGold : undefined} />
 
         <View style={styles.secondaryRow} accessible accessibilityLabel={`${player.coins} ${t('profile.stats.coins', { defaultValue: 'coins' })}, ${player.gems}`}>
           <View style={styles.stat}>
-            <Coins size={14} color={colors.accentGoldPressed} strokeWidth={2} />
+            <Coins size={17} color={colors.accentGoldPressed} strokeWidth={2} />
             <Text style={styles.statText}>{player.coins.toLocaleString('ru-RU')}</Text>
           </View>
           <View style={styles.stat}>
-            <Award size={14} color={colors.accentSilver} strokeWidth={2} />
+            <Award size={17} color={colors.accentSilver} strokeWidth={2} />
             <Text style={styles.statText}>{player.gems.toLocaleString('ru-RU')}</Text>
           </View>
           {player.streakDays > 0 ? (
             <View style={styles.stat}>
-              <Flame size={14} color={colors.accentTerracotta} strokeWidth={2} />
+              <Flame size={17} color={colors.accentTerracotta} strokeWidth={2} />
               <Text style={styles.statText}>{player.streakDays}</Text>
             </View>
           ) : null}
@@ -83,7 +83,7 @@ export function HomeProgressSection({
 
         <View style={styles.playRow}>
           <View style={styles.playIcon}>
-            <Target size={18} color={ready ? colors.accentGoldPressed : colors.primary} strokeWidth={2} />
+            <Target size={22} color={ready ? colors.accentGoldPressed : colors.primary} strokeWidth={2} />
           </View>
           <View style={styles.playText}>
             <Text style={styles.playTitle}>{t('home.dailyProgress.title')}</Text>
@@ -115,31 +115,31 @@ export function HomeProgressSection({
 
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
-  card: { marginHorizontal: spacing.md, padding: spacing.md, gap: spacing.sm, borderRadius: HOME_RADIUS.standard, backgroundColor: colors.surface },
+  card: { marginHorizontal: spacing.md, padding: spacing.lg, gap: spacing.md, borderRadius: HOME_RADIUS.standard, backgroundColor: colors.surface },
   playerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  avatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden', borderWidth: 2, borderColor: colors.accentGold, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
+  avatar: { width: 60, height: 60, borderRadius: 30, overflow: 'hidden', borderWidth: 2, borderColor: colors.accentGold, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
   identity: { flex: 1, gap: 4 },
-  name: { ...typography.bodyBold, fontSize: 17, color: colors.textPrimary },
+  name: { ...typography.h1, fontSize: 21, color: colors.textPrimary },
   levelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  level: { paddingHorizontal: spacing.xs, paddingVertical: 2, borderRadius: radii.pill, backgroundColor: colors.primary },
+  level: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill, backgroundColor: colors.primary },
   levelRewarding: { backgroundColor: colors.accentGold },
-  levelText: { ...typography.small, fontWeight: '700', color: colors.textOnDark },
+  levelText: { ...typography.caption, fontWeight: '700', color: colors.textOnDark },
   levelTextRewarding: { color: colors.textPrimary },
-  xpText: { ...typography.small, fontWeight: '600', color: colors.textSecondary },
+  xpText: { ...typography.caption, fontWeight: '600', color: colors.textSecondary },
   secondaryRow: { flexDirection: 'row', gap: spacing.md },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
+  statText: { ...typography.body, fontWeight: '700', color: colors.textSecondary },
   divider: { height: 1, backgroundColor: colors.surfaceAlt },
   playRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  playIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
+  playIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
   playText: { flex: 1, gap: 4 },
-  playTitle: { ...typography.bodyBold, fontSize: 15, color: colors.textPrimary },
+  playTitle: { ...typography.bodyBold, fontSize: 17, color: colors.textPrimary },
   playProgress: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   playBar: { flex: 1 },
-  playCount: { ...typography.small, fontWeight: '700', color: colors.textSecondary },
-  claim: { minHeight: 40, paddingHorizontal: spacing.sm, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', maxWidth: 130 },
+  playCount: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
+  claim: { minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', maxWidth: 130 },
   claimReady: { backgroundColor: colors.accentGold },
   claimIdle: { backgroundColor: colors.surfaceAlt },
-  claimText: { ...typography.small, fontWeight: '700', color: colors.textMuted },
+  claimText: { ...typography.caption, fontWeight: '700', color: colors.textMuted },
   claimTextReady: { color: colors.textPrimary },
 });

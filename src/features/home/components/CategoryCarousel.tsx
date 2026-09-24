@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import type { AgeExperience } from '@/services/ageExperience/types';
@@ -11,8 +11,9 @@ import type { CultureTile } from '../types';
 
 import { HOME_RADIUS, HomeSectionHeader } from './homeKit';
 
-/** Card width per age: children get fewer, bigger cards on screen. */
-const CARD_WIDTH: Record<AgeExperience, number> = { child: 260, preteen: 220, teen: 196, adult: 232 };
+/** Card width as a share of the phone width: the first card is
+ * comfortably readable and the next one peeks in naturally. */
+const WIDTH_SHARE: Record<AgeExperience, number> = { child: 0.84, preteen: 0.78, teen: 0.76, adult: 0.8 };
 
 /**
  * "Explore OYNO" - the existing four category destinations as a horizontal
@@ -23,7 +24,8 @@ const CARD_WIDTH: Record<AgeExperience, number> = { child: 260, preteen: 220, te
  */
 export function CategoryCarousel({ tiles, experience, onPressTile }: { tiles: CultureTile[]; experience: AgeExperience; onPressTile: (tile: CultureTile) => void }) {
   const { t } = useTranslation();
-  const width = CARD_WIDTH[experience];
+  const { width: screenWidth } = useWindowDimensions();
+  const width = Math.min(Math.round(screenWidth * WIDTH_SHARE[experience]), 380);
   const isAdult = experience === 'adult';
 
   return (
@@ -47,10 +49,10 @@ export function CategoryCarousel({ tiles, experience, onPressTile }: { tiles: Cu
                 <Text style={[styles.title, isAdult && styles.titleEditorial]} numberOfLines={2}>
                   {tile.title}
                 </Text>
-                <ChevronRight size={16} color={colors.accentGold} strokeWidth={2.5} />
+                <ChevronRight size={20} color={colors.accentGold} strokeWidth={2.5} />
               </View>
               {experience !== 'child' ? (
-                <Text style={styles.subtitle} numberOfLines={1}>
+                <Text style={styles.subtitle} numberOfLines={2}>
                   {tile.subtitle}
                 </Text>
               ) : null}
@@ -65,11 +67,11 @@ export function CategoryCarousel({ tiles, experience, onPressTile }: { tiles: Cu
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   row: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  card: { aspectRatio: 1.3, borderRadius: HOME_RADIUS.standard, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.surfaceFeature, flexShrink: 0 },
+  card: { aspectRatio: 1.08, borderRadius: HOME_RADIUS.hero, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.surfaceFeature, flexShrink: 0 },
   image: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
-  text: { padding: spacing.sm, gap: 2 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  title: { ...typography.h2, fontSize: 18, lineHeight: 22, color: colors.textOnDark, flexShrink: 1 },
+  text: { padding: spacing.lg, gap: 4 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  title: { ...typography.display, fontSize: 26, lineHeight: 31, color: colors.textOnDark, flexShrink: 1 },
   titleEditorial: { fontFamily: fontFamily.wordmark },
-  subtitle: { ...typography.small, fontWeight: '500', color: 'rgba(251,243,227,0.82)' },
+  subtitle: { ...typography.body, fontSize: 15, color: 'rgba(251,243,227,0.86)' },
 });

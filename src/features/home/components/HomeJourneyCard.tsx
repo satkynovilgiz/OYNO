@@ -20,7 +20,7 @@ type HomeJourneyCardProps = {
 /** Minimum card height per card scale - child gets the biggest picture.
  * A minimum (not a fixed aspect ratio): long KG/RU titles that wrap to two
  * lines grow the card instead of pushing the CTA out of view. */
-const MIN_HEIGHT_BY_CARD_SCALE = { large: 340, medium: 270, compact: 236, dense: 224 };
+const MIN_HEIGHT_BY_CARD_SCALE = { large: 440, medium: 400, compact: 380, dense: 360 };
 
 /**
  * Home's single "Continue Your Journey" card (spec "Do not render several
@@ -68,7 +68,7 @@ export function HomeJourneyCard({ recommendation, display, onPress }: HomeJourne
             ) : null}
             {progress && progress.total > 0 ? (
               <View style={styles.progressBlock}>
-                <ProgressBar progress={progress.completed / progress.total} height={5} fillColor={colors.accentGold} />
+                <ProgressBar progress={progress.completed / progress.total} height={7} fillColor={colors.accentGold} />
                 <Text style={styles.progressLabel}>
                   {progress.completed} / {progress.total}
                 </Text>
@@ -126,8 +126,8 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.display,
-    fontSize: 27,
-    lineHeight: 32,
+    fontSize: 32,
+    lineHeight: 38,
     color: colors.textOnDark,
     textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowRadius: 6,
@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...typography.body,
+    fontSize: 16,
     color: 'rgba(255,255,255,0.85)',
   },
   progressBlock: {
@@ -145,7 +146,8 @@ const styles = StyleSheet.create({
     maxWidth: '75%',
   },
   progressLabel: {
-    ...typography.small,
+    ...typography.caption,
+    fontWeight: '700',
     color: 'rgba(255,255,255,0.75)',
   },
   ctaRow: {

@@ -25,13 +25,13 @@ type TodayDiscoveryEntryCardProps = {
  * dark readable overlay, a clear "TODAY" label, the item's real title,
  * honest read-time + category, and one gold Open CTA (or a quiet "done"
  * once completed - no streak pressure). Small source art (e.g. a 150 px
- * ornament motif) is never stretched: HomeArtwork shows it as a crisp
- * inset over the same category's high-resolution image.
+ * ornament motif) is never stretched: HomeArtwork uses the same category's
+ * high-resolution photograph full-bleed instead.
  */
 export function TodayDiscoveryEntryCard({ discovery, isLoading, experience, onPress }: TodayDiscoveryEntryCardProps) {
   const { t } = useTranslation();
 
-  if (isLoading) return <Skeleton height={200} borderRadius={HOME_RADIUS.standard} />;
+  if (isLoading) return <Skeleton height={340} borderRadius={HOME_RADIUS.hero} />;
   if (!discovery) return null;
 
   const meta = [t('daily.minutes', { count: discovery.minutes }), discovery.categoryTitle].filter(Boolean).join(' · ');
@@ -81,16 +81,16 @@ export function TodayDiscoveryEntryCard({ discovery, isLoading, experience, onPr
 }
 
 const styles = StyleSheet.create({
-  card: { width: '100%', minHeight: 208, borderRadius: HOME_RADIUS.standard, overflow: 'hidden', justifyContent: 'space-between', backgroundColor: colors.surfaceFeature },
-  cardChild: { minHeight: 240 },
-  today: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, margin: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill, backgroundColor: 'rgba(19,32,24,0.62)' },
+  card: { width: '100%', minHeight: 340, borderRadius: HOME_RADIUS.hero, overflow: 'hidden', justifyContent: 'space-between', backgroundColor: colors.surfaceFeature },
+  cardChild: { minHeight: 380 },
+  today: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, margin: spacing.lg, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radii.pill, backgroundColor: 'rgba(19,32,24,0.62)' },
   todayText: { ...typography.overline, color: colors.accentGold },
-  body: { padding: spacing.md, gap: 2 },
-  kicker: { ...typography.caption, fontWeight: '600', color: 'rgba(251,243,227,0.78)' },
-  title: { ...typography.display, fontSize: 25, lineHeight: 30, color: colors.textOnDark },
+  body: { padding: spacing.lg, gap: 4 },
+  kicker: { ...typography.body, fontSize: 15, fontWeight: '600', color: 'rgba(251,243,227,0.82)' },
+  title: { ...typography.display, fontSize: 32, lineHeight: 38, color: colors.textOnDark },
   titleEditorial: { fontFamily: fontFamily.wordmark },
-  meta: { ...typography.small, fontWeight: '500', color: 'rgba(251,243,227,0.75)' },
-  ctaRow: { marginTop: spacing.sm },
-  done: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, minHeight: 36, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: 'rgba(232,185,61,0.16)' },
-  doneText: { ...typography.caption, fontWeight: '700', color: colors.accentGold },
+  meta: { ...typography.body, fontSize: 14, color: 'rgba(251,243,227,0.78)' },
+  ctaRow: { marginTop: spacing.md },
+  done: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, minHeight: 50, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: 'rgba(232,185,61,0.16)' },
+  doneText: { ...typography.bodyBold, color: colors.accentGold },
 });

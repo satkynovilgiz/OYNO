@@ -40,11 +40,11 @@ export function RecentlyExploredRow({ items, onPress }: { items: RecentDisplay[]
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.xs },
-  title: { ...typography.overline, color: colors.textSecondary, paddingHorizontal: spacing.md },
+  section: { gap: spacing.sm },
+  title: { ...typography.h2, fontSize: 18, color: colors.textPrimary, paddingHorizontal: spacing.md },
   row: { paddingHorizontal: spacing.md, gap: spacing.xs },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44, maxWidth: 220, paddingLeft: 4, paddingRight: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder, flexShrink: 0 },
-  thumb: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.surfaceAlt },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, maxWidth: 260, paddingLeft: 6, paddingRight: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder, flexShrink: 0 },
+  thumb: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceAlt },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
-  pillTitle: { ...typography.caption, fontWeight: '600', color: colors.textPrimary, flexShrink: 1 },
+  pillTitle: { ...typography.bodyBold, fontSize: 15, color: colors.textPrimary, flexShrink: 1 },
 });

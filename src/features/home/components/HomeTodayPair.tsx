@@ -54,9 +54,9 @@ export function HomeTodayPair({
             </Text>
           </View>
           <View style={styles.rewardRow}>
-            <Star size={12} color={colors.accentGoldPressed} strokeWidth={2.25} />
+            <Star size={15} color={colors.accentGoldPressed} strokeWidth={2.25} />
             <Text style={styles.reward}>{challenge.rewardXp}</Text>
-            <Coins size={12} color={colors.accentGoldPressed} strokeWidth={2.25} />
+            <Coins size={15} color={colors.accentGoldPressed} strokeWidth={2.25} />
             <Text style={styles.reward}>{challenge.rewardCoins}</Text>
           </View>
         </TodayCard>
@@ -103,7 +103,7 @@ function TodayCard({
       accessibilityLabel={accessibilityLabel}
     >
       <View style={[styles.medallion, ready && styles.medallionReady]}>
-        <Icon size={18} color={ready ? colors.textPrimary : colors.primary} strokeWidth={2.25} />
+        <Icon size={22} color={ready ? colors.textPrimary : colors.primary} strokeWidth={2.25} />
       </View>
       <Text style={styles.title} numberOfLines={2}>
         {title}
@@ -119,16 +119,16 @@ function TodayCard({
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   row: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md },
-  card: { flex: 1, minHeight: 168, padding: spacing.md, gap: 4, borderRadius: HOME_RADIUS.standard, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: 'transparent' },
+  card: { flex: 1, minHeight: 210, padding: spacing.md, gap: 6, borderRadius: HOME_RADIUS.standard, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: 'transparent' },
   cardReady: { borderColor: colors.accentGold },
-  medallion: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt, marginBottom: 4 },
+  medallion: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt, marginBottom: 4 },
   medallionReady: { backgroundColor: colors.accentGold },
-  title: { ...typography.bodyBold, fontSize: 15, lineHeight: 19, color: colors.textPrimary },
-  body: { ...typography.small, fontWeight: '500', lineHeight: 16, color: colors.textSecondary },
+  title: { ...typography.h2, fontSize: 18, lineHeight: 23, color: colors.textPrimary },
+  body: { ...typography.caption, fontSize: 14, lineHeight: 19, color: colors.textSecondary },
   footer: { marginTop: 'auto', gap: 4, paddingTop: spacing.xs },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   bar: { flex: 1 },
-  count: { ...typography.small, fontWeight: '700', color: colors.textSecondary },
+  count: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
   rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  reward: { ...typography.small, fontWeight: '700', color: colors.textSecondary, marginRight: 6 },
+  reward: { ...typography.caption, fontWeight: '700', color: colors.textSecondary, marginRight: 8 },
 });

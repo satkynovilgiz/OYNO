@@ -1,7 +1,6 @@
 import { ChevronRight } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
 
-import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -76,39 +75,27 @@ export const MIN_BACKDROP_WIDTH = 600;
 /**
  * Full-bleed card artwork that never upscales a tiny asset. If `source` is
  * too small to fill the card (e.g. a 150x60 px ornament motif), the card
- * uses `backdrop` - a real, high-resolution OYNO image from the same
- * category - and shows the small image crisply as an inset swatch instead
- * of stretching it. No blur tricks, no invented images.
+ * shows `backdrop` instead - a real, high-resolution OYNO photograph from
+ * the same category - full-bleed and cropped properly. No blur tricks, no
+ * floating inset boxes, no invented images.
  */
 export function HomeArtwork({ source, backdrop, style }: { source: ImageSourcePropType; backdrop?: ImageSourcePropType | null; style?: StyleProp<ViewStyle> }) {
   const width = sourceWidth(source);
   const lowRes = width !== null && width < MIN_BACKDROP_WIDTH;
-  if (!lowRes || !backdrop) {
-    return <Image source={source} style={[styles.fill, style as never]} resizeMode="cover" accessibilityIgnoresInvertColors />;
-  }
-  return (
-    <View style={[styles.fill, style]}>
-      <Image source={backdrop} style={styles.fill} resizeMode="cover" accessibilityIgnoresInvertColors />
-      <View style={styles.swatch}>
-        <OymoOrnament size={16} color={colors.accentGold} strokeWidth={1.5} />
-        <Image source={source} style={styles.swatchImage} resizeMode="contain" accessibilityIgnoresInvertColors />
-      </View>
-    </View>
-  );
+  const shown = lowRes && backdrop ? backdrop : source;
+  return <Image source={shown} style={[styles.fill, style as never]} resizeMode="cover" accessibilityIgnoresInvertColors />;
 }
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm, paddingHorizontal: spacing.md },
   headerText: { flex: 1, gap: 2 },
   eyebrow: { ...typography.overline, color: colors.accentTerracotta },
-  title: { ...typography.h1, fontSize: 21, lineHeight: 26, color: colors.textPrimary },
+  title: { ...typography.display, fontSize: 24, lineHeight: 30, color: colors.textPrimary },
   link: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44 },
-  linkText: { ...typography.caption, fontWeight: '700', color: colors.primary },
-  pill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, minHeight: 40, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.accentGold },
-  pillLarge: { minHeight: 52, alignSelf: 'stretch', justifyContent: 'center' },
-  pillText: { ...typography.bodyBold, fontSize: 14, color: colors.textPrimary, flexShrink: 1 },
-  pillTextLarge: { fontSize: 17 },
+  linkText: { ...typography.body, fontSize: 15, fontWeight: '700', color: colors.primary },
+  pill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, minHeight: 50, paddingHorizontal: spacing.lg, borderRadius: radii.pill, backgroundColor: colors.accentGold },
+  pillLarge: { minHeight: 58, alignSelf: 'stretch', justifyContent: 'center' },
+  pillText: { ...typography.bodyBold, fontSize: 16, color: colors.textPrimary, flexShrink: 1 },
+  pillTextLarge: { fontSize: 19 },
   fill: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
-  swatch: { position: 'absolute', top: spacing.md, right: spacing.md, width: 104, padding: spacing.xs, gap: 4, alignItems: 'center', borderRadius: radii.lg, backgroundColor: 'rgba(251,243,227,0.94)', borderWidth: 1, borderColor: colors.accentGold },
-  swatchImage: { width: 88, height: 44 },
 });

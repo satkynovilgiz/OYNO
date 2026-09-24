@@ -13,7 +13,7 @@ import { colors, spacing, typography } from '@/theme';
 import { HOME_RADIUS, HomeSectionHeader } from './homeKit';
 
 const MAX_GAMES = 5;
-const CARD_WIDTH: Record<AgeExperience, number> = { child: 170, preteen: 140, teen: 128, adult: 136 };
+const CARD_WIDTH: Record<AgeExperience, number> = { child: 210, preteen: 176, teen: 168, adult: 176 };
 
 /**
  * Home's Play teaser - not the Games tab: at most five games (playable
@@ -44,11 +44,11 @@ export function GamesCarousel({ games, experience, onPressGame, onPressSeeAll }:
               accessibilityState={{ disabled: !playable }}
               accessibilityLabel={playable ? `${title}, ${t('games.play')}` : `${title}, ${t('games.comingSoonBadge')}`}
             >
-              <GameArt source={gameArt(game, 'card')} title={title} style={StyleSheet.absoluteFill} ornamentSize={48} />
+              <GameArt source={gameArt(game, 'card')} title={title} style={StyleSheet.absoluteFill} ornamentSize={64} />
               <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.5, 1]} style={StyleSheet.absoluteFill} />
               {playable ? (
                 <View style={styles.playMark}>
-                  <Play size={12} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
+                  <Play size={15} color={colors.textPrimary} fill={colors.textPrimary} strokeWidth={0} />
                 </View>
               ) : null}
               <Text style={styles.title} numberOfLines={2}>
@@ -65,8 +65,8 @@ export function GamesCarousel({ games, experience, onPressGame, onPressSeeAll }:
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   row: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  card: { aspectRatio: 0.82, borderRadius: HOME_RADIUS.standard, overflow: 'hidden', justifyContent: 'flex-end', padding: spacing.sm, backgroundColor: colors.surfaceFeature, flexShrink: 0 },
+  card: { aspectRatio: 0.8, borderRadius: HOME_RADIUS.standard, overflow: 'hidden', justifyContent: 'flex-end', padding: spacing.sm, backgroundColor: colors.surfaceFeature, flexShrink: 0 },
   locked: { opacity: 0.7 },
-  playMark: { position: 'absolute', top: spacing.xs, right: spacing.xs, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentGold },
-  title: { ...typography.bodyBold, fontSize: 14, lineHeight: 18, color: colors.textOnDark },
+  playMark: { position: 'absolute', top: spacing.sm, right: spacing.sm, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentGold },
+  title: { ...typography.bodyBold, fontSize: 17, lineHeight: 22, color: colors.textOnDark },
 });
