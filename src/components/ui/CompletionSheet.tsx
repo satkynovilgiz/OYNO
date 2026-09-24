@@ -10,6 +10,9 @@ import { colors, radii, spacing } from '@/theme';
 type CompletionSheetProps = {
   visible: boolean;
   children: ReactNode;
+  /** Haptic on open: 'success' (default) for a real success, 'light' for
+   * a gentle "try again", 'none' to stay silent. */
+  haptic?: 'success' | 'light' | 'none';
 };
 
 /**
@@ -29,7 +32,7 @@ type CompletionSheetProps = {
  * fires once per genuine completion (on the transition into `visible`,
  * not on every re-render while already visible).
  */
-export function CompletionSheet({ visible, children }: CompletionSheetProps) {
+export function CompletionSheet({ visible, children, haptic = 'success' }: CompletionSheetProps) {
   const reducedMotion = useReducedMotion();
   const scale = useSharedValue(reducedMotion ? 1 : 0.92);
   const opacity = useSharedValue(reducedMotion ? 1 : 0);
@@ -45,7 +48,8 @@ export function CompletionSheet({ visible, children }: CompletionSheetProps) {
       scale.value = withTiming(1, { duration: 320 });
       opacity.value = withTiming(1, { duration: 260 });
     }
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (haptic === 'success') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    else if (haptic === 'light') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
@@ -55,7 +59,7 @@ export function CompletionSheet({ visible, children }: CompletionSheetProps) {
   }));
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" supportedOrientations={['portrait', 'landscape']}>
       <View style={styles.backdrop}>
         <Animated.View style={[styles.sheet, sheetStyle]}>
           <View style={styles.ornamentRow}>
@@ -81,6 +85,7 @@ const styles = StyleSheet.create({
   sheet: {
     width: '100%',
     maxWidth: 360,
+    maxHeight: '100%',
     backgroundColor: colors.surface,
     borderRadius: radii.xxl,
     padding: spacing.xl,

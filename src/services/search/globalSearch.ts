@@ -4,7 +4,7 @@ import type { CatalogContentType, CatalogItem } from '@/services/content/content
  * Games, Маданият / Culture, Жерлер / Places, Материалдар / Materials") -
  * a display grouping over `CatalogContentType`, not a new content
  * classification of its own. */
-export type SearchResultGroup = 'games' | 'culture' | 'places' | 'materials' | 'trails';
+export type SearchResultGroup = 'games' | 'culture' | 'places' | 'materials' | 'trails' | 'collections';
 
 const GROUP_BY_CONTENT_TYPE: Record<CatalogContentType, SearchResultGroup> = {
   game: 'games',
@@ -15,6 +15,7 @@ const GROUP_BY_CONTENT_TYPE: Record<CatalogContentType, SearchResultGroup> = {
   region: 'places',
   nature: 'places',
   trail: 'trails',
+  collection: 'collections',
 };
 
 export function groupForContentType(contentType: CatalogContentType): SearchResultGroup {
@@ -44,7 +45,7 @@ export function searchCatalog(items: CatalogItem[], query: string): CatalogItem[
 }
 
 export function groupSearchResults(items: CatalogItem[]): Record<SearchResultGroup, CatalogItem[]> {
-  const groups: Record<SearchResultGroup, CatalogItem[]> = { games: [], culture: [], places: [], materials: [], trails: [] };
+  const groups: Record<SearchResultGroup, CatalogItem[]> = { games: [], culture: [], places: [], materials: [], trails: [], collections: [] };
   for (const item of items) {
     groups[groupForContentType(item.contentType)].push(item);
   }

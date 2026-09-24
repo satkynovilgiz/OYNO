@@ -1,15 +1,18 @@
 import { router } from 'expo-router';
-import { ArrowDownToLine, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ArrowDownToLine, HardDrive } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, ConfirmationModal, EmptyState, IconButton } from '@/components/ui';
+import { LibraryEmptyState, LibraryHeader, LibrarySectionHeader } from '@/components/library/LibraryChrome';
+import { LibraryContentRow } from '@/components/library/LibraryContentRow';
+import { AnimatedPressable, ConfirmationModal } from '@/components/ui';
 import { getCollection } from '@/features/collections/collectionsData';
 import { cultureItemImages } from '@/features/culture/data';
 import { natureSiteImages } from '@/features/explore/data';
 import type { SupportedLanguage } from '@/i18n';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { mapExploreRegionName } from '@/services/content/types';
@@ -47,6 +50,7 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
   const insets = useSafeAreaInsets();
+  const { experience } = useAgeExperience();
   const manifest = useOfflineStore((state) => state.manifest);
   const entries = Object.values(manifest.entries);
   const { data: regions } = useExploreRegions();
@@ -83,60 +87,58 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
     };
   }
 
+  const typeFor = (kind: OfflineKind): 'nature' | 'collection' | 'culture_item' => kind;
+
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
-        <Text style={styles.title}>{t('offline.library.title')}</Text>
-      </View>
+      <LibraryHeader title={t('offline.library.title')} subtitle={t('library.offlineSubtitle')} onPressBack={onPressBack} />
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
         {entries.length === 0 ? (
-          <EmptyState icon={ArrowDownToLine} title={t('offline.library.emptyTitle')} description={t('offline.library.emptyDescription')} />
+          <LibraryEmptyState icon={ArrowDownToLine} tone={colors.primary} title={t('offline.library.emptyTitle')} description={t('offline.library.emptyDescription')} />
         ) : (
           <>
-            <View style={styles.summary}>
-              <Text style={styles.summaryText}>
-                {t('offline.library.count', { count: entries.length })}
-                {bytes !== null ? ` · ${t('offline.library.storage', { size: formatBytes(bytes) })}` : ''}
-              </Text>
-              <Text style={styles.summaryNote}>{t('offline.library.storageNote')}</Text>
+            <View style={styles.summary} accessible accessibilityLabel={`${t('offline.library.count', { count: entries.length })}${bytes !== null ? `, ${t('offline.library.storage', { size: formatBytes(bytes) })}` : ''}`}>
+              <View style={styles.summaryIcon}>
+                <HardDrive size={18} color={colors.primary} strokeWidth={2} />
+              </View>
+              <View style={styles.summaryTextBlock}>
+                <Text style={styles.summaryText}>{t('offline.library.count', { count: entries.length })}</Text>
+                {bytes !== null ? <Text style={styles.summarySize}>{t('offline.library.storage', { size: formatBytes(bytes) })}</Text> : null}
+              </View>
             </View>
+            <Text style={styles.summaryNote}>{t('offline.library.storageNote')}</Text>
 
             {SECTIONS.map(({ kind, titleKey }) => {
               const sectionEntries = entries.filter((entry) => entry.kind === kind);
               if (sectionEntries.length === 0) return null;
               return (
                 <View key={kind} style={styles.section}>
-                  <Text style={styles.sectionTitle}>{t(titleKey)}</Text>
-                  {sectionEntries.map((entry) => {
-                    const { title, image } = describe(entry);
-                    return (
-                      <View key={entry.id} style={styles.row}>
-                        <AnimatedPressable
-                          style={styles.rowMain}
+                  <LibrarySectionHeader title={t(titleKey)} count={sectionEntries.length} />
+                  <View style={styles.list}>
+                    {sectionEntries.map((entry) => {
+                      const { title, image } = describe(entry);
+                      return (
+                        <LibraryContentRow
+                          key={entry.id}
+                          item={{ contentType: typeFor(entry.kind), id: entry.contentId, title, thumbnail: image }}
+                          experience={experience}
+                          offline
                           onPress={() => router.push(routeFor(entry) as never)}
-                          hoverEffect
-                          accessibilityRole="button"
-                          accessibilityLabel={t('offline.a11y.available', { title })}
-                        >
-                          {image ? <Image source={image} style={styles.thumb} resizeMode="cover" /> : <View style={styles.thumb} />}
-                          <Text style={styles.rowTitle} numberOfLines={2}>
-                            {title}
-                          </Text>
-                          <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
-                        </AnimatedPressable>
-                        <AnimatedPressable
-                          style={styles.remove}
-                          onPress={() => void useOfflineStore.getState().remove(entry.id)}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('offline.a11y.remove', { title })}
-                        >
-                          <Text style={styles.removeText}>{t('offline.remove')}</Text>
-                        </AnimatedPressable>
-                      </View>
-                    );
-                  })}
+                          trailing={
+                            <AnimatedPressable
+                              style={styles.remove}
+                              onPress={() => void useOfflineStore.getState().remove(entry.id)}
+                              accessibilityRole="button"
+                              accessibilityLabel={t('offline.a11y.remove', { title })}
+                            >
+                              <Text style={styles.removeText}>{t('offline.remove')}</Text>
+                            </AnimatedPressable>
+                          }
+                        />
+                      );
+                    })}
+                  </View>
                 </View>
               );
             })}
@@ -166,84 +168,18 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.lg,
-  },
-  summary: {
-    gap: 2,
-  },
-  summaryText: {
-    ...typography.bodyBold,
-    color: colors.textPrimary,
-  },
-  summaryNote: {
-    ...typography.small,
-    fontWeight: '500',
-    color: colors.textMuted,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    ...typography.overline,
-    color: colors.accentTerracotta,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radii.xl,
-    backgroundColor: colors.surface,
-  },
-  rowMain: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  thumb: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceAlt,
-  },
-  rowTitle: {
-    ...typography.bodyBold,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  remove: {
-    paddingVertical: spacing.xs,
-  },
-  removeText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textDecorationLine: 'underline',
-  },
-  removeAll: {
-    alignSelf: 'center',
-    paddingVertical: spacing.sm,
-  },
-  removeAllText: {
-    ...typography.bodyBold,
-    color: colors.danger,
-  },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: spacing.md, gap: spacing.md, paddingTop: spacing.xs },
+  summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radii.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
+  summaryIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
+  summaryTextBlock: { flex: 1, gap: 2 },
+  summaryText: { ...typography.bodyBold, color: colors.textPrimary },
+  summarySize: { ...typography.caption, color: colors.textSecondary },
+  summaryNote: { ...typography.small, fontWeight: '500', color: colors.textMuted, marginTop: -spacing.xs },
+  section: { gap: spacing.xs },
+  list: { gap: spacing.xxs },
+  remove: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.xs },
+  removeText: { ...typography.caption, fontWeight: '600', color: colors.textSecondary, textDecorationLine: 'underline' },
+  removeAll: { alignSelf: 'center', minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md },
+  removeAllText: { ...typography.bodyBold, color: colors.danger },
 });

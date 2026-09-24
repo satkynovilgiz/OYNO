@@ -16,7 +16,7 @@ export function ContextActionButton({ label, enabled, onPress }: ContextActionBu
   return (
     <Pressable
       onPress={enabled ? onPress : undefined}
-      style={[styles.button, !enabled && styles.disabled]}
+      style={({ pressed }) => [styles.button, !enabled && styles.disabled, pressed && enabled && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !enabled }}
@@ -37,6 +37,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.35)',
+  },
+  pressed: {
+    transform: [{ scale: 0.95 }],
   },
   disabled: {
     opacity: 0.35,

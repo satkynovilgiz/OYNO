@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Gamepad2, Heart, Play } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CharacterAvatar } from '@/components/character';
@@ -13,10 +14,12 @@ import { getBestScore } from '@/games3d/core/gameBestScore';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useCultureItem } from '@/services/content/cultureItemsService';
-import { achievementDefinitions } from '@/services/progress/achievements';
+import { useHeroParallax } from '@/services/motion/useHeroParallax';
 import { useProgressStore } from '@/store/useProgressStore';
-import { aspectRatios, colors, radii, shadows, spacing, typography } from '@/theme';
+import { colors, fontFamily, radii, shadows, spacing, typography } from '@/theme';
 import { getGameHostConfig } from '@games/gameHostCharacters';
+
+import { gameArt, listGameForProgressId } from './gamesCatalog';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -89,7 +92,12 @@ export function GameDetailScreen({
   const insets = useSafeAreaInsets();
   const { config } = useAgeExperience();
   const gamesPlayed = useProgressStore((state) => state.gameStats[gameId]?.played ?? 0);
-  const unlockedCount = useProgressStore((state) => state.unlockedAchievementIds.length);
+  const gamesWon = useProgressStore((state) => state.gameStats[gameId]?.won ?? 0);
+  const { scrollHandler, heroStyle } = useHeroParallax();
+  // The same catalog entry the Games tab shows: sharper large-format art
+  // where it exists, plus real players/duration/difficulty facts.
+  const listGame = listGameForProgressId(gameId);
+  const heroArt = (listGame ? gameArt(listGame, 'large') : null) ?? imageSource ?? null;
   const [bestScore, setBestScore] = useState<number | null>(null);
   const { data: culturalContextItem } = useCultureItem(culturalContextItemId ?? '');
 
@@ -100,7 +108,19 @@ export function GameDetailScreen({
   const showCulturalContext = !!culturalContextItem && (culturalContextItem.cultural_meaning || culturalContextItem.history);
   const isAdult = config.characterProminence === 'subtle';
   const host = getGameHostConfig(gameId);
-  const bannerAspectRatio = resolveByCardScale(config.cardScale, { large: 1.5, medium: aspectRatios.banner, compact: 2.1, dense: 2.4 });
+  // Cinematic, taller than the old banner; a little calmer for adults.
+  const bannerAspectRatio = resolveByCardScale(config.cardScale, { large: 0.95, medium: 1.05, compact: 1.15, dense: 1.3 });
+  const facts = listGame && !isChild
+    ? [
+        listGame.players.kind === 'team'
+          ? t('games.players.team')
+          : listGame.players.kind === 'exact'
+            ? t('games.players.exact', { count: listGame.players.count })
+            : t('games.players.open', { min: listGame.players.min }),
+        t('games.duration.range', { min: listGame.duration.minMinutes, max: listGame.duration.maxMinutes }),
+        t(`games.difficulty.${listGame.difficulty}`),
+      ]
+    : [];
 
   useEffect(() => {
     if (!showBestScore) return;
@@ -115,17 +135,20 @@ export function GameDetailScreen({
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView onScroll={scrollHandler} scrollEventThrottle={16} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <HeroEntrance>
           <View style={[styles.hero, { aspectRatio: bannerAspectRatio }]}>
-            {imageSource ? (
-              <Image source={imageSource} style={styles.heroImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.heroImage, styles.heroFallback]}>
-                <Gamepad2 size={40} color={colors.accentGold} strokeWidth={1.5} />
-              </View>
-            )}
-            <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+            <Animated.View style={[styles.heroImage, heroStyle]}>
+              {heroArt ? (
+                <Image source={heroArt} style={styles.heroImage} resizeMode="cover" accessibilityIgnoresInvertColors />
+              ) : (
+                <View style={[styles.heroImage, styles.heroFallback]}>
+                  <OymoOrnament size={120} color="rgba(232,185,61,0.3)" strokeWidth={1.25} />
+                  <Gamepad2 size={40} color={colors.accentGold} strokeWidth={1.5} style={styles.heroFallbackIcon} />
+                </View>
+              )}
+            </Animated.View>
+            <LinearGradient colors={['rgba(19,32,24,0.45)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.92)']} locations={[0, 0.3, 1]} style={StyleSheet.absoluteFill} />
 
             <View style={styles.heroOverlay} pointerEvents="box-none">
               <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
@@ -144,12 +167,30 @@ export function GameDetailScreen({
                   onPress={onToggleFavorite}
                 />
               </View>
-              <Text style={styles.heroTitle} numberOfLines={2}>
-                {title}
-              </Text>
+              <View style={styles.heroText}>
+                {listGame ? <Text style={styles.heroEyebrow}>{t(`games.categories.${listGame.category}`)}</Text> : null}
+                <Text style={[styles.heroTitle, isAdult && styles.heroTitleEditorial]} numberOfLines={2} accessibilityRole="header">
+                  {title}
+                </Text>
+                {gamesPlayed > 0 ? (
+                  <Text style={styles.heroStats}>
+                    {gamesWon > 0 ? t('games.playAgain.statsWithWins', { played: gamesPlayed, won: gamesWon }) : t('games.playAgain.stats', { played: gamesPlayed })}
+                  </Text>
+                ) : null}
+              </View>
             </View>
           </View>
         </HeroEntrance>
+
+        {facts.length > 0 ? (
+          <View style={styles.factsRow} accessible accessibilityLabel={facts.join(', ')}>
+            {facts.map((fact) => (
+              <View key={fact} style={styles.fact}>
+                <Text style={styles.factText}>{fact}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {isAdult && showCulturalContext ? (
           <FadeSlideIn style={[styles.card, styles.culturalContextCardProminent]} index={0}>
@@ -158,6 +199,15 @@ export function GameDetailScreen({
             {culturalContextItem!.history && culturalContextItem!.cultural_meaning ? (
               <Text style={styles.body}>{culturalContextItem!.cultural_meaning}</Text>
             ) : null}
+          </FadeSlideIn>
+        ) : null}
+
+        {!isAdult && showCulturalContext ? (
+          <FadeSlideIn style={styles.card} index={3}>
+            <Text style={styles.sectionLabel}>{t('gameDetail.culturalContext')}</Text>
+            <Text style={styles.body} numberOfLines={3}>
+              {culturalContextItem!.cultural_meaning ?? culturalContextItem!.history}
+            </Text>
           </FadeSlideIn>
         ) : null}
 
@@ -186,15 +236,6 @@ export function GameDetailScreen({
             </View>
           ))}
         </FadeSlideIn>
-
-        {!isAdult && showCulturalContext ? (
-          <FadeSlideIn style={styles.card} index={3}>
-            <Text style={styles.sectionLabel}>{t('gameDetail.culturalContext')}</Text>
-            <Text style={styles.body} numberOfLines={3}>
-              {culturalContextItem!.cultural_meaning ?? culturalContextItem!.history}
-            </Text>
-          </FadeSlideIn>
-        ) : null}
 
         {showDifficultyPicker ? (
           <FadeSlideIn style={styles.card} index={4}>
@@ -235,8 +276,8 @@ export function GameDetailScreen({
               <Text style={styles.statLabel}>{t('gameDetail.gamesPlayed')}</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statValue}>{t('profile.achievements.unlocked', { unlocked: unlockedCount, total: achievementDefinitions.length })}</Text>
-              <Text style={styles.statLabel}>{t('profile.achievements.title')}</Text>
+              <Text style={styles.statValue}>{gamesWon}</Text>
+              <Text style={styles.statLabel}>{t('gameDetail.wins')}</Text>
             </View>
           </FadeSlideIn>
         ) : null}
@@ -252,18 +293,15 @@ export function GameDetailScreen({
           <Text style={styles.cultureLinkText}>{t('gameDetail.learnTradition')}</Text>
           <ChevronRight size={18} color={colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
-      </ScrollView>
+      </Animated.ScrollView>
 
       <View style={[styles.footer, isAdult && styles.footerCompact, { paddingBottom: insets.bottom + spacing.md }]}>
-        <View style={[styles.footerButton, isChild && styles.footerButtonSecondary]}>
+        <View style={[styles.footerButton, styles.footerButtonSecondary]}>
           <Button label={t('gameDetail.practice')} variant="secondary" onPress={onPressPractice} />
         </View>
-        <View style={[styles.footerButton, isChild && styles.footerButtonPrimary]}>
-          <Button
-            label={t('games.play')}
-            onPress={onPressPlay}
-            icon={isChild ? <Play size={16} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} /> : undefined}
-          />
+        {/* Play is always the strongest action: twice Practice's width, with icon. */}
+        <View style={[styles.footerButton, styles.footerButtonPrimary]}>
+          <Button label={t('games.play')} onPress={onPressPlay} icon={<Play size={16} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />} />
         </View>
       </View>
     </View>
@@ -313,9 +351,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  heroText: {
+    gap: 2,
+  },
+  heroEyebrow: {
+    ...typography.overline,
+    color: colors.accentGold,
+  },
   heroTitle: {
-    ...typography.display,
+    fontFamily: fontFamily.wordmark,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '700',
     color: colors.textOnDark,
+  },
+  heroTitleEditorial: {
+    fontSize: 30,
+    lineHeight: 36,
+  },
+  heroStats: {
+    ...typography.caption,
+    fontWeight: '600',
+    color: 'rgba(251,243,227,0.85)',
+  },
+  heroFallbackIcon: {
+    position: 'absolute',
+  },
+  factsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  fact: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+  },
+  factText: {
+    ...typography.caption,
+    fontWeight: '600',
+    color: colors.textPrimary,
   },
   culturalContextCardProminent: {
     borderColor: colors.accentGold,

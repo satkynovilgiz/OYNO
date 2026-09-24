@@ -238,7 +238,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
       <StatusBanner visible={!!coachingText} text={coachingText ?? ''} top="14%" maxWidth="80%" />
 
       {playing ? (
-        <View pointerEvents="box-none" style={[styles.controlsRow, { paddingBottom: insets.bottom + spacing.lg }]}>
+        <View pointerEvents="box-none" style={[styles.controlsRow, { paddingBottom: insets.bottom + spacing.lg, paddingLeft: insets.left + spacing.lg, paddingRight: insets.right + spacing.lg }]}>
           <View pointerEvents="box-none" style={styles.controlSlot}>
             <VirtualJoystickView gesture={joystick.gesture} knobX={joystick.knobX} knobY={joystick.knobY} />
           </View>
@@ -263,6 +263,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
       <StartCountdown visible={game.phase === 'READY' && mode === 'normal'} onDone={game.startChase} />
 
       <PauseMenu
+        gameTitle={t('games3d.titles.kyzKuumai')}
         visible={game.phase === 'PAUSED' && helpStage === null}
         onResume={game.resume}
         onRestart={game.restart}
@@ -270,7 +271,14 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
         onHowToPlay={handleHowToPlay}
       />
 
-      <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={game.restart} onExit={handleExit} />
+      <ResultScreen
+        visible={game.phase === 'RESULT'}
+        title={resultTitle}
+        outcome={mode === 'practice' ? 'completed' : game.summary.caught ? 'win' : 'tryAgain'}
+        stats={resultStats}
+        onReplay={game.restart}
+        onExit={handleExit}
+      />
 
       <LoadingOverlay visible={modelsLoading} progress={modelsProgress / 100} />
     </View>

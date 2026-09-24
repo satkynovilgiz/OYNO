@@ -1,36 +1,31 @@
 import type { AgeExperience } from '@/services/ageExperience/types';
 
-/** Every section HomeScreen can render, in a stable identity independent of
- * on-screen order. Kept in one enum-like list so `HOME_SECTION_ORDER` below
- * can be checked (by its own test) to always be a full permutation - Home
- * stays the same single screen for every age, only the order changes. */
-export type HomeSectionId = 'hero' | 'today' | 'profile' | 'games' | 'dailyRow' | 'culture' | 'dailyProgress';
-
-export const ALL_HOME_SECTIONS: HomeSectionId[] = ['hero', 'today', 'profile', 'games', 'dailyRow', 'culture', 'dailyProgress'];
-
 /**
- * Section priority per AgeExperience (spec "Make Home adapt to
- * AgeExperience... Section ordering/presentation responds to
- * AgeExperience"):
- * - child: character greeting (hero) + profile, then a big "Continue
- *   Playing" (games) up top, daily mission/reward close behind.
- * - preteen: games/streak/achievements first, then daily challenges and
- *   culture recommendations.
- * - teen: continue playing, challenges, exploration (culture), progress,
- *   recommendations (profile) last.
- * - adult: a featured cultural story leads, then an explore-style
- *   recommendation slot and compact progress; games are available but not
- *   dominant, pushed toward the end.
+ * Home information hierarchy - ONE architecture for every age:
  *
- * `today` (the Daily OYNO entry card) sits right after each experience's
- * lead section - visible without scrolling far, but never displacing what
- * already leads Home for that age.
+ *   header
+ *   hero      the one primary recommendation ("Continue / Next for you")
+ *   culture   Explore OYNO category carousel
+ *   today     Daily OYNO
+ *   recent    recently explored (light, secondary; real history only)
+ *   progress  YOUR PROGRESS - player level/XP + daily play (grouped)
+ *   games     PLAY - games teaser
+ *   dailyRow  TODAY - daily task + daily gift (one visual family)
+ *
+ * The first four never move (where am I -> what next -> what to explore ->
+ * today). Age only trims or nudges the lower page: children see fewer
+ * sections; preteens see progress before games (rewards a little
+ * stronger); teens/adults keep rewards last so culture leads.
  */
+export type HomeSectionId = 'hero' | 'culture' | 'today' | 'recent' | 'progress' | 'games' | 'dailyRow';
+
+export const ALL_HOME_SECTIONS: HomeSectionId[] = ['hero', 'culture', 'today', 'recent', 'progress', 'games', 'dailyRow'];
+
 const HOME_SECTION_ORDER: Record<AgeExperience, HomeSectionId[]> = {
-  child: ['hero', 'today', 'profile', 'games', 'dailyRow', 'culture', 'dailyProgress'],
-  preteen: ['games', 'today', 'dailyRow', 'culture', 'profile', 'hero', 'dailyProgress'],
-  teen: ['games', 'today', 'dailyRow', 'culture', 'dailyProgress', 'hero', 'profile'],
-  adult: ['culture', 'today', 'hero', 'dailyProgress', 'profile', 'games', 'dailyRow'],
+  child: ['hero', 'culture', 'today', 'games', 'progress', 'dailyRow'],
+  preteen: ['hero', 'culture', 'today', 'recent', 'progress', 'games', 'dailyRow'],
+  teen: ['hero', 'culture', 'today', 'recent', 'games', 'progress', 'dailyRow'],
+  adult: ['hero', 'culture', 'today', 'recent', 'games', 'progress', 'dailyRow'],
 };
 
 export function getHomeSectionOrder(experience: AgeExperience): HomeSectionId[] {

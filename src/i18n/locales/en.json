@@ -310,6 +310,12 @@
       "passportTitle": "Nature Passport",
       "playAgain": "Play again",
       "playedTimes": "Played {{count}}×"
+    },
+    "sections": {
+      "explore": "Explore OYNO",
+      "progress": "Your progress",
+      "play": "Play",
+      "today": "Today"
     }
   },
   "games": {
@@ -377,6 +383,26 @@
       "title": "No games found",
       "description": "Try a different search or category.",
       "action": "Show all games"
+    },
+    "hero": {
+      "title": "World of Games",
+      "subtitle": "Traditional Kyrgyz games - horseback, archery, strategy and skill.",
+      "childSubtitle": "Let's play Kyrgyz games!",
+      "wallet": "{{coins}} coins, {{gems}} gems"
+    },
+    "featured": {
+      "label": "Featured today"
+    },
+    "playAgain": {
+      "label": "Play again",
+      "stats": "Played {{played}}×",
+      "statsWithWins": "Played {{played}}× · {{won}} wins"
+    },
+    "tile": {
+      "wins": "{{count}} wins"
+    },
+    "sections": {
+      "playNow": "Games to play"
     }
   },
   "beshTash": {
@@ -1133,7 +1159,8 @@
     "gamesPlayed": "Games played",
     "learnTradition": "Learn about the tradition",
     "practice": "Practice",
-    "culturalContext": "Cultural origin"
+    "culturalContext": "Cultural origin",
+    "wins": "Wins"
   },
   "games3d": {
     "lab": {
@@ -1156,7 +1183,8 @@
     "hud": {
       "score": "Score",
       "arrows": "Arrows",
-      "practice": "Practice"
+      "practice": "Practice",
+      "time": "Time"
     },
     "pause": {
       "title": "Paused",
@@ -1180,14 +1208,19 @@
       "score": "Score",
       "bestShot": "Best shot",
       "accuracy": "Accuracy",
-      "replay": "Replay",
-      "exit": "Exit",
+      "replay": "Play again",
+      "exit": "Back to games",
       "bullseyes": "Bullseyes",
       "personalBest": "Personal best",
       "newBest": "New personal best!",
       "win": "YOU WIN!",
-      "lose": "YOU LOSE",
-      "draw": "DRAW"
+      "lose": "TRY AGAIN",
+      "draw": "DRAW",
+      "outcome": {
+        "win": "Well played!",
+        "completed": "Round complete.",
+        "tryAgain": "So close - every rider learns by trying again."
+      }
     },
     "jaaAtuu": {
       "tutorial1": "Drag to aim at the target",
@@ -1273,6 +1306,9 @@
     },
     "practice": {
       "exit": "Exit Practice"
+    },
+    "tutorial": {
+      "step": "{{current}} / {{total}}"
     }
   },
   "search": {
@@ -1293,7 +1329,8 @@
       "culture": "Culture",
       "places": "Places",
       "materials": "Materials",
-      "trails": "Trails"
+      "trails": "Trails",
+      "collections": "Collections"
     }
   },
   "collections": {
@@ -1957,5 +1994,31 @@
     "untitled": "Untitled memory",
     "journeyCount": "Memories saved: {{count}}",
     "photoError": "We couldn't use this photo. Your current photo is unchanged - try another one."
+  },
+  "library": {
+    "eyebrow": "Your OYNO",
+    "recentlyViewed": "Recently explored",
+    "savedSubtitle": "Things you chose to keep.",
+    "offlineSubtitle": "Available without internet on this phone.",
+    "noResults": "No results for “{{query}}”",
+    "noResultsHint": "Try another spelling, or browse a section:",
+    "browse": {
+      "games": "Games",
+      "culture": "Culture",
+      "places": "Places"
+    },
+    "types": {
+      "game": "Game",
+      "place": "Place",
+      "culture": "Culture",
+      "material": "Story",
+      "experience": "Experience",
+      "trail": "Trail",
+      "collection": "Collection"
+    },
+    "status": {
+      "saved": "saved",
+      "offline": "available offline"
+    }
   }
 }

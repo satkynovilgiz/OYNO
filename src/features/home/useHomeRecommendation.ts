@@ -6,10 +6,12 @@ import type { ImageSourcePropType } from 'react-native';
 import { computeCollectionProgress } from '@/features/collections/collectionProgress';
 import { collections, getCollection } from '@/features/collections/collectionsData';
 import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
-import { cultureItemImages } from '@/features/culture/data';
+import { cultureCategoryImages, cultureItemImages } from '@/features/culture/data';
+import type { CultureCategoryId } from '@/features/culture/types';
 import { INTERACTIVE_EXPERIENCES, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
 import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import { natureSiteImages, questBackgroundFor } from '@/features/explore/data';
+import { gameArt } from '@/features/games/gamesCatalog';
 import { mockGamesList } from '@/features/games/mockData';
 import { progressGameIdFor } from '@/features/games/progressGameIds';
 import { gameTitleKey } from '@/features/games/types';
@@ -40,6 +42,9 @@ export type HomeRecommendationDisplay = {
   title: string;
   subtitle: string | null;
   imageSource: ImageSourcePropType;
+  /** High-resolution same-category art for when `imageSource` is too small
+   * to fill the card (see HomeArtwork) - never an invented image. */
+  backdropSource?: ImageSourcePropType | null;
   ctaLabel: string;
 };
 
@@ -151,6 +156,7 @@ export function useHomeRecommendation(): { recommendation: HomeRecommendation; d
           title: today?.item.title ?? '',
           subtitle: t('daily.entry.title'),
           imageSource: today?.imageSource ?? cultureItemImages[recommendation.contentId ?? '']?.[0] ?? journeyBackdrop,
+          backdropSource: today ? (cultureCategoryImages[today.item.category_id as CultureCategoryId] ?? null) : null,
           ctaLabel: t('daily.entry.open'),
         };
       case 'collection': {
@@ -178,7 +184,7 @@ export function useHomeRecommendation(): { recommendation: HomeRecommendation; d
           eyebrow,
           title: game ? t(gameTitleKey(game.id)) : '',
           subtitle: t('home.journey.playedTimes', { count: played }),
-          imageSource: game?.thumbnail ?? journeyBackdrop,
+          imageSource: (game ? gameArt(game, 'large') : null) ?? journeyBackdrop,
           ctaLabel: t('home.journey.playAgain'),
         };
       }

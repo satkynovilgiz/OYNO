@@ -2,8 +2,11 @@ import type { ImageSourcePropType } from 'react-native';
 
 import { cultureCategoryImages, cultureItemImages, cultureMaterialImages } from '@/features/culture/data';
 import type { CultureCategoryId } from '@/features/culture/types';
+import { natureSiteImages } from '@/features/explore/data';
+import { gameArt } from '@/features/games/gamesCatalog';
 import { INTERACTIVE_EXPERIENCES, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
 import { gameTitleKey, type GameListItem } from '@/features/games/types';
+import type { Collection } from '@/features/collections/collectionsData';
 import type { Trail } from '@/features/trails/trailsData';
 import type { SupportedLanguage } from '@/i18n';
 import { mapExploreRegionName, type CultureCategoryRow, type CultureItemRow, type CultureMaterialRow, type ExploreRegionRow } from '@/services/content/types';
@@ -19,7 +22,7 @@ import { mapExploreRegionName, type CultureCategoryRow, type CultureItemRow, typ
  * turn each content type into a title/thumbnail/route, instead of Search
  * and Saved each re-deriving it slightly differently.
  */
-export type CatalogContentType = 'game' | 'region' | 'nature' | 'culture_category' | 'culture_material' | 'culture_item' | 'interactive_experience' | 'trail';
+export type CatalogContentType = 'game' | 'region' | 'nature' | 'culture_category' | 'culture_material' | 'culture_item' | 'interactive_experience' | 'trail' | 'collection';
 
 export type CatalogItem = {
   contentType: CatalogContentType;
@@ -60,7 +63,9 @@ export function buildGameCatalog(games: GameListItem[], t: TFunction): CatalogIt
     id: game.id,
     title: t(gameTitleKey(game.id)),
     metadata: t(`games.categories.${game.category}`),
-    thumbnail: game.thumbnail ?? null,
+    // The same art the Games tab uses (incl. large-format art for games
+    // without a thumbnail, e.g. Kok Boru).
+    thumbnail: gameArt(game, 'card'),
     route: game.route ?? null,
     searchText: allLanguageValues(t, gameTitleKey(game.id)),
   }));
@@ -115,7 +120,8 @@ export function buildExploreCatalog(regions: ExploreRegionRow[], language: Suppo
       id: region.id,
       title: resolveLocalized(name, language),
       metadata: region.tagline || null,
-      thumbnail: null,
+      // Real photos exist for nature sites; regions keep the tonal fallback.
+      thumbnail: natureSiteImages[region.id] ?? null,
       route: `/explore/${region.id}`,
       searchText: [name.kg, name.ru, name.en],
     };
@@ -146,5 +152,18 @@ export function buildTrailCatalog(trails: Trail[], language: SupportedLanguage, 
     thumbnail: trail.heroImage,
     route: `/trails/${trail.id}`,
     searchText: [trail.title.kg, trail.title.ru, trail.title.en],
+  }));
+}
+
+/** Culture collections (static, localized) - searchable like trails. */
+export function buildCollectionCatalog(collections: Collection[], language: SupportedLanguage, label: string | null): CatalogItem[] {
+  return collections.map((collection) => ({
+    contentType: 'collection',
+    id: collection.id,
+    title: resolveLocalized(collection.title, language),
+    metadata: label,
+    thumbnail: collection.heroImage,
+    route: `/collections/${collection.id}`,
+    searchText: [collection.title.kg, collection.title.ru, collection.title.en],
   }));
 }

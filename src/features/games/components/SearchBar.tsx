@@ -37,15 +37,18 @@ export function SearchBar({ value, onChangeText, onPressFilter }: SearchBarProps
         ) : null}
       </View>
 
-      <AnimatedPressable
-        style={styles.filterButton}
-        onPress={onPressFilter}
-        haptic="light"
-        accessibilityRole="button"
-        accessibilityLabel={t('games.filterLabel')}
-      >
-        <SlidersHorizontal size={16} color={colors.textPrimary} strokeWidth={2} />
-      </AnimatedPressable>
+      {/* Only shown when a caller actually handles it - never a dead button. */}
+      {onPressFilter ? (
+        <AnimatedPressable
+          style={styles.filterButton}
+          onPress={onPressFilter}
+          haptic="light"
+          accessibilityRole="button"
+          accessibilityLabel={t('games.filterLabel')}
+        >
+          <SlidersHorizontal size={16} color={colors.textPrimary} strokeWidth={2} />
+        </AnimatedPressable>
+      ) : null}
     </View>
   );
 }

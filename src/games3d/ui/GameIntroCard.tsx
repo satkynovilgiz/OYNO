@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { typography } from '@/theme';
+import { fontFamily, typography } from '@/theme';
 
 type GameIntroCardProps = {
   visible: boolean;
@@ -59,7 +59,7 @@ export function GameIntroCard({ visible, title, onDone }: GameIntroCardProps) {
   return (
     <Pressable style={styles.root} onPress={onDone} accessibilityRole="button" accessibilityLabel={t('gameIntro.skip')}>
       <LinearGradient
-        colors={['rgba(20,14,8,0.75)', 'rgba(20,14,8,0.2)', 'rgba(20,14,8,0.75)']}
+        colors={['rgba(12,20,15,0.75)', 'rgba(12,20,15,0.2)', 'rgba(12,20,15,0.75)']}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -77,8 +77,9 @@ const styles = StyleSheet.create({
   },
   text: {
     ...typography.h1,
-    fontSize: 34,
-    color: '#FFFFFF',
+    fontFamily: fontFamily.wordmark,
+    fontSize: 36,
+    color: '#FBF3E3',
     letterSpacing: 1,
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowRadius: 8,

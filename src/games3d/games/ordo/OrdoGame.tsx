@@ -271,6 +271,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
       <StartCountdown visible={showCountdown && game.phase !== 'PAUSED'} onDone={handleCountdownDone} />
 
       <PauseMenu
+        gameTitle={t('games3d.titles.ordo')}
         visible={game.phase === 'PAUSED' && helpStage === null}
         onResume={game.resume}
         onRestart={handleRestart}
@@ -279,7 +280,14 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
       />
 
       {mode === 'normal' ? (
-        <ResultScreen visible={game.phase === 'RESULT'} title={resultTitle} stats={resultStats} onReplay={handleRestart} onExit={handleExit} />
+        <ResultScreen
+          visible={game.phase === 'RESULT'}
+          title={resultTitle}
+          outcome={game.summary.winner === 'player' ? 'win' : game.summary.winner === 'draw' ? 'completed' : 'tryAgain'}
+          stats={resultStats}
+          onReplay={handleRestart}
+          onExit={handleExit}
+        />
       ) : null}
     </View>
   );

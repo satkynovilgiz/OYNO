@@ -36,7 +36,7 @@ export function SprintButtonView({ sprintHeld, onPressIn }: SprintButtonViewProp
     <Pressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={styles.button}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={t('games3d.controls.sprint')}
     >
@@ -46,6 +46,10 @@ export function SprintButtonView({ sprintHeld, onPressIn }: SprintButtonViewProp
 }
 
 const styles = StyleSheet.create({
+  pressed: {
+    transform: [{ scale: 0.93 }],
+    backgroundColor: 'rgba(232,185,61,1)',
+  },
   button: {
     width: 84,
     height: 84,

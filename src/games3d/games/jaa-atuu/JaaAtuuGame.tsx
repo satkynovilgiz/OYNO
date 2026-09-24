@@ -276,6 +276,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
       <StartCountdown visible={showCountdown && game.phase !== 'PAUSED'} onDone={handleCountdownDone} />
 
       <PauseMenu
+        gameTitle={t('games3d.titles.jaaAtuu')}
         visible={game.phase === 'PAUSED' && helpStage === null}
         onResume={game.resume}
         onRestart={handleRestart}

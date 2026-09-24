@@ -19,19 +19,18 @@ import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
-  CultureGrid,
-  DailyChallengeCard,
-  DailyGiftCard,
-  DailyProgressCard,
+  CategoryCarousel,
   GamesCarousel,
   HomeHeader,
   HomeJourneyCard,
-  ProfileSummaryCard,
+  HomeProgressSection,
+  HomeTodayPair,
   RecentlyExploredRow,
   TodayDiscoveryEntryCard,
 } from './components';
 import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
-import { cultureTileAssets, mockGames } from './mockData';
+import { cultureTileAssets } from './mockData';
+import { mockGamesList } from '@/features/games/mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 import { useHomeRecommendation } from './useHomeRecommendation';
 
@@ -137,75 +136,64 @@ export function HomeScreen() {
     }
   }
 
-  // Same seven sections, same underlying data, for every AgeExperience - only
-  // their order changes (spec "Make Home adapt to AgeExperience... Section
-  // ordering/presentation responds to AgeExperience... do not duplicate
-  // HomeScreen or change underlying progress/game logic").
+  // One Home architecture for every age (homeSections.ts); the data and
+  // actions below are exactly the existing ones - only presentation changed.
   function renderSection(id: HomeSectionId) {
     switch (id) {
       case 'hero':
+        // The ONE primary recommendation (buildHomeJourneyRecommendation).
         return (
           <View key={id} style={styles.horizontalPad}>
-            {/* The ONE "Continue Your Journey" card (useHomeRecommendation),
-                plus real recent activity when there is any. */}
-            <View style={styles.heroStack}>
-              <HomeJourneyCard recommendation={recommendation} display={recommendationDisplay} onPress={openRecommendation} />
-              <RecentlyExploredRow items={recent} onPress={(route) => router.push(route as never)} />
-            </View>
+            <HomeJourneyCard recommendation={recommendation} display={recommendationDisplay} onPress={openRecommendation} />
           </View>
         );
+      case 'culture':
+        return <CategoryCarousel key={id} tiles={cultureTiles} experience={experience} onPressTile={(tile) => router.push(routeForCultureTile(tile.id) as never)} />;
       case 'today':
-        // Already today's recommendation above - don't show Daily twice.
+        // Already the primary recommendation above - don't show Daily twice.
         if (recommendation.kind === 'daily') return null;
         return (
           <View key={id} style={styles.horizontalPad}>
-            <TodayDiscoveryEntryCard discovery={todayDiscovery} isLoading={todayLoading} onPress={() => router.push('/daily' as never)} />
+            <TodayDiscoveryEntryCard discovery={todayDiscovery} isLoading={todayLoading} experience={experience} onPress={() => router.push('/daily' as never)} />
           </View>
         );
-      case 'profile':
+      case 'recent':
+        return recent.length > 0 ? <RecentlyExploredRow key={id} items={recent} onPress={(route) => router.push(route as never)} /> : null;
+      case 'progress':
         return (
-          <View key={id} style={styles.horizontalPad}>
-            <ProfileSummaryCard player={player} />
-          </View>
-        );
-      case 'dailyRow':
-        return (
-          <View key={id} style={styles.topRow}>
-            <DailyChallengeCard
-              challenge={dailyChallenge}
-              onPress={handlePressDailyChallenge}
-              ready={challengeComplete && !challengeClaimed}
-            />
-            <DailyGiftCard gift={dailyGift} claimed={giftClaimed} onPress={() => useProgressStore.getState().claimDailyGift()} />
-          </View>
+          <HomeProgressSection
+            key={id}
+            player={player}
+            dailyProgress={dailyProgress}
+            claimable={playComplete}
+            claimed={playClaimed}
+            experience={experience}
+            onPressClaim={() => useProgressStore.getState().claimDailyPlay()}
+          />
         );
       case 'games':
         return (
           <GamesCarousel
             key={id}
-            games={mockGames}
+            games={mockGamesList}
+            experience={experience}
             onPressGame={(game) => {
-              if (game.route) {
-                router.push(game.route as never);
-              }
+              if (game.route) router.push(game.route as never);
             }}
             onPressSeeAll={() => router.push('/games' as never)}
           />
         );
-      case 'culture':
+      case 'dailyRow':
         return (
-          <CultureGrid key={id} tiles={cultureTiles} onPressTile={(tile) => router.push(routeForCultureTile(tile.id) as never)} />
-        );
-      case 'dailyProgress':
-        return (
-          <View key={id} style={styles.horizontalPad}>
-            <DailyProgressCard
-              progress={dailyProgress}
-              claimable={playComplete}
-              claimed={playClaimed}
-              onPressClaim={() => useProgressStore.getState().claimDailyPlay()}
-            />
-          </View>
+          <HomeTodayPair
+            key={id}
+            challenge={dailyChallenge}
+            challengeReady={challengeComplete && !challengeClaimed}
+            onPressChallenge={handlePressDailyChallenge}
+            gift={dailyGift}
+            giftClaimed={giftClaimed}
+            onPressGift={() => useProgressStore.getState().claimDailyGift()}
+          />
         );
     }
   }
@@ -247,20 +235,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  // Rhythm: header -> hero 16; between major sections 28 (xl-ish), cards
+  // inside a section 12 (see homeKit). Bottom padding keeps the last
+  // section fully above the tab bar.
   content: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xl,
+    gap: spacing.md,
+    paddingBottom: spacing.xxl,
   },
   sectionList: {
-    gap: spacing.lg,
-  },
-  topRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    gap: spacing.sm,
-  },
-  heroStack: {
-    gap: spacing.sm,
+    gap: 28,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
