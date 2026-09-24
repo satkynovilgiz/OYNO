@@ -1,16 +1,16 @@
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable } from '@/components/ui';
+import { AnimatedPressable, Rail, SectionHeader } from '@/components/ui';
 import type { RecentDisplay } from '@/features/home/useHomeRecommendation';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, radii, spacing, textStyles } from '@/theme';
 
 /**
  * Real recent history (destination visits, completed Daily OYNO days) as a
- * light, secondary row of compact pills - small image + title, nothing
- * else. Scrolls horizontally with proper end padding; renders nothing when
- * there's no real history.
+ * light tertiary row of compact pills - round thumbnail + title. Scrolls on
+ * the shared Rail (gutter-aligned, last pill never clipped); renders
+ * nothing when there's no real history.
  */
 export function RecentlyExploredRow({ items, onPress }: { items: RecentDisplay[]; onPress: (route: string) => void }) {
   const { t } = useTranslation();
@@ -18,33 +18,31 @@ export function RecentlyExploredRow({ items, onPress }: { items: RecentDisplay[]
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>{t('home.journey.recentlyExplored')}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <SectionHeader title={t('home.journey.recentlyExplored')} size="sm" />
+      <Rail gap={spacing.xs}>
         {items.map((item) => (
-          <AnimatedPressable key={item.key} style={styles.pill} onPress={() => onPress(item.route)} pressScale={0.97} accessibilityRole="button" accessibilityLabel={item.title}>
+          <AnimatedPressable key={item.key} style={styles.pill} onPress={() => onPress(item.route)} press="strong" accessibilityRole="button" accessibilityLabel={item.title}>
             {item.imageSource ? (
               <Image source={item.imageSource} style={styles.thumb} resizeMode="cover" />
             ) : (
               <View style={[styles.thumb, styles.thumbFallback]}>
-                <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.5} />
+                <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.5} />
               </View>
             )}
-            <Text style={styles.pillTitle} numberOfLines={1}>
+            <Text style={styles.title} numberOfLines={1}>
               {item.title}
             </Text>
           </AnimatedPressable>
         ))}
-      </ScrollView>
+      </Rail>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.sm },
-  title: { ...typography.h2, fontSize: 18, color: colors.textPrimary, paddingHorizontal: spacing.md },
-  row: { paddingHorizontal: spacing.md, gap: spacing.xs },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, maxWidth: 260, paddingLeft: 6, paddingRight: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder, flexShrink: 0 },
-  thumb: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceAlt },
+  section: { gap: spacing.xs },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44, maxWidth: 220, paddingLeft: 6, paddingRight: spacing.sm + 2, borderRadius: radii.pill, backgroundColor: colors.surfaceElevated },
+  thumb: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceMuted },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
-  pillTitle: { ...typography.bodyBold, fontSize: 15, color: colors.textPrimary, flexShrink: 1 },
+  title: { ...textStyles.caption, fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
 });

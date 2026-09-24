@@ -19,6 +19,7 @@ import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
@@ -159,7 +160,7 @@ export default function ExploreLocationRoute() {
       relatedQuest={relatedQuest}
       onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       onPressDiscovery={(discoveryId) => useProgressStore.getState().discoverExploreItem(discoveryId)}
-      onToggleFavorite={() => useFavoritesStore.getState().toggleFavorite(row.kind, row.id)}
+      onToggleFavorite={() => toggleFavoriteWithFeedback(row.kind, row.id)}
       onPressRelatedQuest={() => router.push('/explore' as never)}
     />
   );

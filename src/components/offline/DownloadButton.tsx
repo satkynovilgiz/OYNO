@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
+import { showToast } from '@/components/ui/Toast';
 import { downloadId, type OfflineKind } from '@/services/offline/offlineManifest';
 import { useDownloadState, useOfflineStore } from '@/services/offline/useOfflineStore';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -49,9 +50,9 @@ export function DownloadButton({ kind, contentId, title }: DownloadButtonProps) 
   return (
     <AnimatedPressable
       style={[styles.button, failed && styles.buttonError]}
-      onPress={() => void store.download(kind, contentId)}
+      onPress={() => void store.download(kind, contentId).then((ok) => ok && showToast(t('toast.downloaded'), { haptic: true }))}
       disabled={downloading}
-      pressScale={0.97}
+      press="strong"
       accessibilityRole="button"
       accessibilityState={{ busy: downloading, disabled: downloading }}
       accessibilityLabel={failed ? t('offline.a11y.retry', { title }) : t('offline.a11y.download', { title })}

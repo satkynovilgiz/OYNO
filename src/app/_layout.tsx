@@ -19,6 +19,7 @@ import { ErrorBoundary } from '@/components/system/ErrorBoundary';
 import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { ReminderSync } from '@/components/system/ReminderSync';
 import { SilentErrorBoundary } from '@/components/system/SilentErrorBoundary';
+import { ToastHost } from '@/components/ui/Toast';
 import { WidgetSync } from '@/components/system/WidgetSync';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
@@ -93,6 +94,9 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
 
   return children;
 }
+
+/** Game screens that start play immediately (fade in, no push slide). */
+const GAMEPLAY_ROUTES = ['games/chuko', 'games/kok-boru', 'games/jaa-atuu', 'games/kyz-kuumai', 'games/ordo', 'games/besh-tash', 'games/3d-lab'];
 
 /** Foreground sync at most this often (changes from another device). */
 const FOREGROUND_SYNC_INTERVAL_MS = 5 * 60 * 1000;
@@ -244,15 +248,22 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <StatusBar style="dark" />
             <RouteGuard flagsReady={flagsReady}>
-              <Stack
-                screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
-              />
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+                {/* Transition language: native push everywhere; a short fade
+                    into gameplay (art card -> fade -> game) and into the
+                    editorial Daily OYNO page. */}
+                {GAMEPLAY_ROUTES.map((name) => (
+                  <Stack.Screen key={name} name={name} options={{ animation: 'fade', animationDuration: 220 }} />
+                ))}
+                <Stack.Screen name="daily" options={{ animation: 'fade', animationDuration: 220 }} />
+              </Stack>
             </RouteGuard>
             <AchievementUnlockedModal
               achievement={lastUnlockedAchievementId ? (getAchievement(lastUnlockedAchievementId) ?? null) : null}
               onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
             />
             <OfflineBanner />
+            <ToastHost />
             {/* Native iOS widgets read a shared snapshot; only iOS has them. */}
             {Platform.OS === 'ios' && flagsReady ? (
               <SilentErrorBoundary name="widgets">

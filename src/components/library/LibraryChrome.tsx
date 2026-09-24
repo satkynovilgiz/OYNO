@@ -5,8 +5,8 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, IconButton } from '@/components/ui';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { Chip, IconButton } from '@/components/ui';
+import { colors, fontFamily, spacing, textStyles, typography } from '@/theme';
 
 /** "Your OYNO" screen header: back, a small eyebrow, a large title and one
  * line of context - shared by Search, Saved and Offline Downloads. */
@@ -16,7 +16,7 @@ export function LibraryHeader({ title, subtitle, onPressBack, children }: { titl
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.headerRow}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         {title ? (
           <View style={styles.headerText}>
             <View style={styles.eyebrowRow}>
@@ -57,22 +57,9 @@ export function LibraryFilterChips<T extends string>({ options, value, label, on
     // Bleeds to the screen edges (the header is padded) so the last chip
     // scrolls fully into view instead of being cut by the padding.
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsBleed} contentContainerStyle={styles.chips} accessibilityRole="tablist">
-      {options.map((option) => {
-        const selected = option === value;
-        return (
-          <AnimatedPressable
-            key={option}
-            style={[styles.chip, selected && styles.chipSelected]}
-            onPress={() => onChange(option)}
-            haptic="light"
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            accessibilityLabel={label(option)}
-          >
-            <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label(option)}</Text>
-          </AnimatedPressable>
-        );
-      })}
+      {options.map((option) => (
+        <Chip key={option} label={label(option)} selected={option === value} onPress={() => onChange(option)} accessibilityRole="tab" />
+      ))}
     </ScrollView>
   );
 }
@@ -102,15 +89,11 @@ const styles = StyleSheet.create({
   title: { fontFamily: fontFamily.wordmark, fontSize: 28, lineHeight: 33, fontWeight: '700', color: colors.textPrimary },
   subtitle: { ...typography.caption, color: colors.textSecondary },
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs, marginTop: spacing.xs },
-  sectionTitle: { ...typography.h2, color: colors.textPrimary },
+  sectionTitle: { ...textStyles.title, color: colors.textPrimary },
   sectionCount: { ...typography.caption, fontWeight: '700', color: colors.accentTerracotta },
   flex: { flex: 1 },
   chipsBleed: { marginHorizontal: -spacing.md },
   chips: { gap: spacing.xs, paddingHorizontal: spacing.md },
-  chip: { minHeight: 38, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder, flexShrink: 0 },
-  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { ...typography.caption, fontWeight: '700', color: colors.textPrimary },
-  chipTextSelected: { color: colors.textOnDark },
   empty: { alignItems: 'center', paddingVertical: spacing.xl, paddingHorizontal: spacing.md, gap: spacing.xs },
   medallion: { width: 84, height: 84, borderRadius: 42, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, marginBottom: spacing.xs },
   medallionIcon: { position: 'absolute' },

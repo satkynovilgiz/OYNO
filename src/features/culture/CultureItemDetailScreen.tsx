@@ -18,6 +18,7 @@ import type { CultureItemRow } from '@/services/content/types';
 import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 /** Picks the simple-depth summary matching the app's current language -
  * `_ru`/`_en` stay null until a real translation is authored (spec "Do not
@@ -55,7 +56,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
   const { config } = useAgeExperience();
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_item', item.id)));
-  const onToggleFavorite = () => void useFavoritesStore.getState().toggleFavorite('culture_item', item.id);
+  const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_item', item.id);
   const { share, shareHost } = useShareCard();
 
   // 'simple' depth (child/preteen) shows just the condensed summary when

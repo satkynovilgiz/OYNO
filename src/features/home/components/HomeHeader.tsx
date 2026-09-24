@@ -3,26 +3,29 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { IconButton } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+import { colors, spacing, textStyles } from '@/theme';
 import wordmark from '@assets/img/OYNO_design/wordmark.png';
 
 type HomeHeaderProps = {
   hasUnreadNotifications: boolean;
   /** The real signed-in account's display name - omitted for guests, who
    * see the localized tagline instead of a greeting with no real name
-   * (the original Home behaviour: "САЛАМ, БЕК!" only for a real name). */
+   * ("САЛАМ, БЕК!" only for a real name, never "HI, GUEST!"). */
   greetingName?: string;
   onPressMenu?: () => void;
   onPressSearch?: () => void;
   onPressNotifications?: () => void;
 };
 
+/** Visual control size - the touch target stays 44 pt via hitSlop. */
+const CONTROL = 40;
+
 /**
- * The original OYNO Home header at its original, full native scale: menu +
- * search (44 pt rounded squares), the full-size OYNO wordmark with the
- * localized greeting / tagline under it, and notifications - the same
- * layout as the original header: the centre takes all remaining width, and
- * the greeting wraps to two centred lines rather than shrinking.
+ * Native-proportioned Home header: light, flat controls (tonal surface +
+ * hairline, no floating shadows) on equal-width sides so the OYNO
+ * wordmark is truly centred and stays the anchor; the localized greeting
+ * or tagline sits under it as a quiet secondary line (wraps to two lines
+ * rather than shrinking or truncating in RU/KG).
  */
 export function HomeHeader({ hasUnreadNotifications, greetingName, onPressMenu, onPressSearch, onPressNotifications }: HomeHeaderProps) {
   const { t } = useTranslation();
@@ -31,26 +34,31 @@ export function HomeHeader({ hasUnreadNotifications, greetingName, onPressMenu, 
   return (
     <View style={styles.row}>
       <View style={styles.side}>
-        <IconButton icon={Menu} shape="roundedSquare" accessibilityLabel={t('home.header.menuLabel')} onPress={onPressMenu} />
-        <IconButton icon={Search} shape="roundedSquare" accessibilityLabel={t('search.entryLabel')} onPress={onPressSearch} />
+        <IconButton icon={Menu} size={CONTROL} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('home.header.menuLabel')} onPress={onPressMenu} />
+        <IconButton icon={Search} size={CONTROL} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('search.entryLabel')} onPress={onPressSearch} />
       </View>
 
       <View style={styles.center} accessible accessibilityRole="header" accessibilityLabel={`OYNO. ${line}`}>
         <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
-        <Text style={styles.tagline} numberOfLines={2}>
+        <Text style={styles.line} numberOfLines={2}>
           {line}
         </Text>
       </View>
 
-      <IconButton icon={Bell} accessibilityLabel={t('home.header.notificationsLabel')} showBadge={hasUnreadNotifications} onPress={onPressNotifications} />
+      <View style={[styles.side, styles.sideEnd]}>
+        <IconButton icon={Bell} size={CONTROL} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('home.header.notificationsLabel')} showBadge={hasUnreadNotifications} onPress={onPressNotifications} />
+      </View>
     </View>
   );
 }
 
+const SIDE_WIDTH = CONTROL * 2 + spacing.xs;
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: spacing.md, gap: spacing.xs },
-  side: { flexDirection: 'row', gap: spacing.xs },
-  center: { flex: 1, alignItems: 'center', paddingTop: spacing.xxs, minWidth: 0 },
-  wordmark: { width: 170, height: 30, maxWidth: '100%' },
-  tagline: { ...typography.overline, color: colors.textSecondary, marginTop: spacing.xxs, textAlign: 'center' },
+  side: { width: SIDE_WIDTH, flexDirection: 'row', gap: spacing.xs },
+  sideEnd: { justifyContent: 'flex-end' },
+  center: { flex: 1, alignItems: 'center', minWidth: 0, paddingTop: 2 },
+  wordmark: { width: 132, height: 24, maxWidth: '100%' },
+  line: { ...textStyles.overline, fontSize: 10.5, color: colors.textSecondary, marginTop: 4, textAlign: 'center' },
 });

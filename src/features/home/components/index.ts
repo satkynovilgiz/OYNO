@@ -1,6 +1,5 @@
 export * from './CategoryCarousel';
 export * from './GamesCarousel';
-export * from './homeKit';
 export * from './HomeHeader';
 export * from './HomeJourneyCard';
 export * from './HomeProgressSection';

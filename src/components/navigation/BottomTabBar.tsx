@@ -31,7 +31,7 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
   const { t } = useTranslation();
 
   return (
-    <View style={styles.bar}>
+    <View style={styles.bar} accessibilityRole="tablist">
       {TABS.map((tab) => {
         const isActive = tab.id === activeTab;
         const color = isActive ? colors.primary : colors.textMuted;
@@ -41,8 +41,10 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
           <AnimatedPressable
             key={tab.id}
             style={styles.item}
-            pressScale={0.9}
-            accessibilityRole="button"
+            press="strong"
+            haptic={isActive ? false : 'light'}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
             accessibilityLabel={t(tab.labelKey)}
             onPress={() => onPressTab?.(tab.id)}
           >
@@ -50,10 +52,10 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
               {tab.id === 'culture' ? (
                 <OymoOrnament size={21} color={color} strokeWidth={1.75} />
               ) : (
-                <Icon size={21} color={color} strokeWidth={1.75} />
+                <Icon size={21} color={color} strokeWidth={isActive ? 2.25 : 1.75} />
               )}
               <Text
-                style={[styles.label, { color }]}
+                style={[styles.label, { color }, isActive && styles.labelActive]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
@@ -96,5 +98,8 @@ const styles = StyleSheet.create({
     ...typography.small,
     fontSize: 10,
     fontWeight: '600',
+  },
+  labelActive: {
+    fontWeight: '800',
   },
 });

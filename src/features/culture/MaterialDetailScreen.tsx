@@ -13,6 +13,7 @@ import { joinNarration } from '@/services/audioGuide/narration';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 type MaterialDetailScreenProps = {
   material: CultureMaterialRow;
@@ -27,7 +28,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_material', material.id)));
-  const onToggleFavorite = () => void useFavoritesStore.getState().toggleFavorite('culture_material', material.id);
+  const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_material', material.id);
 
   useEffect(() => {
     track('culture_material_open', { materialId: material.id });

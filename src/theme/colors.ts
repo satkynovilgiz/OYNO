@@ -104,6 +104,27 @@ export const colors = {
   overlayEnd: 'rgba(20, 14, 8, 0.72)',
 
   shadow: '#3D2B14',
+
+  // --- Semantic roles (design system v2) -------------------------------
+  // Aliases over the same palette so new components speak in roles, not
+  // swatches. Existing tokens above keep working unchanged.
+  /** Raised cream surface (cards that sit on the background). */
+  surfaceElevated: palette.cream50,
+  /** Quiet tonal surface (tracks, idle chips, medallions). */
+  surfaceMuted: palette.cream200,
+  /** Hairline separators / idle chip outline - never a card border. */
+  borderSubtle: palette.cream300,
+  success: palette.green500,
+  warning: palette.gold600,
+  error: palette.red500,
+  /** Secondary text on photography / dark surfaces. */
+  textOnDarkSecondary: 'rgba(251,243,227,0.84)',
+  /** Photo scrims - forest-tinted, never pure black. */
+  scrimTop: 'rgba(19,32,24,0.28)',
+  scrimClear: 'rgba(19,32,24,0)',
+  scrimBottom: 'rgba(19,32,24,0.9)',
+  /** Small translucent chip over photography (eyebrow / status). */
+  chipOnDark: 'rgba(19,32,24,0.55)',
 } as const;
 
 export type ColorToken = keyof typeof colors;

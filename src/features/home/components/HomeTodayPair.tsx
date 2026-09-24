@@ -1,21 +1,21 @@
 import { Calendar, Check, Coins, Gift, Star, type LucideIcon } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import { AnimatedPressable, ProgressBar } from '@/components/ui';
-import { colors, radii, spacing, typography } from '@/theme';
+import { AnimatedPressable, ProgressBar, SectionHeader } from '@/components/ui';
+import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
 import type { DailyChallenge, DailyGift } from '../types';
 
-import { HOME_RADIUS, HomeSectionHeader } from './homeKit';
+/** Below this window width the two cards stack instead of squeezing. */
+const STACK_BELOW = 360;
 
 /**
- * "Today" - the daily task and the daily gift as ONE visual family: same
- * height, radius, padding, icon medallion and heading size, side by side.
- * Ready-to-claim is shown the same way on both (a gold edge + gold label),
- * so the gift is never louder than the task. Logic is unchanged - the
- * callers pass the existing actions.
+ * "Today" - the daily task and the daily gift as ONE compact family: same
+ * height, radius, padding, icon medallion and title size. Ready-to-claim
+ * reads the same on both (gold edge + gold medallion), so the gift is
+ * never louder than the task. Logic unchanged - callers pass the actions.
  */
 export function HomeTodayPair({
   challenge,
@@ -33,12 +33,13 @@ export function HomeTodayPair({
   onPressGift: () => void;
 }) {
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
   const ratio = challenge.progressMax > 0 ? challenge.progressCurrent / challenge.progressMax : 0;
 
   return (
     <View style={styles.section}>
-      <HomeSectionHeader title={t('home.sections.today')} />
-      <View style={styles.row}>
+      <SectionHeader title={t('home.sections.today')} />
+      <View style={[styles.row, width < STACK_BELOW && styles.stack]}>
         <TodayCard
           icon={Calendar}
           title={t('home.dailyChallenge.title')}
@@ -48,15 +49,15 @@ export function HomeTodayPair({
           accessibilityLabel={`${t('home.dailyChallenge.title')}. ${challenge.description}. ${challenge.progressCurrent} / ${challenge.progressMax}`}
         >
           <View style={styles.progressRow}>
-            <ProgressBar progress={ratio} height={5} style={styles.bar} />
+            <ProgressBar progress={ratio} height={4} trackColor={colors.surfaceMuted} style={styles.bar} />
             <Text style={styles.count}>
               {challenge.progressCurrent}/{challenge.progressMax}
             </Text>
           </View>
           <View style={styles.rewardRow}>
-            <Star size={15} color={colors.accentGoldPressed} strokeWidth={2.25} />
+            <Star size={13} color={colors.accentGoldPressed} strokeWidth={2.25} />
             <Text style={styles.reward}>{challenge.rewardXp}</Text>
-            <Coins size={15} color={colors.accentGoldPressed} strokeWidth={2.25} />
+            <Coins size={13} color={colors.accentGoldPressed} strokeWidth={2.25} />
             <Text style={styles.reward}>{challenge.rewardCoins}</Text>
           </View>
         </TodayCard>
@@ -96,19 +97,19 @@ function TodayCard({
       style={[styles.card, ready && styles.cardReady]}
       onPress={onPress}
       disabled={!onPress}
-      pressScale={0.97}
+      press="soft"
       haptic={onPress ? 'light' : false}
       accessibilityRole="button"
       accessibilityState={{ disabled: !onPress }}
       accessibilityLabel={accessibilityLabel}
     >
       <View style={[styles.medallion, ready && styles.medallionReady]}>
-        <Icon size={22} color={ready ? colors.textPrimary : colors.primary} strokeWidth={2.25} />
+        <Icon size={18} color={ready ? colors.textPrimary : colors.primary} strokeWidth={2.25} />
       </View>
       <Text style={styles.title} numberOfLines={2}>
         {title}
       </Text>
-      <Text style={styles.body} numberOfLines={2}>
+      <Text style={styles.body} numberOfLines={3}>
         {body}
       </Text>
       {children ? <View style={styles.footer}>{children}</View> : null}
@@ -119,16 +120,17 @@ function TodayCard({
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   row: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md },
-  card: { flex: 1, minHeight: 210, padding: spacing.md, gap: 6, borderRadius: HOME_RADIUS.standard, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: 'transparent' },
+  stack: { flexDirection: 'column' },
+  card: { flex: 1, minHeight: 156, padding: spacing.md, gap: 4, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1.5, borderColor: 'transparent' },
   cardReady: { borderColor: colors.accentGold },
-  medallion: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt, marginBottom: 4 },
+  medallion: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted, marginBottom: 4 },
   medallionReady: { backgroundColor: colors.accentGold },
-  title: { ...typography.h2, fontSize: 18, lineHeight: 23, color: colors.textPrimary },
-  body: { ...typography.caption, fontSize: 14, lineHeight: 19, color: colors.textSecondary },
+  title: { ...textStyles.title, fontSize: 16, lineHeight: 21, color: colors.textPrimary },
+  body: { ...textStyles.caption, color: colors.textSecondary },
   footer: { marginTop: 'auto', gap: 4, paddingTop: spacing.xs },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   bar: { flex: 1 },
-  count: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
+  count: { ...textStyles.small, color: colors.textSecondary },
   rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  reward: { ...typography.caption, fontWeight: '700', color: colors.textSecondary, marginRight: 8 },
+  reward: { ...textStyles.small, color: colors.textSecondary, marginRight: 8 },
 });

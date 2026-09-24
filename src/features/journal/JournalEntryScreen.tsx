@@ -19,6 +19,7 @@ import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 import { formatEntryDate, linkArtwork, linkRoute, shiftDate } from './journalDisplay';
 import { isValidJournalLink, JOURNAL_EXCERPT_MAX, JOURNAL_NOTE_MAX, JOURNAL_TITLE_MAX, shareExcerpt, validateDraft, type JournalLink } from './journalModel';
+import { showToast } from '@/components/ui/Toast';
 
 function imagePickerAvailable(): boolean {
   return Platform.OS !== 'web' && !!requireOptionalNativeModule('ExponentImagePicker');
@@ -122,6 +123,7 @@ export function JournalEntryScreen({ entryId, initialLink = null, onPressBack }:
         return;
       }
       setError(null);
+      showToast(t('toast.journalSaved'), { haptic: true });
       if (entryId) onPressBack();
       else router.replace(`/journal/${saved.id}` as never);
     } finally {

@@ -7,6 +7,7 @@ import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/Ga
 import { OrdoGame } from '@/games3d/games/ordo/OrdoGame';
 import type { OrdoMode } from '@/games3d/games/ordo/OrdoTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
@@ -33,7 +34,7 @@ export default function OrdoRoute() {
         showBestScore
         cultureRoute="/culture/games"
         isFavorite={isFavorite}
-        onToggleFavorite={() => void useFavoritesStore.getState().toggleFavorite('game', 'ordo')}
+        onToggleFavorite={() => void toggleFavoriteWithFeedback('game', 'ordo')}
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}
       />

@@ -2020,5 +2020,11 @@
       "saved": "saved",
       "offline": "available offline"
     }
+  },
+  "toast": {
+    "saved": "Saved",
+    "removed": "Removed from saved",
+    "downloaded": "Available offline",
+    "journalSaved": "Journal entry saved"
   }
 }

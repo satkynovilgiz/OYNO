@@ -202,7 +202,7 @@ export function HomeScreen() {
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
       >
         <ScreenEntrance>
           <HomeHeader
@@ -235,15 +235,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  // Rhythm: header -> hero 16; between major sections 28 (xl-ish), cards
-  // inside a section 12 (see homeKit). Bottom padding keeps the last
-  // section fully above the tab bar.
+  // Rhythm: header -> hero 16; between sections 24 (spacing.xl); title ->
+  // content 12 inside a section. The ScrollView ends above the tab bar
+  // (a sibling, not an overlay), so nothing is hidden behind it.
   content: {
     gap: spacing.md,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
   },
   sectionList: {
-    gap: spacing.xxl,
+    gap: spacing.xl,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

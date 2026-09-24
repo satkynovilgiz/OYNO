@@ -7,6 +7,7 @@ import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/Ga
 import { KyzKuumaiGame } from '@/games3d/games/kyz-kuumai/KyzKuumaiGame';
 import type { KyzKuumaiMode } from '@/games3d/games/kyz-kuumai/KyzKuumaiTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
@@ -41,7 +42,7 @@ export default function KyzKuumaiRoute() {
         culturalContextItemId="horse-kyz-kuumai"
         cultureRoute="/culture/horse"
         isFavorite={isFavorite}
-        onToggleFavorite={() => void useFavoritesStore.getState().toggleFavorite('game', FAVORITE_GAME_ID)}
+        onToggleFavorite={() => void toggleFavoriteWithFeedback('game', FAVORITE_GAME_ID)}
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}
       />

@@ -5,6 +5,7 @@ import { GameDetailScreen } from '@/features/games/GameDetailScreen';
 import { KokBoruGame } from '@/games3d/games/kok-boru/KokBoruGame';
 import type { KokBoruMode } from '@/games3d/games/kok-boru/KokBoruTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
@@ -28,7 +29,7 @@ export default function KokBoruRoute() {
         culturalContextItemId="horse-kok-boru"
         cultureRoute="/culture/horse"
         isFavorite={isFavorite}
-        onToggleFavorite={() => void useFavoritesStore.getState().toggleFavorite('game', 'kok-boru')}
+        onToggleFavorite={() => void toggleFavoriteWithFeedback('game', 'kok-boru')}
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}
       />

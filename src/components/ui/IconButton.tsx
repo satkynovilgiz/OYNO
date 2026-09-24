@@ -19,6 +19,10 @@ type IconButtonProps = {
   shape?: Shape;
   showBadge?: boolean;
   disabled?: boolean;
+  /** Drop shadow - keep for controls floating over photography; pass
+   * `false` for header controls on a flat cream background (tonal
+   * surface + hairline instead). */
+  elevated?: boolean;
 };
 
 export function IconButton({
@@ -31,6 +35,7 @@ export function IconButton({
   shape = 'circle',
   showBadge = false,
   disabled = false,
+  elevated = true,
 }: IconButtonProps) {
   const [pressed, setPressed] = useState(false);
   const isPrimary = variant === 'primary';
@@ -45,6 +50,7 @@ export function IconButton({
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       haptic={disabled ? false : 'light'}
+      press="strong"
       disabled={disabled}
       hitSlop={hitSlopAmount}
       accessibilityRole="button"
@@ -52,7 +58,7 @@ export function IconButton({
       accessibilityState={{ disabled }}
       style={[
         styles.base,
-        shadows.card,
+        elevated ? shadows.card : styles.flat,
         {
           width: size,
           height: size,
@@ -77,6 +83,10 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  flat: {
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
   },
   pressed: {
     opacity: 0.85,

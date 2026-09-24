@@ -7,6 +7,7 @@ import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/Ga
 import { ChukoGame } from '@/games3d/games/chuko/ChukoGame';
 import type { ChukoMode } from '@/games3d/games/chuko/ChukoTypes';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
+import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
@@ -33,7 +34,7 @@ export default function ChukoRoute() {
         showBestScore
         cultureRoute="/culture/games"
         isFavorite={isFavorite}
-        onToggleFavorite={() => void useFavoritesStore.getState().toggleFavorite('game', 'chuko')}
+        onToggleFavorite={() => void toggleFavoriteWithFeedback('game', 'chuko')}
         onPressPractice={() => setMode('practice')}
         onPressPlay={() => setMode('normal')}
       />

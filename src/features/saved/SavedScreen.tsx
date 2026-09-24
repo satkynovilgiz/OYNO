@@ -28,6 +28,7 @@ import { useFavoritesStore, type FavoriteContentType } from '@/store/useFavorite
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { filterSavedItems, resolveSavedItems, type SavedFilter } from './savedFilters';
+import { toggleFavoriteWithFeedback } from './toggleFavoriteWithFeedback';
 
 type SavedScreenProps = {
   onPressBack: () => void;
@@ -52,7 +53,6 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
   const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
   const offlineEntries = useOfflineStore((state) => state.manifest.entries);
   const offlineCount = Object.keys(offlineEntries).length;
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const { data: categories } = useCultureCategories();
   const { data: materials } = useCultureMaterials();
@@ -78,7 +78,7 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
     return !!kind && !!offlineEntries[downloadId(kind, item.id)];
   };
   const open = (item: CatalogItem) => item.route && onPressItem(item.route);
-  const unsave = (item: CatalogItem) => void toggleFavorite(item.contentType as FavoriteContentType, item.id);
+  const unsave = (item: CatalogItem) => void toggleFavoriteWithFeedback(item.contentType as FavoriteContentType, item.id);
 
   return (
     <View style={styles.root}>
