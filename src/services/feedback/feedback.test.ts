@@ -4,14 +4,15 @@ import { supabase } from '@/services/supabase/client';
 
 import { __clearDiagnosticTrail, diagnosticTrail, recordDiagnostic, sanitizeRoute } from './diagnosticTrail';
 import { buildDiagnostics, DIAGNOSTIC_KEYS, errorFingerprint, isSensitiveRoute, sanitizeDiagnostics } from './diagnostics';
-import { flushFeedbackQueue, readFeedbackQueue, submitFeedback } from './feedbackQueue';
+import { classifyFailure, flushFeedbackQueue, readFeedbackQueue, retryFeedback, sendFeedbackReport, submitFeedback } from './feedbackQueue';
 
 // A fake server that, like submit_beta_feedback, stores each
 // client_report_id at most once.
 const mockServer = {
   reports: new Map<string, Record<string, unknown>>(),
   uploads: [] as string[],
-  failNextWith: null as null | { message: string },
+  failNextWith: null as null | { message: string; code?: string; status?: number },
+  uploadError: null as null | { message: string; statusCode?: string },
   rpcCalls: 0,
 };
 
@@ -31,6 +32,7 @@ jest.mock('@/services/supabase/client', () => ({
     storage: {
       from: () => ({
         upload: jest.fn(async (path: string) => {
+          if (mockServer.uploadError) return { data: null, error: mockServer.uploadError };
           mockServer.uploads.push(path);
           return { data: { path }, error: null };
         }),
@@ -53,6 +55,7 @@ beforeEach(async () => {
   mockServer.reports.clear();
   mockServer.uploads = [];
   mockServer.failNextWith = null;
+  mockServer.uploadError = null;
   mockServer.rpcCalls = 0;
   mockRpc.mockClear();
   __clearDiagnosticTrail();
@@ -186,5 +189,59 @@ describe('sensitive metadata exclusion', () => {
     expect(trail[1].detail).toBe('speech');
     expect(trail[2].detail).toBe('redacted');
     expect(sanitizeRoute('/culture/item/boz-uy-tunduk')).toBe('/culture/item/boz-uy-tunduk');
+  });
+});
+
+describe('delivery states', () => {
+  it('a permanently refused report returns "failed", never "sent", and is kept for Retry', async () => {
+    mockServer.failNextWith = { message: 'INVALID_CATEGORY', code: 'P0001' };
+    const result = await submitFeedback({ ...baseInput, accountId: null }, { online: true, currentAccountId: null });
+    expect(result).toBe('failed');
+    expect(mockServer.reports.size).toBe(0);
+    const [kept] = await readFeedbackQueue();
+    expect(kept.status).toBe('failed');
+    expect(kept.message).toBe('The map froze after zooming');
+  });
+
+  it('a failed report is not retried automatically and never later reported as sent', async () => {
+    mockServer.failNextWith = { message: 'new row violates check constraint', code: '23514' };
+    const { clientReportId } = await sendFeedbackReport({ ...baseInput, accountId: null }, { online: true, currentAccountId: null });
+    await flushFeedbackQueue(null);
+    await flushFeedbackQueue(null);
+    expect(mockServer.rpcCalls).toBe(1);
+    expect(mockServer.reports.size).toBe(0);
+    expect((await readFeedbackQueue()).find((item) => item.clientReportId === clientReportId)?.status).toBe('failed');
+  });
+
+  it('temporary failures (offline, timeout, overload, rate limit) stay queued', async () => {
+    for (const error of [{ message: 'Network request failed' }, { message: 'Request timed out' }, { message: 'Service Unavailable', status: 503 }, { message: 'RATE_LIMITED' }]) {
+      expect(classifyFailure(error)).toBe('temporary');
+    }
+    // Even many network failures in a row never turn into "failed".
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      mockServer.failNextWith = { message: 'Network request failed' };
+      if (attempt === 0) expect(await submitFeedback({ ...baseInput, accountId: null }, { online: true, currentAccountId: null })).toBe('queued');
+      else await flushFeedbackQueue(null);
+    }
+    const [queued] = await readFeedbackQueue();
+    expect(queued.status).not.toBe('failed');
+  });
+
+  it('an optional screenshot that is permanently refused still lets the text report go out', async () => {
+    mockServer.uploadError = { message: 'mime type image/heic is not supported', statusCode: '415' };
+    const result = await submitFeedback({ ...baseInput, screenshotUri: 'file:///tmp/capture.heic', accountId: null }, { online: true, currentAccountId: null });
+    expect(result).toBe('sent');
+    const [report] = [...mockServer.reports.values()];
+    expect(report.p_screenshot_path).toBeNull();
+    expect(report.p_diagnostics).toMatchObject({ screenshot: 'not_uploaded' });
+  });
+
+  it('Retry after a failure sends the same report once it can succeed', async () => {
+    mockServer.failNextWith = { message: 'INVALID_INPUT' };
+    const { result, clientReportId } = await sendFeedbackReport({ ...baseInput, accountId: null }, { online: true, currentAccountId: null });
+    expect(result).toBe('failed');
+    expect(await retryFeedback(clientReportId, { online: true, currentAccountId: null })).toBe('sent');
+    expect([...mockServer.reports.keys()]).toEqual([clientReportId]);
+    expect(await readFeedbackQueue()).toEqual([]);
   });
 });

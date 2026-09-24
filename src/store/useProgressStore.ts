@@ -294,9 +294,14 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         });
         return;
       }
+      // The response must belong to whoever is signed in when it ARRIVES:
+      // a slow fetch for an account that signed out meanwhile is dropped.
+      const requestedFor = currentUserId();
+      const stillSameUser = () => isRealUser() && currentUserId() === requestedFor;
       // Render the last-known account progress immediately; the server
       // fetch below replaces it in the background (never a blank wait).
       const cachedFirst = await readCache();
+      if (!stillSameUser()) return;
       if (cachedFirst && !get().isLoaded) {
         const visits = mergeVisits({ ids: cachedFirst.visitedRegionIds, dates: cachedFirst.regionVisitDates ?? {} }, pending);
         set({ ...cachedFirst, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, error: null });
@@ -310,6 +315,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
           supabase.from('user_region_visits').select('region_id, visited_at'),
           supabase.from('user_quest_steps').select('step_id'),
         ]);
+        if (!stillSameUser()) return;
         if (progressRes.error) throw progressRes.error;
 
         const gameStats: Record<string, GameStat> = {};
@@ -349,6 +355,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         // through callAction and fail honestly rather than faking a
         // local update while offline.
         const cached = await readCache();
+        if (!stillSameUser()) return;
         if (cached) {
           const visits = mergeVisits({ ids: cached.visitedRegionIds, dates: cached.regionVisitDates ?? {} }, pending);
           set({ ...cached, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, error: 'offline' });

@@ -24,8 +24,13 @@ export type JournalLink = {
 export type JournalPhoto = {
   /** On-device file (app documents folder) - never inside AsyncStorage. */
   localUri: string | null;
-  /** Private cloud copy for a signed-in account: "<user id>/<entry id>.jpg". */
+  /** The exact private cloud object this record references:
+   * "<user id>/<entry id>/<version id>.jpg" (immutable), or a pre-versioning
+   * legacy "<user id>/<entry id>.jpg" (read-only). */
   remotePath: string | null;
+  /** Unique per picked picture; names the immutable cloud object. Null
+   * only for legacy records. Optional so older saved entries still parse. */
+  versionId?: string | null;
 };
 
 export type JournalEntry = {
@@ -115,14 +120,29 @@ export function mergeJournalEntries(a: JournalEntry[], b: JournalEntry[]): { mer
     }
     if (existing.updatedAt !== entry.updatedAt) conflicts += 1;
     const winner = entry.updatedAt > existing.updatedAt ? entry : existing;
-    // Keep a local photo file even when the other side's newer record only
-    // knows the cloud path.
-    const photo = winner.photo && !winner.photo.localUri && existing.photo?.localUri && existing.photo.remotePath === winner.photo.remotePath
-      ? { ...winner.photo, localUri: existing.photo.localUri }
+    // The winning RECORD decides the photo: a losing (older) version's
+    // picture is never carried over. Its local file is reused only when it
+    // is the very same photo version the winner references.
+    const loser = winner === entry ? existing : entry;
+    // Two copies of the SAME photo version (e.g. this device's file + the
+    // account's cloud path) are combined; a different version never is.
+    const photo = winner.photo && loser.photo && samePhotoVersion(winner.photo, loser.photo)
+      ? { ...winner.photo, localUri: winner.photo.localUri ?? loser.photo.localUri, remotePath: winner.photo.remotePath ?? loser.photo.remotePath }
       : winner.photo;
     byId.set(entry.id, { ...winner, photo });
   }
   return { merged: Array.from(byId.values()), conflicts };
+}
+
+export function samePhotoVersion(a: JournalPhoto, b: JournalPhoto): boolean {
+  if (a.versionId || b.versionId) return !!a.versionId && a.versionId === b.versionId;
+  return !!a.remotePath && a.remotePath === b.remotePath;
+}
+
+/** The version id inside "<user>/<entry>/<version>.jpg"; null for legacy paths. */
+export function versionFromPath(path: string | null | undefined): string | null {
+  const match = path?.match(/^[^/]+\/[^/]+\/([0-9a-f-]{36})\.jpg$/i);
+  return match ? match[1] : null;
 }
 
 export type JournalFilter = 'all' | 'places' | 'culture' | 'trails';
@@ -198,7 +218,7 @@ export function rowToEntry(row: ServerJournalRow): JournalEntry {
     title: row.title,
     note: row.note,
     date: String(row.memory_date).slice(0, 10),
-    photo: row.photo_path ? { localUri: null, remotePath: row.photo_path } : null,
+    photo: row.photo_path ? { localUri: null, remotePath: row.photo_path, versionId: versionFromPath(row.photo_path) } : null,
     link: row.link_type && row.link_id ? { type: row.link_type, id: row.link_id, label: row.link_label ?? '' } : null,
     createdAt: isoTime(row.created_at),
     updatedAt: isoTime(row.updated_at),

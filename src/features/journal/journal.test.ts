@@ -19,6 +19,7 @@ const mockOrigin = { value: 'guest' as 'guest' | 'account' };
 jest.mock('@/services/sync/syncTrigger', () => ({
   requestAccountSync: jest.fn(),
   currentEditOrigin: () => mockOrigin.value,
+  currentAccountId: () => (mockOrigin.value === 'account' ? 'user-a' : null),
   registerSyncScheduler: jest.fn(),
 }));
 

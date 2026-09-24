@@ -1886,7 +1886,9 @@
     "done": "Done",
     "reportProblem": "Report a problem",
     "helpEntry": "Send Beta Feedback",
-    "helpEntryHint": "Report a bug or share an idea from inside the app."
+    "helpEntryHint": "Report a bug or share an idea from inside the app.",
+    "failedTitle": "We couldn't send this report.",
+    "failedBody": "It's still saved on this phone. You can try again."
   },
   "journal": {
     "title": "My Journal",

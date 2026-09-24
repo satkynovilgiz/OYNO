@@ -20,7 +20,7 @@ import { AnimatedPressable, Button, IconButton, TextField, Toggle } from '@/comp
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { currentRoute, recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { buildDiagnostics, isSensitiveRoute } from '@/services/feedback/diagnostics';
-import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, submitFeedback, type FeedbackCategory, type SubmitResult } from '@/services/feedback/feedbackQueue';
+import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult } from '@/services/feedback/feedbackQueue';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
@@ -64,6 +64,7 @@ export function FeedbackSheet() {
   const [showDetails, setShowDetails] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [reportId, setReportId] = useState<string | null>(null);
   const [route, setRoute] = useState<string | null>(null);
 
   // A fresh form each time the sheet opens.
@@ -83,6 +84,7 @@ export function FeedbackSheet() {
     setScreenshotUri(null);
     setShowDetails(false);
     setResult(null);
+    setReportId(null);
   }
 
   function dismiss() {
@@ -135,15 +137,29 @@ export function FeedbackSheet() {
     if (!message.trim() || sending) return;
     setSending(true);
     try {
-      const outcome = await submitFeedback(
+      const outcome = await sendFeedbackReport(
         { category, message, diagnostics, screenshotUri, accountId: user?.id ?? null },
         { online: !isOffline, currentAccountId: user?.id ?? null },
       );
-      setResult(outcome);
+      setReportId(outcome.clientReportId);
+      setResult(outcome.result);
     } finally {
       setSending(false);
     }
   }
+
+  async function retry() {
+    if (!reportId || sending) return;
+    setSending(true);
+    try {
+      setResult(await retryFeedback(reportId, { online: !isOffline, currentAccountId: user?.id ?? null }));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const resultTitle = result === 'sent' ? t('feedback.sentTitle') : result === 'failed' ? t('feedback.failedTitle') : t('feedback.queuedTitle');
+  const resultBody = result === 'sent' ? t('feedback.sentBody') : result === 'failed' ? t('feedback.failedBody') : t('feedback.queuedBody');
 
   const detailRows: [string, string][] = [
     [t('feedback.details.app'), `${diagnostics.appVersion ?? '?'} (${diagnostics.buildNumber ?? '?'})`],
@@ -168,9 +184,10 @@ export function FeedbackSheet() {
 
           {result ? (
             <View style={styles.result} accessibilityLiveRegion="polite">
-              <Text style={styles.resultTitle}>{result === 'sent' ? t('feedback.sentTitle') : t('feedback.queuedTitle')}</Text>
-              <Text style={styles.resultBody}>{result === 'sent' ? t('feedback.sentBody') : t('feedback.queuedBody')}</Text>
-              <Button label={t('feedback.done')} onPress={dismiss} />
+              <Text style={styles.resultTitle}>{resultTitle}</Text>
+              <Text style={styles.resultBody}>{resultBody}</Text>
+              {result === 'failed' ? <Button label={t('common.retry')} onPress={() => void retry()} loading={sending} /> : null}
+              <Button label={result === 'failed' ? t('feedback.close') : t('feedback.done')} variant={result === 'failed' ? 'secondary' : 'primary'} onPress={dismiss} />
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">

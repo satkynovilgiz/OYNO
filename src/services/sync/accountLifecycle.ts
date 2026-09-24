@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { GUEST_PHOTO_OWNER } from '@/services/journal/journalPhotos';
 import { safeJsonParse } from '@/services/storage/safeJson';
-import { registerAccountHooks } from '@/store/useAuthStore';
+import { registerAccountHooks, useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
 import { type ChallengeResult, useChallengeStore } from '@/store/useChallengeStore';
 import { type DailyCompletions, useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
@@ -12,6 +13,7 @@ import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/u
 import {
   clearAccountBoundState,
   discardAccountStash,
+  hasAccountStash,
   readAccountOwner,
   stashAccountState,
   takeAccountStash,
@@ -28,7 +30,7 @@ import {
   type PendingFavorites,
   type PendingVisits,
 } from './outbox';
-import { syncAccountState, type SyncReport } from './syncEngine';
+import { invalidateActiveSync, syncAccountState, type SyncReport } from './syncEngine';
 
 /**
  * Account transitions for the local, account-bound state:
@@ -49,7 +51,19 @@ import { syncAccountState, type SyncReport } from './syncEngine';
  *                          into B.
  */
 
-const SIGN_OUT_SYNC_TIMEOUT_MS = 5000;
+let signOutSyncTimeoutMs = 5000;
+
+/** Tests only. */
+export function __setSignOutSyncTimeoutForTests(ms: number): void {
+  signOutSyncTimeoutMs = ms;
+}
+
+function signedInAs(userId: string): boolean {
+  const { status, user } = useAuthStore.getState();
+  return status === 'authenticated' && user?.id === userId;
+}
+
+const SKIPPED: SyncReport = { ok: false, skipped: 'account_changed', failedDomains: [], conflicts: 0 };
 
 async function ensureLocalStoresLoaded(): Promise<void> {
   const loads: Promise<void>[] = [];
@@ -122,17 +136,27 @@ async function restoreStash(stash: Record<string, string>): Promise<void> {
 export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
   await ensureLocalStoresLoaded();
   const owner = await readAccountOwner();
+  if (!signedInAs(userId)) return SKIPPED;
 
   if (owner && owner !== 'guest' && owner !== userId) {
-    // Another account's leftovers: never merge them into this one.
-    await clearAccountBoundState();
+    // Another account's leftovers: never merge them into this one. Their
+    // photo files go too - unless that account has a stash that still
+    // points at them (its offline work, restored when it signs back in).
+    invalidateActiveSync();
+    const keepPreviousFiles = await hasAccountStash(owner);
+    await clearAccountBoundState({ filesOwner: keepPreviousFiles ? null : owner });
     resetAccountStores();
   } else if (owner === 'guest') {
     await seedGuestFavorites();
   }
+  if (!signedInAs(userId)) return SKIPPED;
 
   const stash = await takeAccountStash(userId);
   if (stash) await restoreStash(stash);
+  // Guest photos (and files from before per-owner folders) move into this
+  // account's own folder - copied first, so no image is lost on the way.
+  await useJournalStore.getState().adoptPhotos(userId);
+  if (!signedInAs(userId)) return SKIPPED;
 
   await writeAccountOwner(userId);
   // Same account as before: a normal start. Anything else (guest before,
@@ -144,6 +168,8 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
 export async function onGuestSession(): Promise<void> {
   const owner = await readAccountOwner();
   if (owner === null) await writeAccountOwner('guest');
+  if (!useJournalStore.getState().isLoaded) await useJournalStore.getState().load();
+  await useJournalStore.getState().adoptPhotos(GUEST_PHOTO_OWNER);
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -155,16 +181,20 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 }
 
 async function leaveAccount(userId: string, keepUnsynced: boolean): Promise<void> {
+  // First: nothing still in flight for this account may write back into
+  // the stores after they are cleared below.
+  invalidateActiveSync();
   if (keepUnsynced) await stashAccountState(userId);
   else await discardAccountStash(userId);
-  // Files (journal photos) stay only while the stash still references them.
-  await clearAccountBoundState({ keepFiles: keepUnsynced });
+  // Only THIS account's files are touched - and kept while its stash
+  // still references them. Other accounts' folders are never cleared here.
+  await clearAccountBoundState({ filesOwner: keepUnsynced ? null : userId });
   await writeAccountOwner('guest');
   resetAccountStores();
 }
 
 export async function beforeSignOut(userId: string): Promise<void> {
-  const report = await withTimeout(syncAccountState('sign_out'), SIGN_OUT_SYNC_TIMEOUT_MS, {
+  const report = await withTimeout(syncAccountState('sign_out'), signOutSyncTimeoutMs, {
     ok: false,
     failedDomains: [],
     conflicts: 0,

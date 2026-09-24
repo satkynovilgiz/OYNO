@@ -9,16 +9,22 @@ export type SyncReason = 'app_start' | 'sign_in' | 'reconnect' | 'foreground' | 
 type Scheduler = (reason: SyncReason) => void;
 
 let scheduler: Scheduler | null = null;
-let signedInProbe: () => boolean = () => false;
+let accountProbe: () => string | null = () => null;
 
-export function registerSyncScheduler(next: Scheduler | null, isSignedIn?: () => boolean): void {
+/** `signedInAccountId` returns the signed-in user id, or null for a guest. */
+export function registerSyncScheduler(next: Scheduler | null, signedInAccountId?: () => string | null): void {
   scheduler = next;
-  if (isSignedIn) signedInProbe = isSignedIn;
+  if (signedInAccountId) accountProbe = signedInAccountId;
+}
+
+/** The signed-in account id, or null (guest / not known yet). */
+export function currentAccountId(): string | null {
+  return accountProbe();
 }
 
 /** Who made a local edit - decides the guest -> account merge rule. */
 export function currentEditOrigin(): 'guest' | 'account' {
-  return signedInProbe() ? 'account' : 'guest';
+  return accountProbe() ? 'account' : 'guest';
 }
 
 export function requestAccountSync(reason: SyncReason): void {

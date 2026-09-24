@@ -36,7 +36,8 @@ export function registerAccountBoundKeys(keys: string[]): void {
   extraAccountKeys = Array.from(new Set([...extraAccountKeys, ...keys]));
 }
 
-type ClearHandler = () => void;
+/** Receives the owner being cleared ('guest' or a user id). */
+type ClearHandler = (owner: string) => void;
 const clearHandlers = new Set<ClearHandler>();
 
 /** Extra clean-up when an account's local state is cleared (files, not keys). */
@@ -57,12 +58,17 @@ export async function writeAccountOwner(owner: string): Promise<void> {
 }
 
 /** Removes every account-bound key from the live (visible) state. */
-export async function clearAccountBoundState(options: { keepFiles?: boolean } = {}): Promise<void> {
+/**
+ * Clears the live account-bound keys. Files are per owner: only `filesOwner`'s
+ * files are removed (never another account's - e.g. a signed-out account's
+ * stashed offline photos). Omit it to keep every file.
+ */
+export async function clearAccountBoundState(options: { filesOwner?: string | null } = {}): Promise<void> {
   await AsyncStorage.multiRemove(accountBoundKeys()).catch(() => {});
-  if (options.keepFiles) return;
+  if (!options.filesOwner) return;
   for (const handler of clearHandlers) {
     try {
-      handler();
+      handler(options.filesOwner);
     } catch {
       // Best effort - never blocks a sign-out.
     }
@@ -91,6 +97,10 @@ export async function takeAccountStash(userId: string): Promise<Record<string, s
   await AsyncStorage.removeItem(key).catch(() => {});
   const parsed = safeJsonParse<unknown>(raw, null);
   return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, string>) : null;
+}
+
+export async function hasAccountStash(userId: string): Promise<boolean> {
+  return (await AsyncStorage.getItem(`${STASH_PREFIX}${userId}`).catch(() => null)) !== null;
 }
 
 export async function discardAccountStash(userId: string): Promise<void> {
