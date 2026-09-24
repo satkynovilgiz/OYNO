@@ -21,6 +21,7 @@ import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { currentRoute, recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { buildDiagnostics, isSensitiveRoute } from '@/services/feedback/diagnostics';
 import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult } from '@/services/feedback/feedbackQueue';
+import { deleteTempImage, FEEDBACK_IMAGE, normalizeToJpeg, pickerOptionsForJpeg, type PickedImage } from '@/services/media/normalizeImage';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
@@ -66,6 +67,7 @@ export function FeedbackSheet() {
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [reportId, setReportId] = useState<string | null>(null);
   const [route, setRoute] = useState<string | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
 
   // A fresh form each time the sheet opens.
   useEffect(() => {
@@ -81,7 +83,9 @@ export function FeedbackSheet() {
     setCategory('bug');
     setMessage('');
     setIncludeEmail(false);
+    deleteTempImage(screenshotUri);
     setScreenshotUri(null);
+    setImageFailed(false);
     setShowDetails(false);
     setResult(null);
     setReportId(null);
@@ -96,6 +100,21 @@ export function FeedbackSheet() {
   const canCapture = screenCaptureAvailable() && !sensitive;
   const canPick = imagePickerAvailable();
 
+  /** Any image becomes a real JPEG within the feedback size limit; if it
+   * can't, the report simply goes without an image. */
+  async function applyImage(picked: PickedImage) {
+    try {
+      const normalized = await normalizeToJpeg(picked, FEEDBACK_IMAGE);
+      if (normalized.uri !== picked.uri) deleteTempImage(picked.uri);
+      deleteTempImage(screenshotUri);
+      setScreenshotUri(normalized.uri);
+      setImageFailed(false);
+    } catch {
+      deleteTempImage(picked.uri);
+      setImageFailed(true);
+    }
+  }
+
   async function attachCurrentScreen() {
     if (!canCapture) return;
     setCapturing(true);
@@ -103,8 +122,9 @@ export function FeedbackSheet() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { captureScreen } = require('react-native-view-shot') as typeof import('react-native-view-shot');
+      // view-shot already encodes JPEG here; normalizing only resizes it.
       const uri = await captureScreen({ format: 'jpg', quality: 0.8, result: 'tmpfile' });
-      setScreenshotUri(uri);
+      await applyImage({ uri, mimeType: 'image/jpeg' });
     } catch {
       recordDiagnostic('native_unavailable', 'screen_capture');
     } finally {
@@ -117,10 +137,11 @@ export function FeedbackSheet() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ImagePicker = require('expo-image-picker') as typeof import('expo-image-picker');
-      const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-      if (!picked.canceled && picked.assets[0]) setScreenshotUri(picked.assets[0].uri);
+      const picked = await ImagePicker.launchImageLibraryAsync(pickerOptionsForJpeg());
+      if (!picked.canceled && picked.assets[0]) await applyImage(picked.assets[0]);
     } catch {
       recordDiagnostic('native_unavailable', 'image_picker');
+      setImageFailed(true);
     }
   }
 
@@ -226,7 +247,14 @@ export function FeedbackSheet() {
               {screenshotUri ? (
                 <View style={styles.previewRow}>
                   <Image source={{ uri: screenshotUri }} style={styles.preview} accessibilityLabel={t('feedback.imageAttached')} />
-                  <Button label={t('feedback.removeImage')} variant="secondary" onPress={() => setScreenshotUri(null)} />
+                  <Button
+                    label={t('feedback.removeImage')}
+                    variant="secondary"
+                    onPress={() => {
+                      deleteTempImage(screenshotUri);
+                      setScreenshotUri(null);
+                    }}
+                  />
                 </View>
               ) : (
                 <View style={styles.imageActions}>
@@ -252,6 +280,7 @@ export function FeedbackSheet() {
                 </View>
               )}
               {sensitive && screenCaptureAvailable() && !screenshotUri ? <Text style={styles.note}>{t('feedback.sensitiveScreen')}</Text> : null}
+              {imageFailed ? <Text style={styles.note} accessibilityLiveRegion="polite">{t('feedback.imageFailed')}</Text> : null}
               <Text style={styles.note}>{t('feedback.imageOptional')}</Text>
 
               {user?.email ? (

@@ -245,3 +245,22 @@ describe('delivery states', () => {
     expect(await readFeedbackQueue()).toEqual([]);
   });
 });
+
+describe('image size safety', () => {
+  it('an image over the 3 MB bucket limit is dropped and the text still sends', async () => {
+    (globalThis as { fetch?: unknown }).fetch = jest.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(4 * 1024 * 1024) }));
+    const result = await submitFeedback({ ...baseInput, screenshotUri: 'file:///mock/document/feedback/big.jpg', accountId: null }, { online: true, currentAccountId: null });
+    expect(result).toBe('sent');
+    expect(mockServer.uploads).toEqual([]);
+    expect([...mockServer.reports.values()][0]).toMatchObject({ p_screenshot_path: null, p_diagnostics: expect.objectContaining({ screenshot: 'not_uploaded' }) });
+  });
+
+  it('if the image file cannot be read at all, the text report still sends', async () => {
+    (globalThis as { fetch?: unknown }).fetch = jest.fn(async () => {
+      throw new Error('ENOENT');
+    });
+    const result = await submitFeedback({ ...baseInput, screenshotUri: 'file:///mock/cache/vanished.jpg', accountId: null }, { online: true, currentAccountId: null });
+    expect(result).toBe('sent');
+    expect([...mockServer.reports.values()][0]).toMatchObject({ p_screenshot_path: null });
+  });
+});

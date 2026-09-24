@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { mergeJournalEntries, validateDraft, type JournalDraft, type JournalEntry } from '@/features/journal/journalModel';
+import { deleteTempImage } from '@/services/media/normalizeImage';
 import { adoptLocalPhoto, deleteAllLocalPhotos, deleteLocalPhoto, GUEST_PHOTO_OWNER, keepLocalPhoto } from '@/services/journal/journalPhotos';
 import { safeJsonParse } from '@/services/storage/safeJson';
 import { createUuid } from '@/services/storage/uuid';
@@ -77,8 +78,11 @@ export const useJournalStore = create<JournalState>((set, get) => {
     // object on the next sync; the previous version is never overwritten.
     const versionId = createUuid();
     const localUri = await keepLocalPhoto(photoUri, entryId, owner, versionId);
+    // Copy failed: the previous photo (and its file) stay exactly as they were.
     if (!localUri) return previous;
     deleteLocalPhoto(previous?.localUri, owner);
+    // The normalized temp file is now safely copied into the journal folder.
+    deleteTempImage(photoUri);
     return { localUri, remotePath: null, versionId };
   }
 

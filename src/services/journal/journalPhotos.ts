@@ -20,6 +20,8 @@ import { supabase } from '@/services/supabase/client';
  * On web there's no durable file storage, so photos are a phone feature.
  */
 const BUCKET = 'journal-photos';
+/** The bucket's own limit (20260923000003_journal.sql). */
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const ROOT = 'journal';
 export const GUEST_PHOTO_OWNER = 'guest';
 
@@ -147,6 +149,8 @@ export async function uploadPhotoVersion(userId: string, entryId: string, versio
   if (!UUID_RE.test(versionId)) throw new Error('INVALID_VERSION');
   const path = versionedPhotoPath(userId, entryId, versionId);
   const bytes = await (await fetch(localUri)).arrayBuffer();
+  // Normalized photos are well under this; never attempt a doomed upload.
+  if (bytes.byteLength > MAX_UPLOAD_BYTES) throw new Error('PHOTO_TOO_LARGE');
   const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
   if (error && !/exists|duplicate/i.test(error.message)) throw error;
   return path;

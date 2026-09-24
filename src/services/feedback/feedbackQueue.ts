@@ -3,6 +3,7 @@ import { requireOptionalNativeModule } from 'expo';
 import { Platform } from 'react-native';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
+import { deleteTempImage, FEEDBACK_IMAGE } from '@/services/media/normalizeImage';
 import { createUuid } from '@/services/storage/uuid';
 import { supabase } from '@/services/supabase/client';
 
@@ -120,6 +121,8 @@ export async function enqueueFeedback(input: {
     attempts: 0,
   };
   await serialized(async () => writeFeedbackQueue([...(await readFeedbackQueue()), report]));
+  // The temp image is now in the queue's own storage.
+  if (input.screenshotUri && report.screenshotUri !== input.screenshotUri) deleteTempImage(input.screenshotUri);
   return report;
 }
 
@@ -170,6 +173,8 @@ async function uploadScreenshot(report: PendingFeedback): Promise<{ path: string
     // The local file is gone (cleared temp storage) - send without it.
     return { path: null, state: 'skipped' };
   }
+  // Over the bucket limit (3 MB): send the text without the image.
+  if (bytes.byteLength > FEEDBACK_IMAGE.maxBytes) return { path: null, state: 'skipped' };
   try {
     const { error } = await supabase.storage.from('beta-feedback').upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
     // Already uploaded by an earlier, interrupted attempt.

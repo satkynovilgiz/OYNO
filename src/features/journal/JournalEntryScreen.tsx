@@ -12,6 +12,7 @@ import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { journalPhotosSupported } from '@/services/journal/journalPhotos';
+import { deleteTempImage, JOURNAL_IMAGE, normalizeToJpeg, pickerOptionsForJpeg } from '@/services/media/normalizeImage';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useJournalStore } from '@/store/useJournalStore';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
@@ -81,14 +82,29 @@ export function JournalEntryScreen({ entryId, initialLink = null, onPressBack }:
 
   if (entryId && isLoaded && !entry) return <NotFoundState message={t('journal.notFound')} onPressBack={onPressBack} />;
 
+  // The picked image (HEIC/PNG/JPEG) becomes a real, resized JPEG before
+  // it's shown or saved; if that fails the current photo stays as it was.
   async function pickPhoto() {
+    let picked: import('expo-image-picker').ImagePickerAsset | undefined;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const ImagePicker = require('expo-image-picker') as typeof import('expo-image-picker');
-      const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
-      if (!picked.canceled && picked.assets[0]) setPhotoUri(picked.assets[0].uri);
+      const result = await ImagePicker.launchImageLibraryAsync(pickerOptionsForJpeg());
+      if (result.canceled || !result.assets[0]) return;
+      picked = result.assets[0];
     } catch {
-      // Picker unavailable in this build - the button is hidden then anyway.
+      setError(t('journal.photoError'));
+      return;
+    }
+    try {
+      const normalized = await normalizeToJpeg(picked, JOURNAL_IMAGE);
+      // A previous not-yet-saved pick is no longer needed.
+      if (photoUri !== entry?.photo?.localUri) deleteTempImage(photoUri);
+      if (normalized.uri !== picked.uri) deleteTempImage(picked.uri);
+      setPhotoUri(normalized.uri);
+      setError(null);
+    } catch {
+      setError(t('journal.photoError'));
     }
   }
 

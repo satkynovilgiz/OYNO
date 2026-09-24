@@ -13,6 +13,7 @@ import { useJournalStore } from '@/store/useJournalStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
+import { bumpAccountGeneration, captureAccountGeneration, isAccountGenerationCurrent } from './accountGeneration';
 import {
   dailyToPush,
   mergeChallengeResults,
@@ -44,12 +45,13 @@ import { registerSyncScheduler, type SyncReason } from './syncTrigger';
  * migration not applied yet) never blocks or rolls back the others, and
  * nothing local is dropped until the server has accepted it.
  *
- * STALE-RESULT SAFETY: every run captures { userId, epoch }. Account
- * transitions (sign-out, session lost, account deletion, switching
- * account) call `invalidateActiveSync()` first, which bumps the epoch. A
- * run re-checks both right before EVERY local mutation, so a slow response
- * that arrives after the user changed can never write into the stores.
- * (The network request itself isn't cancelled - its result is ignored.)
+ * STALE-RESULT SAFETY: every run captures the account-session generation
+ * (accountGeneration.ts: user id + session number - so "A, session #1" and
+ * "A, session #2" differ). Account transitions call `invalidateActiveSync()`
+ * first, which starts a new generation. A run re-checks it right before
+ * EVERY local mutation, so a slow response that arrives after the session
+ * changed can never write into the stores. (The network request itself
+ * isn't cancelled - its result is ignored.)
  */
 
 export type SyncDomain = 'visits' | 'daily' | 'challenges' | 'favorites' | 'journal';
@@ -61,13 +63,11 @@ export type SyncReport = {
   conflicts: number;
 };
 
-type SyncContext = { userId: string; epoch: number; reason: SyncReason };
+type SyncContext = { userId: string; generation: number; reason: SyncReason };
 
 type DomainResult = { conflicts: number; changedProgress?: boolean };
 
 class StaleSyncError extends Error {}
-
-let syncEpoch = 0;
 
 /** A short, content-free failure code for analytics (never a message). */
 function safeCode(error: unknown): string {
@@ -82,7 +82,7 @@ function signedInUserId(): string | null {
 
 /** True while this run may still touch local state. */
 function isCurrent(ctx: SyncContext): boolean {
-  return ctx.epoch === syncEpoch && signedInUserId() === ctx.userId;
+  return isAccountGenerationCurrent(ctx);
 }
 
 /** Called right before every local mutation (and after every await). */
@@ -323,11 +323,11 @@ const DOMAINS: [SyncDomain, (ctx: SyncContext) => Promise<DomainResult>][] = [
   ['journal', syncJournal],
 ];
 
-async function runSync(reason: SyncReason, epoch: number): Promise<SyncReport> {
-  const userId = signedInUserId();
+async function runSync(reason: SyncReason, token: ReturnType<typeof captureAccountGeneration>): Promise<SyncReport> {
+  const userId = token.userId;
   if (!userId) return { ok: false, skipped: 'not_signed_in', failedDomains: [], conflicts: 0 };
   if (!onlineManager.isOnline()) return { ok: false, skipped: 'offline', failedDomains: [], conflicts: 0 };
-  const ctx: SyncContext = { userId, epoch, reason };
+  const ctx: SyncContext = { userId, generation: token.generation, reason };
   if (!isCurrent(ctx)) return { ok: false, skipped: 'account_changed', failedDomains: [], conflicts: 0 };
 
   const startedAt = Date.now();
@@ -351,9 +351,8 @@ async function runSync(reason: SyncReason, epoch: number): Promise<SyncReport> {
 
   // Server-authoritative progress (XP, achievements, visits with their
   // real timestamps) is re-read so Passport/Journey/Home/Map all agree.
-  // progress.load() itself also refuses to apply a response for a user
-  // who is no longer signed in.
-  if (refreshProgress && isCurrent(ctx)) await useProgressStore.getState().load();
+  // progress.load() gets this run's session and applies nothing if stale.
+  if (refreshProgress && isCurrent(ctx)) await useProgressStore.getState().load({ userId: ctx.userId, generation: ctx.generation });
   if (!isCurrent(ctx)) return { ok: false, skipped: 'account_changed', failedDomains, conflicts };
 
   if (conflicts > 0) track('sync_conflict_merged', { reason, count: conflicts });
@@ -378,7 +377,7 @@ const LOCAL_CHANGE_DEBOUNCE_MS = 1500;
  * state. Also drops a queued/debounced run for the previous account.
  */
 export function invalidateActiveSync(): void {
-  syncEpoch += 1;
+  bumpAccountGeneration();
   inFlight = null;
   queuedReason = null;
   if (debounceTimer) clearTimeout(debounceTimer);
@@ -392,7 +391,7 @@ export function syncAccountState(reason: SyncReason): Promise<SyncReport> {
     queuedReason = reason;
     return inFlight;
   }
-  const run = runSync(reason, syncEpoch).finally(() => {
+  const run = runSync(reason, captureAccountGeneration()).finally(() => {
     // An invalidated run must not clear or chain onto a newer one.
     if (inFlight !== run) return;
     inFlight = null;

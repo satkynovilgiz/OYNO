@@ -5,6 +5,7 @@ import { track } from '@/services/analytics/analytics';
 import type { AchievementId } from '@/services/progress/types';
 import { safeJsonParse } from '@/services/storage/safeJson';
 import { supabase } from '@/services/supabase/client';
+import { captureAccountGeneration, isAccountGenerationCurrent, type AccountGenerationToken } from '@/services/sync/accountGeneration';
 import { mergeVisits } from '@/services/sync/mergeRules';
 import { addPendingVisit, readPendingVisits } from '@/services/sync/outbox';
 import { requestAccountSync } from '@/services/sync/syncTrigger';
@@ -186,7 +187,10 @@ type ProgressState = ProgressFields & {
    * date its stamps; a region with no entry simply shows no date. */
   regionVisitDates: Record<string, string>;
   completedQuestStepIds: string[];
-  load: () => Promise<void>;
+  /** `session`: the account session this load is for (the sync engine
+   * passes its own); omitted = the session current at call time. A
+   * response that arrives after that session ended changes nothing. */
+  load: (session?: AccountGenerationToken) => Promise<void>;
   recordGamePlayed: (gameId: string) => Promise<void>;
   recordGameWon: (gameId: string) => Promise<void>;
   advanceQuest: () => Promise<void>;
@@ -251,9 +255,15 @@ export const useProgressStore = create<ProgressState>((set, get) => {
   // real failure and goes into `error` for the UI.
   const EXPECTED_REJECTIONS = ['ALREADY_CLAIMED', 'NOT_ELIGIBLE', 'ALREADY_COMPLETED', 'NOT_AUTHENTICATED'];
 
+  // Every server action goes through here, so this one guard covers them
+  // all: a response for a session that has since ended (sign-out, another
+  // account, or the same account signed in again) is dropped - no store
+  // update, no achievement modal, no cache write.
   async function callAction(fn: string, args?: Record<string, unknown>): Promise<RpcResult | null> {
     if (!isRealUser()) return null;
+    const session = captureAccountGeneration();
     const { data, error } = await supabase.rpc(fn, args);
+    if (!isAccountGenerationCurrent(session)) return null;
     if (error) {
       if (!EXPECTED_REJECTIONS.some((code) => error.message?.includes(code))) {
         set({ error: error.message });
@@ -275,8 +285,11 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     regionVisitDates: {},
     completedQuestStepIds: [],
 
-    load: async () => {
+    load: async (session) => {
+      const token = session ?? captureAccountGeneration();
+      const current = () => isAccountGenerationCurrent(token);
       const pending = await pendingVisitSet();
+      if (!current()) return;
       if (!isRealUser()) {
         // Guests have no server progress, but places they open are kept
         // (sync outbox) so Passport/Journey/Map work and the visits merge
@@ -294,10 +307,9 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         });
         return;
       }
-      // The response must belong to whoever is signed in when it ARRIVES:
-      // a slow fetch for an account that signed out meanwhile is dropped.
-      const requestedFor = currentUserId();
-      const stillSameUser = () => isRealUser() && currentUserId() === requestedFor;
+      // Every step below re-checks the session: a slow response for a
+      // session that ended (even the same account signed in again) is dropped.
+      const stillSameUser = () => isRealUser() && current();
       // Render the last-known account progress immediately; the server
       // fetch below replaces it in the background (never a blank wait).
       const cachedFirst = await readCache();
@@ -336,6 +348,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         visitedRegionIds.splice(0, visitedRegionIds.length, ...visits.ids);
         Object.assign(regionVisitDates, visits.dates);
 
+        if (!stillSameUser()) return;
         set({
           ...fields,
           gameStats,

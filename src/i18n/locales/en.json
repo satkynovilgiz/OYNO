@@ -1888,7 +1888,8 @@
     "helpEntry": "Send Beta Feedback",
     "helpEntryHint": "Report a bug or share an idea from inside the app.",
     "failedTitle": "We couldn't send this report.",
-    "failedBody": "It's still saved on this phone. You can try again."
+    "failedBody": "It's still saved on this phone. You can try again.",
+    "imageFailed": "This image couldn't be attached. You can still send your report without it."
   },
   "journal": {
     "title": "My Journal",
@@ -1954,6 +1955,7 @@
     "open": "Open journal",
     "entryA11y": "{{title}}, {{date}}",
     "untitled": "Untitled memory",
-    "journeyCount": "Memories saved: {{count}}"
+    "journeyCount": "Memories saved: {{count}}",
+    "photoError": "We couldn't use this photo. Your current photo is unchanged - try another one."
   }
 }
