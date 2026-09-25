@@ -1,6 +1,4 @@
-import catClothing from '@assets/img/OYNO_design/culture/cat_clothing.png';
 import catGames from '@assets/img/OYNO_design/culture/cat_games.png';
-import catHorse from '@assets/img/OYNO_design/culture/cat_horse.png';
 import bozUyFeltCovering from '@assets/img/OYNO_design/culture/boz_uy/felt_covering.jpg';
 import bozUyFeltCovering2 from '@assets/img/OYNO_design/culture/boz_uy/felt_covering2.jpg';
 import bozUyYurtBuildersAlpineMeadow from '@assets/img/OYNO_design/culture/boz_uy/yurt_builders_alpine_meadow.jpg';
@@ -16,6 +14,7 @@ import clothingBeldemchiChyptama from '@assets/img/OYNO_design/culture/clothing/
 import clothingChapanNooruz from '@assets/img/OYNO_design/culture/clothing/chapan_nooruz.jpg';
 import clothingElechekCloseup from '@assets/img/OYNO_design/culture/clothing/elechek_closeup.jpg';
 import clothingExhibitHallWide from '@assets/img/OYNO_design/culture/clothing/exhibit_hall_wide.jpg';
+import horseEagleHunterGoldenHour from '@assets/img/OYNO_design/culture/horse/eagle_hunter_golden_hour.jpg';
 import clothingHeadwearPanel from '@assets/img/OYNO_design/culture/clothing/headwear_panel.jpg';
 import clothingJewelryNecklaces from '@assets/img/OYNO_design/culture/clothing/jewelry_necklaces.jpg';
 import clothingBoyTumar from '@assets/img/OYNO_design/culture/clothing/boy_tumar.jpg';
@@ -80,8 +79,10 @@ export const cultureCategoryImages: Record<CultureCategoryId, ImageSourcePropTyp
   shyrdak: shyrdakColorsPattern,
   komuz: komuzHero,
   music: musicYurtAndInstruments,
-  clothing: catClothing,
-  horse: catHorse,
+  // Full-resolution photographs (the old 144 px category art pixelated
+  // in the 2-column grid and the category hero).
+  clothing: clothingHeadwearPanel,
+  horse: horseEagleHunterGoldenHour,
   food: foodYurtFeastLake,
   games: catGames,
   tradition: traditionBlessingCeremony,

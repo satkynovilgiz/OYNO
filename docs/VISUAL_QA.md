@@ -1,11 +1,129 @@
-# Visual QA pass
+# OYNO Visual QA Checklist
+
+A repeatable screenshot pass for the modern (design system v2) UI. Run it
+before every beta build, and after any change to shared UI components
+(`src/components/ui`, `src/theme`).
+
+## How this is checked
+
+| Where | What it proves | What it does NOT prove |
+| --- | --- | --- |
+| Web build in headless Chrome at phone sizes (`npx expo start --web`) | Layout, wrapping, truncation, horizontal overflow, clipped rails, KG/RU/EN copy fit | Real fonts/metrics on iOS, safe areas, haptics, scroll physics, GL performance |
+| Physical iPhone (EAS preview build) | Everything above plus safe areas, gestures, haptics, FPS, audio | - |
+
+Web screenshots are **not** a substitute for a device check. Tick the
+iPhone column only after looking at the screen on a real phone.
+
+Viewports: 375×812 (iPhone mini/SE-class width), 390×844 (iPhone 12-15),
+430×932 (Pro Max). Also spot-check 393×852 (iPhone 15/16).
+Languages: KG (default, longest words), RU (longest labels), EN.
+Ages: at least one of child (6-9) and adult (18+) per pass.
+
+## Screens
+
+Legend: `W` = checked on web at that width · `D` = checked on a real iPhone.
+
+| Screen | Route | 375 | 390 | 430 | iPhone |
+| --- | --- | --- | --- | --- | --- |
+| Home | `/home` | W | W | W | ☐ |
+| Games | `/games` | W | W | W | ☐ |
+| Game detail + HUD | `/games/chuko` | W | W | ☐ | ☐ |
+| Explore | `/explore` | W | W | W | ☐ |
+| Interactive map + sheet | `/explore/map` | W | W | W | ☐ |
+| Destination detail | `/explore/son-kol` | W | W | W | ☐ |
+| Guided trail | `/trails/horse-culture` | W | W | W | ☐ |
+| Culture | `/culture` | W | W | W | ☐ |
+| Culture category | `/culture/boz-uy` | W | W | W | ☐ |
+| Culture article + audio | `/culture/item/clothing-boy-tumar` | W | W | W | ☐ |
+| Collection | `/collections/boz-uy-world` | W | W | W | ☐ |
+| Profile | `/profile` | W | W | W | ☐ |
+| My Journey | `/journey` | W | W | W | ☐ |
+| Achievements | `/achievements` | W | W | W | ☐ |
+| Search | `/search` | W | W | W | ☐ |
+| Saved (empty + filled) | `/saved` | W | W | W | ☐ |
+| Offline (empty + filled) | `/offline` | W | W | W | ☐ |
+| Journal (empty + filled) | `/journal` | W | W | W | ☐ |
+
+"W" above reflects the 2026-09-24 web pass (KG teen 390, RU adult 375,
+EN child 430; KG/RU/EN across the table). No row is ticked for iPhone yet.
+
+## Per-screen checklist
+
+For every screen and width:
+
+- [ ] No horizontal page scroll; every rail starts on the 16 pt gutter and
+      its last card scrolls fully into view (right padding present).
+- [ ] No truncated titles/buttons in KG and RU (one-line subtitles on
+      cards are intentionally clamped); no single-letter last lines.
+- [ ] Text over photos is readable (scrim present, subject not hidden).
+- [ ] Images are sharp: no source narrower than ~2× its display width
+      (see "Known low-resolution assets").
+- [ ] Section rhythm: 24 pt between sections, 12 pt title → content.
+- [ ] Content ends above the tab bar; nothing hidden behind it.
+- [ ] Tab bar: same height on all 5 tabs, active tab obvious, labels fit.
+- [ ] Buttons: CTA hierarchy (gold accent = the one main action),
+      loading state keeps the button size.
+
+State checks:
+
+- [ ] Home Today cards: not started / in progress / claimable / claimed -
+      card heights stay equal, no jump.
+- [ ] Daily OYNO: open vs done.
+- [ ] Toasts (Save, Remove, Download, Journal save): above the tab bar,
+      not over a CTA, disappear after ~2 s, KG/RU text fits.
+- [ ] Empty states: Search (no results), Saved, Offline, Journal, Journey
+      (new user).
+- [ ] Loading: skeleton size ≈ final content size (Home Daily, Explore).
+- [ ] Errors: not-found route, offline-unavailable content, server failure.
+
+iPhone-only checks:
+
+- [ ] Safe areas: Dynamic Island / notch on full-bleed heroes (destination,
+      article, trail, collection, category), map header, game HUD; home
+      indicator under bottom sheets, map place sheet and tab bar.
+- [ ] Scroll: horizontal rails don't steal vertical scroll; snapping rails
+      (Explore, trails, collections) feel natural.
+- [ ] Map: pinch/pan/double-tap, +/- buttons, pin taps at child size,
+      place strip, sheet over the home indicator.
+- [ ] Game HUD: pause, tutorial, result sheet don't cover the play area;
+      touch controls reachable with one thumb.
+- [ ] Audio guide: play/pause, speed, interruption by a call, background.
+- [ ] Motion: press feedback subtle; Reduce Motion removes scale/fade.
+- [ ] Haptics: light on card/primary taps, success on save/download/journal.
+
+## Known low-resolution assets
+
+These are the only art available today; they render acceptably but will
+look soft on 3× screens. Replace when higher-resolution art exists.
+
+| Asset | Size (px) | Where it shows |
+| --- | --- | --- |
+| `games/*/thumbnail.png` (akTerekKokTerek, arkanTartysh, beshTash, beshbarmak, cookingWorld, toguzKorgool, zholukTashtamay) | 228×146 | Games tiles, Home Play rail |
+| `games/{chuko,kyzKuumay,ordo,zhaaAtuu}/thumbnail.png` | 384×256 | Games tiles, Home Play rail |
+| `games/art/games_world_hero.jpg`, `zhaa_atuu_featured.jpg` | ~768×512 | Games hero / featured |
+| `explore/discovery_*.png` | 300×362 | Discoveries rows, Profile collection |
+| `culture/material_*.png` | 155-504 wide | Culture "new materials" rail |
+| `culture/cat_games.png` | 535×390 | Culture category grid (Games) |
+| `culture/oymo/*.jpg` | 114-306 wide | Oymo motif items - HomeArtwork/MediaImage swap in the category photo when used full-bleed |
+
+Fixed in this pass: Home Explore tiles (500 px banners → 1100-1536 px
+photos) and the Clothing / Horse category covers (144 px → 1200-1280 px).
+
+---
+
+# Earlier audit log (pre design system v2)
+
+Kept for history. Items below describe the app before the v2 redesign;
+some components mentioned (e.g. CurrencyRow) have since been removed.
+
+## Visual QA pass
 
 Final app-wide visual audit (sizing/spacing, card system, icons, imagery,
 typography, buttons/controls). Format per screen/area: issue found → fix
 made → anything still needing a real-device check. Business logic,
 navigation, game mechanics, and data models were not touched.
 
-## Design tokens (app-wide)
+### Design tokens (app-wide)
 
 - **Issue**: `colors.ink400` (`textMuted`) measured ~2.7:1 contrast against
   the app background (`colors.background`) and ~3.0:1 against card surfaces
@@ -37,7 +155,7 @@ navigation, game mechanics, and data models were not touched.
   `resizeMode="stretch"` (full-repo search). No duplicated inline shadow
   definitions exist outside `theme/shadows.ts`.
 
-## Games / Game Detail
+### Games / Game Detail
 
 - **Issue**: `GameDetailScreen` (the pre-match "what is this / how to
   play / difficulty / stats" screen used by all 5 3D games) had no artwork
@@ -62,7 +180,7 @@ navigation, game mechanics, and data models were not touched.
   this pass only covered the 2D React Native UI; the 3D scenes themselves
   weren't re-audited here.
 
-## Home / Explore / Culture / Profile
+### Home / Explore / Culture / Profile
 
 - **Checked, no issue found**: card corner radius, padding, border width,
   and shadow usage are consistent within each screen (all built on the
@@ -83,7 +201,7 @@ navigation, game mechanics, and data models were not touched.
   since it depends on runtime `ScrollView` sizing behavior that static
   analysis can't fully confirm.
 
-## Typography
+### Typography
 
 - **Checked, no issue found**: card/list titles that render user- or
   locale-variable text (game names, achievement titles, discovery titles)
@@ -98,7 +216,7 @@ navigation, game mechanics, and data models were not touched.
   Kyrgyz diacritics (ң/ө/ү ascenders/descenders) on both iOS and Android
   system fonts - not verifiable without a device.
 
-## Buttons / controls
+### Buttons / controls
 
 - **Checked, no issue found**: `Button` (44pt min height), `IconButton`
   (44pt default, `hitSlop` compensates smaller visual sizes), and
@@ -110,7 +228,7 @@ navigation, game mechanics, and data models were not touched.
   exception for gesture handling, not a missed conversion.
 - **Fixed**: Games category filter chips' touch target (see above).
 
-## Not done in this pass
+### Not done in this pass
 
 - No screen was redesigned "just to change it" - fixes above are the only
   changes made.

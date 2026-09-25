@@ -61,7 +61,7 @@ export function ProfileIdentityCard({
           </View>
           <View style={styles.levelRow}>
             <LevelBadge label={t('profile.level', { level: profile.level })} tone={rewarding ? 'gold' : 'forest'} />
-            <Text style={styles.rank} numberOfLines={1}>
+            <Text style={styles.rank} numberOfLines={2}>
               {profile.title}
             </Text>
           </View>
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   identity: { flex: 1, gap: 6, minWidth: 0 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingRight: spacing.lg },
   name: { color: colors.textPrimary, flexShrink: 1 },
-  levelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  levelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, flexWrap: 'wrap' },
   rank: { ...textStyles.caption, color: colors.textSecondary, flexShrink: 1 },
   xp: { gap: 4 },
   xpText: { ...textStyles.small, color: colors.textSecondary },

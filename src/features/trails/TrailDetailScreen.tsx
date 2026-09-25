@@ -114,11 +114,14 @@ export function TrailDetailScreen({ trail, onPressBack }: TrailDetailScreenProps
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl, gap: spacing.lg }} showsVerticalScrollIndicator={false}>
-        <HeroCard imageSource={trail.heroImage} title={title} aspectRatio={isChild ? 1 : 4 / 3}>
-          <View style={{ paddingTop: insets.top }}>
-            <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <View>
+          <HeroCard imageSource={trail.heroImage} title={title} aspectRatio={isChild ? 1 : 4 / 3} />
+          {/* Back at the top under the status bar (HeroCard stacks
+              children at the bottom, next to the title). */}
+          <View style={[styles.back, { top: insets.top + spacing.xs }]}>
+            <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" variant="surface" accessibilityLabel={t('common.back')} onPress={onPressBack} />
           </View>
-        </HeroCard>
+        </View>
 
         <View style={styles.pad}>
           <Text style={styles.kicker}>{t('trails.kicker')}</Text>
@@ -318,6 +321,7 @@ function TrailStepRow({
 }
 
 const styles = StyleSheet.create({
+  back: { position: 'absolute', left: spacing.md },
   root: { flex: 1, backgroundColor: colors.background },
   pad: { paddingHorizontal: spacing.md },
   kicker: { ...typography.overline, color: colors.accentTerracotta, marginBottom: spacing.xxs },

@@ -1,8 +1,11 @@
 import { mockGamesList } from '@/features/games/mockData';
-import tileCultureBozUy from '@assets/img/OYNO_design/home/tile_culture_bozuy.png';
-import tileFoodPlov from '@assets/img/OYNO_design/home/tile_food_plov.png';
-import tileMapLake from '@assets/img/OYNO_design/home/tile_map_lake.png';
-import tileMusicKomuz from '@assets/img/OYNO_design/home/tile_music_komuz.png';
+// Same subjects as the original banner tiles, but the full-resolution
+// OYNO photographs (1100-1536 px) - the old 500x206 banners were
+// upscaled ~3x inside the ~250x220 pt Explore cards on 3x iPhones.
+import tileCultureBozUy from '@assets/img/OYNO_design/culture/boz_uy/yurt_camp.jpg';
+import tileFoodPlov from '@assets/img/OYNO_design/culture/food/yurt_feast_lake.jpg';
+import tileMusicKomuz from '@assets/img/OYNO_design/culture/music/yurt_and_instruments.jpg';
+import tileMapLake from '@assets/img/OYNO_design/explore/nature/son_kol.jpg';
 
 import type { CultureTileTone } from './types';
 

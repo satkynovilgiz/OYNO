@@ -101,11 +101,12 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.heroWrap}>
-          <HeroCard imageSource={collection.heroImage} title={resolveLocalized(collection.title, language)} aspectRatio={4 / 3}>
-            <View style={styles.heroTopRow}>
-              <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('common.back')} onPress={onPressBack} />
-            </View>
-          </HeroCard>
+          <HeroCard imageSource={collection.heroImage} title={resolveLocalized(collection.title, language)} aspectRatio={4 / 3} />
+          {/* Back sits at the top of the hero, under the status bar - not
+              above the title (HeroCard stacks children at the bottom). */}
+          <View style={[styles.heroTopRow, { top: insets.top + spacing.xs }]}>
+            <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" variant="surface" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+          </View>
         </View>
 
         <Text style={styles.intro}>{resolveLocalized(collection.intro, language)}</Text>
@@ -297,7 +298,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   heroTopRow: {
-    marginBottom: spacing.sm,
+    position: 'absolute',
+    left: spacing.md,
   },
   intro: {
     ...typography.body,
@@ -312,6 +314,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   row: {

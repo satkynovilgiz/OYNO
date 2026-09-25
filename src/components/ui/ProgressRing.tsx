@@ -47,7 +47,10 @@ export function ProgressRing({
 
   return (
     <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+      {/* Start the arc at 12 o'clock by rotating the whole ring - the SVG
+          rotation/origin props emit an invalid transform-origin DOM attribute
+          on web. */}
+      <Svg width={size} height={size} style={[StyleSheet.absoluteFill, styles.startAtTop]}>
         <Circle
           cx={size / 2}
           cy={size / 2}
@@ -66,8 +69,6 @@ export function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           animatedProps={animatedProps}
-          rotation={-90}
-          origin={`${size / 2}, ${size / 2}`}
         />
       </Svg>
       {children ? <View style={styles.content}>{children}</View> : null}
@@ -76,6 +77,9 @@ export function ProgressRing({
 }
 
 const styles = StyleSheet.create({
+  startAtTop: {
+    transform: [{ rotate: '-90deg' }],
+  },
   content: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',

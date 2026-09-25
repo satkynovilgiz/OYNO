@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronLeft, Lock, Plus } from 'lucide-react-native';
+import { ChevronLeft, Lock, NotebookPen, Plus } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
@@ -14,6 +14,8 @@ import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 import { formatEntryDate, formatMonthHeading, linkArtwork } from './journalDisplay';
 import { groupByMonth, visibleEntries, type JournalEntry, type JournalFilter } from './journalModel';
+import { LibraryEmptyState } from '@/components/library/LibraryChrome';
+import { Chip } from '@/components/ui/Chip';
 
 const FILTERS: JournalFilter[] = ['all', 'places', 'culture', 'trails'];
 
@@ -69,30 +71,17 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
         </AnimatedPressable>
 
         {!isChild ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} accessibilityRole="tablist">
-            {FILTERS.map((option) => {
-              const selected = option === filter;
-              return (
-                <AnimatedPressable
-                  key={option}
-                  style={[styles.filter, selected && styles.filterSelected]}
-                  onPress={() => setFilter(option)}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={t(`journal.filters.${option}`)}
-                >
-                  <Text style={[styles.filterText, selected && styles.filterTextSelected]}>{t(`journal.filters.${option}`)}</Text>
-                </AnimatedPressable>
-              );
-            })}
+          // Bleeds to the screen edges so the last chip scrolls fully into
+          // view instead of being cut by the page padding.
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersBleed} contentContainerStyle={styles.filters} accessibilityRole="tablist">
+            {FILTERS.map((option) => (
+              <Chip key={option} label={t(`journal.filters.${option}`)} selected={option === filter} onPress={() => setFilter(option)} accessibilityRole="tab" />
+            ))}
           </ScrollView>
         ) : null}
 
         {groups.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={[styles.emptyTitle, isAdult && styles.editorial]}>{t('journal.empty')}</Text>
-            <Text style={styles.emptyBody}>{t('journal.emptyBody')}</Text>
-          </View>
+          <LibraryEmptyState icon={NotebookPen} tone={colors.primary} title={t('journal.empty')} description={t('journal.emptyBody')} />
         ) : (
           groups.map((group) => (
             <View key={group.month} style={styles.group}>
@@ -172,7 +161,8 @@ const styles = StyleSheet.create({
   newButtonChild: { minHeight: 64, borderRadius: radii.xxl },
   newButtonText: { ...typography.bodyBold, color: colors.textOnDark },
   newButtonTextChild: { fontSize: 20 },
-  filters: { gap: spacing.xs },
+  filtersBleed: { marginHorizontal: -spacing.md, flexGrow: 0 },
+  filters: { gap: spacing.xs, paddingHorizontal: spacing.md },
   filter: { minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.surface, flexShrink: 0 },
   filterSelected: { backgroundColor: colors.primary },
   filterText: { ...typography.caption, fontWeight: '600', color: colors.textPrimary },

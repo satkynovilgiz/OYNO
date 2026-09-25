@@ -58,7 +58,7 @@ export function PassportSummaryCard({ passport, editorialTitle = false, onPress 
       <ProgressBar progress={passport.total > 0 ? passport.unlocked / passport.total : 0} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
 
       <View style={styles.footer}>
-        <Text style={styles.note} numberOfLines={1}>
+        <Text style={styles.note} numberOfLines={2}>
           {latest ? t('explore.v2.lastStamp', { title: latest.title }) : passport.unlocked === 0 ? t('explore.v2.passportEmpty') : countLabel}
         </Text>
         <Text style={styles.cta}>{t('explore.v2.passportCta')} ›</Text>

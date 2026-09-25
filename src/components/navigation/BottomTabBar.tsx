@@ -98,8 +98,11 @@ const styles = StyleSheet.create({
     ...typography.small,
     fontSize: 10,
     fontWeight: '600',
+    letterSpacing: -0.1,
   },
+  // Same weight family as inactive (700 vs 600) - a heavier active weight
+  // pushed long labels like RU "Исследовать" past the tab width.
   labelActive: {
-    fontWeight: '800',
+    fontWeight: '700',
   },
 });

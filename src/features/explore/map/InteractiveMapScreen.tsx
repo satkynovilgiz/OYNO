@@ -319,7 +319,7 @@ export function InteractiveMapScreen({
                     size={pin.size}
                     hit={pin.hit}
                     labelSize={pin.label}
-                    labelSide={pin.alwaysLabel ? (LABEL_SIDE[place.id] ?? 'bottom') : 'bottom'}
+                    labelSide={labelSideFor(place, (place.x / MAP_VIEWBOX_WIDTH) * frameWidth, pin.alwaysLabel, pin.label)}
                     showLabel={pin.alwaysLabel || place.id === selectedId}
                     editorial={isAdult}
                     selected={place.id === selectedId}
@@ -487,6 +487,16 @@ function MapPin({ place, left, top, scale, spread, size, hit, labelSize, labelSi
       ) : null}
     </Animated.View>
   );
+}
+
+/** The preferred side for a pin's name, except that a left-side label is
+ * moved above the pin when the name would run past the map's left edge
+ * (narrow 375 pt frames) - presentation only, coordinates unchanged. */
+function labelSideFor(place: MapPlace, left: number, alwaysLabel: boolean, labelSize: number): 'top' | 'bottom' | 'left' | 'right' {
+  if (!alwaysLabel) return 'bottom';
+  const side = LABEL_SIDE[place.id] ?? 'bottom';
+  const estimatedWidth = place.title.length * labelSize * 0.62 + 14;
+  return side === 'left' && left < estimatedWidth ? 'top' : side;
 }
 
 /** Places the name box beside the pin circle without covering it. */

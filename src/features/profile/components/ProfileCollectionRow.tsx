@@ -46,7 +46,7 @@ export function ProfileCollectionRow({ items, onPressItem, onPressSeeAll }: Prof
               ) : (
                 <View style={[styles.image, { backgroundColor: item.color }]} />
               )}
-              <Text style={styles.title} numberOfLines={1}>
+              <Text style={styles.title} numberOfLines={2}>
                 {item.title}
               </Text>
               <Text style={styles.progress}>
