@@ -3,6 +3,7 @@ import arkanTartysh from '@assets/img/games/arkanTartysh/thumbnail.png';
 import beshbarmak from '@assets/img/games/beshbarmak/thumbnail.png';
 import beshTash from '@assets/img/games/beshTash/thumbnail.png';
 import chuko from '@assets/img/games/chuko/thumbnail.png';
+import kokBoru from '@assets/img/games/kokBoru/thumbnail.jpg';
 import cookingWorld from '@assets/img/games/cookingWorld/thumbnail.png';
 import kyzKuumay from '@assets/img/games/kyzKuumay/thumbnail.png';
 import ordo from '@assets/img/games/ordo/thumbnail.png';
@@ -98,11 +99,7 @@ export const mockGamesList: GameListItem[] = [
   },
   {
     id: 'kok-boru',
-    // No cover art exists yet - see docs/DESIGN_ASSET_AUDIT.md for the
-    // exact spec (cinematic horse+rider composition, same illustrated
-    // style as the other 3D game covers) needed before this can be
-    // replaced with a real `thumbnail`. GameCard renders a plain icon
-    // chip in the meantime instead of a mismatched/placeholder photo.
+    thumbnail: kokBoru,
     category: 'horse',
     difficulty: 'medium',
     players: { kind: 'exact', count: 1 },

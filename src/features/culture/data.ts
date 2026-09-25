@@ -18,6 +18,7 @@ import clothingElechekCloseup from '@assets/img/OYNO_design/culture/clothing/ele
 import clothingExhibitHallWide from '@assets/img/OYNO_design/culture/clothing/exhibit_hall_wide.jpg';
 import clothingHeadwearPanel from '@assets/img/OYNO_design/culture/clothing/headwear_panel.jpg';
 import clothingJewelryNecklaces from '@assets/img/OYNO_design/culture/clothing/jewelry_necklaces.jpg';
+import clothingBoyTumar from '@assets/img/OYNO_design/culture/clothing/boy_tumar.jpg';
 import clothingJewelryPendants from '@assets/img/OYNO_design/culture/clothing/jewelry_pendants.jpg';
 import clothingJoolukKemsel from '@assets/img/OYNO_design/culture/clothing/jooluk_kemsel.jpg';
 import clothingKalpakTebeteyCoat from '@assets/img/OYNO_design/culture/clothing/kalpak_tebetey_coat.jpg';
@@ -138,7 +139,7 @@ export const cultureItemImages: Record<string, ImageSourcePropType[]> = {
   'clothing-chepken': [clothingExhibitHallWide],
   'clothing-beldemchi': [clothingBeldemchiChyptama],
   'clothing-solkobay': [clothingJewelryPendants],
-  'clothing-boy-tumar': [clothingJewelryNecklaces],
+  'clothing-boy-tumar': [clothingBoyTumar],
   'clothing-ala-tamak': [clothingJewelryNecklaces],
   'clothing-soyko': [clothingJewelryNecklaces],
   'clothing-chachpak': [clothingElechekCloseup],

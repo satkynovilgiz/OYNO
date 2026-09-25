@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import kokBoruArt from '@assets/img/OYNO_design/culture/horse/kok_boru_flag.jpg';
+import kokBoruArt from '@assets/img/games/kokBoru/thumbnail.jpg';
 import kyzKuumaiArt from '@assets/img/OYNO_design/culture/horse/kyz_kuumai.jpg';
 import gamesWorldHero from '@assets/img/games/art/games_world_hero.jpg';
 import zhaaAtuuArt from '@assets/img/games/art/zhaa_atuu_featured.jpg';
