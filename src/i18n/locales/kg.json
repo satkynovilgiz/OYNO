@@ -1033,6 +1033,59 @@
       "dailyTasks": "Күнүмдүк тапшырмалар",
       "system": "Тутум",
       "friends": "Достор"
+    },
+    "v2": {
+      "sections": {
+        "today": "Бүгүн",
+        "yesterday": "Кечээ",
+        "week": "Бул аптада",
+        "earlier": "Мурун"
+      },
+      "types": {
+        "daily": "Бүгүнкү ачылыш",
+        "gift": "Сыйлык",
+        "challenge": "Сынак",
+        "trail": "Саякат",
+        "achievement": "Жетишкендик",
+        "download": "Жүктөө",
+        "downloadFailed": "Жүктөө",
+        "challengeDone": "Сынак"
+      },
+      "daily": {
+        "title": "Бүгүнкү OYNO даяр"
+      },
+      "gift": {
+        "title": "Күнүмдүк сыйлык даяр",
+        "body": "Башкы бетте алсаң болот."
+      },
+      "challenge": {
+        "title": "Бүгүнкү сынак",
+        "body": "Бүгүн үйрөнгөнүңдү текшер - {{count}} суроо."
+      },
+      "trail": {
+        "title": "Саякатыңды улант",
+        "body": "{{title}} · {{completed}}/{{total}}"
+      },
+      "achievement": {
+        "title": "Жаңы жетишкендик"
+      },
+      "download": {
+        "title": "Офлайн жеткиликтүү"
+      },
+      "downloadFailed": {
+        "title": "Жүктөө бүткөн жок",
+        "body": "{{name}} · кайра аракет кылуу үчүн ач"
+      },
+      "challengeDone": {
+        "title": "Сынак аяктады",
+        "body": "{{title}} · {{correct}}/{{total}}"
+      },
+      "unread": "Окула элек",
+      "markAll": "Баарын окулду деп белгилөө",
+      "emptyTitle": "Баары тынч.",
+      "emptyBody": "Бир нерсе чындап маанилүү болгондо ушул жерде көрөсүң.",
+      "explore": "OYNOну изилдөө",
+      "offlineContent": "Жүктөлгөн мазмун"
     }
   },
   "profile": {
@@ -1743,6 +1796,15 @@
       "journeyBody": "Кийинки кадам: {{title}}",
       "trailTitle": "Саякатың күтүп турат",
       "trailBody": "«{{title}}» саякатын улант."
+    },
+    "v2": {
+      "offTitle": "Билдирмелер телефондун жөндөөлөрүндө өчүк",
+      "offBody": "Эскертмелерди алуу үчүн телефондун Жөндөөлөрүнөн OYNOго уруксат бер.",
+      "openSettings": "Жөндөөлөрдү ачуу",
+      "askNote": "Биринчи эскертмени күйгүзгөндө OYNO уруксат сурайт.",
+      "whenTitle": "Качан",
+      "pickTime": "Эскертме убактысы",
+      "done": "Даяр"
     }
   },
   "challenges": {

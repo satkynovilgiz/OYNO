@@ -4,7 +4,9 @@ import { GUEST_PHOTO_OWNER } from '@/services/journal/journalPhotos';
 import { safeJsonParse } from '@/services/storage/safeJson';
 import { registerAccountHooks, useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
+import { useActivityStore } from '@/store/useActivityStore';
 import { type ChallengeResult, useChallengeStore } from '@/store/useChallengeStore';
+import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { type DailyCompletions, useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
@@ -71,6 +73,8 @@ async function ensureLocalStoresLoaded(): Promise<void> {
   if (!useChallengeStore.getState().isLoaded) loads.push(useChallengeStore.getState().load());
   if (!useWallpaperFavoritesStore.getState().isLoaded) loads.push(useWallpaperFavoritesStore.getState().load());
   if (!useJournalStore.getState().isLoaded) loads.push(useJournalStore.getState().load());
+  if (!useActivityStore.getState().isLoaded) loads.push(useActivityStore.getState().load());
+  if (!useNotificationsStore.getState().isLoaded) loads.push(useNotificationsStore.getState().load());
   await Promise.all(loads);
 }
 
@@ -81,6 +85,8 @@ function resetAccountStores(): void {
   useFavoritesStore.getState().reset();
   useWallpaperFavoritesStore.getState().reset();
   useJournalStore.getState().reset();
+  useActivityStore.getState().reset();
+  useNotificationsStore.getState().reset();
   // Progress and avatar re-load themselves on the auth status change
   // (root layout) and now find no cached account data to show.
 }

@@ -14,7 +14,7 @@ import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
-import { useNotificationsStore } from '@/store/useNotificationsStore';
+import { useInbox } from '@/features/notifications/useInbox';
 import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
@@ -62,7 +62,8 @@ export function HomeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
-  const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
+  // Same inbox the Notifications screen shows - one unread source.
+  const hasUnreadNotifications = useInbox().unread > 0;
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
   const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));

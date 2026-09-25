@@ -20,6 +20,7 @@ import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { ReminderSync } from '@/components/system/ReminderSync';
 import { SilentErrorBoundary } from '@/components/system/SilentErrorBoundary';
 import { ToastHost } from '@/components/ui/Toast';
+import { ActivityRecorder } from '@/components/system/ActivityRecorder';
 import { WidgetSync } from '@/components/system/WidgetSync';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
@@ -264,6 +265,9 @@ export default function RootLayout() {
             />
             <OfflineBanner />
             <ToastHost />
+            <SilentErrorBoundary name="activity">
+              <ActivityRecorder />
+            </SilentErrorBoundary>
             {/* Native iOS widgets read a shared snapshot; only iOS has them. */}
             {Platform.OS === 'ios' && flagsReady ? (
               <SilentErrorBoundary name="widgets">

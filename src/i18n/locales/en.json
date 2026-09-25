@@ -1033,6 +1033,59 @@
       "dailyTasks": "Daily tasks",
       "system": "System",
       "friends": "Friends"
+    },
+    "v2": {
+      "sections": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "week": "This week",
+        "earlier": "Earlier"
+      },
+      "types": {
+        "daily": "Daily OYNO",
+        "gift": "Gift",
+        "challenge": "Challenge",
+        "trail": "Trail",
+        "achievement": "Achievement",
+        "download": "Download",
+        "downloadFailed": "Download",
+        "challengeDone": "Challenge"
+      },
+      "daily": {
+        "title": "Today's OYNO is ready"
+      },
+      "gift": {
+        "title": "Your daily gift is ready",
+        "body": "You can claim it on Home."
+      },
+      "challenge": {
+        "title": "Today's challenge",
+        "body": "Check what you learned today - {{count}} questions."
+      },
+      "trail": {
+        "title": "Continue your journey",
+        "body": "{{title}} · {{completed}}/{{total}}"
+      },
+      "achievement": {
+        "title": "Achievement unlocked"
+      },
+      "download": {
+        "title": "Available offline"
+      },
+      "downloadFailed": {
+        "title": "Download didn't finish",
+        "body": "{{name}} · open to try again"
+      },
+      "challengeDone": {
+        "title": "Challenge completed",
+        "body": "{{title}} · {{correct}}/{{total}}"
+      },
+      "unread": "Unread",
+      "markAll": "Mark all as read",
+      "emptyTitle": "All quiet.",
+      "emptyBody": "You'll see something here only when it's genuinely useful.",
+      "explore": "Explore OYNO",
+      "offlineContent": "Downloaded content"
     }
   },
   "profile": {
@@ -1743,6 +1796,15 @@
       "journeyBody": "Next up: {{title}}",
       "trailTitle": "Your trail is waiting",
       "trailBody": "Pick up “{{title}}” where you left off."
+    },
+    "v2": {
+      "offTitle": "Notifications are off in your phone settings",
+      "offBody": "To get reminders, allow notifications for OYNO in your phone settings.",
+      "openSettings": "Open Settings",
+      "askNote": "OYNO asks for permission the first time you turn a reminder on.",
+      "whenTitle": "When",
+      "pickTime": "Reminder time",
+      "done": "Done"
     }
   },
   "challenges": {

@@ -11,11 +11,29 @@ import { diffSchedule, type PlannedReminder } from './reminderPlanner';
  * (data.oynoReminder) are ever touched; other notifications are left alone.
  */
 
-export async function requestReminderPermission(): Promise<boolean> {
-  if (Platform.OS === 'web') return false;
+export type ReminderPermission = 'granted' | 'undetermined' | 'denied' | 'unavailable';
+
+/** Current OS permission, without prompting. 'denied' = the system won't
+ * show the prompt again; only iOS Settings can change it. */
+export async function getReminderPermission(): Promise<ReminderPermission> {
+  if (Platform.OS === 'web') return 'unavailable';
   try {
     const current = await Notifications.getPermissionsAsync();
-    if (current.granted) return true;
+    if (current.granted) return 'granted';
+    return current.canAskAgain === false || current.status === 'denied' ? 'denied' : 'undetermined';
+  } catch {
+    return 'unavailable';
+  }
+}
+
+/** Asks only when the system can still show the prompt - never re-prompts
+ * after the user said no (that answer is respected until they change it in
+ * Settings). */
+export async function requestReminderPermission(): Promise<boolean> {
+  const current = await getReminderPermission();
+  if (current === 'granted') return true;
+  if (current !== 'undetermined') return false;
+  try {
     const requested = await Notifications.requestPermissionsAsync();
     return requested.granted;
   } catch {

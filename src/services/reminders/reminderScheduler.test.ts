@@ -79,3 +79,34 @@ describe('app launch', () => {
     expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
   });
 });
+
+describe('reminder permission', () => {
+  const { getReminderPermission, requestReminderPermission } = require('./reminderScheduler') as typeof import('./reminderScheduler');
+
+  it('never re-prompts after the user denied it', async () => {
+    (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: false, status: 'denied', canAskAgain: false });
+    (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: false, status: 'denied', canAskAgain: false });
+    (Notifications.requestPermissionsAsync as jest.Mock).mockClear();
+    expect(await getReminderPermission()).toBe('denied');
+    expect(await requestReminderPermission()).toBe(false);
+    expect(Notifications.requestPermissionsAsync).not.toHaveBeenCalled();
+  });
+
+  it('asks exactly once when the system can still show the prompt', async () => {
+    (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: false, status: 'undetermined', canAskAgain: true });
+    (Notifications.requestPermissionsAsync as jest.Mock).mockClear();
+    (Notifications.requestPermissionsAsync as jest.Mock).mockResolvedValueOnce({ granted: true, status: 'granted' });
+    expect(await requestReminderPermission()).toBe(true);
+    expect(Notifications.requestPermissionsAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('never schedules the same reminder twice when synced repeatedly', async () => {
+    mockScheduled.clear();
+    const settings = { ...DEFAULT_REMINDER_SETTINGS, dailyEnabled: true };
+    const plan = planReminders(settings, ctx);
+    await Promise.all([syncReminderSchedule(plan), syncReminderSchedule(plan), syncReminderSchedule(plan)]);
+    const ids = Array.from(mockScheduled.keys());
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.length).toBe(plan.length);
+  });
+});

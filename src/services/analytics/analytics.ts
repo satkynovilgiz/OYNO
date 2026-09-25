@@ -43,6 +43,7 @@ export type AnalyticsEventName =
   | 'reminder_enabled'
   | 'reminder_disabled'
   | 'reminder_opened'
+  | 'notification_opened'
   | 'sync_started'
   | 'sync_completed'
   | 'sync_failed'
