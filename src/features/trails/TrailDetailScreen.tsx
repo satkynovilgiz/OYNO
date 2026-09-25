@@ -158,7 +158,7 @@ export function TrailDetailScreen({ trail, onPressBack }: TrailDetailScreenProps
               <AnimatedPressable
                 style={styles.completeShare}
                 onPress={() =>
-                  void share({ title, label: t('trails.kicker'), imageSource: trail.heroImage, completedLabel: t('trails.completedLabel') }, t('share.message', { title }))
+                  void share({ title, label: t('trails.kicker'), imageSource: trail.heroImage, completedLabel: t('trails.completedLabel'), variant: 'score', stat: `${progress.completed} / ${progress.total}` }, t('share.message', { title }))
                 }
                 accessibilityRole="button"
                 accessibilityLabel={t('share.action')}

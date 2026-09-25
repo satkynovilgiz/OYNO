@@ -2,7 +2,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Image,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -23,17 +22,17 @@ import Animated, {
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, TextButton } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { colors, radii, spacing, typography } from '@/theme';
-import wordmark from '@assets/img/OYNO_design/wordmark.png';
+import { colors, editorial, radii, spacing, textStyles } from '@/theme';
 
 import { onboardingSlideImages, type OnboardingSlideImage } from './data';
+import { DiscoverCollage, JourneyCollage, PlayCollage } from './OnboardingVisuals';
 
 /** Reserved bottom space so each slide's own text never sits under the
  * fixed dots/CTA overlay (Section "reduce giant dead space" - the image
  * now fills the whole screen instead of stopping partway down, so the
  * chrome that used to live on its own cream footer now floats over the
  * art instead of pushing it up). */
-const BOTTOM_CHROME_HEIGHT = 168;
+const BOTTOM_CHROME_HEIGHT = 150;
 
 type OnboardingScreenProps = {
   onFinish: () => void;
@@ -110,24 +109,26 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
 
       <View style={[styles.skipRow, { top: insets.top + spacing.sm }]}>
         <View style={styles.skipChip}>
-          <TextButton label={t('onboarding.skip')} onPress={onFinish} />
+          <TextButton label={t('onboarding.skip')} onPress={onFinish} tone="light" />
         </View>
       </View>
 
       <View style={[styles.bottomChrome, { paddingBottom: insets.bottom + spacing.md }]}>
-        <View style={styles.dots}>
+        <View style={styles.dots} accessible accessibilityRole="progressbar" accessibilityLabel={`${index + 1} / ${onboardingSlideImages.length}`}>
           {onboardingSlideImages.map((slide, dotIndex) => (
             <OnboardingDot key={slide.id} dotIndex={dotIndex} scrollX={scrollX} screenWidth={screenWidth} />
           ))}
         </View>
 
+        <View style={styles.cta}>
+          <Button label={isLastSlide ? t('onboarding.start') : t('onboarding.next')} variant="accent" size="lg" block onPress={handleContinue} />
+        </View>
+        {/* Guest-first stays one tap away on the last slide; account
+            creation is never forced before the user has seen OYNO. */}
         {isLastSlide ? (
-          <>
-            <Button label={t('onboarding.start')} onPress={handleContinue} />
-            <TextButton label={t('onboarding.later')} onPress={onContinueAsGuest} tone="light" style={styles.laterLink} />
-          </>
+          <TextButton label={t('onboarding.v2.guest')} onPress={onContinueAsGuest} tone="light" style={styles.laterLink} />
         ) : (
-          <Button label={t('onboarding.next')} onPress={handleContinue} />
+          <View style={styles.laterSpacer} />
         )}
       </View>
     </View>
@@ -176,25 +177,24 @@ function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth, screenHeight
         resizeMode="cover"
       />
       <LinearGradient
-        colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.25)', 'rgba(19,32,24,0.94)']}
-        locations={[0.35, 0.62, 1]}
+        colors={['rgba(19,32,24,0.55)', 'rgba(19,32,24,0.4)', 'rgba(19,32,24,0.96)']}
+        locations={[0, 0.5, 0.85]}
         style={StyleSheet.absoluteFill}
       />
 
-      {slide.id === 'welcome' ? (
-        <View style={[styles.wordmarkBadge, { top: insets.top + spacing.xxl }]}>
-          <Image source={wordmark} style={styles.wordmarkImage} resizeMode="contain" />
-        </View>
-      ) : null}
+      <View style={[styles.visual, { paddingTop: insets.top + 64 }]}>
+        <Animated.View style={contentStyle}>
+          {slide.id === 'discover' ? <DiscoverCollage width={Math.min(screenWidth - spacing.lg * 2, 420)} /> : null}
+          {slide.id === 'play' ? <PlayCollage width={Math.min(screenWidth - spacing.lg * 2, 420)} /> : null}
+          {slide.id === 'journey' ? <JourneyCollage width={Math.min(screenWidth - spacing.lg * 2, 420)} /> : null}
+        </Animated.View>
+      </View>
 
       <Animated.View style={[styles.content, { paddingBottom: BOTTOM_CHROME_HEIGHT + insets.bottom }, contentStyle]}>
-        <View style={styles.ornamentRow}>
-          <OymoOrnament size={11} color={colors.accentGold} />
-          <OymoOrnament size={13} color={colors.accentGold} />
-          <OymoOrnament size={11} color={colors.accentGold} />
-        </View>
-        <Text style={styles.title}>{t(`onboarding.slides.${slide.id}.title`)}</Text>
-        <Text style={styles.description}>{t(`onboarding.slides.${slide.id}.description`)}</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {t(`onboarding.v2.${slide.id}.title`)}
+        </Text>
+        <Text style={styles.description}>{t(`onboarding.v2.${slide.id}.description`)}</Text>
       </Animated.View>
     </View>
   );
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   skipChip: {
-    backgroundColor: 'rgba(251,243,227,0.9)',
+    backgroundColor: 'rgba(19,32,24,0.45)',
     borderRadius: radii.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
@@ -266,34 +266,25 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  wordmarkBadge: {
-    position: 'absolute',
-    alignSelf: 'center',
+  // Collage area: the upper part of the slide, above the copy.
+  visual: {
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
-  },
-  wordmarkImage: {
-    width: 176,
-    height: 48,
   },
   content: {
     paddingHorizontal: spacing.xl,
     gap: spacing.xs,
   },
-  ornamentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
   title: {
-    ...typography.display,
-    fontSize: 26,
+    ...editorial(textStyles.display),
     color: colors.textOnDark,
   },
   description: {
-    ...typography.body,
-    color: 'rgba(255,255,255,0.88)',
-    lineHeight: 21,
-    maxWidth: 320,
+    ...textStyles.body,
+    fontSize: 16,
+    lineHeight: 23,
+    color: colors.textOnDarkSecondary,
+    maxWidth: 340,
   },
   bottomChrome: {
     position: 'absolute',
@@ -317,7 +308,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     backgroundColor: colors.accentGold,
   },
+  cta: {
+    alignSelf: 'stretch',
+  },
   laterLink: {
     paddingVertical: spacing.xxs,
+  },
+  // Same height as the guest link, so the CTA never jumps on the last slide.
+  laterSpacer: {
+    height: 30,
   },
 });

@@ -1,12 +1,13 @@
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Image, type ImageSourcePropType, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, IconButton, ProgressBar } from '@/components/ui';
+import { AnimatedPressable, Button, IconButton, ProgressBar, sourceWidth } from '@/components/ui';
 import { getCollection, type Collection } from '@/features/collections/collectionsData';
 import { cultureItemImages } from '@/features/culture/data';
 import { natureSiteImages } from '@/features/explore/data';
@@ -23,7 +24,7 @@ import { useShareCard } from '@/services/share/useShareCard';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { cardRadii, colors, editorial, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds, pickDailyQuestionIds, scoreAnswers, type AnswerRecord } from './challengeLogic';
 import { getQuestion, routeForSource, type ChallengeOption, type ChallengeQuestion, type OptionImageRef } from './questionBank';
@@ -123,6 +124,8 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   if (finished) {
     const wrongSources = Array.from(new Map(questions.filter((question) => !answers.some((a) => a.questionId === question.id && a.optionId === question.correctOptionId)).map((q) => [`${q.sourceType}:${q.sourceId}`, q])).values());
     const allSources = Array.from(new Map(questions.map((q) => [`${q.sourceType}:${q.sourceId}`, q])).values());
+    const perfect = total > 0 && correct === total;
+    const resultMessage = perfect ? t('challenges.v2.perfectBody') : correct / Math.max(1, total) >= 0.6 ? t('challenges.v2.goodBody') : t('challenges.v2.lowerBody');
     const shareImage = collection?.heroImage ?? imageFor(questions[0].sourceType === 'destination' ? { type: 'destination', id: questions[0].sourceId } : { type: 'culture_item', id: questions[0].sourceId }) ?? null;
     return (
       <View style={styles.root}>
@@ -130,30 +133,76 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
           <View style={styles.header}>
             <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
           </View>
-          <View style={styles.resultCard} accessible accessibilityLabel={`${title}. ${t('challenges.resultTitle', { correct, total })}`}>
-            <OymoOrnament size={18} color={colors.accentGold} strokeWidth={1.5} />
-            <Text style={styles.resultEyebrow}>{title}</Text>
-            <Text style={styles.resultScore}>{t('challenges.resultTitle', { correct, total })}</Text>
-            <Text style={styles.resultBody}>{t('challenges.resultBody')}</Text>
-            <AnimatedPressable
-              style={styles.shareLink}
-              onPress={() =>
-                void share({ title, label: t('challenges.shareTitle'), imageSource: shareImage, completedLabel: `${correct} / ${total}` }, `${t('challenges.shareTitle')}: ${correct} / ${total}`)
-              }
-              accessibilityRole="button"
-              accessibilityLabel={t('share.action')}
-            >
-              <Text style={styles.shareText}>{t('share.action')}</Text>
-            </AnimatedPressable>
+          <View style={styles.resultCard} accessible accessibilityLabel={`${title}. ${t('challenges.resultTitle', { correct, total })}. ${resultMessage}`}>
+            <View style={styles.resultOrnaments}>
+              {perfect ? <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.75} /> : null}
+              <OymoOrnament size={perfect ? 22 : 16} color={colors.accentGold} strokeWidth={1.5} />
+              {perfect ? <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.75} /> : null}
+            </View>
+            <Text style={styles.resultEyebrow} numberOfLines={2}>
+              {title}
+            </Text>
+            <Text style={styles.resultScore}>
+              {correct}
+              <Text style={styles.resultScoreTotal}> / {total}</Text>
+            </Text>
+            {perfect ? <Text style={styles.resultPerfect}>{t('challenges.v2.perfectTitle')}</Text> : null}
+            <Text style={styles.resultBody}>{resultMessage}</Text>
+            <View style={styles.resultActions}>
+              <Button
+                label={t('share.action')}
+                variant="accent"
+                size="sm"
+                onPress={() =>
+                  void share({ title, label: t('challenges.shareTitle'), imageSource: shareImage, variant: 'score', stat: `${correct} / ${total}` }, `${t('challenges.shareTitle')}: ${correct} / ${total}`)
+                }
+              />
+            </View>
           </View>
 
-          <Text style={styles.sectionTitle}>{t('challenges.reviewed')}</Text>
-          {questions.map((question) => {
-            const ok = answers.some((a) => a.questionId === question.id && a.optionId === question.correctOptionId);
+          <Text style={styles.sectionTitle} accessibilityRole="header">
+            {t('challenges.v2.reviewTitle')}
+          </Text>
+          {questions.map((question, questionIndex) => {
+            const answer = answers.find((a) => a.questionId === question.id);
+            const chosen = question.options.find((option) => option.id === answer?.optionId);
+            const right = question.options.find((option) => option.id === question.correctOptionId)!;
+            const ok = chosen?.id === right.id;
             return (
-              <View key={question.id} style={styles.reviewRow} accessible accessibilityLabel={`${t(`challenges.questions.${question.id}.question`)}. ${ok ? t('challenges.answerCorrectA11y') : t('challenges.answerWrongA11y')}`}>
-                {ok ? <Check size={16} color={colors.primary} strokeWidth={3} /> : <X size={16} color={colors.accentTerracotta} strokeWidth={3} />}
-                <Text style={styles.reviewText}>{t(`challenges.questions.${question.id}.question`)}</Text>
+              <View key={question.id} style={styles.reviewCard}>
+                <View style={styles.reviewHead}>
+                  <StateBadge correct={ok} inline />
+                  <Text style={styles.reviewQuestion}>{t(`challenges.questions.${question.id}.question`)}</Text>
+                </View>
+                {question.kind === 'image' ? null : (
+                  <View style={styles.reviewAnswers}>
+                    {!ok && chosen ? (
+                      <Text style={styles.reviewLine}>
+                        <Text style={styles.reviewLabel}>{t('challenges.v2.yourAnswer')}: </Text>
+                        {optionLabel(question, chosen, question.options.indexOf(chosen))}
+                      </Text>
+                    ) : null}
+                    <Text style={styles.reviewLine}>
+                      <Text style={styles.reviewLabel}>{t('challenges.v2.correctAnswer')}: </Text>
+                      {optionLabel(question, right, question.options.indexOf(right))}
+                    </Text>
+                  </View>
+                )}
+                <Text style={styles.reviewExplanation} numberOfLines={experience === 'child' ? 3 : undefined}>
+                  {t(`challenges.questions.${question.id}.explanation`)}
+                </Text>
+                <AnimatedPressable
+                  onPress={() => router.push(routeForSource(question) as never)}
+                  hitSlop={8}
+                  press="strong"
+                  accessibilityRole="link"
+                  accessibilityLabel={`${t('challenges.learnMore')}: ${sourceTitle(question)}`}
+                  accessibilityHint={`${questionIndex + 1} / ${questions.length}`}
+                >
+                  <Text style={styles.learnMore}>
+                    {t('challenges.learnMore')} · {sourceTitle(question)} →
+                  </Text>
+                </AnimatedPressable>
               </View>
             );
           })}
@@ -172,9 +221,9 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
             </>
           ) : null}
 
-          <AnimatedPressable style={styles.primary} onPress={() => router.replace('/challenges' as never)} accessibilityRole="button" accessibilityLabel={t('challenges.backToChallenges')}>
-            <Text style={styles.primaryText}>{t('challenges.backToChallenges')}</Text>
-          </AnimatedPressable>
+          <View style={styles.primary}>
+            <Button label={t('challenges.backToChallenges')} variant="secondary" size="lg" block onPress={() => router.replace('/challenges' as never)} />
+          </View>
         </ScrollView>
         {shareHost}
       </View>
@@ -197,12 +246,15 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
           ? t('challenges.incorrectImage')
           : t('challenges.incorrect', { answer: optionLabel(question, correctOption, question.options.indexOf(correctOption)) });
     AccessibilityInfo.announceForAccessibility(message);
+    // Success tap only for a correct answer - never an "error" buzz.
+    if (optionId === question.correctOptionId && Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   }
 
   function next() {
     if (index + 1 >= questions.length) {
       const score = scoreAnswers(answers);
       useChallengeStore.getState().complete(resultKey, score.correct, score.total);
+      if (score.total > 0 && score.correct === score.total && Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setFinished(true);
       return;
     }
@@ -215,12 +267,14 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={styles.header}>
           <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
-          <View style={styles.headerText}>
-            <Text style={styles.kicker}>{title}</Text>
-            <Text style={styles.counter}>{t('challenges.questionOf', { index: index + 1, total: questions.length })}</Text>
-          </View>
+          <Text style={styles.kicker} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={styles.counter} accessibilityLabel={t('challenges.questionOf', { index: index + 1, total: questions.length })}>
+            {index + 1} / {questions.length}
+          </Text>
         </View>
-        <ProgressBar progress={(index + (answered ? 1 : 0)) / questions.length} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceAlt} />
+        <ProgressBar progress={(index + (answered ? 1 : 0)) / questions.length} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
 
         <Text style={[styles.question, isAdult && styles.questionEditorial, experience === 'child' && styles.questionChild]} accessibilityRole="header">
           {t(`challenges.questions.${question.id}.question`)}
@@ -231,7 +285,9 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
         {answered ? (
           <View style={[styles.feedback, isCorrect ? styles.feedbackRight : styles.feedbackWrong]} accessibilityLiveRegion="polite">
             <View style={styles.feedbackHeader}>
-              {isCorrect ? <Check size={18} color={colors.primary} strokeWidth={3} /> : <OymoOrnament size={14} color={colors.accentTerracotta} strokeWidth={1.75} />}
+              <View style={[styles.feedbackIcon, isCorrect ? styles.badgeCorrect : styles.feedbackIconSoft]}>
+                {isCorrect ? <Check size={14} color={colors.textPrimary} strokeWidth={3} /> : <OymoOrnament size={12} color={colors.accentTerracotta} strokeWidth={1.75} />}
+              </View>
               <Text style={[styles.feedbackTitle, !isCorrect && styles.feedbackTitleWrong]}>
                 {isCorrect
                   ? t('challenges.correct')
@@ -245,10 +301,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
               <AnimatedPressable onPress={() => router.push(routeForSource(question) as never)} accessibilityRole="link" accessibilityLabel={`${t('challenges.learnMore')}: ${sourceTitle(question)}`}>
                 <Text style={styles.learnMore}>{t('challenges.learnMore')} →</Text>
               </AnimatedPressable>
-              <AnimatedPressable style={styles.nextButton} onPress={next} pressScale={0.97} haptic="light" accessibilityRole="button" accessibilityLabel={index + 1 >= questions.length ? t('challenges.finish') : t('challenges.next')}>
-                <Text style={styles.nextText}>{index + 1 >= questions.length ? t('challenges.finish') : t('challenges.next')}</Text>
-                <ChevronRight size={16} color={colors.accentGold} strokeWidth={2.5} />
-              </AnimatedPressable>
+              <Button label={index + 1 >= questions.length ? t('challenges.finish') : t('challenges.next')} variant="primary" onPress={next} />
             </View>
           </View>
         ) : null}
@@ -304,7 +357,17 @@ function Options({
               accessibilityState={{ selected: option.id === selected, disabled: answered }}
               accessibilityLabel={a11y(option, position)}
             >
-              {image ? <Image source={image} style={styles.imageFill} resizeMode="cover" /> : null}
+              {image ? (
+                // Small motif art (e.g. a 114 px oymo pattern) is shown whole
+                // on cream instead of being cropped and upscaled.
+                (sourceWidth(image) ?? 1000) < 400 ? (
+                  <View style={styles.motifFrame}>
+                    <Image source={image} style={styles.motif} resizeMode="contain" />
+                  </View>
+                ) : (
+                  <Image source={image} style={styles.imageFill} resizeMode="cover" />
+                )
+              ) : null}
               {state === 'correct' || state === 'wrong' ? <StateBadge correct={state === 'correct'} /> : null}
             </AnimatedPressable>
           );
@@ -369,12 +432,12 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.md, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   headerText: { flex: 1 },
-  kicker: { ...typography.overline, color: colors.accentTerracotta },
-  counter: { ...typography.caption, color: colors.textSecondary },
+  kicker: { ...textStyles.overline, color: colors.accentTerracotta, flex: 1 },
+  counter: { ...textStyles.title, color: colors.textPrimary },
   emptyText: { ...typography.body, color: colors.textSecondary, padding: spacing.md },
-  question: { ...typography.h1, color: colors.textPrimary, lineHeight: 28 },
-  questionEditorial: { fontFamily: fontFamily.wordmark, fontSize: 22, lineHeight: 30 },
-  questionChild: { fontSize: 22, lineHeight: 30 },
+  question: { ...textStyles.h2, color: colors.textPrimary, marginTop: spacing.xs },
+  questionEditorial: { ...editorial(textStyles.h2) },
+  questionChild: { ...textStyles.h1 },
   optionList: { gap: spacing.sm },
   optionRow: { flexDirection: 'row' },
   option: {
@@ -385,43 +448,62 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radii.lg,
+    borderRadius: cardRadii.compact,
     borderWidth: 2,
-    borderColor: colors.surfaceAlt,
-    backgroundColor: colors.surface,
+    borderColor: 'transparent',
+    backgroundColor: colors.surfaceElevated,
   },
   optionHalf: { flex: 1, justifyContent: 'center' },
   optionLarge: { minHeight: 64 },
-  optionCorrect: { borderColor: colors.accentGold },
-  optionWrong: { borderColor: colors.accentTerracotta },
+  // Correct: gold edge + soft success surface + ✓ badge.
+  optionCorrect: { borderColor: colors.accentGold, backgroundColor: 'rgba(232,185,61,0.14)' },
+  // Incorrect: calm terracotta edge + ✕ badge (no harsh red fill).
+  optionWrong: { borderColor: colors.accentTerracotta, backgroundColor: 'rgba(185,98,47,0.07)' },
   optionDim: { opacity: 0.55 },
-  optionText: { ...typography.bodyBold, color: colors.textPrimary, flexShrink: 1 },
+  optionText: { ...textStyles.bodyMedium, fontSize: 16, lineHeight: 22, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
   optionTextLarge: { fontSize: 18 },
-  imageGrid: { flexDirection: 'row', gap: spacing.sm },
-  imageGridLarge: { flexDirection: 'column' },
-  imageOption: { flex: 1, aspectRatio: 3 / 4, borderRadius: radii.lg, overflow: 'hidden', borderWidth: 3, borderColor: 'transparent', backgroundColor: colors.surfaceAlt },
-  imageOptionLarge: { aspectRatio: 16 / 9, flex: 0, width: '100%' },
+  // Two columns (3 options -> 2 + 1), never three squeezed into a row.
+  imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  imageGridLarge: {},
+  imageOption: { flexBasis: '47%', flexGrow: 0, aspectRatio: 4 / 3, borderRadius: cardRadii.compact, overflow: 'hidden', borderWidth: 3, borderColor: 'transparent', backgroundColor: colors.surfaceMuted },
+  // Child/preteen: same 2-column grid, slightly taller tiles (bigger target).
+  imageOptionLarge: { aspectRatio: 1 },
   imageFill: { width: '100%', height: '100%' },
+  motifFrame: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceElevated, padding: spacing.md },
+  motif: { width: '70%', height: '70%' },
   badge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   badgeInline: {},
   badgeCorner: { position: 'absolute', top: spacing.xs, right: spacing.xs },
   badgeCorrect: { backgroundColor: colors.accentGold },
   badgeWrong: { backgroundColor: colors.accentTerracotta },
-  feedback: { padding: spacing.md, borderRadius: radii.xl, gap: spacing.xs, borderWidth: 1 },
-  feedbackRight: { backgroundColor: colors.surface, borderColor: 'rgba(232,185,61,0.5)' },
-  feedbackWrong: { backgroundColor: colors.surface, borderColor: 'rgba(185,98,47,0.35)' },
+  feedback: { padding: spacing.md, borderRadius: cardRadii.media, gap: spacing.xs, backgroundColor: colors.surfaceElevated },
+  feedbackRight: {},
+  feedbackWrong: {},
   feedbackHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  feedbackTitle: { ...typography.bodyBold, color: colors.primary, flex: 1 },
+  feedbackTitle: { ...textStyles.title, color: colors.primary, flex: 1 },
+  feedbackIcon: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  feedbackIconSoft: { backgroundColor: 'rgba(185,98,47,0.12)' },
   feedbackTitleWrong: { color: colors.accentTerracotta },
-  explanation: { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+  explanation: { ...textStyles.body, fontSize: 16, lineHeight: 24, color: colors.textPrimary },
   feedbackActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xs, gap: spacing.sm },
-  learnMore: { ...typography.bodyBold, color: colors.primary },
+  learnMore: { ...textStyles.caption, fontSize: 14, fontWeight: '700', color: colors.primary, paddingLeft: 0 },
   nextButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.primary },
   nextText: { ...typography.bodyBold, color: colors.textOnPrimary },
-  resultCard: { alignItems: 'center', gap: spacing.xs, padding: spacing.lg, borderRadius: radii.xxl, backgroundColor: colors.surfaceFeature },
+  resultCard: { alignItems: 'center', gap: spacing.xs, padding: spacing.lg, borderRadius: cardRadii.hero, backgroundColor: colors.surfaceFeature },
+  resultOrnaments: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  resultScoreTotal: { ...textStyles.h2, color: colors.textOnDarkSecondary },
+  resultPerfect: { ...textStyles.title, color: colors.accentGold },
+  resultActions: { marginTop: spacing.xs },
+  reviewCard: { gap: spacing.xs, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated },
+  reviewHead: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  reviewQuestion: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary, flex: 1 },
+  reviewAnswers: { gap: 2, paddingLeft: 24 + spacing.sm },
+  reviewLine: { ...textStyles.caption, color: colors.textPrimary },
+  reviewLabel: { ...textStyles.caption, fontWeight: '700', color: colors.textSecondary },
+  reviewExplanation: { ...textStyles.caption, fontSize: 14, lineHeight: 20, color: colors.textSecondary, paddingLeft: 24 + spacing.sm },
   resultEyebrow: { ...typography.overline, color: colors.accentGold },
-  resultScore: { ...typography.display, fontFamily: fontFamily.wordmark, fontSize: 30, color: colors.textOnDark, textAlign: 'center' },
-  resultBody: { ...typography.caption, color: 'rgba(255,255,255,0.75)', textAlign: 'center' },
+  resultScore: { ...editorial(textStyles.display), fontSize: 48, lineHeight: 54, color: colors.textOnDark, textAlign: 'center' },
+  resultBody: { ...textStyles.body, color: colors.textOnDarkSecondary, textAlign: 'center', maxWidth: 300 },
   shareLink: { paddingVertical: spacing.xs },
   shareText: { ...typography.bodyBold, color: colors.accentGold },
   sectionTitle: { ...typography.overline, color: colors.accentTerracotta, marginTop: spacing.sm },
@@ -429,6 +511,6 @@ const styles = StyleSheet.create({
   reviewText: { ...typography.caption, color: colors.textPrimary, flex: 1 },
   sourceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surface },
   sourceText: { ...typography.bodyBold, color: colors.textPrimary, flex: 1 },
-  primary: { alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: radii.pill, backgroundColor: colors.primary, marginTop: spacing.md },
+  primary: { marginTop: spacing.md },
   primaryText: { ...typography.bodyBold, color: colors.textOnPrimary },
 });

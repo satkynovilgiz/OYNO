@@ -3,11 +3,22 @@ import { forwardRef } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { colors, fontFamily, spacing, typography } from '@/theme';
+import { colors, editorial, spacing, textStyles } from '@/theme';
 
 /** Logical size of the card - captured at 1080×1350 physical (4:5 post). */
 export const SHARE_CARD_WIDTH = 360;
 export const SHARE_CARD_HEIGHT = 450;
+
+/**
+ * One OYNO share family, three layouts:
+ *   story    content card (place, culture item, collection, trail, Daily)
+ *   score    a real number is the hero (challenge result, Passport count,
+ *            trail stops) - never a rank or an intelligence label
+ *   journal  scrapbook memory: framed picture on cream paper, title, the
+ *            one line the user typed for the card, linked content
+ * All share the wordmark, cream/forest/gold and a small oymo rule.
+ */
+export type ShareCardVariant = 'story' | 'score' | 'journal';
 
 export type ShareCardContent = {
   title: string;
@@ -22,23 +33,30 @@ export type ShareCardContent = {
   /** A short line the user typed for this card themselves (Journal) -
    * never filled in automatically from private text. */
   excerpt?: string | null;
+  variant?: ShareCardVariant;
+  /** `score` variant: the real figure (e.g. "4 / 5", "3 / 6"). */
+  stat?: string | null;
+  /** `journal` variant: the linked OYNO content's name. */
+  linkedLabel?: string | null;
 };
 
 type ShareCardProps = ShareCardContent & {
   onImageReady?: () => void;
 };
 
-/**
- * The one OYNO share image: full-bleed artwork, a controlled bottom
- * gradient, a small category label, the title, an optional completion
- * seal, and a quiet OYNO wordmark with an oymo mark. Deliberately carries
- * no user data - no name, avatar, email, id or location - only the
- * content being shared.
- */
-export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
-  { title, label, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, excerpt, onImageReady },
+/** No user data ever: no name, avatar, email, id, coordinates - only the
+ * content being shared and what the user explicitly typed for the card. */
+export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(props, ref) {
+  const variant = props.variant ?? 'story';
+  if (variant === 'journal') return <JournalCard ref={ref} {...props} />;
+  return <PhotoCard ref={ref} {...props} variant={variant} />;
+});
+
+const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
+  { title, label, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, excerpt, variant, stat, onImageReady },
   ref,
 ) {
+  const score = variant === 'score' && !!stat;
   return (
     <View ref={ref} collapsable={false} style={[styles.card, { backgroundColor: fallbackTone }]}>
       {imageSource ? (
@@ -49,21 +67,26 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
         </View>
       )}
       <LinearGradient
-        colors={['rgba(19,32,24,0.35)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.2)', 'rgba(19,32,24,0.92)']}
+        colors={score ? ['rgba(19,32,24,0.45)', 'rgba(19,32,24,0.35)', 'rgba(19,32,24,0.6)', 'rgba(19,32,24,0.95)'] : ['rgba(19,32,24,0.35)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.2)', 'rgba(19,32,24,0.92)']}
         locations={[0, 0.2, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={styles.brandRow}>
-        <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.75} />
-        <Text style={styles.wordmark}>OYNO</Text>
-      </View>
+      <Brand light />
+
+      {score ? (
+        <View style={styles.scoreCenter}>
+          <Text style={styles.scoreValue} numberOfLines={1} adjustsFontSizeToFit>
+            {stat}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.content}>
         <Text style={styles.label} numberOfLines={1}>
           {label}
         </Text>
-        <Text style={styles.title} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7}>
+        <Text style={[styles.title, score && styles.titleScore]} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7}>
           {title}
         </Text>
         {excerpt ? (
@@ -77,93 +100,98 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
             <Text style={styles.completedText}>{completedLabel}</Text>
           </View>
         ) : null}
-        <View style={styles.footerRule}>
-          <View style={styles.ruleLine} />
-          <OymoOrnament size={8} color="rgba(232,185,61,0.8)" strokeWidth={1.5} />
-          <View style={styles.ruleLine} />
-        </View>
+        <Rule />
       </View>
     </View>
   );
 });
 
+const JournalCard = forwardRef<View, ShareCardProps>(function JournalCard({ title, label, imageSource, excerpt, linkedLabel, onImageReady }, ref) {
+  return (
+    <View ref={ref} collapsable={false} style={[styles.card, styles.paper]}>
+      <View style={styles.frame}>
+        {imageSource ? (
+          <Image source={imageSource} style={styles.fill} resizeMode="cover" onLoad={onImageReady} onError={onImageReady} />
+        ) : (
+          <View style={[styles.fallbackMark, styles.frameFallback]}>
+            <OymoOrnament size={90} color="rgba(232,185,61,0.35)" strokeWidth={1} />
+          </View>
+        )}
+        <View style={styles.tape} />
+      </View>
+      <View style={styles.paperText}>
+        <View style={styles.paperBrand}>
+          <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
+          <Text style={styles.paperLabel} numberOfLines={1}>
+            {label}
+          </Text>
+          <Text style={styles.paperWordmark}>OYNO</Text>
+        </View>
+        <Text style={styles.paperTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
+          {title}
+        </Text>
+        {excerpt ? (
+          <Text style={styles.paperExcerpt} numberOfLines={2}>
+            {`“${excerpt}”`}
+          </Text>
+        ) : null}
+        {linkedLabel ? (
+          <Text style={styles.paperLinked} numberOfLines={1}>
+            ◆ {linkedLabel}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+});
+
+function Brand({ light }: { light: boolean }) {
+  return (
+    <View style={styles.brandRow}>
+      <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.75} />
+      <Text style={[styles.wordmark, !light && styles.wordmarkDark]}>OYNO</Text>
+    </View>
+  );
+}
+
+function Rule() {
+  return (
+    <View style={styles.footerRule}>
+      <View style={styles.ruleLine} />
+      <OymoOrnament size={8} color="rgba(232,185,61,0.8)" strokeWidth={1.5} />
+      <View style={styles.ruleLine} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  card: {
-    width: SHARE_CARD_WIDTH,
-    height: SHARE_CARD_HEIGHT,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  fill: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
-  },
-  fallbackMark: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandRow: {
-    position: 'absolute',
-    top: spacing.lg,
-    left: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  wordmark: {
-    fontFamily: fontFamily.wordmark,
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 3,
-    color: colors.textOnDark,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.xs,
-  },
-  label: {
-    ...typography.overline,
-    color: colors.accentGold,
-  },
-  title: {
-    fontFamily: fontFamily.wordmark,
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '700',
-    color: colors.textOnDark,
-  },
-  excerpt: {
-    fontSize: 17,
-    lineHeight: 24,
-    fontStyle: 'italic',
-    color: 'rgba(255,255,255,0.9)',
-  },
-  completed: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: colors.accentGold,
-    marginTop: spacing.xxs,
-  },
-  completedText: {
-    ...typography.small,
-    color: colors.textPrimary,
-  },
-  footerRule: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  ruleLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(232,185,61,0.5)',
-  },
+  card: { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT, overflow: 'hidden', justifyContent: 'flex-end' },
+  fill: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
+  fallbackMark: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  brandRow: { position: 'absolute', top: spacing.lg, left: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  wordmark: { ...editorial(textStyles.title), fontSize: 18, letterSpacing: 3, color: colors.textOnDark },
+  wordmarkDark: { color: colors.primary },
+  content: { padding: spacing.lg, gap: spacing.xs },
+  label: { ...textStyles.overline, color: colors.accentGold },
+  title: { ...editorial(textStyles.display), fontSize: 34, lineHeight: 40, color: colors.textOnDark },
+  titleScore: { fontSize: 26, lineHeight: 32 },
+  excerpt: { ...textStyles.body, fontSize: 17, lineHeight: 24, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)' },
+  completed: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: spacing.sm, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.accentGold, marginTop: spacing.xxs },
+  completedText: { ...textStyles.small, color: colors.textPrimary },
+  scoreCenter: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingBottom: 120 },
+  scoreValue: { ...editorial(textStyles.display), fontSize: 84, lineHeight: 92, color: colors.textOnDark, paddingHorizontal: spacing.lg },
+  footerRule: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  ruleLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(232,185,61,0.5)' },
+  // Journal: cream paper, framed picture with a strip of gold "tape".
+  paper: { backgroundColor: colors.surfaceElevated, justifyContent: 'flex-start', padding: spacing.lg, gap: spacing.md },
+  frame: { height: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: colors.surfaceFeature, borderWidth: 5, borderColor: '#FFFDF7', transform: [{ rotate: '-1.5deg' }] },
+  frameFallback: { backgroundColor: colors.surfaceFeature },
+  tape: { position: 'absolute', top: -4, alignSelf: 'center', width: 70, height: 18, backgroundColor: 'rgba(232,185,61,0.6)', transform: [{ rotate: '2deg' }] },
+  paperText: { flex: 1, gap: 6 },
+  paperBrand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  paperLabel: { ...textStyles.overline, color: colors.accentTerracotta, flex: 1 },
+  paperWordmark: { ...editorial(textStyles.title), fontSize: 15, letterSpacing: 2.5, color: colors.primary },
+  paperTitle: { ...editorial(textStyles.h1), color: colors.textPrimary },
+  paperExcerpt: { ...textStyles.body, fontSize: 16, lineHeight: 22, fontStyle: 'italic', color: colors.textSecondary },
+  paperLinked: { ...textStyles.caption, fontWeight: '700', color: colors.primary, marginTop: 'auto' },
 });

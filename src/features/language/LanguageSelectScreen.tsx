@@ -1,13 +1,15 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Check } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, Button, FadeSlideIn } from '@/components/ui';
+import { AnimatedPressable, Button, FadeSlideIn, MediaImage } from '@/components/ui';
+import { openingImage } from '@/features/onboarding/data';
 import type { SupportedLanguage } from '@/i18n';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
-import wordmark from '@assets/img/OYNO_design/wordmark.png';
+import { colors, editorial, radii, spacing, textStyles } from '@/theme';
+import wordmark from '@assets/splash-wordmark.png';
 
 type LanguageOption = { id: SupportedLanguage; label: string; flag: string };
 
@@ -23,150 +25,100 @@ type LanguageSelectScreenProps = {
   onContinue: () => void;
 };
 
-/** First-launch language picker (spec Section 14) - distinct from the
- * language switcher that will live in Settings, though both just call
- * useAppStore.setLanguage under the hood. */
+/**
+ * First launch: the cinematic opening and the language choice in one
+ * screen. Full-bleed Kyrgyz landscape, the OYNO wordmark, the localized
+ * tagline, three large language choices (tapping one switches the whole
+ * screen's text immediately - `setLanguage` changes i18n at once) and one
+ * gold "Start". Persistence is unchanged: the route marks the language
+ * chosen on Start, exactly as before.
+ */
 export function LanguageSelectScreen({ selected, onSelect, onContinue }: LanguageSelectScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.root}>
-      <View style={[styles.content, { paddingTop: insets.top + spacing.xl }]}>
-        <View style={styles.brand}>
+      <MediaImage source={openingImage} position="top" />
+      <LinearGradient
+        colors={['rgba(19,32,24,0.1)', 'rgba(19,32,24,0.15)', 'rgba(19,32,24,0.82)', 'rgba(19,32,24,0.97)']}
+        locations={[0, 0.3, 0.55, 0.78]}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={[styles.brand, { top: insets.top + spacing.lg }]} accessible accessibilityRole="header" accessibilityLabel="OYNO">
+        <View style={styles.wordmarkBadge}>
           <Image source={wordmark} style={styles.wordmark} resizeMode="contain" />
+        </View>
+      </View>
+
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.sheet, { paddingBottom: insets.bottom + spacing.md }]} bounces={false} showsVerticalScrollIndicator={false}>
+        <FadeSlideIn>
           <View style={styles.ornamentRow}>
-            <OymoOrnament size={12} color={colors.accentGold} />
-            <OymoOrnament size={14} color={colors.accentGold} />
-            <OymoOrnament size={12} color={colors.accentGold} />
+            <OymoOrnament size={10} color={colors.accentGold} strokeWidth={1.75} />
+            <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.75} />
+            <OymoOrnament size={10} color={colors.accentGold} strokeWidth={1.75} />
           </View>
-        </View>
+          <Text style={styles.tagline}>{t('home.header.tagline')}</Text>
+        </FadeSlideIn>
 
-        <View style={styles.heading}>
-          <Text style={styles.title}>{t('language.title')}</Text>
-          <Text style={styles.subtitle}>{t('language.subtitle')}</Text>
-        </View>
-
-        <View style={styles.list}>
+        <View style={styles.list} accessibilityRole="radiogroup" accessibilityLabel={t('language.title')}>
           {LANGUAGE_OPTIONS.map((option, optionIndex) => {
             const isSelected = option.id === selected;
             return (
-              <FadeSlideIn key={option.id} index={optionIndex}>
+              <FadeSlideIn key={option.id} index={optionIndex + 1}>
                 <AnimatedPressable
                   onPress={() => onSelect(option.id)}
-                  hoverEffect
+                  press="strong"
                   haptic="light"
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: isSelected }}
                   accessibilityLabel={option.label}
                   style={[styles.option, isSelected && styles.optionSelected]}
                 >
-                  <View style={styles.flagChip}>
-                    <Text style={styles.flag}>{option.flag}</Text>
-                  </View>
+                  <Text style={styles.flag}>{option.flag}</Text>
                   <Text style={[styles.optionLabel, isSelected && styles.optionLabelSelected]}>{option.label}</Text>
-                  {isSelected ? (
-                    <View style={styles.checkBadge}>
-                      <Check size={14} color={colors.textOnPrimary} strokeWidth={3} />
-                    </View>
-                  ) : null}
+                  <View style={[styles.radio, isSelected && styles.radioSelected]}>{isSelected ? <Check size={13} color={colors.textOnPrimary} strokeWidth={3} /> : null}</View>
                 </AnimatedPressable>
               </FadeSlideIn>
             );
           })}
         </View>
-      </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label={t('language.continue')} onPress={onContinue} />
-      </View>
+        <Text style={styles.hint}>{t('onboarding.v2.languageHint')}</Text>
+
+        <Button label={t('onboarding.start')} variant="accent" size="lg" block onPress={onContinue} />
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-    justifyContent: 'space-between',
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.xl,
-  },
-  brand: {
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  wordmark: {
-    width: 160,
-    height: 44,
-  },
-  ornamentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  heading: {
-    gap: spacing.xxs,
-  },
-  title: {
-    ...typography.display,
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  subtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
-  list: {
-    gap: spacing.sm,
-  },
+  root: { flex: 1, backgroundColor: colors.surfaceFeature },
+  brand: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  wordmarkBadge: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radii.pill, backgroundColor: 'rgba(251,243,227,0.92)' },
+  wordmark: { width: 132, height: 25 },
+  scroll: { flexGrow: 0, marginTop: 'auto' },
+  sheet: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  ornamentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.xs },
+  tagline: { ...editorial(textStyles.display), color: colors.textOnDark },
+  list: { gap: spacing.xs },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    borderWidth: 1.5,
-    borderColor: colors.surfaceBorder,
+    minHeight: 54,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    ...shadows.card,
+    borderRadius: radii.xl,
+    backgroundColor: 'rgba(251,243,227,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,243,227,0.2)',
   },
-  optionSelected: {
-    borderColor: colors.accentGold,
-  },
-  flagChip: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flag: {
-    fontSize: 22,
-  },
-  optionLabel: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    flex: 1,
-  },
-  optionLabelSelected: {
-    color: colors.primary,
-  },
-  checkBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: colors.accentGold,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footer: {
-    paddingHorizontal: spacing.xl,
-    alignItems: 'center',
-  },
+  optionSelected: { backgroundColor: colors.surfaceElevated, borderColor: colors.accentGold },
+  flag: { fontSize: 20 },
+  optionLabel: { ...textStyles.title, color: colors.textOnDark, flex: 1 },
+  optionLabelSelected: { color: colors.primary },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(251,243,227,0.5)', alignItems: 'center', justifyContent: 'center' },
+  radioSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  hint: { ...textStyles.caption, color: colors.textOnDarkSecondary },
 });

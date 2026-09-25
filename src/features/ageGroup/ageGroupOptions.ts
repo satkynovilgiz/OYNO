@@ -6,6 +6,9 @@ export type AgeGroupOption = {
   id: AgeGroup;
   icon: LucideIcon;
   labelKey: string;
+  /** One neutral line on how OYNO adapts for this band - describes the
+   * app, never the person. */
+  hintKey: string;
 };
 
 /** Shared list consumed by both the onboarding step and the later Settings
@@ -22,4 +25,5 @@ export const AGE_GROUP_OPTIONS: AgeGroupOption[] = ALL_AGE_GROUPS.map((id) => ({
   id,
   icon: ICONS[id],
   labelKey: `ageGroup.options.${id}`,
+  hintKey: `onboarding.v2.ageHints.${id}`,
 }));

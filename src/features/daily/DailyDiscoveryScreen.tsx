@@ -23,6 +23,11 @@ import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
+import { CHILD_DAILY_QUESTION_COUNT, challengeForItem, DAILY_QUESTION_COUNT } from '@/features/challenges/challengeLogic';
+import { collections } from '@/features/collections/collectionsData';
+import { KnowledgeCheckLink, TestKnowledgeLink } from '@/features/culture/components/ArticleParts';
+import { cardRadii, textStyles } from '@/theme';
+
 import { DailyImageChallenge } from './components/DailyImageChallenge';
 import { dailyHasChallenge } from './dailyContent';
 import { formatDayLabel } from './formatDayLabel';
@@ -37,6 +42,9 @@ const RELATED_GAME_BY_ITEM: Record<string, string> = {
 
 /** How far the reading sheet tucks up over the bottom of the hero photo. */
 const SHEET_OVERLAP = 28;
+
+/** dailyContent labels the item's `fun_facts` field with this key. */
+const TAKEAWAY_LABEL_KEY = 'culture.item.funFactsLabel';
 
 function useHeroHeight(): number {
   const { height } = useWindowDimensions();
@@ -143,6 +151,8 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 120);
   }
 
+  const knowledgeCheck = challengeForItem(item.id, collections, discovery.dateKey, experience === 'child' ? CHILD_DAILY_QUESTION_COUNT : DAILY_QUESTION_COUNT);
+
   const [leadBlock, ...moreBlocks] = discovery.textBlocks;
   // Narrate the title + the story blocks shown below, only when they're all
   // in one language (a Kyrgyz field never gets read with a ru/en voice).
@@ -213,13 +223,36 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
             </FadeSlideIn>
           ) : null}
 
-          {moreBlocks.map((block, index) => (
-            <FadeSlideIn key={`${block.labelKey ?? 'block'}-${index}`} index={index + 1} style={styles.block}>
-              <OrnamentDivider />
-              {block.labelKey ? <Text style={styles.blockLabel}>{t(block.labelKey)}</Text> : null}
-              <Text style={[styles.body, isAdult && styles.bodyEditorial]}>{block.text}</Text>
-            </FadeSlideIn>
-          ))}
+          {moreBlocks.map((block, index) =>
+            block.labelKey === TAKEAWAY_LABEL_KEY ? (
+              // The item's own verified "fun fact" field, shown as a
+              // subtle editorial callout - never a generated fact.
+              <FadeSlideIn key={`takeaway-${index}`} index={index + 1} style={styles.takeaway}>
+                <View style={styles.takeawayHead}>
+                  <OymoOrnament size={11} color={colors.accentGoldPressed} strokeWidth={1.75} />
+                  <Text style={styles.takeawayLabel}>{t('daily.takeaway')}</Text>
+                </View>
+                <Text style={[styles.takeawayText, isAdult && styles.bodyEditorial]}>{block.text}</Text>
+              </FadeSlideIn>
+            ) : (
+              <FadeSlideIn key={`${block.labelKey ?? 'block'}-${index}`} index={index + 1} style={styles.block}>
+                <OrnamentDivider />
+                {block.labelKey ? <Text style={styles.blockLabel}>{t(block.labelKey)}</Text> : null}
+                <Text style={[styles.body, isAdult && styles.bodyEditorial]}>{block.text}</Text>
+              </FadeSlideIn>
+            ),
+          )}
+
+          {/* Only when a real challenge covers today's item. */}
+          {knowledgeCheck ? (
+            <View style={styles.block}>
+              {knowledgeCheck.kind === 'collection' ? (
+                <TestKnowledgeLink collection={knowledgeCheck.collection} />
+              ) : (
+                <KnowledgeCheckLink meta={`${t('daily.todayChallenge')} · ${t('challenges.questionCount', { count: knowledgeCheck.questionCount })}`} route="/challenges/daily" />
+              )}
+            </View>
+          ) : null}
 
           {challengeUsable ? (
             <View style={styles.block}>
@@ -395,6 +428,10 @@ function OrnamentDivider() {
 }
 
 const styles = StyleSheet.create({
+  takeaway: { marginTop: spacing.lg, padding: spacing.md, gap: spacing.xs, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceWarm, borderLeftWidth: 3, borderLeftColor: colors.accentGold },
+  takeawayHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  takeawayLabel: { ...textStyles.overline, color: colors.accentTerracottaDark },
+  takeawayText: { ...textStyles.body, fontSize: 16, lineHeight: 24, color: colors.textPrimary },
   root: {
     flex: 1,
     backgroundColor: colors.background,

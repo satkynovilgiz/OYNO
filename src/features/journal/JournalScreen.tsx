@@ -5,15 +5,16 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, IconButton } from '@/components/ui';
+import { AnimatedPressable, Button, IconButton, MediaImage } from '@/components/ui';
+import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import type { SupportedLanguage } from '@/i18n';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useJournalStore } from '@/store/useJournalStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
 
 import { formatEntryDate, formatMonthHeading, linkArtwork } from './journalDisplay';
-import { groupByMonth, visibleEntries, type JournalEntry, type JournalFilter } from './journalModel';
+import { groupByMonth, visibleEntries, type JournalEntry, type JournalFilter, type JournalLink } from './journalModel';
 import { LibraryEmptyState } from '@/components/library/LibraryChrome';
 import { Chip } from '@/components/ui/Chip';
 
@@ -42,37 +43,44 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
   const isChild = experience === 'child';
   const isAdult = experience === 'adult';
 
+  const total = useMemo(() => visibleEntries(entries).length, [entries]);
+
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
-        <View style={styles.headerText}>
-          <Text style={[styles.title, isAdult && styles.editorial, isChild && styles.childTitle]} accessibilityRole="header">
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs, paddingBottom: insets.bottom + spacing.xxl }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.topRow}>
+          <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        </View>
+
+        <View style={styles.header}>
+          <View style={styles.eyebrowRow}>
+            <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
+            <Text style={styles.eyebrow}>{t('journal.v2.eyebrow')}</Text>
+          </View>
+          <Text style={[styles.title, !isChild && styles.titleEditorial]} accessibilityRole="header">
             {isChild ? t('journal.childTitle') : t('journal.title')}
           </Text>
           <View style={styles.privateRow}>
             <Lock size={12} color={colors.textMuted} strokeWidth={2.25} />
-            <Text style={styles.subtitle}>{t('journal.subtitle')}</Text>
+            <Text style={styles.subtitle}>
+              {t('journal.privateBadge')}
+              {total > 0 ? ` · ${t('journal.v2.count', { count: total })}` : ''}
+            </Text>
           </View>
         </View>
-      </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} showsVerticalScrollIndicator={false}>
-        <AnimatedPressable
-          style={[styles.newButton, isChild && styles.newButtonChild]}
+        {/* The one create action. */}
+        <Button
+          label={isChild ? t('journal.childNew') : t('journal.new')}
+          icon={<Plus size={isChild ? 22 : 18} color={colors.textPrimary} strokeWidth={2.5} />}
+          variant="accent"
+          size={isChild ? 'lg' : 'md'}
+          block
           onPress={() => router.push('/journal/new' as never)}
-          pressScale={0.97}
-          haptic="light"
-          accessibilityRole="button"
-          accessibilityLabel={isChild ? t('journal.childNew') : t('journal.new')}
-        >
-          <Plus size={isChild ? 24 : 18} color={colors.textOnDark} strokeWidth={2.5} />
-          <Text style={[styles.newButtonText, isChild && styles.newButtonTextChild]}>{isChild ? t('journal.childNew') : t('journal.new')}</Text>
-        </AnimatedPressable>
+        />
 
-        {!isChild ? (
-          // Bleeds to the screen edges so the last chip scrolls fully into
-          // view instead of being cut by the page padding.
+        {!isChild && total > 0 ? (
+          // Bleeds to the screen edges so the last chip scrolls fully into view.
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersBleed} contentContainerStyle={styles.filters} accessibilityRole="tablist">
             {FILTERS.map((option) => (
               <Chip key={option} label={t(`journal.filters.${option}`)} selected={option === filter} onPress={() => setFilter(option)} accessibilityRole="tab" />
@@ -89,7 +97,7 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
                 {formatMonthHeading(group.month, language)}
               </Text>
               {group.entries.map((entry, index) => (
-                <JournalEntryCard key={entry.id} entry={entry} experience={experience} index={index} language={language} />
+                <MemoryCard key={entry.id} entry={entry} experience={experience} index={index} language={language} />
               ))}
             </View>
           ))
@@ -99,41 +107,63 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
   );
 }
 
-function JournalEntryCard({ entry, experience, index, language }: { entry: JournalEntry; experience: AgeExperience; index: number; language: SupportedLanguage }) {
+/** Linked OYNO content as a quiet pill with the content's own small
+ * artwork - visibly separate from the user's photo. */
+export function LinkedPill({ link }: { link: JournalLink }) {
   const { t } = useTranslation();
-  const photo: ImageSourcePropType | null = entry.photo?.localUri ? { uri: entry.photo.localUri } : linkArtwork(entry.link);
+  const art = linkArtwork(link);
+  return (
+    <View style={styles.pill} accessible accessibilityLabel={`${t(`journal.linkTypes.${link.type}`)}: ${link.label}`}>
+      {art ? <Image source={art} style={styles.pillThumb} resizeMode="cover" /> : <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />}
+      <Text style={styles.pillText} numberOfLines={1}>
+        {t(`journal.linkTypes.${link.type}`)} · {link.label}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * Two memory cards: PHOTO (the user's own picture, natural and un-darkened,
+ * text below) and TEXT (warm paper surface, small ornament). A memory
+ * without a photo never borrows OYNO artwork as if it were the user's.
+ */
+function MemoryCard({ entry, experience, index, language }: { entry: JournalEntry; experience: AgeExperience; index: number; language: SupportedLanguage }) {
+  const { t } = useTranslation();
+  const photo: ImageSourcePropType | null = entry.photo?.localUri ? { uri: entry.photo.localUri } : null;
   const title = entry.title || entry.link?.label || t('journal.untitled');
   const date = formatEntryDate(entry.date, language);
   const scrapbook = experience === 'preteen';
   const isChild = experience === 'child';
+  const isAdult = experience === 'adult';
+  const noteLines = isChild ? 0 : photo ? 2 : 4;
 
   return (
     <AnimatedPressable
-      style={[styles.card, isChild && styles.cardChild, experience === 'adult' && styles.cardAdult]}
+      style={[styles.card, !photo && styles.cardText]}
       onPress={() => router.push(`/journal/${entry.id}` as never)}
-      pressScale={0.98}
+      press="soft"
       accessibilityRole="button"
       accessibilityLabel={t('journal.entryA11y', { title, date })}
     >
       {photo ? (
-        <View style={[styles.photoWrap, scrapbook && { transform: [{ rotate: index % 2 === 0 ? '-2.5deg' : '2deg' }] }]}>
-          <Image source={photo} style={[styles.photo, isChild && styles.photoChild]} resizeMode="cover" accessibilityIgnoresInvertColors />
+        <View style={[styles.photoWrap, scrapbook && { transform: [{ rotate: index % 2 === 0 ? '-1.5deg' : '1.2deg' }] }]}>
+          <MediaImage source={photo} fill={false} style={[styles.photo, isChild && styles.photoChild]} />
           {scrapbook ? <View style={styles.tape} /> : null}
         </View>
-      ) : null}
-      <View style={styles.cardText}>
-        <Text style={[styles.cardTitle, experience === 'adult' && styles.editorial, isChild && styles.cardTitleChild]} numberOfLines={2}>
+      ) : (
+        <OymoOrnament size={14} color={colors.accentGoldPressed} strokeWidth={1.75} />
+      )}
+      <View style={styles.cardBody}>
+        <Text style={styles.cardDate}>{date}</Text>
+        <Text style={[styles.cardTitle, isAdult && styles.cardTitleEditorial, isChild && styles.cardTitleChild]} numberOfLines={2}>
           {title}
         </Text>
-        {entry.note && !isChild ? (
-          <Text style={styles.cardNote} numberOfLines={2}>
+        {entry.note && noteLines > 0 ? (
+          <Text style={styles.cardNote} numberOfLines={noteLines}>
             {entry.note}
           </Text>
         ) : null}
-        <Text style={styles.cardMeta} numberOfLines={1}>
-          {entry.link ? `${t(`journal.linkTypes.${entry.link.type}`)} · ` : ''}
-          {date}
-        </Text>
+        {entry.link ? <LinkedPill link={entry.link} /> : null}
       </View>
     </AnimatedPressable>
   );
@@ -141,48 +171,33 @@ function JournalEntryCard({ entry, experience, index, language }: { entry: Journ
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.md },
-  headerText: { flex: 1, gap: 2 },
-  title: { ...typography.h1, color: colors.textPrimary },
-  childTitle: { fontSize: 28 },
-  editorial: { fontFamily: fontFamily.wordmark },
-  privateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  subtitle: { ...typography.small, fontWeight: '500', color: colors.textMuted, flexShrink: 1 },
   content: { paddingHorizontal: spacing.md, gap: spacing.md },
-  newButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    minHeight: 48,
-    borderRadius: radii.xl,
-    backgroundColor: colors.primary,
-  },
-  newButtonChild: { minHeight: 64, borderRadius: radii.xxl },
-  newButtonText: { ...typography.bodyBold, color: colors.textOnDark },
-  newButtonTextChild: { fontSize: 20 },
+  topRow: { flexDirection: 'row' },
+  header: { gap: 3 },
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  eyebrow: { ...textStyles.overline, color: colors.accentGoldPressed },
+  title: { ...textStyles.h1, color: colors.textPrimary },
+  titleEditorial: { ...editorial(textStyles.h1) },
+  privateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  subtitle: { ...textStyles.caption, color: colors.textMuted, flexShrink: 1 },
   filtersBleed: { marginHorizontal: -spacing.md, flexGrow: 0 },
   filters: { gap: spacing.xs, paddingHorizontal: spacing.md },
-  filter: { minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.surface, flexShrink: 0 },
-  filterSelected: { backgroundColor: colors.primary },
-  filterText: { ...typography.caption, fontWeight: '600', color: colors.textPrimary },
-  filterTextSelected: { color: colors.textOnDark },
-  empty: { paddingVertical: spacing.xl, gap: spacing.xs, alignItems: 'center' },
-  emptyTitle: { ...typography.h2, color: colors.textPrimary, textAlign: 'center' },
-  emptyBody: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
   group: { gap: spacing.sm },
-  month: { ...typography.overline, color: colors.textSecondary, marginTop: spacing.xs },
+  month: { ...textStyles.overline, color: colors.textSecondary, marginTop: spacing.sm },
   monthAdult: { color: colors.accentGoldPressed, letterSpacing: 2 },
-  card: { flexDirection: 'row', gap: spacing.sm, padding: spacing.sm, borderRadius: radii.xl, backgroundColor: colors.surface },
-  cardChild: { padding: spacing.md, borderRadius: radii.xxl },
-  cardAdult: { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.surfaceAlt, borderRadius: 0, paddingHorizontal: 0 },
-  photoWrap: { alignSelf: 'flex-start' },
-  photo: { width: 76, height: 76, borderRadius: radii.lg, backgroundColor: colors.surfaceAlt },
-  photoChild: { width: 96, height: 96 },
-  tape: { position: 'absolute', top: -6, left: 22, width: 32, height: 12, backgroundColor: 'rgba(232,185,61,0.55)', transform: [{ rotate: '-4deg' }] },
-  cardText: { flex: 1, gap: 2, justifyContent: 'center' },
-  cardTitle: { ...typography.bodyBold, color: colors.textPrimary },
-  cardTitleChild: { fontSize: 19 },
-  cardNote: { ...typography.caption, color: colors.textSecondary },
-  cardMeta: { ...typography.small, fontWeight: '500', color: colors.textMuted },
+  card: { gap: spacing.sm, padding: spacing.sm, borderRadius: cardRadii.media, backgroundColor: colors.surfaceElevated },
+  cardText: { flexDirection: 'row', alignItems: 'flex-start', padding: spacing.md, backgroundColor: colors.surfaceWarm },
+  photoWrap: {},
+  photo: { width: '100%', aspectRatio: 4 / 3, borderRadius: cardRadii.compact },
+  photoChild: { aspectRatio: 1 },
+  tape: { position: 'absolute', top: -6, left: '42%', width: 44, height: 14, backgroundColor: 'rgba(232,185,61,0.6)', transform: [{ rotate: '-4deg' }] },
+  cardBody: { flex: 1, gap: 4, paddingHorizontal: 2, paddingBottom: 2 },
+  cardDate: { ...textStyles.small, color: colors.textMuted },
+  cardTitle: { ...textStyles.title, color: colors.textPrimary },
+  cardTitleEditorial: { ...editorial(textStyles.title) },
+  cardTitleChild: { ...textStyles.h3 },
+  cardNote: { ...textStyles.body, color: colors.textSecondary },
+  pill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, maxWidth: '100%', marginTop: 2, paddingLeft: 3, paddingRight: spacing.sm, paddingVertical: 3, borderRadius: 999, backgroundColor: colors.background },
+  pillThumb: { width: 20, height: 20, borderRadius: 10 },
+  pillText: { ...textStyles.small, color: colors.primary, flexShrink: 1 },
 });

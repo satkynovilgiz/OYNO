@@ -75,3 +75,24 @@ export function validateQuestion(question: ChallengeQuestion): string[] {
   if (question.kind === 'multiple' && question.options.length < 3) errors.push('multiple choice needs 3+ options');
   return errors;
 }
+
+/**
+ * Which existing challenge really tests this culture item, if any: a
+ * collection challenge whose questions include it, else today's Daily
+ * Challenge when today's question set happens to include it. Null means
+ * "no challenge covers this" - callers then show no challenge link.
+ */
+export function challengeForItem(
+  itemId: string,
+  collections: Collection[],
+  dailyDateKey: string,
+  dailyCount: number,
+  bank: ChallengeQuestion[] = QUESTION_BANK,
+): { kind: 'collection'; collection: Collection } | { kind: 'daily'; questionCount: number } | null {
+  const aboutItem = new Set(bank.filter((question) => question.sourceType === 'culture_item' && question.sourceId === itemId).map((question) => question.id));
+  if (aboutItem.size === 0) return null;
+  const collection = collections.find((candidate) => collectionQuestionIds(candidate, bank).some((id) => aboutItem.has(id)));
+  if (collection) return { kind: 'collection', collection };
+  const daily = pickDailyQuestionIds(dailyDateKey, dailyCount, bank);
+  return daily.some((id) => aboutItem.has(id)) ? { kind: 'daily', questionCount: daily.length } : null;
+}

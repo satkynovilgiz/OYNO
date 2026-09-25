@@ -5,10 +5,10 @@ import { cultureItemImages } from '@/features/culture/data';
 import { natureSiteImages } from '@/features/explore/data';
 import { getTrail } from '@/features/trails/trailsData';
 import type { SupportedLanguage } from '@/i18n';
+import { formatLongDate, formatMonthYear } from '@/services/i18n/formatDate';
 
 import type { JournalLink, JournalLinkType } from './journalModel';
 
-const LOCALE_BY_LANGUAGE: Record<SupportedLanguage, string> = { kg: 'ky-KG', ru: 'ru-RU', en: 'en-US' };
 
 /** The linked content's own public artwork (never a user photo). */
 export function linkArtwork(link: JournalLink | null): ImageSourcePropType | null {
@@ -41,21 +41,11 @@ export function linkRoute(link: { type: JournalLinkType; id: string }): string {
 
 /** "SEPTEMBER 2026" style timeline heading for a YYYY-MM key. */
 export function formatMonthHeading(month: string, language: SupportedLanguage): string {
-  const [y, m] = month.split('-').map(Number);
-  try {
-    return new Date(y, m - 1, 1).toLocaleDateString(LOCALE_BY_LANGUAGE[language] ?? 'en-US', { month: 'long', year: 'numeric' }).toUpperCase();
-  } catch {
-    return month;
-  }
+  return formatMonthYear(month, language);
 }
 
 export function formatEntryDate(date: string, language: SupportedLanguage): string {
-  const [y, m, d] = date.split('-').map(Number);
-  try {
-    return new Date(y, m - 1, d).toLocaleDateString(LOCALE_BY_LANGUAGE[language] ?? 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch {
-    return date;
-  }
+  return formatLongDate(date, language);
 }
 
 /** YYYY-MM-DD shifted by whole days (local calendar). */

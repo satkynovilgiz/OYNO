@@ -142,3 +142,29 @@ describe('challenge progress', () => {
     expect(useChallengeStore.getState().results['daily:2026-09-23']).toMatchObject({ lastCorrect: 1, lastTotal: 2 });
   });
 });
+
+describe('challengeForItem', () => {
+  const { challengeForItem } = require('./challengeLogic') as typeof import('./challengeLogic');
+  const { collections } = require('@/features/collections/collectionsData') as typeof import('@/features/collections/collectionsData');
+
+  it('returns null for an item no question is about', () => {
+    expect(challengeForItem('no-such-item', collections, '2026-09-25', 5)).toBeNull();
+  });
+
+  it('prefers a collection challenge that contains a question about the item', () => {
+    const result = challengeForItem('boz-uy-tunduk', collections, '2026-09-25', 5);
+    expect(result?.kind).toBe('collection');
+  });
+
+  it('never invents a link: any result points at a challenge that has a question about the item', () => {
+    const { QUESTION_BANK } = require('./questionBank') as typeof import('./questionBank');
+    for (const question of QUESTION_BANK.filter((q) => q.sourceType === 'culture_item')) {
+      const result = challengeForItem(question.sourceId, collections, '2026-09-25', 5);
+      if (result?.kind === 'collection') {
+        const { collectionQuestionIds } = require('./challengeLogic') as typeof import('./challengeLogic');
+        const ids = collectionQuestionIds(result.collection);
+        expect(QUESTION_BANK.some((q) => ids.includes(q.id) && q.sourceId === question.sourceId)).toBe(true);
+      }
+    }
+  });
+});

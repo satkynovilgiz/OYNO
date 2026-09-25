@@ -528,6 +528,38 @@
         "title": "Your Journey Begins",
         "description": "Explore. Play. Learn. Create your own journey."
       }
+    },
+    "v2": {
+      "discover": {
+        "title": "Discover Kyrgyzstan",
+        "description": "Places, stories and traditions - in one app."
+      },
+      "play": {
+        "title": "Play and learn",
+        "description": "Traditional games and questions to test what you know."
+      },
+      "journey": {
+        "title": "Your journey",
+        "description": "Passport stamps, achievements and a private journal."
+      },
+      "guest": "Continue without an account",
+      "languageHint": "You can change the language anytime in Settings.",
+      "challengeChip": "Knowledge challenges",
+      "passport": "Passport",
+      "journal": "Journal",
+      "private": "Private",
+      "ageSubtitle": "OYNO adapts pictures, text and games to your age.",
+      "ageHints": {
+        "6-9": "Bigger pictures, simpler words",
+        "10-13": "Collections and achievements",
+        "14-17": "Fast and visual",
+        "18+": "Deeper stories"
+      },
+      "places": {
+        "sonKol": "Son-Kol",
+        "saryChelek": "Sary-Chelek",
+        "alay": "Alay"
+      }
     }
   },
   "culture": {
@@ -1450,7 +1482,9 @@
       "home": "Back to Home"
     },
     "unavailableTitle": "Today's discovery couldn't load",
-    "unavailableDescription": "Check your connection and try again later."
+    "unavailableDescription": "Check your connection and try again later.",
+    "takeaway": "Good to know",
+    "todayChallenge": "Today's challenge"
   },
   "journey": {
     "entryCta": "Open my journey",
@@ -1937,7 +1971,17 @@
         "explanation": "Son-Köl is a high mountain lake formed by glaciers."
       }
     },
-    "questionCount": "{{count}} questions"
+    "questionCount": "{{count}} questions",
+    "v2": {
+      "perfectTitle": "Every answer correct",
+      "perfectBody": "You know these stories well.",
+      "goodBody": "Every answer is a chance to learn something new.",
+      "lowerBody": "Take another look at these stories - then try again.",
+      "reviewTitle": "Review answers",
+      "yourAnswer": "Your answer",
+      "correctAnswer": "Correct answer",
+      "notQuite": "Not quite"
+    }
   },
   "feedback": {
     "title": "Send beta feedback",
@@ -2055,7 +2099,28 @@
     "entryA11y": "{{title}}, {{date}}",
     "untitled": "Untitled memory",
     "journeyCount": "Memories saved: {{count}}",
-    "photoError": "We couldn't use this photo. Your current photo is unchanged - try another one."
+    "photoError": "We couldn't use this photo. Your current photo is unchanged - try another one.",
+    "v2": {
+      "eyebrow": "Your story",
+      "count": "Memories: {{count}}",
+      "edit": "Edit",
+      "linkContent": "Link OYNO content",
+      "linkPickerTitle": "What is this about?",
+      "linkSearch": "Search",
+      "linkNone": "Nothing found",
+      "addNote": "Add a note",
+      "addDate": "Change date",
+      "previewTitle": "Card preview",
+      "artwork": "OYNO artwork",
+      "myPhoto": "My photo",
+      "noImage": "No image",
+      "saveImage": "Save",
+      "shareFailed": "We couldn't create the card. Please try again.",
+      "savedToPhotos": "Saved to Photos",
+      "saveFailed": "We couldn't save to Photos.",
+      "savePermission": "OYNO has no permission to save to Photos.",
+      "privateNote": "Private note - never shared"
+    }
   },
   "library": {
     "eyebrow": "Your OYNO",

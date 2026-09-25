@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, Lock, Sparkles } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, Lock, Sparkles } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, IconButton } from '@/components/ui';
+import { AnimatedPressable, CtaPill, IconButton } from '@/components/ui';
+import { formatDayLabel } from '@/features/daily/formatDayLabel';
 import { collections } from '@/features/collections/collectionsData';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -15,7 +16,7 @@ import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { cardRadii, colors, editorial, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds } from './challengeLogic';
 
@@ -45,7 +46,7 @@ export function ChallengesHubScreen({ onPressBack }: { onPressBack: () => void }
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         <View style={styles.headerText}>
           <Text style={styles.title}>{t('challenges.title')}</Text>
           <Text style={styles.subtitle}>{t('challenges.subtitle')}</Text>
@@ -66,13 +67,21 @@ export function ChallengesHubScreen({ onPressBack }: { onPressBack: () => void }
           <View style={styles.dailyTop}>
             <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.5} />
             <Text style={styles.dailyEyebrow}>{t('challenges.daily.title')}</Text>
+            <Text style={styles.dailyDate}>{formatDayLabel(today, language)}</Text>
+            {todayResult?.completedAt ? (
+              <View style={styles.doneSeal} accessibilityElementsHidden>
+                <Check size={12} color={colors.textPrimary} strokeWidth={3} />
+              </View>
+            ) : null}
           </View>
           <Text style={styles.dailyTitle}>
             {todayResult?.completedAt ? t('challenges.doneToday', { correct: todayResult.lastCorrect, total: todayResult.lastTotal }) : t('challenges.daily.description', { count: dailyCount })}
           </Text>
-          <View style={styles.dailyCta}>
-            <Text style={styles.dailyCtaText}>{todayResult?.completedAt ? t('challenges.retry') : t('challenges.start')}</Text>
-            <ChevronRight size={16} color={colors.textPrimary} strokeWidth={2.5} />
+          {todayResult?.completedAt && todayResult.bestCorrect !== undefined ? (
+            <Text style={styles.dailyMeta}>{t('challenges.best', { correct: todayResult.bestCorrect, total: todayResult.lastTotal })}</Text>
+          ) : null}
+          <View style={styles.dailyCtaRow}>
+            <CtaPill label={todayResult?.completedAt ? t('challenges.retry') : t('challenges.start')} size="md" />
           </View>
         </AnimatedPressable>
 
@@ -142,13 +151,17 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   headerText: { flex: 1 },
-  title: { ...typography.h1, fontFamily: fontFamily.wordmark, color: colors.textPrimary },
+  title: { ...editorial(textStyles.h1), color: colors.textPrimary },
   subtitle: { ...typography.caption, color: colors.textSecondary },
   content: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  daily: { padding: spacing.lg, borderRadius: radii.xxl, backgroundColor: colors.surfaceFeature, gap: spacing.xs },
+  daily: { padding: spacing.lg, borderRadius: cardRadii.hero, backgroundColor: colors.surfaceFeature, gap: spacing.xs },
+  dailyDate: { ...textStyles.small, color: colors.textOnDarkSecondary, marginLeft: 'auto' },
+  doneSeal: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentGold },
+  dailyMeta: { ...textStyles.caption, color: colors.textOnDarkSecondary },
+  dailyCtaRow: { marginTop: spacing.sm, flexDirection: 'row' },
   dailyTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   dailyEyebrow: { ...typography.overline, color: colors.accentGold },
-  dailyTitle: { ...typography.h1, fontFamily: fontFamily.wordmark, color: colors.textOnDark },
+  dailyTitle: { ...editorial(textStyles.h1), color: colors.textOnDark },
   dailyCta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -162,9 +175,9 @@ const styles = StyleSheet.create({
   },
   dailyCtaText: { ...typography.caption, fontWeight: '700', color: colors.textPrimary },
   sectionTitle: { ...typography.overline, color: colors.accentTerracotta, marginTop: spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radii.xl, backgroundColor: colors.surface },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated },
   locked: { opacity: 0.85 },
-  thumb: { width: 56, height: 56, borderRadius: radii.lg },
+  thumb: { width: 56, height: 56, borderRadius: cardRadii.chip },
   thumbIcon: { backgroundColor: colors.surfaceFeature, alignItems: 'center', justifyContent: 'center' },
   thumbLocked: { backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, gap: 2 },

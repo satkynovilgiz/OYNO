@@ -32,30 +32,30 @@ export function challengeCollectionFor(itemId: string): Collection | null {
   return collections.find((collection) => collection.sections.some((ref) => ref.kind === 'culture_item' && ref.id === itemId) && collectionQuestionIds(collection).length > 0) ?? null;
 }
 
-/** Subtle "Test your knowledge" link to an existing collection challenge. */
-export function TestKnowledgeLink({ collection }: { collection: Collection }) {
-  const { t, i18n } = useTranslation();
-  const title = collection.title[i18n.language as SupportedLanguage] ?? collection.title.kg;
-  const count = collectionQuestionIds(collection).length;
+/** Subtle "Test your knowledge" row - secondary to reading. */
+export function KnowledgeCheckLink({ meta, route }: { meta: string; route: string }) {
+  const { t } = useTranslation();
   return (
-    <AnimatedPressable
-      style={styles.test}
-      onPress={() => router.push(`/challenges/collection-${collection.id}` as never)}
-      press="soft"
-      accessibilityRole="button"
-      accessibilityLabel={`${t('culture.v2.testKnowledge')}. ${title}. ${t('challenges.questionCount', { count })}`}
-    >
+    <AnimatedPressable style={styles.test} onPress={() => router.push(route as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${t('culture.v2.testKnowledge')}. ${meta}`}>
       <View style={styles.testIcon}>
         <GraduationCap size={18} color={colors.primary} strokeWidth={2.25} />
       </View>
       <View style={styles.testText}>
         <Text style={styles.testTitle}>{t('culture.v2.testKnowledge')}</Text>
         <Text style={styles.testMeta} numberOfLines={1}>
-          {title} · {t('challenges.questionCount', { count })}
+          {meta}
         </Text>
       </View>
     </AnimatedPressable>
   );
+}
+
+/** Link to an existing collection challenge. */
+export function TestKnowledgeLink({ collection }: { collection: Collection }) {
+  const { t, i18n } = useTranslation();
+  const title = collection.title[i18n.language as SupportedLanguage] ?? collection.title.kg;
+  const count = collectionQuestionIds(collection).length;
+  return <KnowledgeCheckLink meta={`${title} · ${t('challenges.questionCount', { count })}`} route={`/challenges/collection-${collection.id}`} />;
 }
 
 /** "Keep reading": other real items from the same category (the existing
