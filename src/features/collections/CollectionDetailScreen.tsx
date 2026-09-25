@@ -24,6 +24,8 @@ import { colors, radii, spacing, typography } from '@/theme';
 import { computeCollectionProgress } from './collectionProgress';
 import { collections, type Collection, type CollectionSectionRef } from './collectionsData';
 import { useCollectionSignals } from './useCollectionProgress';
+import { collectionQuestionIds } from '@/features/challenges/challengeLogic';
+import { TestKnowledgeLink } from '@/features/culture/components/ArticleParts';
 
 type CollectionDetailScreenProps = {
   collection: Collection;
@@ -255,6 +257,12 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
                 >
                   <Text style={styles.completeShareText}>{t('share.action')}</Text>
                 </AnimatedPressable>
+              </View>
+            ) : null}
+
+            {collectionQuestionIds(collection).length > 0 ? (
+              <View style={styles.horizontalPad}>
+                <TestKnowledgeLink collection={collection} />
               </View>
             ) : null}
 

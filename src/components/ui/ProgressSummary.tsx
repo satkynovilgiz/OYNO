@@ -23,11 +23,13 @@ export function LevelBadge({ label, tone = 'forest' }: { label: string; tone?: '
   );
 }
 
-export function StatPill({ icon: Icon, value, color, accessibilityLabel }: { icon: LucideIcon; value: string | number; color: string; accessibilityLabel?: string }) {
+export function StatPill({ icon: Icon, value, color, label, accessibilityLabel }: { icon: LucideIcon; value: string | number; color: string; label?: string; accessibilityLabel?: string }) {
+  const a11y = accessibilityLabel ?? (label ? `${value} ${label}` : undefined);
   return (
-    <View style={styles.stat} accessible={!!accessibilityLabel} accessibilityLabel={accessibilityLabel}>
+    <View style={styles.stat} accessible={!!a11y} accessibilityLabel={a11y}>
       <Icon size={15} color={color} strokeWidth={2.25} />
       <Text style={styles.statText}>{value}</Text>
+      {label ? <Text style={styles.statLabel}>{label}</Text> : null}
     </View>
   );
 }
@@ -57,6 +59,7 @@ const styles = StyleSheet.create({
   levelTextGold: { color: colors.textPrimary },
   stat: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: spacing.xs + 2, paddingVertical: 6, borderRadius: radii.pill, backgroundColor: colors.surfaceMuted },
   statText: { ...textStyles.caption, fontWeight: '700', color: colors.textPrimary },
+  statLabel: { ...textStyles.caption, color: colors.textSecondary },
   summary: { gap: 6 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.xs },
   summaryLabel: { ...textStyles.caption, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },

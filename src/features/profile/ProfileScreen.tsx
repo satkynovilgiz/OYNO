@@ -1,11 +1,19 @@
 import { router } from 'expo-router';
-import { Backpack, Compass, Diamond, Gamepad2, Target } from 'lucide-react-native';
+import { Award, Coins, Flame, Gamepad2, Heart, MapPin, Settings, Trophy } from 'lucide-react-native';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, ScreenEntrance } from '@/components/ui';
+import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, IconButton, MediaCard, ScreenEntrance, StatPill } from '@/components/ui';
+import { computeCollectionProgress } from '@/features/collections/collectionProgress';
+import { collections } from '@/features/collections/collectionsData';
+import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
+import { natureSiteImages } from '@/features/explore/data';
+import { buildPassport } from '@/features/journey/passport';
+import { useExploreRegions } from '@/services/content/exploreService';
+import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 import { mockGamesList } from '@/features/games/mockData';
 import { progressGameIdFor } from '@/features/games/progressGameIds';
 import { gameTitleKey } from '@/features/games/types';
@@ -17,41 +25,27 @@ import { useAppStore } from '@/store/useAppStore';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
-import { useNotificationsStore } from '@/store/useNotificationsStore';
-import { DAILY_GIFT_REWARD, useProgressStore } from '@/store/useProgressStore';
-import { colors, spacing } from '@/theme';
+import { useProgressStore } from '@/store/useProgressStore';
+import { colors, spacing, textStyles } from '@/theme';
 
-import {
-  AchievementsPreviewCard,
-  CulturalJourneyCard,
-  CurrencyRow,
-  DailyActivitySummaryCard,
-  DailyRewardCard,
-  FavoriteGamesCard,
-  ProfileCollectionRow,
-  ProfileHeader,
-  ProfileHero,
-} from './components';
-import { achievementsTotal, getCollectionCounts, getCollectionItems, profileAchievements } from './data';
+import { AchievementsPreviewCard, FavoriteGamesCard, ProfileCollectionRow, ProfileIdentityCard } from './components';
+import { achievementsTotal, getCollectionItems, profileAchievements } from './data';
 import { getProfileSectionOrder, type ProfileSectionId } from './profileSections';
-import type { DailyActivityItem, FavoriteGame, ProfileStat, ProfileSummary } from './types';
-
-const QUEST_TOTAL = 5;
+import type { FavoriteGame, ProfileSummary } from './types';
 
 export function ProfileScreen() {
   useTrackScreenView('profile');
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
-  const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
   const user = useAuthStore((state) => state.user);
   const characterId = useAppStore((state) => state.characterId) ?? 'bek';
   const avatarConfig = useAvatarStore((state) => (state.hasEverSaved ? state.config : null));
   const progress = useProgressStore();
   const { data: discoveries } = useDiscoveries();
-
-  const today = new Date().toISOString().slice(0, 10);
-  const giftClaimed = progress.dailyGiftClaimedDateISO === today;
+  const { data: regions } = useExploreRegions();
+  const collectionSignals = useCollectionSignals();
+  const language = i18n.language as SupportedLanguage;
 
   const { level, xpCurrent, xpMax } = xpProgress(progress.xp);
   const profile: ProfileSummary = {
@@ -67,18 +61,28 @@ export function ProfileScreen() {
     streakDays: progress.streakDays,
   };
 
-  const explorePercent = Math.round((progress.questFoundCount / QUEST_TOTAL) * 100);
-  const cultureRatio = ((progress.cultureDiscoveryCount >= 1 ? 1 : 0) + (progress.bozUyVisited ? 1 : 0)) / 2;
-  const collectionItems = getCollectionItems(discoveries ?? [], progress.discoveredExploreIds, i18n.language as SupportedLanguage);
-  const { unlocked: collectionUnlocked, total: collectionTotal } = getCollectionCounts(discoveries ?? [], progress.discoveredExploreIds);
+  const collectionItems = getCollectionItems(discoveries ?? [], progress.discoveredExploreIds, language);
 
-  const profileStats: ProfileStat[] = [
-    { id: 'games', icon: Gamepad2, label: t('profile.stats.games'), valueLabel: String(progress.gamesPlayed), captionKey: 'count', ringProgress: Math.min(1, progress.gamesPlayed / 20) },
-    { id: 'explore', icon: Compass, label: t('profile.stats.explore'), valueLabel: `${explorePercent}%`, captionKey: 'percent', ringProgress: progress.questFoundCount / QUEST_TOTAL },
-    { id: 'culture', icon: Diamond, label: t('profile.stats.culture'), valueLabel: `${Math.round(cultureRatio * 100)}%`, captionKey: 'percent', ringProgress: cultureRatio },
-    { id: 'quests', icon: Target, label: t('profile.stats.quests'), valueLabel: `${progress.questFoundCount} / ${QUEST_TOTAL}`, captionKey: 'fraction', ringProgress: progress.questFoundCount / QUEST_TOTAL },
-    { id: 'collection', icon: Backpack, label: t('profile.stats.collection'), valueLabel: `${collectionUnlocked} / ${collectionTotal}`, captionKey: 'fraction', ringProgress: collectionTotal > 0 ? collectionUnlocked / collectionTotal : 0 },
-  ];
+  // Real stats only - and only the ones that say something (zeros hidden).
+  const totalWins = Object.values(progress.gameStats).reduce((sum, stat) => sum + (stat?.won ?? 0), 0);
+  const stats = [
+    { id: 'games', icon: Gamepad2, value: progress.gamesPlayed, label: t('profile.v2.statGames'), color: colors.primary },
+    { id: 'wins', icon: Trophy, value: totalWins, label: t('profile.v2.statWins'), color: colors.accentGoldPressed },
+    { id: 'places', icon: MapPin, value: progress.visitedRegionIds.length, label: t('profile.v2.statPlaces'), color: colors.accentTerracotta },
+    { id: 'achievements', icon: Award, value: progress.unlockedAchievementIds.length, label: t('profile.v2.statAchievements'), color: colors.accentGoldPressed },
+    { id: 'streak', icon: Flame, value: progress.streakDays, label: t('profile.v2.statStreak'), color: colors.accentTerracotta },
+    { id: 'coins', icon: Coins, value: progress.coins, label: t('profile.v2.statCoins'), color: colors.accentGoldPressed },
+  ].filter((stat) => stat.value > 0);
+
+  // My Journey entry: real Passport count + completed collections, with the
+  // most recently visited place as artwork (else the journey backdrop).
+  const passport = useMemo(
+    () => buildPassport(regions ?? [], progress.visitedRegionIds, progress.regionVisitDates, (id) => natureSiteImages[id], language),
+    [regions, progress.visitedRegionIds, progress.regionVisitDates, language],
+  );
+  const collectionsCompleted = collections.filter((collection) => computeCollectionProgress(collection, collectionSignals).status === 'completed').length;
+  const latestVisit = Object.entries(progress.regionVisitDates).sort(([, a], [, b]) => b.localeCompare(a))[0]?.[0];
+  const journeyImage = (latestVisit ? natureSiteImages[latestVisit] : undefined) ?? journeyBackdrop;
 
   const favoriteGames: FavoriteGame[] = mockGamesList
     .filter((game) => (progress.gameStats[progressGameIdFor(game.id)]?.played ?? 0) > 0)
@@ -91,49 +95,25 @@ export function ProfileScreen() {
       route: game.route,
     }));
 
-  const dailyActivity: DailyActivityItem[] = [
-    {
-      id: 'games',
-      icon: Gamepad2,
-      label:
-        progress.playsToday > 0
-          ? t('profile.dailyActivity.games.played', { count: progress.playsToday })
-          : t('profile.dailyActivity.games.empty'),
-    },
-    {
-      id: 'discovery',
-      icon: Diamond,
-      label:
-        progress.cultureDiscoveryCount >= 1
-          ? t('profile.dailyActivity.discovery.found')
-          : t('profile.dailyActivity.discovery.empty'),
-    },
-    {
-      id: 'quests',
-      icon: Target,
-      label: t('profile.dailyActivity.quests', { found: progress.questFoundCount, total: QUEST_TOTAL }),
-    },
-    {
-      id: 'boz-uy',
-      icon: Compass,
-      label: progress.bozUyVisited
-        ? t('profile.dailyActivity.bozUy.visited')
-        : t('profile.dailyActivity.bozUy.notVisited'),
-    },
-  ];
-  const dailyActivityCompleted = [
-    progress.playsToday > 0,
-    progress.cultureDiscoveryCount >= 1,
-    progress.questFoundCount > 0,
-    progress.bozUyVisited,
-  ].filter(Boolean).length;
-
   function renderSection(id: ProfileSectionId) {
     switch (id) {
       case 'journey':
         return (
           <View key={id} style={styles.horizontalPad}>
-            <CulturalJourneyCard stats={profileStats} onPress={() => router.push('/journey' as never)} />
+            <MediaCard
+              variant="landscape"
+              aspectRatio={1.75}
+              source={journeyImage}
+              title={t('journey.title')}
+              editorialTitle={experience === 'adult'}
+              subtitle={t('profile.v2.journeySummary', { places: passport.unlocked, total: passport.total, collections: collectionsCompleted })}
+              cta={t('journey.entryCta')}
+              ctaSize="sm"
+              ctaPlacement="inline"
+              footer={<View />}
+              onPress={() => router.push('/journey' as never)}
+              accessibilityLabel={`${t('journey.title')}. ${t('profile.v2.journeySummary', { places: passport.unlocked, total: passport.total, collections: collectionsCompleted })}`}
+            />
           </View>
         );
       case 'achievements':
@@ -169,22 +149,6 @@ export function ProfileScreen() {
             onPressSeeAll={() => router.push('/collection' as never)}
           />
         );
-      case 'daily':
-        return (
-          <View key={id} style={[styles.horizontalPad, styles.row]}>
-            <DailyActivitySummaryCard
-              profile={profile}
-              activity={dailyActivity}
-              completed={dailyActivityCompleted}
-              total={dailyActivity.length}
-            />
-            <DailyRewardCard
-              reward={DAILY_GIFT_REWARD}
-              claimed={giftClaimed}
-              onPressClaim={() => useProgressStore.getState().claimDailyGift()}
-            />
-          </View>
-        );
     }
   }
 
@@ -192,29 +156,41 @@ export function ProfileScreen() {
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
       >
         <ScreenEntrance>
-          <ProfileHeader
-            hasUnreadNotifications={hasUnreadNotifications}
-            onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/home'))}
-            onPressSaved={() => router.push('/saved' as never)}
-            onPressSettings={() => router.push('/settings' as never)}
-            onPressNotifications={() => router.push('/notifications' as never)}
-          />
+          {/* Compact top bar - Profile is identity/progress; everything
+              configurable lives behind the one Settings action. */}
+          <View style={styles.topBar}>
+            <Text style={styles.topTitle} accessibilityRole="header">
+              {t('profile.title')}
+            </Text>
+            <View style={styles.topActions}>
+              <IconButton icon={Heart} size={40} iconSize={19} shape="roundedSquare" elevated={false} accessibilityLabel={t('saved.title')} onPress={() => router.push('/saved' as never)} />
+              <IconButton icon={Settings} size={40} iconSize={19} shape="roundedSquare" elevated={false} accessibilityLabel={t('profile.settingsLabel')} onPress={() => router.push('/settings' as never)} />
+            </View>
+          </View>
         </ScreenEntrance>
 
-        <View style={styles.horizontalPad}>
-          <HeroEntrance>
-            <ProfileHero
-              profile={profile}
-              onPressAvatar={() => router.push('/avatar-editor' as never)}
-              onPressEdit={() => router.push('/settings/account' as never)}
-            />
-          </HeroEntrance>
-        </View>
-
-        <CurrencyRow profile={profile} />
+        <HeroEntrance>
+          <ProfileIdentityCard
+            profile={profile}
+            experience={experience}
+            onPressAvatar={() => router.push('/avatar-editor' as never)}
+            onPressEditName={() => router.push('/settings/account' as never)}
+            stats={
+              stats.length > 0 ? (
+                <View style={styles.stats}>
+                  {stats.map((stat) => (
+                    <StatPill key={stat.id} icon={stat.icon} value={stat.value.toLocaleString('ru-RU')} label={stat.label} color={stat.color} />
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.emptyStats}>{t('profile.v2.emptyStats')}</Text>
+              )
+            }
+          />
+        </HeroEntrance>
 
         <AgeExperienceTransition style={styles.sectionList}>
           {getProfileSectionOrder(experience).map((id, index) => (
@@ -250,13 +226,32 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   sectionList: {
-    gap: spacing.lg,
+    gap: spacing.xl,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
   },
-  row: {
+  topBar: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+  },
+  topTitle: {
+    ...textStyles.h2,
+    color: colors.textPrimary,
+  },
+  topActions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  stats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  emptyStats: {
+    ...textStyles.caption,
+    color: colors.textSecondary,
   },
 });

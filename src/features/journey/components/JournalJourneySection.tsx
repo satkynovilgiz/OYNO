@@ -9,7 +9,7 @@ import { formatEntryDate, linkArtwork } from '@/features/journal/journalDisplay'
 import { visibleEntries } from '@/features/journal/journalModel';
 import type { SupportedLanguage } from '@/i18n';
 import { useJournalStore } from '@/store/useJournalStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { textStyles, colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 const LATEST = 2;
 
@@ -75,7 +75,7 @@ export function JournalJourneySection({ editorial }: { editorial: boolean }) {
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  title: { ...typography.h1, color: colors.textPrimary },
+  title: { ...textStyles.h2, color: colors.textPrimary },
   editorial: { fontFamily: fontFamily.wordmark },
   summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md, borderRadius: radii.lg, backgroundColor: colors.surface },
   summaryText: { ...typography.bodyBold, color: colors.textPrimary, flex: 1 },

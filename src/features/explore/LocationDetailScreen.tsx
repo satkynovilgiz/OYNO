@@ -1,24 +1,22 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Compass, Heart, Share2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Compass, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { DownloadButton } from '@/components/offline/DownloadButton';
-import { AnimatedPressable, FadeSlideIn, IconButton, ProgressBar } from '@/components/ui';
+import { AnimatedPressable, FadeSlideIn, IconButton, MediaCard, MediaImage, ProgressBar, SectionHeader } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { joinNarration } from '@/services/audioGuide/narration';
-import { useHeroParallax } from '@/services/motion/useHeroParallax';
 import { useShareCard } from '@/services/share/useShareCard';
-import { colors, radii, spacing, typography } from '@/theme';
+import { cardRadii, colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
-import { DiscoveriesRow } from './components';
+import { DiscoveriesRow, formatVisitDate } from './components';
 import { LOCATION_TONES } from './data';
 import type { ExploreDiscovery, ExploreLocation } from './types';
 import type { RegionState } from '@/services/explore/regionState';
@@ -26,6 +24,9 @@ import type { RegionState } from '@/services/explore/regionState';
 const TONES = LOCATION_TONES;
 
 const HERO_ASPECT_RATIO_BY_CARD_SCALE = { large: 1.1, medium: 1.35, compact: 1.55, dense: 1.8 };
+
+/** A Guided Trail that really includes this destination as a step. */
+export type RelatedTrail = { id: string; title: string; image: ImageSourcePropType; status?: string };
 
 export type RelatedQuest = {
   title: string;
@@ -49,6 +50,12 @@ type LocationDetailScreenProps = {
    * targets this location or one of its discoveries - real quest state,
    * never shown speculatively. */
   relatedQuest: RelatedQuest;
+  /** Passport: nature destinations only; `visitedAt` is the real visit
+   * timestamp (null when unknown - no date is shown then). */
+  passport?: { visited: boolean; visitedAt: string | null } | null;
+  relatedTrails?: RelatedTrail[];
+  onPressTrail?: (trailId: string) => void;
+  onPressPassport?: () => void;
   onPressBack?: () => void;
   onPressDiscovery?: (discoveryId: string) => void;
   onToggleFavorite?: () => void;
@@ -74,6 +81,10 @@ export function LocationDetailScreen({
   discoveredIds,
   isFavorite,
   relatedQuest,
+  passport = null,
+  relatedTrails = [],
+  onPressTrail,
+  onPressPassport,
   onPressBack,
   onPressDiscovery,
   onToggleFavorite,
@@ -82,7 +93,6 @@ export function LocationDetailScreen({
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { config } = useAgeExperience();
-  const { scrollHandler, heroStyle } = useHeroParallax();
   const tone = TONES[toneIndex % TONES.length];
   const locationName = location.name[i18n.language as SupportedLanguage] ?? location.name.kg;
   const heroAspectRatio = resolveByCardScale(config.cardScale, HERO_ASPECT_RATIO_BY_CARD_SCALE);
@@ -93,6 +103,13 @@ export function LocationDetailScreen({
   const questFirst = config.characterProminence === 'primary' || config.characterProminence === 'frequent';
 
   const { share, shareHost } = useShareCard();
+  const passportLabel = passport
+    ? passport.visited
+      ? passport.visitedAt
+        ? t('explore.locationDetail.passportStamp', { date: formatVisitDate(passport.visitedAt) })
+        : t('explore.locationDetail.passportStampNoDate')
+      : t('explore.map.pinNotDiscovered')
+    : '';
 
   // Share card = this destination's own hero art (or its tone), its name
   // and a "Place" label; plain text on builds/platforms without image
@@ -130,21 +147,13 @@ export function LocationDetailScreen({
 
   return (
     <View style={styles.root}>
-      <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* 1. Cinematic hero - static (no parallax), title + kind on the photo. */}
         <View style={[styles.hero, { aspectRatio: heroAspectRatio }, !heroImage && { backgroundColor: tone }]}>
           {heroImage ? (
             <>
-              <Animated.Image source={heroImage} style={[styles.heroImage, heroStyle]} resizeMode="cover" />
-              <LinearGradient
-                colors={['rgba(19,32,24,0.1)', 'rgba(19,32,24,0.88)']}
-                locations={[0.35, 1]}
-                style={StyleSheet.absoluteFill}
-              />
+              <MediaImage source={heroImage} />
+              <LinearGradient colors={[colors.scrimTop, colors.scrimClear, colors.scrimBottom]} locations={[0, 0.3, 1]} style={StyleSheet.absoluteFill} />
             </>
           ) : (
             <View style={styles.heroOrnament}>
@@ -152,66 +161,56 @@ export function LocationDetailScreen({
             </View>
           )}
 
-          <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
-            <IconButton
-              icon={ChevronLeft}
-              shape="roundedSquare"
-              accessibilityLabel={t('explore.locationDetail.backLabel')}
-              onPress={onPressBack}
-              variant="surface"
-            />
+          <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.xs }]}>
+            <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" accessibilityLabel={t('explore.locationDetail.backLabel')} onPress={onPressBack} />
             <View style={styles.heroActions}>
               <IconButton
                 icon={Heart}
+                size={40}
+                iconSize={19}
                 shape="roundedSquare"
-                accessibilityLabel={
-                  isFavorite ? t('explore.locationDetail.unfavoriteLabel') : t('explore.locationDetail.favoriteLabel')
-                }
+                accessibilityLabel={isFavorite ? t('explore.locationDetail.unfavoriteLabel') : t('explore.locationDetail.favoriteLabel')}
                 onPress={onToggleFavorite}
                 variant={isFavorite ? 'primary' : 'surface'}
               />
-              <IconButton
-                icon={Share2}
-                shape="roundedSquare"
-                accessibilityLabel={t('explore.locationDetail.shareLabel')}
-                onPress={handleShare}
-                variant="surface"
-              />
+              <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" accessibilityLabel={t('explore.locationDetail.shareLabel')} onPress={handleShare} />
             </View>
           </View>
           <View style={styles.heroBottom}>
-            <Text style={styles.heroTitle}>{locationName}</Text>
-            <Text style={styles.heroSubtitle}>{location.tagline}</Text>
+            <View style={styles.kindRow}>
+              <OymoOrnament size={10} color={colors.accentGold} strokeWidth={1.75} />
+              <Text style={styles.kind}>{t(location.kind === 'nature' ? 'explore.locationDetail.kindNature' : 'explore.locationDetail.kindRegion')}</Text>
+            </View>
+            <Text style={[styles.heroTitle, isAdult && styles.heroTitleEditorial]} accessibilityRole="header">
+              {locationName}
+            </Text>
           </View>
         </View>
 
         <View style={styles.body}>
-          {/* Tagline and facts are Kyrgyz-authored (explore_regions); the
-              name is read in its Kyrgyz form to match. Only facts this
-              screen actually shows are read. */}
-          <AudioGuidePlayer
-            contentKey={`region:${location.id}`}
-            narration={{ lang: 'kg', text: joinNarration([location.name.kg, location.tagline, ...(isChild ? location.facts.slice(0, 2) : location.facts)]) }}
-          />
+          {/* 2. Short introduction (the region's real tagline). */}
+          <Text style={[styles.intro, isAdult && styles.introEditorial]}>{location.tagline}</Text>
 
-          {location.kind === 'nature' ? (
-            <View style={styles.secondaryActions}>
-              <DownloadButton kind="nature" contentId={location.id} title={locationName} />
-              <AddToJournalButton type="nature_site" id={location.id} title={locationName} />
-            </View>
-          ) : null}
+          {/* 3. The story: real sourced facts, read as paragraphs, with the
+              compact audio guide right above them. Tagline and facts are
+              Kyrgyz-authored (explore_regions); narration stays Kyrgyz. */}
+          <FadeSlideIn style={styles.section} index={0}>
+            <SectionHeader title={t('explore.locationDetail.story')} inset={0} editorialTitle={isAdult} />
+            <AudioGuidePlayer
+              contentKey={`region:${location.id}`}
+              narration={{ lang: 'kg', text: joinNarration([location.name.kg, location.tagline, ...(isChild ? location.facts.slice(0, 2) : location.facts)]) }}
+            />
+            {(isChild ? location.facts.slice(0, 2) : location.facts).map((fact, index) => (
+              <View key={index} style={styles.factRow}>
+                <View style={styles.factMark}>
+                  <OymoOrnament size={8} color={colors.accentGoldPressed} strokeWidth={2} />
+                </View>
+                <Text style={[styles.factText, isChild && styles.factTextChild]}>{fact}</Text>
+              </View>
+            ))}
+          </FadeSlideIn>
 
           {questFirst ? questCard : null}
-
-          <FadeSlideIn style={styles.progressBlock} index={1}>
-            <View style={styles.progressLabelRow}>
-              <Text style={styles.progressLabel}>
-                {t('explore.locationDetail.progressLabel', { percent: location.discoveredPercent })}
-              </Text>
-              <Text style={styles.stateLabel}>{t(`explore.locationDetail.state.${state}`)}</Text>
-            </View>
-            <ProgressBar progress={location.discoveredPercent / 100} height={8} />
-          </FadeSlideIn>
 
           <View style={styles.discoveriesSection}>
             {discoveries.length > 0 ? (
@@ -222,26 +221,75 @@ export function LocationDetailScreen({
                 title={t('explore.locationDetail.discoveriesTitle')}
               />
             ) : (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('explore.locationDetail.discoveriesTitle')}</Text>
+              <View style={[styles.section, styles.padded]}>
+                <SectionHeader title={t('explore.locationDetail.discoveriesTitle')} size="sm" inset={0} />
                 <Text style={styles.emptyText}>{t('explore.locationDetail.noDiscoveries')}</Text>
               </View>
             )}
           </View>
 
-          <FadeSlideIn style={styles.section} index={2}>
-            <Text style={styles.sectionTitle}>{t('explore.locationDetail.factsTitle')}</Text>
-            {(isChild ? location.facts.slice(0, 2) : location.facts).map((fact, index) => (
-              <View key={index} style={styles.factRow}>
-                <Text style={styles.factNumber}>{index + 1}</Text>
-                <Text style={[styles.factText, isAdult && styles.factTextDense]}>{fact}</Text>
+          {/* 4. Passport status (nature only) + this place's real discovery
+              progress - a quiet status card, not a banner. */}
+          <View style={styles.statusCard}>
+            {passport ? (
+              <AnimatedPressable
+                style={styles.statusRow}
+                onPress={onPressPassport}
+                disabled={!onPressPassport}
+                press="soft"
+                accessibilityRole="button"
+                accessibilityLabel={`${t('explore.locationDetail.passportLink')}. ${passportLabel}`}
+              >
+                <View style={[styles.stamp, passport.visited ? styles.stampOn : styles.stampOff]}>
+                  <OymoOrnament size={14} color={passport.visited ? colors.textPrimary : colors.accentBrown} strokeWidth={1.75} />
+                </View>
+                <Text style={styles.statusText} numberOfLines={2}>
+                  {passportLabel}
+                </Text>
+                {onPressPassport ? <ChevronRight size={16} color={colors.textMuted} strokeWidth={2.25} /> : null}
+              </AnimatedPressable>
+            ) : null}
+            <View style={styles.progressBlock}>
+              <View style={styles.progressLabelRow}>
+                <Text style={styles.progressLabel}>{t('explore.locationDetail.progressLabel', { percent: location.discoveredPercent })}</Text>
+                <Text style={styles.stateLabel}>{t(`explore.locationDetail.state.${state}`)}</Text>
               </View>
-            ))}
-          </FadeSlideIn>
+              <ProgressBar progress={location.discoveredPercent / 100} height={5} trackColor={colors.surfaceMuted} />
+            </View>
+          </View>
+
+          {/* 5. Trail connection - only trails that really include this place. */}
+          {relatedTrails.length > 0 ? (
+            <View style={styles.section}>
+              <SectionHeader title={t('explore.locationDetail.trailsTitle')} size="sm" inset={0} />
+              {relatedTrails.map((trail) => (
+                <MediaCard
+                  key={trail.id}
+                  variant="landscape"
+                  aspectRatio={2.4}
+                  source={trail.image}
+                  title={trail.title}
+                  titleLines={1}
+                  subtitle={trail.status}
+                  chevron
+                  onPress={() => onPressTrail?.(trail.id)}
+                  accessibilityLabel={`${trail.title}${trail.status ? `. ${trail.status}` : ''}`}
+                />
+              ))}
+            </View>
+          ) : null}
+
+          {/* 6. Journal + offline - secondary, side by side. */}
+          {location.kind === 'nature' ? (
+            <View style={styles.secondaryActions}>
+              <AddToJournalButton type="nature_site" id={location.id} title={locationName} />
+              <DownloadButton kind="nature" contentId={location.id} title={locationName} />
+            </View>
+          ) : null}
 
           {!questFirst ? questCard : null}
         </View>
-      </Animated.ScrollView>
+      </ScrollView>
       {shareHost}
     </View>
   );
@@ -258,14 +306,77 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     justifyContent: 'space-between',
-    borderBottomLeftRadius: radii.xxl,
-    borderBottomRightRadius: radii.xxl,
+    borderBottomLeftRadius: cardRadii.hero,
+    borderBottomRightRadius: cardRadii.hero,
     overflow: 'hidden',
+    backgroundColor: colors.surfaceFeature,
   },
-  heroImage: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
+  kindRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  kind: {
+    ...textStyles.overline,
+    color: colors.accentGold,
+  },
+  heroTitleEditorial: {
+    ...editorial(textStyles.display),
+  },
+  intro: {
+    ...textStyles.body,
+    fontSize: 17,
+    lineHeight: 25,
+    color: colors.textPrimary,
+  },
+  introEditorial: {
+    fontStyle: 'italic',
+  },
+  padded: {
+    paddingHorizontal: spacing.md,
+  },
+  factMark: {
+    width: 16,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  factTextChild: {
+    fontSize: 17,
+    lineHeight: 25,
+  },
+  statusCard: {
+    padding: spacing.md,
+    gap: spacing.sm,
+    borderRadius: cardRadii.media,
+    backgroundColor: colors.surfaceElevated,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+  },
+  stamp: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  stampOn: {
+    backgroundColor: colors.accentGold,
+    borderColor: colors.accentGoldPressed,
+  },
+  stampOff: {
+    borderStyle: 'dashed',
+    borderColor: colors.accentBrown,
+  },
+  statusText: {
+    ...textStyles.bodyMedium,
+    color: colors.textPrimary,
+    flex: 1,
   },
   heroOrnament: {
     ...StyleSheet.absoluteFill,
@@ -288,19 +399,18 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
   },
   heroTitle: {
-    ...typography.display,
+    ...textStyles.display,
     color: colors.textOnDark,
-  },
-  heroSubtitle: {
-    ...typography.body,
-    color: colors.textOnDark,
-    opacity: 0.9,
   },
   secondaryActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   body: {
     padding: spacing.md,
+    paddingTop: spacing.lg,
     gap: spacing.xl,
   },
   progressBlock: {
@@ -312,7 +422,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   progressLabel: {
-    ...typography.caption,
+    ...textStyles.caption,
     color: colors.textSecondary,
   },
   stateLabel: {
@@ -322,10 +432,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.sm,
-  },
-  sectionTitle: {
-    ...typography.h1,
-    color: colors.textPrimary,
   },
   discoveriesSection: {
     marginHorizontal: -spacing.md,
@@ -339,27 +445,19 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     alignItems: 'flex-start',
   },
-  factNumber: {
-    ...typography.overline,
-    color: colors.accentGold,
-    width: 20,
-  },
   factText: {
-    ...typography.body,
+    ...textStyles.body,
+    fontSize: 16,
+    lineHeight: 24,
     color: colors.textPrimary,
     flex: 1,
-    lineHeight: 21,
-  },
-  factTextDense: {
-    ...typography.caption,
-    lineHeight: 19,
   },
   questCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.surfaceWarm,
-    borderRadius: radii.xl,
+    borderRadius: cardRadii.media,
     padding: spacing.sm,
   },
   questIcon: {

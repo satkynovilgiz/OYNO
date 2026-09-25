@@ -2,14 +2,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Image, type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
-import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
+import { AnimatedPressable, Chip, HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
-import { KomuzPlaylist } from '@/features/culture/components';
+import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { joinNarration, type Narration } from '@/services/audioGuide/narration';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -17,7 +17,7 @@ import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
 import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
-import { colors, radii, shadows, spacing, typography } from '@/theme';
+import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 
 /** Picks the simple-depth summary matching the app's current language -
@@ -93,78 +93,104 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
     );
   }
 
+  const isChild = config.textComplexity === 'minimal';
+  const challengeCollection = challengeCollectionFor(item.id);
+  const typeLabel = item.type_label ? t(`culture.item.type.${item.type_label}`) : null;
+
+  const actions = (
+    <View style={styles.headerActions}>
+      <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" elevated={!!heroSource} accessibilityLabel={t('share.action')} onPress={handleShare} />
+      <IconButton
+        icon={Heart}
+        size={40}
+        iconSize={19}
+        shape="roundedSquare"
+        elevated={!!heroSource}
+        variant={isFavorite ? 'primary' : 'surface'}
+        accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+        onPress={onToggleFavorite}
+      />
+    </View>
+  );
+
   return (
     <View style={styles.root}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
         {heroSource ? (
           <HeroEntrance>
-            <View style={styles.hero}>
+            <View style={[styles.hero, isChild && styles.heroChild]}>
               {item.image_url ? (
-                // Storage-backed (admin-uploaded, see
-                // admin_set_culture_item_image) - expo-image gives this one
-                // real disk/memory caching, unlike the bundled images below
-                // which are already local and don't need it.
-                <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
+                // Storage-backed (admin-uploaded, see admin_set_culture_item_image).
+                <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={200} />
               ) : (
-                <Image source={heroSource as ImageSourcePropType} style={styles.heroImage} resizeMode="cover" />
+                <MediaImage source={heroSource as ImageSourcePropType} />
               )}
-              <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+              <LinearGradient colors={[colors.scrimTop, colors.scrimClear, colors.scrimBottom]} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
 
               <View style={styles.heroOverlay} pointerEvents="box-none">
-                <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
-                  <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-                  <View style={styles.headerActions}>
-                    <IconButton icon={Share2} shape="roundedSquare" variant="surface" accessibilityLabel={t('share.action')} onPress={handleShare} />
-                    <IconButton
-                      icon={Heart}
-                      shape="roundedSquare"
-                      variant={isFavorite ? 'primary' : 'surface'}
-                      accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                      onPress={onToggleFavorite}
-                    />
-                  </View>
+                <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.xs }]}>
+                  <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                  {actions}
                 </View>
-                <Text style={styles.heroTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
+                <View style={styles.heroText}>
+                  {typeLabel ? <Text style={styles.heroEyebrow}>{typeLabel}</Text> : null}
+                  <Text style={[styles.heroTitle, !isChild && styles.heroTitleEditorial]} numberOfLines={3} accessibilityRole="header">
+                    {item.title}
+                  </Text>
+                </View>
               </View>
             </View>
           </HeroEntrance>
         ) : (
-          <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.sm }]}>
-            <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-            <Text style={styles.plainHeaderTitle} numberOfLines={1}>
+          <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.xs }]}>
+            <View style={styles.plainTopRow}>
+              <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+              {actions}
+            </View>
+            {typeLabel ? <Text style={styles.plainEyebrow}>{typeLabel}</Text> : null}
+            <Text style={[styles.plainHeaderTitle, !isChild && styles.heroTitleEditorial]} accessibilityRole="header">
               {item.title}
             </Text>
-            <View style={styles.headerActions}>
-              <IconButton icon={Share2} shape="roundedSquare" accessibilityLabel={t('share.action')} onPress={handleShare} />
-              <IconButton
-                icon={Heart}
-                shape="roundedSquare"
-                variant={isFavorite ? 'primary' : 'surface'}
-                accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                onPress={onToggleFavorite}
-              />
-            </View>
           </View>
         )}
 
         <View style={styles.contentBody}>
-          <View style={styles.headerBlock}>
+          {/* 2. Short context: alternative names + source accuracy. */}
+          <View style={styles.context}>
             {item.alt_names ? <Text style={styles.altNames}>{item.alt_names}</Text> : null}
-            {item.type_label ? (
-              <Badge label={t(`culture.item.type.${item.type_label}`)} color={colors.surfaceAlt} textColor={colors.primary} />
-            ) : null}
-            <Badge label={t(`culture.item.accuracy.${item.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
+            <Chip label={t(`culture.item.accuracy.${item.accuracy_level}`)} />
           </View>
 
+          {/* 3. Compact audio guide, right where reading starts. */}
           <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} />
-          <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
 
+          {/* 4. Content blocks - text straight on the page, no boxes. */}
+          {simpleSummary ? (
+            <Text style={[styles.paragraph, isChild && styles.paragraphChild]}>{simpleSummary}</Text>
+          ) : filledFields.length === 0 ? (
+            hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
+          ) : (
+            <View style={styles.fields}>
+              {filledFields.map((field, index) => (
+                <View key={field.key} style={styles.field}>
+                  {index > 0 ? <OymoDivider /> : null}
+                  <Text style={styles.fieldLabel} accessibilityRole="header">
+                    {t(field.labelKey)}
+                  </Text>
+                  <Text style={[styles.paragraph, isChild && styles.paragraphChild]}>{item[field.key] as string}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* 5. Relevant images. */}
           {hasRemainingGallery ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery} style={styles.galleryBleed}>
               {remainingImages!.map((source, index) => (
-                <Image key={index} source={source} style={styles.galleryImage} resizeMode="cover" />
+                <View key={index} style={styles.galleryImage}>
+                  <MediaImage source={source} />
+                </View>
               ))}
             </ScrollView>
           ) : null}
@@ -176,22 +202,12 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
             </View>
           ) : null}
 
-          {simpleSummary ? (
-            <View style={styles.field}>
-              <Text style={styles.fieldValue}>{simpleSummary}</Text>
-            </View>
-          ) : filledFields.length === 0 ? (
-            hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
-          ) : (
-            <View style={styles.fields}>
-              {filledFields.map((field) => (
-                <View key={field.key} style={styles.field}>
-                  <Text style={styles.fieldLabel}>{t(field.labelKey)}</Text>
-                  <Text style={styles.fieldValue}>{item[field.key] as string}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          {/* 6. Save / Journal - secondary, after reading. */}
+          <View style={styles.actionsRow}>
+            <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
+          </View>
+
+          {challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
           {item.sources && item.sources.length > 0 ? (
             <View style={styles.field}>
@@ -206,6 +222,9 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
             </View>
           ) : null}
         </View>
+
+        {/* 7. Related real items from the same category. */}
+        <RelatedItemsRail item={item} />
       </ScrollView>
       {shareHost}
     </View>
@@ -213,111 +232,34 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingBottom: spacing.xl,
-    gap: spacing.md,
-  },
-  // Owns sizing/overflow only - no padding here. Padding for the back
-  // button/title lives on `heroOverlay` instead - see TodayDiscoveryCard's
-  // `card`/`overlay` comment for why padding directly on this node would
-  // make the absolute-fill image/gradient fall short of the true edge.
-  hero: {
-    width: '100%',
-    aspectRatio: 1.5,
-    borderBottomLeftRadius: radii.xxl,
-    borderBottomRightRadius: radii.xxl,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceAlt,
-  },
-  heroImage: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
-    justifyContent: 'space-between',
-    padding: spacing.md,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  heroTitle: {
-    ...typography.display,
-    color: colors.textOnDark,
-  },
-  plainHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  plainHeaderTitle: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    flex: 1,
-    textAlign: 'center',
-  },
-  contentBody: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
-  },
-  headerBlock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  altNames: {
-    ...typography.body,
-    color: colors.textSecondary,
-    flexShrink: 1,
-  },
-  gallery: {
-    gap: spacing.sm,
-  },
-  galleryImage: {
-    width: 220,
-    height: 160,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    ...shadows.card,
-  },
-  pending: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  fields: {
-    gap: spacing.md,
-  },
-  field: {
-    gap: spacing.xxs,
-  },
-  fieldLabel: {
-    ...typography.overline,
-    color: colors.textSecondary,
-  },
-  fieldValue: {
-    ...typography.body,
-    color: colors.textPrimary,
-    lineHeight: 21,
-  },
-  sourceLink: {
-    ...typography.small,
-    color: colors.primary,
-    textDecorationLine: 'underline',
-  },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { paddingBottom: spacing.xxl, gap: spacing.lg },
+  hero: { width: '100%', aspectRatio: 1.25, borderBottomLeftRadius: cardRadii.hero, borderBottomRightRadius: cardRadii.hero, overflow: 'hidden', backgroundColor: colors.surfaceFeature },
+  heroChild: { aspectRatio: 1.05 },
+  heroImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
+  heroOverlay: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.lg },
+  headerActions: { flexDirection: 'row', gap: spacing.xs },
+  heroTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  heroText: { gap: 4 },
+  heroEyebrow: { ...textStyles.overline, color: colors.accentGold },
+  heroTitle: { ...textStyles.display, color: colors.textOnDark },
+  heroTitleEditorial: { ...editorial(textStyles.display) },
+  plainHeader: { paddingHorizontal: spacing.md, gap: spacing.xs },
+  plainTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
+  plainEyebrow: { ...textStyles.overline, color: colors.accentTerracotta },
+  plainHeaderTitle: { ...textStyles.display, color: colors.textPrimary },
+  contentBody: { paddingHorizontal: spacing.lg, gap: spacing.lg },
+  context: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
+  altNames: { ...textStyles.body, fontStyle: 'italic', color: colors.textSecondary, flexShrink: 1 },
+  galleryBleed: { marginHorizontal: -spacing.lg },
+  gallery: { gap: spacing.sm, paddingHorizontal: spacing.lg },
+  galleryImage: { width: 240, aspectRatio: 1.4, borderRadius: cardRadii.media, overflow: 'hidden', backgroundColor: colors.surfaceMuted },
+  pending: { ...textStyles.body, color: colors.textSecondary },
+  fields: { gap: spacing.md },
+  field: { gap: spacing.xs },
+  fieldLabel: { ...textStyles.overline, color: colors.accentTerracotta },
+  paragraph: { ...textStyles.body, fontSize: 16, lineHeight: 25, color: colors.textPrimary },
+  paragraphChild: { fontSize: 17, lineHeight: 26 },
+  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  sourceLink: { ...typography.small, color: colors.primary, textDecorationLine: 'underline', minHeight: 32, paddingVertical: 8 },
 });

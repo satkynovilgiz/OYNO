@@ -4,6 +4,6 @@ export * from './ExploreFilterSheet';
 export * from './ExploreHeader';
 export * from './KyrgyzstanMap';
 export * from './MapPin';
-export * from './NatureSitesRow';
-export * from './RegionProgressCard';
 export * from './RegionStateBadge';
+export * from './DestinationCards';
+export * from './ExploreMapCard';

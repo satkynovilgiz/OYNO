@@ -30,3 +30,5 @@ export * from './ProgressSummary';
 export * from './Rail';
 export * from './SectionHeader';
 export * from './Toast';
+export * from './PhotoBadge';
+export * from './ScreenHeader';

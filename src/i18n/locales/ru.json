@@ -848,6 +848,20 @@
         "title": "Урок завершён!",
         "reward": "+{{xp}} XP"
       }
+    },
+    "v2": {
+      "featured": "История дня",
+      "read": "Читать",
+      "stories": "Материалов: {{count}}",
+      "continueTitle": "Продолжить",
+      "listenTitle": "Слушать",
+      "komuzTitle": "Мелодии комуза",
+      "tracks": "Треков: {{count}}",
+      "learnTitle": "Проверь знания",
+      "categoriesTitle": "Категории",
+      "relatedTitle": "Читать дальше",
+      "testKnowledge": "Проверь знания",
+      "inCollection": "Коллекция: {{title}}"
     }
   },
   "explore": {
@@ -870,7 +884,9 @@
       "explore": "Исследовать",
       "pinDiscovered": "открыто",
       "pinNotDiscovered": "не открыто",
-      "trailFilter": "Маршрут: {{title}}"
+      "trailFilter": "Маршрут: {{title}}",
+      "zoomIn": "Приблизить",
+      "zoomOut": "Отдалить"
     },
     "progress": {
       "title": "Прогресс исследования Кыргызстана",
@@ -941,7 +957,29 @@
         "started": "Начато",
         "explored": "Изучено",
         "completed": "Завершено"
-      }
+      },
+      "passportStamp": "Штамп в паспорте · {{date}}",
+      "passportStampNoDate": "Штамп в паспорте получен",
+      "passportLink": "Паспорт",
+      "trailsTitle": "Маршруты с этим местом",
+      "kindNature": "Природное место",
+      "kindRegion": "Регион",
+      "story": "Об этом месте"
+    },
+    "v2": {
+      "title": "Исследуй Кыргызстан",
+      "subtitle": "Места, пейзажи и истории",
+      "mapTitle": "Интерактивная карта",
+      "openMap": "Открыть карту",
+      "featured": "Место дня",
+      "visited": "Посещено",
+      "offline": "Офлайн",
+      "passportCta": "Открыть паспорт",
+      "lastStamp": "Последний штамп: {{title}}",
+      "passportEmpty": "Посети первое место — получи первый штамп",
+      "stops": "Шагов: {{count}}",
+      "places": "Места",
+      "searchLabel": "Поиск по OYNO"
     }
   },
   "profileSetup": {
@@ -1050,6 +1088,18 @@
       "claimedLabel": "Получено",
       "xpValue": "+{{xp}} XP",
       "coinsValue": "+{{coins}}"
+    },
+    "v2": {
+      "journeySummary": "Места: {{places}}/{{total}} · Коллекции: {{collections}}",
+      "statGames": "игр",
+      "statWins": "побед",
+      "statPlaces": "мест",
+      "statAchievements": "достижений",
+      "statStreak": "дней подряд",
+      "statCoins": "монет",
+      "statGems": "токенов",
+      "emptyStats": "Сыграй первую игру или исследуй место — твой прогресс появится здесь.",
+      "editName": "Изменить имя"
     }
   },
   "legal": {
@@ -1463,6 +1513,18 @@
     },
     "collections": {
       "empty": "Пройди интерактивные практики и игры из коллекции."
+    },
+    "v2": {
+      "places": "Места",
+      "collections": "Коллекции",
+      "challenges": "Испытания",
+      "trails": "Маршруты",
+      "memories": "Дневник",
+      "achievements": "Медали",
+      "activeTrail": "Текущий маршрут",
+      "startTrail": "Начни маршрут",
+      "continueLearning": "Продолжить обучение",
+      "bestResult": "Лучший: {{correct}}/{{total}}"
     }
   },
   "share": {

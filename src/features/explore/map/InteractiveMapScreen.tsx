@@ -1,15 +1,15 @@
 import { router } from 'expo-router';
-import { ArrowRight, Check, ChevronLeft, X } from 'lucide-react-native';
+import { Check, ChevronLeft, Minus, Plus, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, findNodeHandle, Image, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { AccessibilityInfo, findNodeHandle, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, G, Path, Pattern } from 'react-native-svg';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, IconButton, Skeleton } from '@/components/ui';
+import { AnimatedPressable, Button, IconButton, MediaImage, PhotoBadge, Skeleton } from '@/components/ui';
 import { LOCATION_TONES, natureSiteCoordinates, natureSiteImages } from '@/features/explore/data';
 import { buildPassport, type PassportStamp } from '@/features/journey/passport';
 import type { SupportedLanguage } from '@/i18n';
@@ -17,8 +17,9 @@ import type { AgeExperience } from '@/services/ageExperience/types';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useExploreRegions } from '@/services/content/exploreService';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, shadows, spacing, typography } from '@/theme';
+import { cardRadii, colors, elevation, fontFamily, motion, radii, spacing, textStyles, typography } from '@/theme';
 
 import { KYRGYZSTAN_PATH, MAP_VIEWBOX_HEIGHT, MAP_VIEWBOX_WIDTH, projectLonLat } from './kyrgyzstanGeometry';
 import { pinNudge, spreadPins, type PinSpread } from './pinSpread';
@@ -29,13 +30,16 @@ const DOUBLE_TAP_SCALE = 2.4;
 const FRAME_GUTTER = spacing.md;
 const FRAME_BORDER = 1;
 const LABEL_WIDTH = 116;
+/** Room kept under the map table for the hint line + places strip. */
+const HINT_SPACE = 28 + 64;
+const ZOOM_STEP = 1.6;
 
 /** Which side of its pin each name sits on - the three sites around the
  * Chuy/Naryn highlands are close together, so their labels fan out instead
  * of stacking on top of each other. Presentation only. */
 const LABEL_SIDE: Record<string, 'top' | 'bottom' | 'left' | 'right'> = {
   'ala-too': 'right',
-  suusamyr: 'left',
+  suusamyr: 'top',
   'son-kol': 'bottom',
   'sary-chelek': 'left',
 };
@@ -121,8 +125,13 @@ export function InteractiveMapScreen({
 
   // Frame + map geometry (map is fitted to the frame width).
   const [frameWidth, setFrameWidth] = useState(0);
+  const [availableHeight, setAvailableHeight] = useState(0);
+  const reducedMotion = useReducedMotion();
   const mapHeight = frameWidth * (MAP_VIEWBOX_HEIGHT / MAP_VIEWBOX_WIDTH);
-  const frameHeight = Math.round(mapHeight * 1.3);
+  // The map table takes the screen: as tall as the space allows (up to
+  // ~1.9x the country's own height, so zoomed pans have room), never less
+  // than the original 1.3x.
+  const frameHeight = Math.round(Math.max(mapHeight * 1.3, Math.min(availableHeight - HINT_SPACE, mapHeight * 1.9)));
 
   // Close pins (Ala-Too / Suusamyr / Son-Köl) are nudged apart so their
   // touch targets never overlap at phone width; the nudge fades on zoom.
@@ -193,6 +202,22 @@ export function InteractiveMapScreen({
 
   const gesture = Gesture.Simultaneous(pinch, pan, doubleTap);
 
+  /** +/- buttons: same clamps as the pinch gesture, one step per tap. */
+  function zoomBy(factor: number) {
+    const next = clamp(scale.value * factor, MIN_SCALE, MAX_SCALE);
+    const duration = reducedMotion ? 0 : motion.duration.base;
+    scale.value = withTiming(next, { duration });
+    savedScale.value = next;
+    const maxX = (bounds.value.w * (next - 1)) / 2;
+    const maxY = Math.max(0, (bounds.value.h * next - bounds.value.frameH) / 2);
+    const nextTx = clamp(tx.value, -maxX, maxX);
+    const nextTy = clamp(ty.value, -maxY, maxY);
+    tx.value = withTiming(nextTx, { duration });
+    ty.value = withTiming(nextTy, { duration });
+    savedTx.value = nextTx;
+    savedTy.value = nextTy;
+  }
+
   const mapStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: tx.value }, { translateY: ty.value }, { scale: scale.value }],
   }));
@@ -214,10 +239,12 @@ export function InteractiveMapScreen({
 
   return (
     <View style={styles.root}>
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+      <View style={[styles.header, { paddingTop: insets.top + spacing.xs }]}>
+        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         <View style={styles.headerText}>
-          <Text style={[styles.title, isAdult && styles.titleEditorial]}>{t('explore.map.title')}</Text>
+          <Text style={[styles.title, isAdult && styles.titleEditorial]} accessibilityRole="header" numberOfLines={1}>
+            {t('explore.map.title')}
+          </Text>
           <View style={styles.summaryRow}>
             {passport.isComplete ? (
               <View style={styles.completeSeal} accessibilityLabel={t('journey.passport.completeTitle')}>
@@ -239,7 +266,29 @@ export function InteractiveMapScreen({
         </View>
       </View>
 
-      <View style={styles.frameWrap} onLayout={(event: LayoutChangeEvent) => setFrameWidth(event.nativeEvent.layout.width - FRAME_GUTTER * 2 - FRAME_BORDER * 2)}>
+      {/* Legend - state is carried by shape + icon + text, not colour alone. */}
+      <View style={styles.legend} accessible accessibilityLabel={`${t('explore.v2.visited')}; ${t('explore.map.pinNotDiscovered')}`}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendPin, styles.pinVisited]}>
+            <Check size={8} color={colors.textPrimary} strokeWidth={3.5} />
+          </View>
+          <Text style={styles.legendText}>{t('explore.v2.visited')}</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendPin, styles.pinUnvisited]}>
+            <View style={styles.legendDot} />
+          </View>
+          <Text style={styles.legendText}>{t('explore.map.pinNotDiscovered')}</Text>
+        </View>
+      </View>
+
+      <View
+        style={styles.frameWrap}
+        onLayout={(event: LayoutChangeEvent) => {
+          setFrameWidth(event.nativeEvent.layout.width - FRAME_GUTTER * 2 - FRAME_BORDER * 2);
+          setAvailableHeight(event.nativeEvent.layout.height);
+        }}
+      >
         {frameWidth > 0 && !isLoading ? (
           <GestureDetector gesture={gesture}>
             <View style={[styles.frame, { height: frameHeight }]} accessibilityHint={t('explore.map.gestureHint')}>
@@ -284,54 +333,69 @@ export function InteractiveMapScreen({
                 <OymoOrnament size={18} color={colors.accentGoldPressed} strokeWidth={1.5} />
                 <Text style={styles.compassN}>N</Text>
               </View>
+              <View style={styles.zoom}>
+                <IconButton icon={Plus} size={40} iconSize={18} shape="roundedSquare" accessibilityLabel={t('explore.map.zoomIn')} onPress={() => zoomBy(ZOOM_STEP)} />
+                <IconButton icon={Minus} size={40} iconSize={18} shape="roundedSquare" accessibilityLabel={t('explore.map.zoomOut')} onPress={() => zoomBy(1 / ZOOM_STEP)} />
+              </View>
             </View>
           </GestureDetector>
         ) : (
           <Skeleton height={Math.max(200, frameHeight)} borderRadius={radii.xl} />
         )}
         <Text style={styles.hint}>{t('explore.map.gestureHint')}</Text>
+        {/* Every place as a readable chip - an easy, screen-reader-friendly
+            alternative to small pins; tapping one opens the same sheet. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.places} style={styles.placesBleed}>
+          {places.map((place) => (
+            <AnimatedPressable
+              key={place.id}
+              style={[styles.placeChip, place.id === selectedId && styles.placeChipSelected]}
+              onPress={() => setSelectedId(place.id)}
+              press="strong"
+              accessibilityRole="button"
+              accessibilityState={{ selected: place.id === selectedId }}
+              accessibilityLabel={`${place.title}, ${place.unlocked ? t('explore.map.pinDiscovered') : t('explore.map.pinNotDiscovered')}`}
+            >
+              <View style={[styles.placeThumb, { backgroundColor: LOCATION_TONES[place.toneIndex % LOCATION_TONES.length] }]}>
+                {place.imageSource ? <MediaImage source={place.imageSource} /> : null}
+                {place.unlocked ? (
+                  <View style={styles.placeCheck}>
+                    <Check size={8} color={colors.textPrimary} strokeWidth={3.5} />
+                  </View>
+                ) : null}
+              </View>
+              <Text style={styles.placeName} numberOfLines={1}>
+                {place.title}
+              </Text>
+            </AnimatedPressable>
+          ))}
+        </ScrollView>
       </View>
 
       {selected ? (
-        <View style={[styles.preview, { bottom: insets.bottom + spacing.md }]}>
+        <Animated.View
+          key={selected.id}
+          entering={reducedMotion ? undefined : FadeInDown.duration(motion.sheetEnter.durationMs)}
+          style={[styles.preview, { bottom: insets.bottom + spacing.sm }]}
+        >
+          <View style={styles.handle} />
           <View style={styles.previewRow}>
-            {selected.imageSource ? (
-              <Image source={selected.imageSource} style={styles.previewImage} resizeMode="cover" />
-            ) : (
-              <View
-                style={[
-                  styles.previewImage,
-                  {
-                    backgroundColor: LOCATION_TONES[selected.toneIndex % LOCATION_TONES.length],
-                  },
-                ]}
-              />
-            )}
+            <View style={[styles.previewImage, { backgroundColor: LOCATION_TONES[selected.toneIndex % LOCATION_TONES.length] }]}>
+              {selected.imageSource ? <MediaImage source={selected.imageSource} /> : <OymoOrnament size={28} color="rgba(251,243,227,0.5)" strokeWidth={1.2} />}
+            </View>
             <View style={styles.previewText}>
-              <Text style={styles.previewState}>
-                {selected.unlocked ? `✓ ${t('explore.filters.options.discovered')}` : t('explore.filters.options.undiscovered')}
-              </Text>
+              {selected.unlocked ? <PhotoBadge kind="visited" label={t('explore.v2.visited')} /> : <Text style={styles.previewState}>{t('explore.map.pinNotDiscovered')}</Text>}
               <Text ref={nameRef} style={[styles.previewName, isAdult && styles.titleEditorial]} numberOfLines={2} accessibilityRole="header">
                 {selected.title}
               </Text>
-              <Text style={styles.previewTagline} numberOfLines={2}>
+              <Text style={styles.previewTagline} numberOfLines={1}>
                 {selected.tagline}
               </Text>
             </View>
-            <IconButton icon={X} size={32} iconSize={16} accessibilityLabel={t('explore.map.closePreview')} onPress={() => setSelectedId(null)} />
+            <IconButton icon={X} size={32} iconSize={16} elevated={false} accessibilityLabel={t('explore.map.closePreview')} onPress={() => setSelectedId(null)} />
           </View>
-          <AnimatedPressable
-            style={styles.exploreButton}
-            onPress={() => router.push(selected.route as never)}
-            pressScale={0.98}
-            haptic="light"
-            accessibilityRole="button"
-            accessibilityLabel={`${t('explore.map.explore')}: ${selected.title}`}
-          >
-            <Text style={styles.exploreText}>{t('explore.map.explore')}</Text>
-            <ArrowRight size={16} color={colors.accentGold} strokeWidth={2.5} />
-          </AnimatedPressable>
-        </View>
+          <Button label={t('explore.map.explore')} variant="accent" block onPress={() => router.push(selected.route as never)} accessibilityHint={selected.title} />
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -451,8 +515,97 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    ...typography.h1,
+    ...textStyles.h2,
     color: colors.textPrimary,
+  },
+  legend: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendPin: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  legendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.accentBrown,
+  },
+  legendText: {
+    ...textStyles.small,
+    color: colors.textSecondary,
+  },
+  placesBleed: {
+    marginHorizontal: -FRAME_GUTTER,
+    flexGrow: 0,
+  },
+  places: {
+    gap: spacing.xs,
+    paddingHorizontal: FRAME_GUTTER,
+    paddingTop: spacing.xs,
+  },
+  placeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 44,
+    paddingLeft: 5,
+    paddingRight: spacing.sm,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  placeChipSelected: {
+    borderColor: colors.accentTerracotta,
+  },
+  placeThumb: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  placeCheck: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accentGold,
+  },
+  placeName: {
+    ...textStyles.caption,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  zoom: {
+    position: 'absolute',
+    right: spacing.sm,
+    bottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.borderSubtle,
+    marginTop: -4,
   },
   titleEditorial: {
     fontFamily: fontFamily.wordmark,
@@ -476,6 +629,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   frameWrap: {
+    flex: 1,
     paddingHorizontal: FRAME_GUTTER,
     gap: spacing.xs,
   },
@@ -561,13 +715,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: spacing.md,
     right: spacing.md,
-    padding: spacing.sm,
+    padding: spacing.md,
+    paddingTop: spacing.sm,
     gap: spacing.sm,
-    borderRadius: radii.xl,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: 'rgba(199,154,46,0.4)',
-    ...shadows.card,
+    borderRadius: cardRadii.hero,
+    backgroundColor: colors.surfaceElevated,
+    ...elevation.floating,
   },
   previewRow: {
     flexDirection: 'row',
@@ -575,38 +728,28 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   previewImage: {
-    width: 84,
-    height: 84,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceAlt,
+    width: 72,
+    height: 72,
+    borderRadius: cardRadii.chip,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   previewText: {
     flex: 1,
-    gap: 2,
+    gap: 3,
+    alignItems: 'flex-start',
   },
   previewState: {
     ...typography.overline,
     color: colors.accentTerracotta,
   },
   previewName: {
-    ...typography.h2,
+    ...textStyles.h3,
     color: colors.textPrimary,
   },
   previewTagline: {
     ...typography.caption,
     color: colors.textSecondary,
-  },
-  exploreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    minHeight: 46,
-    borderRadius: radii.pill,
-    backgroundColor: colors.primary,
-  },
-  exploreText: {
-    ...typography.bodyBold,
-    color: colors.textOnPrimary,
   },
 });

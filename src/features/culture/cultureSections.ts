@@ -1,46 +1,35 @@
 import type { AgeExperience } from '@/services/ageExperience/types';
 
 /**
- * Sections CultureScreen can render below its fixed header/hero, in a
- * stable identity independent of on-screen order - same data, same
- * screen, for every age (spec "Make Culture and Explore adapt to
- * AgeExperience... Keep same underlying data"). CultureHero itself stays
- * pinned right under the header for every age (it renders even while
- * categories/materials are still loading, so it can't be part of a
- * loaded-content reorder without changing loading-state behavior).
+ * Culture landing hierarchy - ONE architecture for every age:
+ *
+ *   header      editorial header (eyebrow, title, subtitle, Search)
+ *   featured    the day's cultural story (pinned; a real curated collection)
+ *   then, reordered by age (never added/removed):
+ *
+ *   categories      every Culture category (real routes, real item counts)
+ *   collections     curated collections with real completed / total
+ *   continue        in-progress collections + real Daily history
+ *   listen          bundled komuz audio
+ *   todayDiscovery  today's culture material
+ *   learn           quiz + knowledge challenges
+ *   interactive     hands-on creators (oymo, shyrdak, boz uy...)
+ *   bozUy           enter the Boz Uy
+ *   newMaterials    new materials rail
+ *
+ * Child: hands-on first. Preteen: categories + collections (visual
+ * storytelling). Teen: modern editorial browsing. Adult: curated
+ * long-form collections and continue-reading first.
  */
-export type CultureSectionId = 'categories' | 'interactive' | 'bozUy' | 'todayDiscovery' | 'progressQuiz' | 'newMaterials' | 'collections';
+export type CultureSectionId = 'categories' | 'collections' | 'continue' | 'listen' | 'todayDiscovery' | 'learn' | 'interactive' | 'bozUy' | 'newMaterials';
 
-export const ALL_CULTURE_SECTIONS: CultureSectionId[] = [
-  'categories',
-  'interactive',
-  'bozUy',
-  'todayDiscovery',
-  'progressQuiz',
-  'newMaterials',
-  'collections',
-];
+export const ALL_CULTURE_SECTIONS: CultureSectionId[] = ['categories', 'collections', 'continue', 'listen', 'todayDiscovery', 'learn', 'interactive', 'bozUy', 'newMaterials'];
 
-/**
- * Section priority per AgeExperience, following the same
- * contentDensity/artworkProminence/characterProminence axes as
- * AGE_EXPERIENCE_CONFIG (Culture/Explore weren't given their own literal
- * per-age bullet list - this mirrors Home's reasoning: hands-on/playful
- * first for child, editorial/curated first for adult):
- * - child: the hands-on creators (interactive, Boz Üy build) lead, before
- *   the denser category grid or quiz/materials.
- * - preteen: category exploration + interactive experiences + today's
- *   discovery lead, progress/quiz still visible but lower.
- * - teen: categories and new materials (exploration) lead.
- * - adult: today's discovery and new materials read as an editorial lead;
- *   the hands-on creator tools (more playful) move toward the end without
- *   ever being hidden.
- */
 const CULTURE_SECTION_ORDER: Record<AgeExperience, CultureSectionId[]> = {
-  child: ['interactive', 'bozUy', 'categories', 'todayDiscovery', 'progressQuiz', 'newMaterials', 'collections'],
-  preteen: ['categories', 'interactive', 'todayDiscovery', 'progressQuiz', 'bozUy', 'newMaterials', 'collections'],
-  teen: ['categories', 'newMaterials', 'collections', 'progressQuiz', 'interactive', 'todayDiscovery', 'bozUy'],
-  adult: ['todayDiscovery', 'collections', 'newMaterials', 'categories', 'progressQuiz', 'interactive', 'bozUy'],
+  child: ['interactive', 'categories', 'bozUy', 'continue', 'learn', 'collections', 'listen', 'todayDiscovery', 'newMaterials'],
+  preteen: ['categories', 'collections', 'interactive', 'continue', 'todayDiscovery', 'learn', 'listen', 'bozUy', 'newMaterials'],
+  teen: ['categories', 'collections', 'continue', 'newMaterials', 'listen', 'learn', 'interactive', 'todayDiscovery', 'bozUy'],
+  adult: ['collections', 'continue', 'categories', 'newMaterials', 'listen', 'todayDiscovery', 'learn', 'interactive', 'bozUy'],
 };
 
 export function getCultureSectionOrder(experience: AgeExperience): CultureSectionId[] {

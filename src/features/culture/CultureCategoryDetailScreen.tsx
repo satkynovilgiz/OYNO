@@ -28,7 +28,6 @@ type CultureCategoryDetailScreenProps = {
   categoryId: string;
   categoryTitle: string;
   categoryImage: ImageSourcePropType;
-  progress: { current: number; total: number };
   items: CultureItemRow[];
   isLoading: boolean;
   hasError: boolean;
@@ -76,7 +75,6 @@ export function CultureCategoryDetailScreen({
   categoryId,
   categoryTitle,
   categoryImage,
-  progress,
   items,
   isLoading,
   hasError,
@@ -124,7 +122,7 @@ export function CultureCategoryDetailScreen({
             <Text style={styles.heroTitle} numberOfLines={2}>
               {categoryTitle}
             </Text>
-            <Pill label={`${progress.current} / ${progress.total}`} />
+            {items.length > 0 ? <Pill label={t('culture.v2.stories', { count: items.length })} /> : null}
           </View>
         </View>
 

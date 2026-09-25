@@ -8,7 +8,7 @@ import { getCollection } from '@/features/collections/collectionsData';
 import { formatDayLabel } from '@/features/daily/formatDayLabel';
 import type { SupportedLanguage } from '@/i18n';
 import { useChallengeStore } from '@/store/useChallengeStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { textStyles, colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 const MAX_ROWS = 5;
 
@@ -38,7 +38,14 @@ export function LearningJourneySection({ editorial }: { editorial: boolean }) {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.title, editorial && styles.editorial]}>{t('challenges.journeySection')}</Text>
+      <View style={styles.headRow}>
+        <Text style={[styles.title, editorial && styles.editorial]}>{t('challenges.journeySection')}</Text>
+        {completed.length > 0 ? (
+          <AnimatedPressable onPress={() => router.push('/challenges' as never)} hitSlop={10} press="strong" accessibilityRole="button" accessibilityLabel={t('journey.v2.continueLearning')}>
+            <Text style={styles.hint}>{t('journey.v2.continueLearning')} ›</Text>
+          </AnimatedPressable>
+        ) : null}
+      </View>
       {completed.length === 0 ? (
         <AnimatedPressable onPress={() => router.push('/challenges' as never)} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('challenges.journeyEmpty')}>
           <Text style={styles.hint}>{t('challenges.journeyEmpty')} →</Text>
@@ -57,9 +64,7 @@ export function LearningJourneySection({ editorial }: { editorial: boolean }) {
             <Text style={styles.rowTitle} numberOfLines={1}>
               {label(id)}
             </Text>
-            <Text style={styles.score}>
-              {result.lastCorrect} / {result.lastTotal}
-            </Text>
+            <Text style={styles.score}>{t('journey.v2.bestResult', { correct: result.bestCorrect ?? result.lastCorrect, total: result.lastTotal })}</Text>
           </AnimatedPressable>
         ))
       )}
@@ -69,10 +74,11 @@ export function LearningJourneySection({ editorial }: { editorial: boolean }) {
 
 const styles = StyleSheet.create({
   section: { gap: spacing.sm },
-  title: { ...typography.h1, color: colors.textPrimary },
+  headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  title: { ...textStyles.h2, color: colors.textPrimary },
   editorial: { fontFamily: fontFamily.wordmark },
   hint: { ...typography.caption, color: colors.primary, fontWeight: '700' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surface },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surfaceElevated },
   rowTitle: { ...typography.bodyBold, color: colors.textPrimary, flex: 1 },
-  score: { ...typography.bodyBold, color: colors.primary },
+  score: { ...typography.caption, fontWeight: '700', color: colors.primary },
 });

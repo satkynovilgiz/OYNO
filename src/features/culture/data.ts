@@ -60,7 +60,7 @@ import shyrdakMosaicCloseup from '@assets/img/OYNO_design/culture/shyrdak/mosaic
 import traditionBlessingCeremony from '@assets/img/OYNO_design/culture/tradition/blessing_ceremony.jpg';
 import type { ImageSourcePropType } from 'react-native';
 
-import type { CultureCategoryId, CultureProgress, CultureStatId } from './types';
+import type { CultureCategoryId } from './types';
 
 /**
  * Category/material content itself (id, title, description) is now
@@ -87,18 +87,6 @@ export const cultureCategoryImages: Record<CultureCategoryId, ImageSourcePropTyp
 };
 
 /** Mock per-category progress - not wired to a real collection-items count. */
-export const cultureCategoryMockProgress: Record<CultureCategoryId, { current: number; total: number }> = {
-  'boz-uy': { current: 8, total: 12 },
-  oymo: { current: 10, total: 20 },
-  shyrdak: { current: 5, total: 10 },
-  komuz: { current: 6, total: 10 },
-  music: { current: 7, total: 15 },
-  clothing: { current: 6, total: 12 },
-  horse: { current: 8, total: 15 },
-  food: { current: 12, total: 20 },
-  games: { current: 9, total: 15 },
-  tradition: { current: 8, total: 15 },
-};
 
 /** Local image galleries for individual culture_items rows - RN's
  * require() needs a static literal path, so a DB-supplied image URL can
@@ -165,12 +153,3 @@ export const cultureMaterialImages: Record<string, ImageSourcePropType> = {
 };
 
 /** Mock overview progress - not wired to real user progress yet. */
-export const cultureProgress: CultureProgress = {
-  overallPercent: 47,
-  stats: Object.fromEntries(
-    (['boz-uy', 'oymo', 'shyrdak', 'komuz', 'food', 'games'] as CultureStatId[]).map((id) => [
-      id,
-      cultureCategoryMockProgress[id],
-    ]),
-  ) as Record<CultureStatId, { current: number; total: number }>,
-};

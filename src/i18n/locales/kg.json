@@ -848,6 +848,20 @@
         "title": "Сабак аякталды!",
         "reward": "+{{xp}} XP"
       }
+    },
+    "v2": {
+      "featured": "Күндүн окуясы",
+      "read": "Окуу",
+      "stories": "Материалдар: {{count}}",
+      "continueTitle": "Окууну улант",
+      "listenTitle": "Угуу",
+      "komuzTitle": "Комуз күүлөрү",
+      "tracks": "Күүлөр: {{count}}",
+      "learnTitle": "Билимиңди сына",
+      "categoriesTitle": "Категориялар",
+      "relatedTitle": "Дагы окуу",
+      "testKnowledge": "Билимиңди сына",
+      "inCollection": "Коллекция: {{title}}"
     }
   },
   "explore": {
@@ -870,7 +884,9 @@
       "explore": "Изилдөө",
       "pinDiscovered": "ачылган",
       "pinNotDiscovered": "ачыла элек",
-      "trailFilter": "Саякат: {{title}}"
+      "trailFilter": "Саякат: {{title}}",
+      "zoomIn": "Чоңойтуу",
+      "zoomOut": "Кичирейтүү"
     },
     "progress": {
       "title": "Кыргызстанды изилдөө прогресси",
@@ -941,7 +957,29 @@
         "started": "Башталды",
         "explored": "Изилденди",
         "completed": "Аяктады"
-      }
+      },
+      "passportStamp": "Паспортто мөөр бар · {{date}}",
+      "passportStampNoDate": "Паспортто мөөр бар",
+      "passportLink": "Паспорт",
+      "trailsTitle": "Бул жер кирген саякаттар",
+      "kindNature": "Табигый жер",
+      "kindRegion": "Аймак",
+      "story": "Бул жер тууралуу"
+    },
+    "v2": {
+      "title": "Кыргызстанды изилде",
+      "subtitle": "Жерлер, пейзаждар жана окуялар",
+      "mapTitle": "Интерактивдүү карта",
+      "openMap": "Картаны ачуу",
+      "featured": "Бүгүнкү жер",
+      "visited": "Барылган",
+      "offline": "Офлайн",
+      "passportCta": "Паспортту ачуу",
+      "lastStamp": "Акыркы мөөр: {{title}}",
+      "passportEmpty": "Биринчи жерге бар — биринчи мөөрдү ал",
+      "stops": "Кадамдар: {{count}}",
+      "places": "Жерлер",
+      "searchLabel": "OYNOдон издөө"
     }
   },
   "profileSetup": {
@@ -1050,6 +1088,18 @@
       "claimedLabel": "Алынды",
       "xpValue": "+{{xp}} XP",
       "coinsValue": "+{{coins}}"
+    },
+    "v2": {
+      "journeySummary": "Жерлер: {{places}}/{{total}} · Коллекциялар: {{collections}}",
+      "statGames": "оюн",
+      "statWins": "жеңиш",
+      "statPlaces": "жер",
+      "statAchievements": "жетишкендик",
+      "statStreak": "күн катары",
+      "statCoins": "монета",
+      "statGems": "токен",
+      "emptyStats": "Биринчи оюнуңду ойно же бир жерди изилде — жетишкендиктериң ушул жерде көрүнөт.",
+      "editName": "Атты өзгөртүү"
     }
   },
   "legal": {
@@ -1463,6 +1513,18 @@
     },
     "collections": {
       "empty": "Коллекциядагы интерактивдүү тажрыйбаларды жана оюндарды аякта."
+    },
+    "v2": {
+      "places": "Жерлер",
+      "collections": "Коллекциялар",
+      "challenges": "Сыноолор",
+      "trails": "Саякаттар",
+      "memories": "Күндөлүк",
+      "achievements": "Медалдар",
+      "activeTrail": "Азыркы саякат",
+      "startTrail": "Саякатты башта",
+      "continueLearning": "Окууну улантуу",
+      "bestResult": "Эң мыкты: {{correct}}/{{total}}"
     }
   },
   "share": {

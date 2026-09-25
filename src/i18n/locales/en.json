@@ -848,6 +848,20 @@
         "title": "Lesson complete!",
         "reward": "+{{xp}} XP"
       }
+    },
+    "v2": {
+      "featured": "Story of the day",
+      "read": "Read",
+      "stories": "Stories: {{count}}",
+      "continueTitle": "Continue learning",
+      "listenTitle": "Listen",
+      "komuzTitle": "Komuz melodies",
+      "tracks": "Tracks: {{count}}",
+      "learnTitle": "Test your knowledge",
+      "categoriesTitle": "Categories",
+      "relatedTitle": "Keep reading",
+      "testKnowledge": "Test your knowledge",
+      "inCollection": "Collection: {{title}}"
     }
   },
   "explore": {
@@ -870,7 +884,9 @@
       "explore": "Explore",
       "pinDiscovered": "discovered",
       "pinNotDiscovered": "not discovered",
-      "trailFilter": "Trail: {{title}}"
+      "trailFilter": "Trail: {{title}}",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out"
     },
     "progress": {
       "title": "Kyrgyzstan exploration progress",
@@ -941,7 +957,29 @@
         "started": "Started",
         "explored": "Explored",
         "completed": "Completed"
-      }
+      },
+      "passportStamp": "Passport stamp · {{date}}",
+      "passportStampNoDate": "Passport stamp earned",
+      "passportLink": "Passport",
+      "trailsTitle": "Trails through this place",
+      "kindNature": "Nature site",
+      "kindRegion": "Region",
+      "story": "About this place"
+    },
+    "v2": {
+      "title": "Explore Kyrgyzstan",
+      "subtitle": "Places, landscapes and stories",
+      "mapTitle": "Interactive map",
+      "openMap": "Open map",
+      "featured": "Place of the day",
+      "visited": "Visited",
+      "offline": "Offline",
+      "passportCta": "Open Passport",
+      "lastStamp": "Latest stamp: {{title}}",
+      "passportEmpty": "Visit your first place to earn a stamp",
+      "stops": "Stops: {{count}}",
+      "places": "Places",
+      "searchLabel": "Search OYNO"
     }
   },
   "profileSetup": {
@@ -1050,6 +1088,18 @@
       "claimedLabel": "Claimed",
       "xpValue": "+{{xp}} XP",
       "coinsValue": "+{{coins}}"
+    },
+    "v2": {
+      "journeySummary": "Places: {{places}}/{{total}} · Collections: {{collections}}",
+      "statGames": "games",
+      "statWins": "wins",
+      "statPlaces": "places",
+      "statAchievements": "achievements",
+      "statStreak": "day streak",
+      "statCoins": "coins",
+      "statGems": "tokens",
+      "emptyStats": "Play your first game or explore a place — your progress will show up here.",
+      "editName": "Edit name"
     }
   },
   "legal": {
@@ -1463,6 +1513,18 @@
     },
     "collections": {
       "empty": "Finish a collection’s interactive experiences and games to complete it."
+    },
+    "v2": {
+      "places": "Places",
+      "collections": "Collections",
+      "challenges": "Challenges",
+      "trails": "Trails",
+      "memories": "Memories",
+      "achievements": "Medals",
+      "activeTrail": "Current trail",
+      "startTrail": "Start a trail",
+      "continueLearning": "Continue learning",
+      "bestResult": "Best: {{correct}}/{{total}}"
     }
   },
   "share": {

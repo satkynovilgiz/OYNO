@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react-native';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { CharacterId } from '@/components/character';
@@ -15,17 +14,6 @@ export type ProfileSummary = {
   coins: number;
   tokens: number;
   streakDays: number;
-};
-
-export type ProfileStatId = 'games' | 'explore' | 'culture' | 'quests' | 'collection';
-
-export type ProfileStat = {
-  id: ProfileStatId;
-  icon: LucideIcon;
-  label: string;
-  valueLabel: string;
-  captionKey: 'count' | 'percent' | 'fraction';
-  ringProgress: number; // 0..1, decorative for count-based stats
 };
 
 export type ProfileAchievement = {
@@ -64,13 +52,3 @@ export type ProfileCollectionItem = {
   total: number;
 };
 
-export type DailyActivityItem = {
-  id: string;
-  icon: LucideIcon;
-  label: string;
-};
-
-export type DailyReward = {
-  xp: number;
-  coins: number;
-};

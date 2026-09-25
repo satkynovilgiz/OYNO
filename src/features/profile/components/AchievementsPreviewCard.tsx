@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { FadeSlideIn, TextButton } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+import { colors, spacing, textStyles, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
 
@@ -35,10 +35,14 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
       </View>
 
       <View style={styles.grid}>
-        {achievements.map((achievement, index) => {
+        {/* Earned first, then locked - same list, never hidden. */}
+        {[...achievements]
+          .sort((a, b) => Number(!!unlockedIds && !unlockedIds.includes(a.id)) - Number(!!unlockedIds && !unlockedIds.includes(b.id)))
+          .map((achievement, index) => {
           const isLocked = !!unlockedIds && !unlockedIds.includes(achievement.id);
           return (
             <FadeSlideIn key={achievement.id} style={styles.badgeItem} index={index}>
+              <View accessible accessibilityLabel={`${t(achievement.titleKey)}, ${isLocked ? t('profile.achievements.lockedBadge') : t('profile.achievements.unlockedBadge')}`} style={styles.badgeA11y}>
               <View style={styles.badgeStage}>
                 <Image
                   source={achievement.iconSource}
@@ -54,9 +58,10 @@ export function AchievementsPreviewCard({ achievements, unlockedIds, unlocked, t
               <Text style={styles.badgeLabel} numberOfLines={2}>
                 {t(achievement.titleKey)}
               </Text>
+              </View>
             </FadeSlideIn>
           );
-        })}
+          })}
       </View>
     </View>
   );
@@ -77,8 +82,13 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   title: {
-    ...typography.h1,
+    ...textStyles.h2,
     color: colors.textPrimary,
+  },
+  badgeA11y: {
+    width: '100%',
+    alignItems: 'center',
+    gap: spacing.xxs,
   },
   unlocked: {
     ...typography.caption,
@@ -120,7 +130,7 @@ const styles = StyleSheet.create({
   // too much") - the medal (now genuinely transparent PNG, no more white
   // square behind it) stays clearly recognizable, not washed out.
   badgeLocked: {
-    opacity: 0.55,
+    opacity: 0.62,
   },
   lockBadge: {
     position: 'absolute',

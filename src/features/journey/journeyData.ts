@@ -213,19 +213,19 @@ export type JourneySectionId = 'next' | 'passport' | 'trails' | 'discovered' | '
 export const ALL_JOURNEY_SECTIONS: JourneySectionId[] = ['next', 'passport', 'trails', 'discovered', 'explored', 'played', 'collections', 'learning', 'journal', 'achievements'];
 
 /**
- * Same sections for every age, different emphasis (spec "Child → simpler,
- * visual / Teen → adventure/progression / Adult → elegant cultural
- * journal"): child leads with the next thing to do and the most visual
- * pages (passport seals, games, medals); preteen/teen lead with the next
- * step, the passport and exploration progress; adult reads like a journal
- * - what was discovered and where, then collections, the "what next"
- * suggestion last.
+ * Same sections for every age, one hierarchy under the fixed summary:
+ * active trail -> Passport -> learning -> collections -> journal -> the
+ * stamp pages (discovered / explored / played) -> achievements. Age only
+ * nudges emphasis: child puts the next thing to do and medals up front
+ * (avatar + achievements prominent); preteen keeps "next" and collectibles
+ * high; teen is a clean travel/progress identity; adult reads as a calm
+ * cultural journal with the "what next" suggestion last.
  */
 const JOURNEY_SECTION_ORDER: Record<AgeExperience, JourneySectionId[]> = {
-  child: ['next', 'passport', 'trails', 'played', 'achievements', 'journal', 'learning', 'discovered', 'collections', 'explored'],
-  preteen: ['next', 'passport', 'trails', 'played', 'explored', 'collections', 'journal', 'learning', 'achievements', 'discovered'],
-  teen: ['next', 'passport', 'trails', 'explored', 'played', 'collections', 'learning', 'journal', 'achievements', 'discovered'],
-  adult: ['discovered', 'passport', 'trails', 'explored', 'collections', 'journal', 'learning', 'played', 'achievements', 'next'],
+  child: ['next', 'trails', 'passport', 'achievements', 'played', 'learning', 'collections', 'journal', 'discovered', 'explored'],
+  preteen: ['next', 'trails', 'passport', 'learning', 'collections', 'played', 'journal', 'explored', 'achievements', 'discovered'],
+  teen: ['trails', 'passport', 'learning', 'collections', 'journal', 'next', 'explored', 'played', 'achievements', 'discovered'],
+  adult: ['trails', 'passport', 'learning', 'collections', 'journal', 'discovered', 'explored', 'played', 'achievements', 'next'],
 };
 
 export function getJourneySectionOrder(experience: AgeExperience): JourneySectionId[] {

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowRight, ChevronLeft, Compass, Gamepad2, Medal, Sparkles, type LucideIcon } from 'lucide-react-native';
+import { ArrowRight, BookOpen, ChevronLeft, Compass, Gamepad2, GraduationCap, MapPin, Medal, NotebookPen, Route, Sparkles, type LucideIcon } from 'lucide-react-native';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -31,14 +31,17 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
-import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 
 import { CollectionsJourneySection } from './components/CollectionsJourneySection';
 import { JournalJourneySection } from './components/JournalJourneySection';
 import { LearningJourneySection } from './components/LearningJourneySection';
 import { TrailsJourneySection } from './components/TrailsJourneySection';
 import { JourneyStamp } from './components/JourneyStamp';
+import { JourneySummaryCard } from './components/JourneySummaryCard';
 import { PassportSection } from './components/PassportSection';
+import { visibleEntries } from '@/features/journal/journalModel';
+import { useChallengeStore } from '@/store/useChallengeStore';
+import { useJournalStore } from '@/store/useJournalStore';
 import {
   buildJourneySummary,
   getJourneySectionOrder,
@@ -119,6 +122,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
     : null;
   const next = pickNextDiscovery(summary, todayStamp);
   const { level } = xpProgress(progress.xp);
+  const challengeResults = useChallengeStore((state) => state.results);
+  const journalEntries = useJournalStore((state) => state.entries);
 
   // Chapter numerals follow the on-screen order of the stamp pages (the
   // "next" suggestion isn't a chapter), so they always read I, II, III, IV.
@@ -132,14 +137,6 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
     (id) => id !== 'next' && id !== 'passport' && id !== 'collections' && id !== 'trails' && id !== 'learning',
   );
   const chapterOf = (id: JourneySectionId) => CHAPTER_NUMERALS[chapterPages.indexOf(id)] ?? '';
-
-  const totalPossible =
-    summary.discovered.experiences.length +
-    summary.discovered.dailyItems.length +
-    summary.explored.regionsTotal +
-    summary.explored.discoveriesTotal +
-    summary.played.total +
-    summary.achievements.total;
 
   function renderStamps(
     stamps: JourneyStampData[],
@@ -277,13 +274,6 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
     }
   }
 
-  const counters: { id: string; icon: LucideIcon; label: string; value: number }[] = [
-    { id: 'discovered', icon: Sparkles, label: t('journey.counters.discovered'), value: summary.discovered.earned },
-    { id: 'explored', icon: Compass, label: t('journey.counters.explored'), value: summary.explored.regionsVisited + summary.explored.discoveriesFound },
-    { id: 'played', icon: Gamepad2, label: t('journey.counters.played'), value: summary.played.distinctPlayed },
-    { id: 'achievements', icon: Medal, label: t('journey.counters.achievements'), value: summary.achievements.unlocked },
-  ];
-
   return (
     <View style={styles.root}>
       <ScrollView
@@ -291,55 +281,26 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.xl }]}
       >
         <View style={styles.header}>
-          <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+          <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         </View>
 
         <HeroEntrance>
-          <View style={styles.passport}>
-            <Image source={journeyBackdrop} style={styles.passportBackdrop} resizeMode="cover" />
-            <View style={styles.passportFrame} pointerEvents="none" />
-
-            <View style={styles.passportTop}>
-              <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.5} />
-              <Text style={styles.passportOverline}>OYNO</Text>
-              <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.5} />
-            </View>
-
-            <Text style={[styles.passportTitle, isAdult && styles.passportTitleEditorial]}>{t('journey.title')}</Text>
-            <Text style={styles.passportSubtitle}>{t(`journey.subtitle.${experience}`)}</Text>
-
-            <View style={styles.passportIdentity}>
-              <Text style={styles.passportName} numberOfLines={1}>
-                {user?.name ?? t('common.guestName')}
-              </Text>
-              <Text style={styles.passportLevel}>{t('journey.level', { level })}</Text>
-            </View>
-
-            <View style={styles.totalBlock}>
-              <Text style={styles.totalValue}>{summary.totalStamps}</Text>
-              <Text style={styles.totalLabel}>{t('journey.stampsLabel')}</Text>
-            </View>
-            {totalPossible > 0 ? (
-              <View style={styles.summaryBar}>
-                <ProgressBar progress={summary.totalStamps / totalPossible} height={4} fillColor={colors.accentGold} trackColor="rgba(255,255,255,0.14)" />
-                <Text style={styles.summaryText}>{t('journey.summary', { earned: summary.totalStamps, total: totalPossible })}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.counterRow}>
-              {counters.map(({ id, icon: Icon, label, value }) => (
-                <View key={id} style={styles.counter}>
-                  <Icon size={isChild ? 22 : 18} color={colors.accentGold} strokeWidth={1.75} />
-                  <Text style={[styles.counterValue, isChild && styles.counterValueChild]}>{value}</Text>
-                  <Text style={styles.counterLabel} numberOfLines={1}>
-                    {label}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {!isSignedIn ? <Text style={styles.guestNote}>{t('journey.guestNote')}</Text> : null}
-          </View>
+          <JourneySummaryCard
+            title={t('journey.title')}
+            subtitle={t(`journey.subtitle.${experience}`)}
+            name={user?.name ?? t('common.guestName')}
+            levelLabel={t('journey.level', { level })}
+            editorialTitle={isAdult}
+            note={!isSignedIn ? t('journey.guestNote') : undefined}
+            metrics={[
+              { id: 'places', icon: MapPin, label: t('journey.v2.places'), value: passport.unlocked, total: passport.total },
+              { id: 'collections', icon: BookOpen, label: t('journey.v2.collections'), value: collectionEntries.filter((entry) => entry.progress.status === 'completed').length, total: collectionEntries.length },
+              { id: 'trails', icon: Route, label: t('journey.v2.trails'), value: trailEntries.filter((entry) => entry.progress.status === 'completed').length, total: trailEntries.length },
+              { id: 'challenges', icon: GraduationCap, label: t('journey.v2.challenges'), value: Object.values(challengeResults).filter((result) => !!result.completedAt).length },
+              { id: 'memories', icon: NotebookPen, label: t('journey.v2.memories'), value: visibleEntries(journalEntries).length },
+              { id: 'achievements', icon: Medal, label: t('journey.v2.achievements'), value: summary.achievements.unlocked, total: summary.achievements.total },
+            ]}
+          />
         </HeroEntrance>
 
         <AgeExperienceTransition style={styles.sections}>
@@ -493,136 +454,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
   },
-  passport: {
-    backgroundColor: colors.surfaceFeature,
-    borderRadius: radii.xxl,
-    padding: spacing.lg,
-    overflow: 'hidden',
-    alignItems: 'center',
-    gap: spacing.xxs,
-  },
-  passportBackdrop: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
-    opacity: 0.16,
-  },
-  // Inset gold hairline - the "passport cover" edge.
-  passportFrame: {
-    position: 'absolute',
-    top: spacing.xs,
-    left: spacing.xs,
-    right: spacing.xs,
-    bottom: spacing.xs,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(232,185,61,0.45)',
-  },
-  passportTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  passportOverline: {
-    ...typography.overline,
-    color: colors.accentGold,
-    letterSpacing: 4,
-  },
-  passportTitle: {
-    ...typography.display,
-    fontSize: 28,
-    color: colors.textOnDark,
-    textAlign: 'center',
-  },
-  passportTitleEditorial: {
-    fontFamily: fontFamily.wordmark,
-  },
-  passportSubtitle: {
-    ...typography.caption,
-    color: 'rgba(255,255,255,0.75)',
-    textAlign: 'center',
-  },
-  passportIdentity: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xxs,
-    borderRadius: radii.pill,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    maxWidth: '100%',
-  },
-  passportName: {
-    ...typography.caption,
-    color: colors.textOnDark,
-    fontWeight: '700',
-    flexShrink: 1,
-  },
-  passportLevel: {
-    ...typography.small,
-    color: colors.accentGold,
-  },
-  totalBlock: {
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  totalValue: {
-    fontFamily: fontFamily.wordmark,
-    fontSize: 52,
-    fontWeight: '700',
-    color: colors.accentGold,
-    lineHeight: 58,
-  },
-  totalLabel: {
-    ...typography.overline,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  counterRow: {
-    flexDirection: 'row',
-    alignSelf: 'stretch',
-    justifyContent: 'space-between',
-    marginTop: spacing.md,
-    paddingTop: spacing.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(232,185,61,0.35)',
-  },
-  counter: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  counterValue: {
-    ...typography.h2,
-    color: colors.textOnDark,
-  },
-  counterValueChild: {
-    fontSize: 22,
-  },
-  counterLabel: {
-    ...typography.small,
-    color: 'rgba(255,255,255,0.7)',
-  },
-  guestNote: {
-    ...typography.small,
-    color: 'rgba(255,255,255,0.7)',
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
   sections: {
-    gap: spacing.lg,
-  },
-  summaryBar: {
-    alignSelf: 'stretch',
-    gap: spacing.xxs,
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  summaryText: {
-    ...typography.small,
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
+    gap: spacing.xl,
   },
   // Plain paper chapters sit straight on the screen's cream - no card
   // chrome - so only the warm/feature chapters read as distinct surfaces.

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { ChevronRight, Map as MapIcon, SlidersHorizontal, TriangleAlert } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { ChevronRight, SlidersHorizontal, TriangleAlert } from 'lucide-react-native';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,19 +21,25 @@ import { computeRegionCompletions } from '@/services/explore/regionAggregation';
 import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
 import { useProgressStore } from '@/store/useProgressStore';
 import { TrailsRow } from '@/features/trails/TrailsRow';
+import { PassportSummaryCard } from '@/features/journey/components/PassportSummaryCard';
+import { buildPassport } from '@/features/journey/passport';
+import { buildRecentlyExplored } from '@/features/home/homeRecommendation';
+import { dayNumber, localDateKey } from '@/services/daily/dailyDiscovery';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import {
   CurrentQuestCard,
+  DestinationRail,
   DiscoveriesRow,
   ExploreFilterSheet,
   ExploreHeader,
+  ExploreMapCard,
+  FeaturedDestinationCard,
   KyrgyzstanMap,
-  NatureSitesRow,
-  RegionProgressCard,
+  RecentPlacesRow,
 } from './components';
 import { discoveryImages, exploreMapPins, natureSiteImages } from './data';
-import { getExploreSectionOrder, type ExploreSectionId } from './exploreSections';
+import { getExploreSectionOrder, pickFeaturedDestination, type ExploreSectionId } from './exploreSections';
 import type { ExploreDiscovery } from './types';
 
 export function ExploreScreen() {
@@ -136,18 +142,33 @@ export function ExploreScreen() {
     imageSource: discoveryImages[d.id],
   }));
 
-  const regionsTotal = (regions ?? []).filter((r) => r.kind === 'region').length;
-  const regionsVisited = (regions ?? []).filter((r) => r.kind === 'region' && progress.visitedRegionIds.includes(r.id)).length;
-  const natureTotal = (regions ?? []).filter((r) => r.kind === 'nature').length;
-  const natureVisited = (regions ?? []).filter((r) => r.kind === 'nature' && progress.visitedRegionIds.includes(r.id)).length;
-  const discoveriesTotal = discoveryList.length;
-  const discoveriesFound = discoveryList.filter((d) => progress.discoveredExploreIds.includes(d.id)).length;
-  const questTotal = questRow?.total_count ?? 0;
-  const questCurrent = Math.min(progress.questFoundCount, questTotal);
+  // Discovery Passport - the same buildPassport the Journey, Home and the
+  // map screen use (visitedRegionIds + real visit dates). Counts only.
+  const passport = useMemo(
+    () => buildPassport(regions ?? [], progress.visitedRegionIds, progress.regionVisitDates, (id) => natureSiteImages[id], language),
+    [regions, progress.visitedRegionIds, progress.regionVisitDates, language],
+  );
 
-  const sumCurrent = regionsVisited + natureVisited + discoveriesFound + questCurrent;
-  const sumTotal = regionsTotal + natureTotal + discoveriesTotal + questTotal;
-  const overallPercent = sumTotal > 0 ? Math.round((sumCurrent / sumTotal) * 100) : 0;
+  // Featured = a stable daily rotation over ALL real nature destinations
+  // (not the filtered list, so a filter never changes "place of the day").
+  const allNatureSites = (regions ?? [])
+    .filter((region) => region.kind === 'nature')
+    .map((region, index) => ({
+      id: region.id,
+      name: mapExploreRegionName(region)[language] ?? region.name_kg,
+      tagline: region.tagline,
+      imageSource: natureSiteImages[region.id] ?? null,
+      toneIndex: index,
+      visited: progress.visitedRegionIds.includes(region.id),
+    }));
+  const featured = pickFeaturedDestination(allNatureSites, dayNumber(localDateKey()));
+  const railSites = natureSites.filter((site) => site.id !== featured?.id);
+
+  // Real visit history (places only here - Daily history lives on Home).
+  const recentPlaces = buildRecentlyExplored(progress.regionVisitDates, {}, 6).flatMap((entry) => {
+    const site = allNatureSites.find((candidate) => candidate.id === entry.id);
+    return site ? [{ ...site, visitedAt: entry.at }] : [];
+  });
 
   const quest = questRow
     ? {
@@ -180,23 +201,16 @@ export function ExploreScreen() {
   // (and its own filtered-results list) stays pinned above these, see
   // exploreSections.ts.
   function renderSection(id: ExploreSectionId) {
+    const openSite = (siteId: string) => router.push(`/explore/${siteId}` as never);
     switch (id) {
-      case 'progress':
-        return (
-          <View key={id} style={styles.horizontalPad}>
-            <RegionProgressCard
-              progress={{
-                overallPercent,
-                stats: {
-                  regions: { current: regionsVisited, total: regionsTotal },
-                  nature: { current: natureVisited, total: natureTotal },
-                  discoveries: { current: discoveriesFound, total: discoveriesTotal },
-                  quests: { current: questCurrent, total: questTotal },
-                },
-              }}
-            />
-          </View>
-        );
+      case 'featured':
+        return featured && activeFilters.length === 0 ? <FeaturedDestinationCard key={id} site={featured} experience={experience} onPress={() => openSite(featured.id)} /> : null;
+      case 'nature':
+        return <DestinationRail key={id} title={t('explore.natureSites.title')} sites={activeFilters.length === 0 ? railSites : natureSites} experience={experience} onPressSite={openSite} />;
+      case 'recent':
+        return <RecentPlacesRow key={id} places={recentPlaces} onPressPlace={openSite} />;
+      case 'passport':
+        return passport.total > 0 ? <PassportSummaryCard key={id} passport={passport} editorialTitle={experience === 'adult'} onPress={() => router.push('/journey' as never)} /> : null;
       case 'quest':
         return quest ? (
           <View key={id} style={styles.horizontalPad}>
@@ -204,9 +218,7 @@ export function ExploreScreen() {
           </View>
         ) : null;
       case 'trails':
-        return <TrailsRow key={id} />;
-      case 'natureSites':
-        return <NatureSitesRow key={id} sites={natureSites} onPressSite={(siteId) => router.push(`/explore/${siteId}` as never)} />;
+        return <TrailsRow key={id} experience={experience} />;
       case 'discoveries':
         return (
           <DiscoveriesRow
@@ -224,12 +236,12 @@ export function ExploreScreen() {
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
       >
         <ScreenEntrance>
           <ExploreHeader
-            onPressAvatar={() => router.push('/character-select' as never)}
-            onPressSearch={() => router.push('/explore/search' as never)}
+            editorialTitle={experience === 'adult'}
+            onPressSearch={() => router.push('/search' as never)}
             onPressCollection={() => router.push('/collection' as never)}
           />
         </ScreenEntrance>
@@ -256,27 +268,20 @@ export function ExploreScreen() {
           />
         ) : (
           <>
-            <View style={styles.horizontalPad}>
-              <HeroEntrance>
-                <KyrgyzstanMap
-                  pins={mapPins}
-                  onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
-                  onPressFilter={() => setFiltersVisible(true)}
-                />
-              </HeroEntrance>
-              <AnimatedPressable
-                style={styles.mapEntry}
-                onPress={() => router.push('/explore/map' as never)}
-                pressScale={0.98}
-                hoverEffect
-                accessibilityRole="button"
-                accessibilityLabel={t('explore.map.entry')}
-              >
-                <MapIcon size={16} color={colors.primary} strokeWidth={2.25} />
-                <Text style={styles.mapEntryText}>{t('explore.map.entry')}</Text>
-                <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
-              </AnimatedPressable>
-            </View>
+            <HeroEntrance>
+              <ExploreMapCard
+                visited={passport.unlocked}
+                total={passport.total}
+                onPressOpen={() => router.push('/explore/map' as never)}
+                map={
+                  <KyrgyzstanMap
+                    pins={mapPins}
+                    onPressPin={(locationId) => router.push(`/explore/${locationId}` as never)}
+                    onPressFilter={() => setFiltersVisible(true)}
+                  />
+                }
+              />
+            </HeroEntrance>
 
             {filteredRegionsList && (
               <View style={styles.horizontalPad}>
@@ -363,23 +368,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   sectionList: {
-    gap: spacing.lg,
-  },
-  mapEntry: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(47,82,51,0.35)',
-    backgroundColor: colors.surface,
-  },
-  mapEntryText: {
-    ...typography.bodyBold,
-    color: colors.primary,
+    gap: spacing.xl,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

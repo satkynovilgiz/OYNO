@@ -17,23 +17,6 @@ export type CultureCategoryId =
   | 'games'
   | 'tradition';
 
-export type CultureCategory = {
-  id: CultureCategoryId;
-  title: string;
-  current: number;
-  total: number;
-  imageSource: ImageSourcePropType;
-};
-
-/** Subset of categories surfaced in the CultureProgressCard stat row,
- * matching the design reference (not all 10 categories appear there). */
-export type CultureStatId = 'boz-uy' | 'oymo' | 'shyrdak' | 'komuz' | 'food' | 'games';
-
-export type CultureProgress = {
-  overallPercent: number;
-  stats: Record<CultureStatId, { current: number; total: number }>;
-};
-
 export type CultureDiscovery = {
   title: string;
   description: string;

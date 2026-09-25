@@ -138,9 +138,11 @@ describe('getJourneySectionOrder', () => {
     expect([...getJourneySectionOrder(experience)].sort()).toEqual([...ALL_JOURNEY_SECTIONS].sort());
   });
 
-  it('reads like a journal for adults, with the suggestion last', () => {
+  it('follows trail -> passport -> learning -> collections -> journal for teen/adult, suggestion last for adults', () => {
+    for (const experience of ['teen', 'adult'] as const) {
+      expect(getJourneySectionOrder(experience).slice(0, 5)).toEqual(['trails', 'passport', 'learning', 'collections', 'journal']);
+    }
     const order = getJourneySectionOrder('adult');
-    expect(order[0]).toBe('discovered');
     expect(order[order.length - 1]).toBe('next');
   });
 });

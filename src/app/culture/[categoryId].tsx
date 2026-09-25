@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { CultureCategoryDetailScreen } from '@/features/culture/CultureCategoryDetailScreen';
-import { cultureCategoryImages, cultureCategoryMockProgress } from '@/features/culture/data';
+import { cultureCategoryImages } from '@/features/culture/data';
 import { interactiveExperienceForCategory, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
 import type { CultureCategoryId } from '@/features/culture/types';
 import { useCultureCategories } from '@/services/content/cultureService';
@@ -20,7 +20,6 @@ export default function CultureCategoryRoute() {
       categoryId={id}
       categoryTitle={category?.title ?? ''}
       categoryImage={cultureCategoryImages[id]}
-      progress={cultureCategoryMockProgress[id] ?? { current: 0, total: 0 }}
       items={items ?? []}
       isLoading={isLoading}
       hasError={!!error}

@@ -20,6 +20,10 @@ import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
+import { computeTrailProgress } from '@/features/trails/trailProgress';
+import { trails } from '@/features/trails/trailsData';
+import { trailStatusLabel } from '@/features/trails/TrailsRow';
+import { useTrailSignals } from '@/features/trails/useTrailSignals';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
 
@@ -33,6 +37,7 @@ export default function ExploreLocationRoute() {
   const { data: questRow } = useCurrentQuest();
   const { data: questSteps } = useQuestSteps(questRow?.id);
   const progress = useProgressStore();
+  const trailSignals = useTrailSignals();
   const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
 
   const row = regions?.find((item) => item.id === id);
@@ -148,6 +153,16 @@ export default function ExploreLocationRoute() {
     }
   }
 
+  // Only trails that really list this destination as a step.
+  const relatedTrails = trails
+    .filter((trail) => trail.steps.some((step) => step.type === 'destination' && step.id === row.id))
+    .map((trail) => ({
+      id: trail.id,
+      title: trail.title[i18n.language as 'kg' | 'ru' | 'en'] ?? trail.title.kg,
+      image: trail.heroImage,
+      status: trailStatusLabel(computeTrailProgress(trail, trailSignals), t),
+    }));
+
   return (
     <LocationDetailScreen
       location={location}
@@ -158,6 +173,10 @@ export default function ExploreLocationRoute() {
       discoveredIds={progress.discoveredExploreIds}
       isFavorite={favoriteIds.includes(favoriteKey(row.kind, row.id))}
       relatedQuest={relatedQuest}
+      passport={row.kind === 'nature' ? { visited: progress.visitedRegionIds.includes(row.id), visitedAt: progress.regionVisitDates[row.id] ?? null } : null}
+      relatedTrails={relatedTrails}
+      onPressTrail={(trailId) => router.push(`/trails/${trailId}` as never)}
+      onPressPassport={() => router.push('/journey' as never)}
       onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       onPressDiscovery={(discoveryId) => useProgressStore.getState().discoverExploreItem(discoveryId)}
       onToggleFavorite={() => toggleFavoriteWithFeedback(row.kind, row.id)}

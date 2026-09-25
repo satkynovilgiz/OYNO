@@ -1,72 +1,118 @@
 import { router } from 'expo-router';
-import { TriangleAlert } from 'lucide-react-native';
+import { Search, TriangleAlert } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, ScreenEntrance, Skeleton } from '@/components/ui';
+import { AgeExperienceTransition, EmptyState, FadeSlideIn, HeroEntrance, IconButton, ScreenEntrance, ScreenHeader, SectionHeader, Skeleton } from '@/components/ui';
 import { ChallengesEntryCard } from '@/features/challenges/ChallengesEntryCard';
 import { collections } from '@/features/collections/collectionsData';
-import { CollectionsRow } from '@/features/collections/components/CollectionsRow';
+import { computeCollectionProgress } from '@/features/collections/collectionProgress';
+import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
+import { komuzTracks } from './audioData';
+import type { SupportedLanguage } from '@/i18n';
+import { dayNumber, localDateKey } from '@/services/daily/dailyDiscovery';
+import { useAllCultureItems } from '@/services/content/cultureItemsService';
+import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
-import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing } from '@/theme';
 
 import {
-  CultureCategoriesGrid,
-  CultureHeader,
-  CultureHero,
-  CultureProgressCard,
+  CategoryGrid,
+  CollectionsRail,
+  ContinueLearning,
   EnterBozUyCard,
+  FeaturedStoryCard,
   InteractiveExperiencesRow,
+  ListenCard,
   NewMaterialsRow,
   QuizTeaserCard,
   TodayDiscoveryCard,
+  type ContinueRowData,
 } from './components';
 import { getCultureSectionOrder, type CultureSectionId } from './cultureSections';
-import { cultureCategoryImages, cultureCategoryMockProgress, cultureMaterialImages, cultureProgress } from './data';
+import { cultureCategoryImages, cultureItemImages, cultureMaterialImages } from './data';
 import { INTERACTIVE_EXPERIENCES, routeForInteractiveExperience } from './interactiveExperiences';
-import type { CultureCategory, CultureCategoryId, CultureDiscovery, CultureMaterial } from './types';
+import type { CultureCategoryId, CultureDiscovery, CultureMaterial } from './types';
 
 function handlePressExperience(id: string) {
   const route = routeForInteractiveExperience(id);
   if (route) router.push(route as never);
 }
 
-function handlePressCategory(category: CultureCategory) {
-  if (category.id === 'games') {
+function handlePressCategory(categoryId: string) {
+  if (categoryId === 'games') {
     router.push('/games' as never);
     return;
   }
-  router.push(`/culture/${category.id}` as never);
+  router.push(`/culture/${categoryId}` as never);
 }
 
 export function CultureScreen() {
   useTrackScreenView('culture');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language as SupportedLanguage;
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
-  const hasUnreadNotifications = useNotificationsStore((state) => state.hasUnread());
-  const progress = useProgressStore();
+  const collectionSignals = useCollectionSignals();
+  const dailyCompletions = useDailyDiscoveryStore((state) => state.completions);
+  const { data: allItems } = useAllCultureItems();
   const { data: categoryRows, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCultureCategories();
   const { data: materialRows, isLoading: materialsLoading, error: materialsError, refetch: refetchMaterials } = useCultureMaterials();
 
   const isLoading = categoriesLoading || materialsLoading;
   const hasError = !!categoriesError || !!materialsError;
 
-  const categories: CultureCategory[] = (categoryRows ?? []).map((row) => {
+  // Real counts only: number of culture_items per category (null while
+  // the items query hasn't answered - no number rather than a guess).
+  const categories = (categoryRows ?? []).map((row) => {
     const id = row.id as CultureCategoryId;
+    const count = allItems ? allItems.filter((item) => item.category_id === id).length : null;
+    return { id, title: row.title, image: cultureCategoryImages[id], count: count && count > 0 ? count : null };
+  });
+
+  const collectionCards = collections.map((collection) => {
+    const progress = computeCollectionProgress(collection, collectionSignals);
+    const status =
+      progress.status === 'completed'
+        ? `✓ ${t('collections.status.completed')}`
+        : progress.status === 'inProgress'
+          ? t('collections.status.continue')
+          : undefined;
     return {
-      id,
-      title: row.title,
-      imageSource: cultureCategoryImages[id],
-      ...cultureCategoryMockProgress[id],
+      id: collection.id,
+      title: collection.title[language] ?? collection.title.kg,
+      intro: collection.intro[language] ?? collection.intro.kg,
+      image: collection.heroImage,
+      completed: progress.completed,
+      total: progress.total,
+      status,
+      inProgress: progress.status === 'inProgress',
     };
   });
+
+  // Featured story: a stable daily rotation over the real curated
+  // collections; the excerpt is the collection's own editorial intro.
+  const featuredCollection = collectionCards.length > 0 ? collectionCards[dayNumber(localDateKey()) % collectionCards.length] : null;
+
+  // Continue learning: collections really in progress, then the latest
+  // real Daily OYNO completions (culture items) - newest first.
+  const continueRows: ContinueRowData[] = [
+    ...collectionCards
+      .filter((card) => card.inProgress)
+      .map((card) => ({ key: `collection:${card.id}`, title: card.title, meta: t('collections.progress', { completed: card.completed, total: card.total }), image: card.image, route: `/collections/${card.id}` })),
+    ...Object.entries(dailyCompletions)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 2)
+      .flatMap(([dateKey, itemId]) => {
+        const item = allItems?.find((row) => row.id === itemId);
+        return item ? [{ key: `daily:${dateKey}`, title: item.title, meta: `${t('daily.entry.title')} · ${dateKey.slice(8, 10)}.${dateKey.slice(5, 7)}`, image: cultureItemImages[item.id]?.[0] ?? null, route: `/culture/item/${item.id}` }] : [];
+      }),
+  ].slice(0, 3);
 
   const todayDiscoveryRow = materialRows?.find((row) => row.kind === 'today_discovery');
   const todayDiscovery: CultureDiscovery | null = todayDiscoveryRow
@@ -94,18 +140,15 @@ export function CultureScreen() {
   function renderSection(id: CultureSectionId) {
     switch (id) {
       case 'categories':
-        return (
-          <CultureCategoriesGrid
-            key={id}
-            categories={categories}
-            onPressCategory={handlePressCategory}
-            onPressSeeAll={() => router.push('/collection' as never)}
-          />
-        );
+        return <CategoryGrid key={id} categories={categories} experience={experience} onPressCategory={handlePressCategory} />;
+      case 'collections':
+        return <CollectionsRail key={id} items={collectionCards} experience={experience} onPress={(collectionId) => router.push(`/collections/${collectionId}` as never)} />;
+      case 'continue':
+        return <ContinueLearning key={id} rows={continueRows} onPress={(route) => router.push(route as never)} />;
+      case 'listen':
+        return <ListenCard key={id} trackCount={komuzTracks.length} image={cultureCategoryImages.komuz} onPress={() => router.push('/culture/komuz/learn' as never)} />;
       case 'interactive':
-        return (
-          <InteractiveExperiencesRow key={id} experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />
-        );
+        return <InteractiveExperiencesRow key={id} experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />;
       case 'bozUy':
         return (
           <View key={id} style={styles.horizontalPad}>
@@ -118,30 +161,18 @@ export function CultureScreen() {
             <TodayDiscoveryCard discovery={todayDiscovery} onPress={() => useProgressStore.getState().discoverCulture()} />
           </View>
         ) : null;
-      case 'progressQuiz':
+      case 'learn':
         return (
-          <View key={id} style={[styles.horizontalPad, styles.stack]}>
-            <CultureProgressCard progress={cultureProgress} />
-            <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
-            <ChallengesEntryCard />
+          <View key={id} style={styles.stack}>
+            <SectionHeader title={t('culture.v2.learnTitle')} size="sm" />
+            <View style={[styles.horizontalPad, styles.stack]}>
+              <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
+              <ChallengesEntryCard />
+            </View>
           </View>
         );
       case 'newMaterials':
-        return (
-          <NewMaterialsRow
-            key={id}
-            materials={materials}
-            onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)}
-          />
-        );
-      case 'collections':
-        return (
-          <CollectionsRow
-            key={id}
-            collections={collections}
-            onPressCollection={(collectionId) => router.push(`/collections/${collectionId}` as never)}
-          />
-        );
+        return <NewMaterialsRow key={id} materials={materials} onPressMaterial={(material) => router.push(`/culture/material/${material.id}` as never)} />;
     }
   }
 
@@ -149,23 +180,27 @@ export function CultureScreen() {
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
       >
         <ScreenEntrance>
-          <CultureHeader
-            streakDays={progress.streakDays}
-            coins={progress.coins}
-            hasUnreadNotifications={hasUnreadNotifications}
-            onPressAvatar={() => router.push('/character-select' as never)}
-            onPressNotifications={() => router.push('/notifications' as never)}
+          <ScreenHeader
+            eyebrow="OYNO"
+            title={t('culture.title')}
+            subtitle={t('culture.subtitle')}
+            editorialTitle
+            actions={<IconButton icon={Search} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('culture.searchLabel')} onPress={() => router.push('/search' as never)} />}
           />
         </ScreenEntrance>
 
-        <View style={styles.horizontalPad}>
+        {featuredCollection ? (
           <HeroEntrance>
-            <CultureHero onPress={() => router.push('/collection' as never)} />
+            <FeaturedStoryCard
+              story={{ id: featuredCollection.id, eyebrow: t('culture.v2.featured'), title: featuredCollection.title, excerpt: featuredCollection.intro, image: featuredCollection.image }}
+              experience={experience}
+              onPress={() => router.push(`/collections/${featuredCollection.id}` as never)}
+            />
           </HeroEntrance>
-        </View>
+        ) : null}
 
         {isLoading ? (
           <View style={styles.horizontalPad}>
@@ -222,7 +257,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   sectionList: {
-    gap: spacing.lg,
+    gap: spacing.xl,
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,

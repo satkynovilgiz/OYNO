@@ -12,12 +12,12 @@ describe('getCultureSectionOrder', () => {
   it('leads with hands-on creators for child', () => {
     const order = getCultureSectionOrder('child');
     expect(order.indexOf('interactive')).toBeLessThan(order.indexOf('newMaterials'));
-    expect(order.indexOf('bozUy')).toBeLessThan(order.indexOf('progressQuiz'));
+    expect(order.indexOf('bozUy')).toBeLessThan(order.indexOf('learn'));
   });
 
-  it('leads with today\'s discovery for adult and pushes creator tools last', () => {
+  it('leads with curated collections for adult and pushes creator tools last', () => {
     const order = getCultureSectionOrder('adult');
-    expect(order[0]).toBe('todayDiscovery');
+    expect(order[0]).toBe('collections');
     expect(order.indexOf('interactive')).toBeGreaterThan(order.indexOf('categories'));
     expect(order.indexOf('bozUy')).toBeGreaterThan(order.indexOf('categories'));
   });

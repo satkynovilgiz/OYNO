@@ -90,7 +90,7 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
       <AnimatedPressable
         style={styles.listen}
         onPress={() => useAudioGuideStore.getState().start(sessionKey, plan)}
-        pressScale={0.97}
+        press="strong"
         haptic="light"
         accessibilityRole="button"
         accessibilityLabel={label}
@@ -110,7 +110,8 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
         <AnimatedPressable
           style={styles.playButton}
           onPress={store.toggle}
-          pressScale={0.94}
+          press="strong"
+          haptic="light"
           accessibilityRole="button"
           accessibilityLabel={isPlaying ? t('audioGuide.pause') : t('audioGuide.play')}
         >
@@ -132,10 +133,10 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
           <ProgressBar progress={progress} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceAlt} />
         </View>
 
-        <AnimatedPressable style={styles.iconButton} onPress={store.restart} accessibilityRole="button" accessibilityLabel={t('audioGuide.restart')}>
+        <AnimatedPressable style={styles.iconButton} onPress={store.restart} hitSlop={6} press="strong" accessibilityRole="button" accessibilityLabel={t('audioGuide.restart')}>
           <RotateCcw size={16} color={colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
-        <AnimatedPressable style={styles.iconButton} onPress={() => store.stop(sessionKey)} accessibilityRole="button" accessibilityLabel={t('audioGuide.stop')}>
+        <AnimatedPressable style={styles.iconButton} onPress={() => store.stop(sessionKey)} hitSlop={6} press="strong" accessibilityRole="button" accessibilityLabel={t('audioGuide.stop')}>
           <X size={16} color={colors.textSecondary} strokeWidth={2.25} />
         </AnimatedPressable>
       </View>
@@ -146,6 +147,8 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
             key={option}
             style={[styles.rate, rate === option && styles.rateActive]}
             onPress={() => store.setRate(option)}
+            hitSlop={8}
+            press="strong"
             accessibilityRole="radio"
             accessibilityState={{ checked: rate === option }}
             accessibilityLabel={t('audioGuide.speed', { rate: option })}
@@ -166,10 +169,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
+    minHeight: 40,
     borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: 'rgba(47,82,51,0.35)',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
   },
   listenText: {
     ...typography.caption,
@@ -188,10 +190,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   player: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(199,154,46,0.35)',
     padding: spacing.sm,
     gap: spacing.xs,
   },
