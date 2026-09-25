@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ConfirmationModal } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
 
-import { SettingsRow } from './components/SettingsRow';
+import { SettingsRow, SettingsSection } from './components/SettingsRow';
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
 
 type DataSettingsScreenProps = {
@@ -38,13 +38,9 @@ export function DataSettingsScreen({ onClearCache, onPressBack }: DataSettingsSc
       <Text style={styles.description}>{t('settings.data.description')}</Text>
 
       <View style={styles.group}>
-        <SettingsRow
-          icon={Trash2}
-          label={t('settings.data.clearCache')}
-          destructive
-          showChevron={false}
-          onPress={() => setConfirmVisible(true)}
-        />
+        <SettingsSection>
+          <SettingsRow icon={Trash2} label={t('settings.data.clearCache')} destructive showChevron={false} onPress={() => setConfirmVisible(true)} />
+        </SettingsSection>
       </View>
 
       {cleared ? <Text style={styles.saved}>{t('settings.data.cleared')}</Text> : null}

@@ -2,13 +2,13 @@ import { router } from 'expo-router';
 import { ChevronLeft, Heart } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedPressable, EmptyState, IconButton, Pill } from '@/components/ui';
+import { AnimatedPressable, Chip, EmptyState, IconButton, MediaImage } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useWallpaperFavoritesStore } from '@/store/useWallpaperFavoritesStore';
-import { colors, fontFamily, spacing, typography } from '@/theme';
+import { cardRadii, colors, editorial, fontFamily, spacing, textStyles, typography } from '@/theme';
 
 import { WALLPAPER_CATEGORIES, wallpapers, type WallpaperCategory } from './wallpapers';
 
@@ -34,63 +34,79 @@ export function WallpapersScreen({ onPressBack }: { onPressBack: () => void }) {
   // Two columns on every phone width; the gap and gutters are fixed so the
   // cards stay tall and even at 375, 390 and 430.
   const cardWidth = Math.floor((Math.min(width, 520) - spacing.md * 2 - spacing.sm) / 2);
+  const featured = wallpapers.find((wallpaper) => wallpaper.featured && wallpaper.portrait) ?? wallpapers[0];
+  const heroHeight = Math.min(250, Math.round(width * 0.58));
 
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         <Text style={styles.title}>{t('appearance.wallpapers.title')}</Text>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersScroll}>
-        {filters.map((option) => (
+      <ScrollView contentContainerStyle={[styles.page, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        {/* Featured: one large real wallpaper, only in the "All" view. */}
+        {filter === 'all' && featured ? (
           <AnimatedPressable
-            key={option}
-            onPress={() => setFilter(option)}
-            haptic="light"
+            style={styles.hero}
+            onPress={() => router.push(`/appearance/wallpapers/${featured.id}` as never)}
+            press="soft"
             accessibilityRole="button"
-            accessibilityState={{ selected: filter === option }}
-            accessibilityLabel={t(`appearance.wallpapers.filters.${option}`)}
+            accessibilityLabel={`${t('appearance.v2.featured')}: ${t(featured.titleKey)}`}
           >
-            <Pill label={t(`appearance.wallpapers.filters.${option}`)} tone={filter === option ? 'primary' : 'surface'} />
+            <View style={[styles.heroPhone, { width: Math.round(heroHeight * PHONE_ASPECT), height: heroHeight }]}>
+              <MediaImage source={featured.image} />
+            </View>
+            <View style={styles.heroText}>
+              <Text style={styles.heroEyebrow}>{t('appearance.v2.featured')}</Text>
+              <Text style={styles.heroTitle}>{t(featured.titleKey)}</Text>
+              <Text style={styles.heroHow}>{t('appearance.v2.howTo')}</Text>
+              <Text style={styles.heroLink}>{t('appearance.wallpapers.save')} ›</Text>
+            </View>
           </AnimatedPressable>
-        ))}
-      </ScrollView>
+        ) : null}
 
-      <ScrollView contentContainerStyle={[styles.grid, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
-        {visible.length === 0 ? (
-          <View style={styles.empty}>
-            <EmptyState icon={Heart} title={t('appearance.wallpapers.noFavoritesTitle')} description={t('appearance.wallpapers.noFavoritesDescription')} compact />
-          </View>
-        ) : (
-          visible.map((wallpaper) => {
-            const favorite = favoriteIds.includes(wallpaper.id);
-            const name = t(wallpaper.titleKey);
-            return (
-              <AnimatedPressable
-                key={wallpaper.id}
-                style={[styles.phone, { width: cardWidth, height: Math.round(cardWidth / PHONE_ASPECT) }]}
-                onPress={() => router.push(`/appearance/wallpapers/${wallpaper.id}` as never)}
-                pressScale={0.97}
-                hoverEffect
-                accessibilityRole="button"
-                accessibilityLabel={t('appearance.wallpapers.a11yCard', { name, category: t(`appearance.wallpapers.filters.${wallpaper.category}`) })}
-              >
-                <Image source={wallpaper.image} style={styles.phoneImage} resizeMode="cover" />
-                {favorite ? (
-                  <View style={styles.favoriteBadge}>
-                    <Heart size={12} color={colors.textOnDark} fill={colors.textOnDark} strokeWidth={2} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersBleed}>
+          {filters.map((option) => (
+            <Chip key={option} label={t(`appearance.wallpapers.filters.${option}`)} selected={filter === option} onPress={() => setFilter(option)} accessibilityRole="tab" />
+          ))}
+        </ScrollView>
+
+        <View style={styles.grid}>
+          {visible.length === 0 ? (
+            <View style={styles.empty}>
+              <EmptyState icon={Heart} title={t('appearance.wallpapers.noFavoritesTitle')} description={t('appearance.wallpapers.noFavoritesDescription')} compact />
+            </View>
+          ) : (
+            visible.filter((wallpaper) => !(filter === 'all' && wallpaper.id === featured?.id)).map((wallpaper) => {
+              const favorite = favoriteIds.includes(wallpaper.id);
+              const name = t(wallpaper.titleKey);
+              return (
+                <AnimatedPressable
+                  key={wallpaper.id}
+                  style={[styles.phone, { width: cardWidth, height: Math.round(cardWidth / PHONE_ASPECT) }]}
+                  onPress={() => router.push(`/appearance/wallpapers/${wallpaper.id}` as never)}
+                  press="soft"
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('appearance.wallpapers.a11yCard', { name, category: t(`appearance.wallpapers.filters.${wallpaper.category}`) })}${favorite ? `. ${t('appearance.wallpapers.filters.favorites')}` : ''}`}
+                >
+                  {/* expo-image decodes at card size (not full resolution) and caches. */}
+                  <MediaImage source={wallpaper.image} />
+                  {favorite ? (
+                    <View style={styles.favoriteBadge}>
+                      <Heart size={12} color={colors.textOnDark} fill={colors.textOnDark} strokeWidth={2} />
+                    </View>
+                  ) : null}
+                  <View style={styles.nameTag}>
+                    <Text style={styles.name} numberOfLines={1}>
+                      {name}
+                    </Text>
                   </View>
-                ) : null}
-                <View style={styles.nameTag}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {name}
-                  </Text>
-                </View>
-              </AnimatedPressable>
-            );
-          })
-        )}
+                </AnimatedPressable>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -100,13 +116,19 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, fontFamily: fontFamily.wordmark, color: colors.textPrimary, flex: 1 },
-  // Never let the chip row shrink under the grid below it.
-  filtersScroll: { flexGrow: 0, flexShrink: 0 },
-  filters: { paddingHorizontal: spacing.md, gap: spacing.xs, paddingBottom: spacing.md, alignItems: 'center' },
+  page: { gap: spacing.md },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginHorizontal: spacing.md, padding: spacing.sm, borderRadius: cardRadii.media, backgroundColor: colors.surfaceFeature },
+  heroPhone: { borderRadius: 18, overflow: 'hidden', borderWidth: 3, borderColor: 'rgba(251,243,227,0.9)' },
+  heroText: { flex: 1, gap: 4, paddingRight: spacing.xs },
+  heroEyebrow: { ...textStyles.overline, color: colors.accentGold },
+  heroTitle: { ...editorial(textStyles.h2), color: colors.textOnDark },
+  heroHow: { ...textStyles.caption, color: colors.textOnDarkSecondary },
+  heroLink: { ...textStyles.caption, fontWeight: '700', color: colors.accentGold, marginTop: spacing.xs },
+  filtersBleed: { flexGrow: 0 },
+  filters: { paddingHorizontal: spacing.md, gap: spacing.xs, alignItems: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.md },
   empty: { width: '100%' },
   phone: { borderRadius: 24, overflow: 'hidden', backgroundColor: colors.surfaceAlt, borderWidth: 3, borderColor: colors.surface },
-  phoneImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
   favoriteBadge: {
     position: 'absolute',
     top: spacing.sm,

@@ -25,7 +25,7 @@ export function AppearanceScreen({ onPressBack }: { onPressBack: () => void }) {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         <View style={styles.headerText}>
           <Text style={styles.title}>{t('appearance.title')}</Text>
           <Text style={styles.subtitle}>{t('appearance.subtitle')}</Text>

@@ -1,117 +1,61 @@
-import { Check } from 'lucide-react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { AlarmClock, Cloud, Image as ImageIcon, NotebookPen, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable } from '@/components/ui';
-import type { PrivacyPreferences } from '@/store/useSettingsStore';
-import { colors, radii, spacing, typography } from '@/theme';
+import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
+import { SettingsRow, SettingsSection } from './components/SettingsRow';
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
 
-type PrivacySettingsScreenProps = {
-  preferences: PrivacyPreferences;
-  onChange: <K extends keyof PrivacyPreferences>(key: K, value: PrivacyPreferences[K]) => void;
-  onPressBack: () => void;
-};
-
-export function PrivacySettingsScreen({ preferences, onChange, onPressBack }: PrivacySettingsScreenProps) {
+/**
+ * Privacy - plain explanations of what OYNO actually does with data, plus
+ * the real controls that exist elsewhere (Reminders). There are no
+ * visibility switches here: OYNO has no public profiles, leaderboards or
+ * social activity, so such switches would do nothing.
+ */
+export function PrivacySettingsScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const facts: { icon: LucideIcon; title: string; body: string }[] = [
+    { icon: NotebookPen, title: t('settings.v2.privacy.journalTitle'), body: t('settings.v2.privacy.journalBody') },
+    { icon: Cloud, title: t('settings.v2.privacy.progressTitle'), body: t('settings.v2.privacy.progressBody') },
+    { icon: ImageIcon, title: t('settings.v2.privacy.photosTitle'), body: t('settings.v2.privacy.photosBody') },
+    { icon: AlarmClock, title: t('settings.v2.privacy.notificationsTitle'), body: t('settings.v2.privacy.notificationsBody') },
+  ];
 
   return (
     <SettingsScreenLayout title={t('settings.privacy.title')} onPressBack={onPressBack}>
-      <OptionGroup
-        title={t('settings.privacy.profileVisibility')}
-        options={[
-          { value: 'public', label: t('settings.privacy.public') },
-          { value: 'friends', label: t('settings.privacy.friendsOnly') },
-          { value: 'private', label: t('settings.privacy.private') },
-        ]}
-        selected={preferences.profileVisibility}
-        onSelect={(value) => onChange('profileVisibility', value)}
-      />
-
-      <OptionGroup
-        title={t('settings.privacy.leaderboardVisibility')}
-        options={[
-          { value: 'visible', label: t('settings.privacy.visible') },
-          { value: 'hidden', label: t('settings.privacy.hidden') },
-        ]}
-        selected={preferences.leaderboardVisibility}
-        onSelect={(value) => onChange('leaderboardVisibility', value)}
-      />
-
-      <OptionGroup
-        title={t('settings.privacy.activityVisibility')}
-        options={[
-          { value: 'public', label: t('settings.privacy.public') },
-          { value: 'friends', label: t('settings.privacy.friendsOnly') },
-          { value: 'private', label: t('settings.privacy.private') },
-        ]}
-        selected={preferences.activityVisibility}
-        onSelect={(value) => onChange('activityVisibility', value)}
-      />
+      <View style={styles.stack}>
+        <Text style={styles.intro}>{t('settings.v2.privacy.intro')}</Text>
+        <View style={styles.card}>
+          {facts.map(({ icon: Icon, title, body }, index) => (
+            <View key={title} style={[styles.fact, index > 0 && styles.factDivider]} accessible accessibilityLabel={`${title}. ${body}`}>
+              <View style={styles.icon}>
+                <Icon size={18} color={colors.primary} strokeWidth={2} />
+              </View>
+              <View style={styles.factText}>
+                <Text style={styles.factTitle}>{title}</Text>
+                <Text style={styles.factBody}>{body}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+        <SettingsSection footer={t('settings.v2.privacy.deleteNote')}>
+          <SettingsRow icon={AlarmClock} label={t('settings.v2.privacy.manageReminders')} onPress={() => router.push('/settings/reminders' as never)} />
+        </SettingsSection>
+      </View>
     </SettingsScreenLayout>
   );
 }
 
-function OptionGroup<T extends string>({
-  title,
-  options,
-  selected,
-  onSelect,
-}: {
-  title: string;
-  options: { value: T; label: string }[];
-  selected: T;
-  onSelect: (value: T) => void;
-}) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.group}>
-        {options.map((option) => {
-          const isSelected = option.value === selected;
-          return (
-            <AnimatedPressable
-              key={option.value}
-              style={styles.row}
-              onPress={() => onSelect(option.value)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: isSelected }}
-              accessibilityLabel={option.label}
-            >
-              <Text style={styles.rowLabel}>{option.label}</Text>
-              {isSelected ? <Check size={18} color={colors.primary} strokeWidth={2.5} /> : null}
-            </AnimatedPressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  section: {
-    gap: spacing.xs,
-  },
-  sectionTitle: {
-    ...typography.overline,
-    color: colors.textSecondary,
-  },
-  group: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  rowLabel: {
-    ...typography.body,
-    color: colors.textPrimary,
-  },
+  stack: { gap: spacing.lg },
+  intro: { ...textStyles.body, color: colors.textSecondary },
+  card: { borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated },
+  fact: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  factDivider: { borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.borderSubtle },
+  icon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
+  factText: { flex: 1, gap: 3 },
+  factTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
+  factBody: { ...textStyles.caption, fontSize: 14, lineHeight: 20, color: colors.textSecondary },
 });

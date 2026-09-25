@@ -7,7 +7,7 @@ import { Button, ConfirmationModal, TextField } from '@/components/ui';
 import type { AuthUser } from '@/services/auth';
 import { colors, radii, spacing, typography } from '@/theme';
 
-import { SettingsRow } from './components/SettingsRow';
+import { SettingsRow, SettingsSection } from './components/SettingsRow';
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
 
 type AccountSettingsScreenProps = {
@@ -84,16 +84,15 @@ export function AccountSettingsScreen({
       </View>
 
       <View style={styles.group}>
-        <SettingsRow icon={Sparkles} label={t('settings.account.customizeAvatar')} onPress={onPressCustomizeAvatar} />
-        <SettingsRow icon={Users} label={t('settings.account.storyCompanion')} onPress={onPressStoryCompanion} />
-        <SettingsRow icon={KeyRound} label={t('settings.account.changePassword')} onPress={onPressChangePassword} />
-        <SettingsRow
-          icon={Trash2}
-          label={t('settings.account.deleteAccount')}
-          destructive
-          showChevron={false}
-          onPress={() => setDeleteVisible(true)}
-        />
+        <SettingsSection>
+          <SettingsRow icon={Sparkles} label={t('settings.account.customizeAvatar')} onPress={onPressCustomizeAvatar} />
+          <SettingsRow icon={Users} label={t('settings.account.storyCompanion')} onPress={onPressStoryCompanion} />
+          <SettingsRow icon={KeyRound} label={t('settings.account.changePassword')} onPress={onPressChangePassword} />
+        </SettingsSection>
+        {/* Deleting the account is set apart from ordinary rows. */}
+        <SettingsSection>
+          <SettingsRow icon={Trash2} label={t('settings.account.deleteAccount')} destructive showChevron={false} onPress={() => setDeleteVisible(true)} />
+        </SettingsSection>
       </View>
 
       <ConfirmationModal
@@ -141,7 +140,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   group: {
-    gap: spacing.xs,
+    gap: spacing.md,
   },
   deleteWarning: {
     flexDirection: 'row',

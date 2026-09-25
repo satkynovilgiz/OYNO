@@ -223,6 +223,43 @@
       "messagePlaceholder": "Write your message...",
       "send": "Send",
       "defaultSubject": "OYNO support"
+    },
+    "v2": {
+      "sections": {
+        "experience": "Experience",
+        "personalization": "Personalization",
+        "content": "Content & reminders",
+        "privacy": "Privacy & data",
+        "support": "Support",
+        "about": "About"
+      },
+      "guestTitle": "Guest",
+      "guestBody": "With an account, your progress and journal stay with you on every device.",
+      "signIn": "Sign in",
+      "createAccount": "Create account",
+      "manageAccount": "Manage account",
+      "appearanceSubtitle": "Wallpapers and widgets",
+      "remindersOn": "On: {{count}}",
+      "off": "Off",
+      "downloads": "Downloads: {{count}}",
+      "noDownloads": "No downloads",
+      "gameSubtitle": "Sound and haptics",
+      "storage": "Cache",
+      "reportProblem": "Report a problem",
+      "version": "Version {{version}}",
+      "privacy": {
+        "intro": "OYNO is upfront about how your data is used. No switches for show here - only real actions.",
+        "journalTitle": "Your journal is private",
+        "journalBody": "Your entries belong to your account only - other users can never see them. When you are signed in they sync between your devices over a secure connection. Their text never goes into analytics or feedback reports.",
+        "progressTitle": "Progress and sync",
+        "progressBody": "Achievements, places and saved items are kept with your account. As a guest, only on this phone.",
+        "photosTitle": "Photos",
+        "photosBody": "OYNO opens your photo library only when you choose a photo or save a wallpaper.",
+        "notificationsTitle": "Reminders",
+        "notificationsBody": "Reminders arrive only if you turned them on. No ads.",
+        "manageReminders": "Manage reminders",
+        "deleteNote": "You can delete your account in Account."
+      }
     }
   },
   "home": {
@@ -1769,6 +1806,20 @@
       "noActiveTrail": "No trail started yet",
       "noData": "Loading…",
       "openApp": "Open OYNO for today's discovery"
+    },
+    "v2": {
+      "featured": "Featured wallpaper",
+      "howTo": "After saving: Photos → open the image → Share → Use as Wallpaper.",
+      "installTitle": "How to add a widget",
+      "installSteps": [
+        "Touch and hold an empty area of your Home Screen.",
+        "Tap “+” in the top corner.",
+        "Search for OYNO.",
+        "Choose a widget and size, then tap Add Widget."
+      ],
+      "lockHint": "Lock Screen: touch and hold the screen → Customize → Lock Screen → widgets.",
+      "unavailable": "Widgets work only in the installed OYNO phone app. Here you see how they look.",
+      "sizes": "Sizes"
     }
   },
   "reminders": {

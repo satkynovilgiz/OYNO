@@ -2,16 +2,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Info } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ImageBackground, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, ImageBackground, Platform, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { IconButton, ProgressRing } from '@/components/ui';
+import { Chip, IconButton, ProgressRing } from '@/components/ui';
 import { cultureItemImages, cultureMaterialImages } from '@/features/culture/data';
 import { natureSiteImages } from '@/features/explore/data';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import type { WidgetSnapshot } from '@/services/widgets/widgetSnapshot';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { cardRadii, colors, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
+
+import { WIDGET_CATALOG, widgetAvailability } from './widgetCatalog';
 
 import { useWidgetSnapshot } from './useWidgetSnapshot';
 
@@ -30,6 +32,7 @@ export function WidgetsScreen({ onPressBack }: { onPressBack: () => void }) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const snapshot = useWidgetSnapshot();
+  const availability = widgetAvailability();
 
   const inner = Math.min(width, 520) - spacing.md * 2 - spacing.md * 2;
   const small = Math.min(170, Math.floor((inner - GAP) / 2));
@@ -38,15 +41,19 @@ export function WidgetsScreen({ onPressBack }: { onPressBack: () => void }) {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onPressBack} />
         <Text style={styles.title}>{t('appearance.widgets.title')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
-        <View style={styles.note}>
-          <Info size={16} color={colors.primary} strokeWidth={2.25} />
-          <Text style={styles.noteText}>{t('appearance.widgets.previewNote')}</Text>
-        </View>
+        {/* Honest status: previews always; "installed" only in an iOS build
+            that really contains the widget extension. */}
+        {availability === 'unavailable' ? (
+          <View style={styles.note}>
+            <Info size={16} color={colors.primary} strokeWidth={2.25} />
+            <Text style={styles.noteText}>{Platform.OS === 'ios' ? t('appearance.widgets.previewNote') : t('appearance.v2.unavailable')}</Text>
+          </View>
+        ) : null}
 
         <Text style={styles.sectionTitle}>{t('appearance.widgets.homeScreen')}</Text>
         <View style={styles.homeCanvas}>
@@ -84,6 +91,35 @@ export function WidgetsScreen({ onPressBack }: { onPressBack: () => void }) {
           </View>
           <Text style={styles.lockCaption}>{t('appearance.widgets.lockCaption')}</Text>
         </ImageBackground>
+
+        {/* Sizes - the same list the native extension declares. */}
+        <Text style={styles.sectionTitle}>{t('appearance.v2.sizes')}</Text>
+        <View style={styles.sizes}>
+          {WIDGET_CATALOG.map((entry, index) => (
+            <View key={entry.kind} style={[styles.sizeRow, index > 0 && styles.sizeDivider]} accessible accessibilityLabel={`${t(`appearance.widgets.types.${entry.kind}`)}: ${entry.families.map((family) => t(`appearance.widgets.families.${family}`)).join(', ')}`}>
+              <Text style={styles.sizeName}>{t(`appearance.widgets.types.${entry.kind}`)}</Text>
+              <View style={styles.sizeChips}>
+                {entry.families.map((family) => (
+                  <Chip key={family} label={t(`appearance.widgets.families.${family}`)} />
+                ))}
+              </View>
+            </View>
+          ))}
+        </View>
+
+        {/* How to add - OYNO can't add widgets for the user. */}
+        <Text style={styles.sectionTitle}>{t('appearance.v2.installTitle')}</Text>
+        <View style={styles.sizes}>
+          {(t('appearance.v2.installSteps', { returnObjects: true }) as string[]).map((step, index) => (
+            <View key={index} style={styles.step}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.stepText}>{step}</Text>
+            </View>
+          ))}
+          <Text style={styles.lockHint}>{t('appearance.v2.lockHint')}</Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -293,6 +329,16 @@ function LockRectangular({ snapshot }: { snapshot: WidgetSnapshot }) {
 }
 
 const styles = StyleSheet.create({
+  sizes: { padding: spacing.md, gap: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated },
+  sizeRow: { gap: 6 },
+  sizeDivider: { paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.borderSubtle },
+  sizeName: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
+  sizeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  stepNumber: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  stepNumberText: { ...textStyles.small, color: colors.textOnDark },
+  stepText: { ...textStyles.body, color: colors.textPrimary, flex: 1 },
+  lockHint: { ...textStyles.caption, color: colors.textSecondary, marginTop: spacing.xs },
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, fontFamily: fontFamily.wordmark, color: colors.textPrimary, flex: 1 },

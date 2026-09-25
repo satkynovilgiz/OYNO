@@ -11,6 +11,8 @@ import { useWallpaperFavoritesStore } from '@/store/useWallpaperFavoritesStore';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 import type { Wallpaper } from './wallpapers';
+import { showToast } from '@/components/ui/Toast';
+import { wallpaperSaveFeedback } from './wallpaperFeedback';
 
 const LOCALE: Record<string, string> = { kg: 'ky-KG', ru: 'ru-RU', en: 'en-US' };
 
@@ -50,8 +52,10 @@ export function WallpaperPreviewScreen({ wallpaper, onPressBack }: { wallpaper: 
   async function handleSave() {
     if (saving) return;
     setSaving(true);
-    setResult(await saveWallpaper(wallpaper.image, `oyno-${wallpaper.id}`));
+    const outcome = await saveWallpaper(wallpaper.image, `oyno-${wallpaper.id}`);
+    setResult(outcome);
     setSaving(false);
+    if (wallpaperSaveFeedback(outcome).toast) showToast(t(`appearance.wallpapers.result.${outcome}`), { haptic: true });
   }
 
   const clock = formatClock(now, i18n.language);
