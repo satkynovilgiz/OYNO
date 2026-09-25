@@ -61,7 +61,7 @@ export function HomeProgressSection({
         <ProgressBar progress={xpRatio} height={6} fillColor={rewarding ? colors.accentGold : colors.primary} trackColor={colors.surfaceMuted} />
 
         <View style={styles.stats}>
-          <StatPill icon={Coins} value={player.coins.toLocaleString('ru-RU')} color={colors.accentGoldPressed} accessibilityLabel={`${player.coins} ${t('profile.stats.coins', { defaultValue: 'coins' })}`} />
+          <StatPill icon={Coins} value={player.coins.toLocaleString('ru-RU')} color={colors.accentGoldPressed} accessibilityLabel={`${player.coins} ${t('profile.v2.statCoins')}`} />
           <StatPill icon={Award} value={player.gems.toLocaleString('ru-RU')} color={colors.accentTerracotta} />
           {player.streakDays > 0 ? <StatPill icon={Flame} value={player.streakDays} color={colors.accentTerracotta} /> : null}
         </View>

@@ -14,7 +14,7 @@ Device: `__________` · Tester: `______` · Date: `______`
 - [ ] `ios.appleTeamId` set in `app.json` (needed for the widget extension signing)
 - [ ] App Group `group.com.ilgizsatkynov.oyno.widgets` registered in the Apple Developer portal and enabled for **both** `com.ilgizsatkynov.oyno` and `com.ilgizsatkynov.oyno.widget`
 - [ ] EAS credentials generated for both bundle ids (`eas credentials`)
-- [ ] `npx expo install --fix` run (expo-doctor reports 22 patch-level mismatches) **before** the native build — not via an OTA update
+- [x] `npx expo install --fix` run — expo-doctor 21/21 (2026-09-24); see `TESTFLIGHT_READINESS.md`
 - [ ] Fresh native build made (`eas build -p ios --profile preview`); the preview channel's older binaries lack view-shot, sharing, media-library, speech and the widget extension
 
 ## Real iPhone verification
