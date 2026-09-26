@@ -42,6 +42,11 @@ const MUST_NOT_HAVE_CLIENT_WRITE_POLICY = [
   'user_challenge_results',
   'beta_feedback',
   'user_journal_entries',
+  'content_translations',
+  'content_review_notes',
+  'guided_quest_steps',
+  'guided_quest_rewards',
+  'user_guided_quests',
 ];
 
 describe('database security invariants (static migration lint)', () => {

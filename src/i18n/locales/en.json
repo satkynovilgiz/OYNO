@@ -1000,6 +1000,37 @@
       "relatedTitle": "Keep reading",
       "testKnowledge": "Test your knowledge",
       "inCollection": "Collection: {{title}}"
+    },
+    "labs": {
+      "aboutTitle": "About this lab",
+      "labels": {
+        "whatItIs": "What it is",
+        "whatYouDo": "What you do here",
+        "simplified": "What is simplified"
+      },
+      "oymo": {
+        "whatItIs": "Oymo is Kyrgyz ornament - patterns used on felt, leather, wood and jewellery, where each element carries a meaning.",
+        "whatYouDo": "Place motifs on the canvas, mirror them and choose colours.",
+        "simplified": "Real oymo are cut, carved or stitched by hand; here the motifs are ready-made shapes."
+      },
+      "shyrdak": {
+        "whatItIs": "A shyrdak is a felt carpet made from two contrasting layers of felt, cut together and sewn into a positive-negative design.",
+        "whatYouDo": "Pick a pattern, two colours, a border and symmetry.",
+        "simplified": "The real work - felting, cutting and hand stitching (shyryk) - takes days; here the pattern is applied at once."
+      },
+      "bozUy": {
+        "whatItIs": "The boz üy is the traditional Kyrgyz nomadic home: a wooden frame covered with felt.",
+        "whatYouDo": "Put its main parts together in order and learn their names.",
+        "simplified": "Building a real boz üy takes several people working together; here each part snaps into place."
+      },
+      "komuz": {
+        "whatItIs": "The komuz is a three-stringed plucked Kyrgyz instrument.",
+        "whatYouDo": "Learn its parts, try the strings and listen to real melodies.",
+        "simplified": "Tapping a string here only shows it moving - the music you hear is from real recordings."
+      },
+      "shareDesign": "Share design",
+      "myDesign": "My design",
+      "shareMessage": "A design I made in OYNO"
     }
   },
   "explore": {
@@ -2477,5 +2508,95 @@
     "removed": "Removed from Saved",
     "downloaded": "Available offline",
     "journalSaved": "Journal entry saved"
+  },
+  "content": {
+    "kyrgyzOnly": "This text is only available in Kyrgyz for now."
+  },
+  "sources": {
+    "title": "Sources & notes",
+    "count": "Sources: {{count}}",
+    "none": "No sources listed yet",
+    "noneLong": "No sources have been recorded for this entry yet.",
+    "view": "View source",
+    "externalNote": "Sources open on their own websites; OYNO does not own or edit them.",
+    "status": {
+      "verified": "Reviewed against listed sources",
+      "partially_verified": "Some details are still being reviewed",
+      "unverified": "This entry is still being reviewed"
+    },
+    "kinds": {
+      "encyclopedia": "Encyclopedia",
+      "education": "Education portal",
+      "news": "News",
+      "institution": "Institution",
+      "research": "Research",
+      "media_archive": "Media archive",
+      "document": "Document",
+      "social": "Social media",
+      "website": "Website"
+    }
+  },
+  "quests": {
+    "title": "Quests",
+    "subtitle": "Short cultural adventures with your guide.",
+    "continueTitle": "Continue quest",
+    "availableTitle": "Available",
+    "completedTitle": "Completed",
+    "emptyTitle": "No quests yet",
+    "emptyBody": "New quests will appear here.",
+    "progress": "{{completed}}/{{total}} steps",
+    "view": "View",
+    "continue": "Continue",
+    "start": "Start",
+    "go": "Go",
+    "open": "Open",
+    "needsInternet": "Needs internet - not downloaded",
+    "stepState": {
+      "completed": "Done",
+      "current": "Next step",
+      "upcoming": "Later"
+    },
+    "rewardTitle": "Reward",
+    "reward": "+{{xp}} XP · +{{coins}} coins",
+    "rewardState": {
+      "none": "Given when every step is done.",
+      "claiming": "Adding your reward...",
+      "claimed": "Reward added to your account.",
+      "already": "You already received this reward.",
+      "syncing": "Your progress is still syncing - the reward will be added once it arrives.",
+      "guest": "Rewards are saved with an account. Your quest progress stays on this phone."
+    },
+    "continueExploring": "Continue exploring",
+    "profileActive": "Continue: {{title}}",
+    "profileCount": "Completed: {{completed}} of {{total}}"
+  },
+  "companion": {
+    "lines": {
+      "daily": {
+        "intro": "Today's discovery is waiting. Let's see what it holds.",
+        "outro": "One more piece of Kyrgyz culture is yours today. See you tomorrow!"
+      },
+      "trail": {
+        "start": "A trail is a path of stories. Take the first step whenever you're ready.",
+        "complete": "The whole trail is behind you — every step here is real."
+      },
+      "challenge": {
+        "start": "Take your time. Every answer comes with a short story.",
+        "resultStrong": "Well done! Want to read more about what came up today?",
+        "resultKeepGoing": "Every question is a new story. Try again whenever you like — each round teaches something."
+      },
+      "journey": {
+        "start": "Every journey starts with one step. Pick a place or a story to begin.",
+        "progress": "Look how far you've come. Every stamp here is something you really did."
+      },
+      "achievement": {
+        "unlocked": "You earned this one. It's great to travel together!"
+      },
+      "empty": {
+        "saved": "This is where your own collection of favourite finds will live.",
+        "journal": "Your journal is waiting for its first memory. What did you discover today?",
+        "quests": "Pick a quest and I'll guide you step by step."
+      }
+    }
   }
 }

@@ -1,17 +1,19 @@
 import { router } from 'expo-router';
-import { Award, Coins, Flame, Gamepad2, Heart, MapPin, Settings, Trophy } from 'lucide-react-native';
+import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, Settings, Trophy } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { AgeExperienceTransition, FadeSlideIn, HeroEntrance, IconButton, MediaCard, ScreenEntrance, StatPill } from '@/components/ui';
+import { AgeExperienceTransition, AnimatedPressable, FadeSlideIn, HeroEntrance, IconButton, MediaCard, ScreenEntrance, StatPill } from '@/components/ui';
 import { computeCollectionProgress } from '@/features/collections/collectionProgress';
 import { collections } from '@/features/collections/collectionsData';
 import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
 import { natureSiteImages } from '@/features/explore/data';
 import { buildPassport } from '@/features/journey/passport';
+import { pickActiveQuest } from '@/features/quests/questProgress';
+import { useQuestProgress } from '@/features/quests/useQuests';
 import { useExploreRegions } from '@/services/content/exploreService';
 import journeyBackdrop from '@assets/img/OYNO_design/explore/quest_boru_shyrdak.png';
 import { mockGamesList } from '@/features/games/mockData';
@@ -26,7 +28,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
 import { AchievementsPreviewCard, FavoriteGamesCard, ProfileCollectionRow, ProfileIdentityCard } from './components';
 import { achievementsTotal, getCollectionItems, profileAchievements } from './data';
@@ -95,6 +97,12 @@ export function ProfileScreen() {
       route: game.route,
     }));
 
+  const questProgress = useQuestProgress();
+  const activeQuest = pickActiveQuest(questProgress);
+  const questsSummary = activeQuest
+    ? t('quests.profileActive', { title: activeQuest.quest.title[i18n.language as 'kg' | 'ru' | 'en'] ?? activeQuest.quest.title.kg })
+    : t('quests.profileCount', { completed: questProgress.filter((entry) => entry.status === 'completed').length, total: questProgress.length });
+
   function renderSection(id: ProfileSectionId) {
     switch (id) {
       case 'journey':
@@ -114,6 +122,23 @@ export function ProfileScreen() {
               onPress={() => router.push('/journey' as never)}
               accessibilityLabel={`${t('journey.title')}. ${t('profile.v2.journeySummary', { places: passport.unlocked, total: passport.total, collections: collectionsCompleted })}`}
             />
+            {/* Short themed adventures - real counts only. */}
+            <AnimatedPressable
+              style={styles.questsRow}
+              onPress={() => router.push('/quests' as never)}
+              press="soft"
+              accessibilityRole="button"
+              accessibilityLabel={`${t('quests.title')}. ${questsSummary}`}
+            >
+              <Compass size={18} color={colors.primary} strokeWidth={2} />
+              <View style={styles.questsText}>
+                <Text style={styles.questsTitle}>{t('quests.title')}</Text>
+                <Text style={styles.questsMeta} numberOfLines={1}>
+                  {questsSummary}
+                </Text>
+              </View>
+              <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+            </AnimatedPressable>
           </View>
         );
       case 'achievements':
@@ -217,6 +242,10 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  questsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
+  questsText: { flex: 1, gap: 2 },
+  questsTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
+  questsMeta: { ...textStyles.small, color: colors.textSecondary },
   root: {
     flex: 1,
     backgroundColor: colors.background,

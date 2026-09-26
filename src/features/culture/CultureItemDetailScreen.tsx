@@ -2,12 +2,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { type ImageSourcePropType, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { SourcesAndNotes } from '@/components/content/SourcesAndNotes';
+import { type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
-import { AnimatedPressable, Chip, HeroEntrance, IconButton, MediaImage } from '@/components/ui';
+import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
@@ -73,9 +76,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
 
   // Listen reads exactly what this screen shows below: the simple summary
   // (authored in the app language) or the Kyrgyz-authored field texts.
+  // Field text is in the app language only when the resolver found a full
+  // reviewed translation; otherwise it is the Kyrgyz source (read with the
+  // Kyrgyz title, so one narration never mixes languages).
+  const bodyLanguage: SupportedLanguage = item.translation?.status === 'available' ? (i18n.language as SupportedLanguage) : 'kg';
   const narration: Narration = simpleSummary
     ? { lang: i18n.language as SupportedLanguage, text: joinNarration([item.title, simpleSummary]) }
-    : { lang: 'kg', text: joinNarration([item.title, ...filledFields.map((field) => item[field.key] as string)]) };
+    : { lang: bodyLanguage, text: joinNarration([bodyLanguage === 'kg' ? (item.translation?.titles.kg ?? item.title) : item.title, ...filledFields.map((field) => item[field.key] as string)]) };
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
   // The primary photo (admin-uploaded image_url, falling back to the first
@@ -156,11 +163,15 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         )}
 
         <View style={styles.contentBody}>
-          {/* 2. Short context: alternative names + source accuracy. */}
-          <View style={styles.context}>
-            {item.alt_names ? <Text style={styles.altNames}>{item.alt_names}</Text> : null}
-            <Chip label={t(`culture.item.accuracy.${item.accuracy_level}`)} />
-          </View>
+          {/* 2. Short context: alternative names. (Review state and sources
+              live in the quiet "Sources & notes" row at the end.) */}
+          {item.alt_names ? (
+            <View style={styles.context}>
+              <Text style={styles.altNames}>{item.alt_names}</Text>
+            </View>
+          ) : null}
+
+          {simpleSummary ? null : <KyrgyzOnlyNote status={item.translation?.status} language={i18n.language} />}
 
           {/* 3. Compact audio guide, right where reading starts. */}
           <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} />
@@ -209,18 +220,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
 
           {challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
-          {item.sources && item.sources.length > 0 ? (
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>{t('culture.item.sourcesLabel')}</Text>
-              {item.sources.map((url) => (
-                <AnimatedPressable key={url} onPress={() => Linking.openURL(url)} accessibilityRole="link">
-                  <Text style={styles.sourceLink} numberOfLines={1}>
-                    {url}
-                  </Text>
-                </AnimatedPressable>
-              ))}
-            </View>
-          ) : null}
+          <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
         </View>
 
         {/* 7. Related real items from the same category. */}

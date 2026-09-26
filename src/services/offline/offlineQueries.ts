@@ -6,6 +6,7 @@ import { fetchCultureMaterial, fetchCultureMaterials } from '@/services/content/
 import { fetchDiscoveries } from '@/services/content/discoveriesService';
 import { fetchCurrentQuest, fetchExploreRegions } from '@/services/content/exploreService';
 import { fetchQuestSteps } from '@/services/content/questStepsService';
+import { fetchContentTranslationsForOffline } from '@/services/content/translationsService';
 
 import type { OfflineKind } from './offlineManifest';
 
@@ -15,6 +16,12 @@ import type { OfflineKind } from './offlineManifest';
  * offline copy is exactly what the screen would have fetched.
  */
 export function queryKeysForDownload(kind: OfflineKind, contentId: string, context: { collection?: Collection; questId?: string | null }): QueryKey[] {
+  // Every download also keeps the RU/EN translations, so a downloaded
+  // article or destination reads in the app language offline too.
+  return [...contentKeysForDownload(kind, contentId, context), ['content_translations']];
+}
+
+function contentKeysForDownload(kind: OfflineKind, contentId: string, context: { collection?: Collection; questId?: string | null }): QueryKey[] {
   if (kind === 'nature') {
     // app/explore/[id].tsx: useExploreRegions, useDiscoveries, useCurrentQuest, useQuestSteps
     const keys: QueryKey[] = [['explore_regions'], ['discoveries'], ['quests', 'current']];
@@ -56,6 +63,8 @@ export function fetcherFor(key: QueryKey): (() => Promise<unknown>) | null {
       return fetchCultureMaterials;
     case 'culture_material':
       return arg ? () => fetchCultureMaterial(arg) : null;
+    case 'content_translations':
+      return fetchContentTranslationsForOffline;
     default:
       return null;
   }

@@ -1,0 +1,27 @@
+{
+  "_note": "Only destinations whose facts contain no claim awaiting verification (docs/CONTENT_AUDIT.md §5). Order = explore_regions.facts order.",
+  "chuy": {
+    "ru": ["Крупные города: Токмок, Кант, Кара-Балта.", "Город Бишкек имеет отдельный республиканский статус, поэтому не входит в состав области."],
+    "en": ["Its main towns are Tokmok, Kant and Kara-Balta.", "The city of Bishkek has its own national-level status, so it is not part of the region."]
+  },
+  "naryn": {
+    "ru": ["95% территории области расположено выше 1000 метров над уровнем моря.", "Родина высокогорных озёр — Сон-Куль, Кол-Суу, Чатыр-Куль."],
+    "en": ["95% of the region lies more than 1,000 metres above sea level.", "It is home to high mountain lakes such as Son-Köl, Kol-Suu and Chatyr-Köl."]
+  },
+  "osh": {
+    "ru": ["Расположен в восточной части Ферганской долины, у подножия Алайских гор.", "Второй по величине город Кыргызстана."],
+    "en": ["It lies in the eastern part of the Fergana Valley, at the foot of the Alay mountains.", "It is the second-largest city in Kyrgyzstan."]
+  },
+  "jalal-abad": {
+    "ru": ["На основе минеральных источников здесь развились курорты.", "В этой области находятся ореховый лес Арсланбоб и Сары-Челекский биосферный заповедник."],
+    "en": ["Resorts have grown up around its mineral springs.", "The Arslanbob walnut forest and the Sary-Chelek Biosphere Reserve are in this region."]
+  },
+  "suusamyr": {
+    "ru": ["Между хребтами Кыргызский Ала-Тоо, Суусамыр и Джумгал, на высоте 2000–3200 метров.", "Главное пастбище для скота, пригоняемого из Чуйской, Таласской и Кетмень-Тюбинской долин."],
+    "en": ["It lies between the Kyrgyz Ala-Too, Suusamyr and Jumgal ranges, at 2,000-3,200 metres.", "It is the main pasture for livestock brought from the Chüy, Talas and Ketmen-Töbö valleys."]
+  },
+  "arslanbob": {
+    "ru": ["Расположен в Джалал-Абадской области, в долине Арстанбап.", "Возраст некоторых ореховых деревьев превышает тысячу лет."],
+    "en": ["It lies in Jalal-Abad Region, in the Arstanbap valley.", "Some of its walnut trees are more than a thousand years old."]
+  }
+}

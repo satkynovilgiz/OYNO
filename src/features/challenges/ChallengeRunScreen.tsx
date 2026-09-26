@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, Image, type ImageSourcePropType, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, Button, IconButton, ProgressBar, sourceWidth } from '@/components/ui';
 import { getCollection, type Collection } from '@/features/collections/collectionsData';
@@ -27,7 +28,7 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, editorial, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds, pickDailyQuestionIds, scoreAnswers, type AnswerRecord } from './challengeLogic';
-import { getQuestion, routeForSource, type ChallengeOption, type ChallengeQuestion, type OptionImageRef } from './questionBank';
+import { getQuestion, questionReviewLevel, routeForSource, type ChallengeOption, type ChallengeQuestion, type OptionImageRef } from './questionBank';
 
 function imageFor(ref: OptionImageRef | undefined): ImageSourcePropType | null {
   if (!ref) return null;
@@ -55,6 +56,23 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   const { data: cultureItems } = useAllCultureItems();
   const { data: materials } = useCultureMaterials();
   const { data: regions } = useExploreRegions();
+
+  // Review state of the entry a question comes from - shown under the
+  // explanation only when it is not fully reviewed (never "verified
+  // knowledge" wording for unreviewed content).
+  const reviewLevelOf = (question: ChallengeQuestion) => {
+    const sourceLevel =
+      question.sourceType === 'destination'
+        ? regions?.find((row) => row.id === question.sourceId)?.status
+        : question.sourceType === 'culture_material'
+          ? materials?.find((row) => row.id === question.sourceId)?.accuracy_level
+          : cultureItems?.find((row) => row.id === question.sourceId)?.accuracy_level;
+    return questionReviewLevel(question.id, sourceLevel);
+  };
+  const reviewNote = (question: ChallengeQuestion) => {
+    const level = reviewLevelOf(question);
+    return level === 'verified' ? null : <Text style={styles.reviewNote}>{t(`sources.status.${level}`)}</Text>;
+  };
   const { share, shareHost } = useShareCard();
 
   useEffect(() => {
@@ -160,6 +178,10 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
             </View>
           </View>
 
+          {/* A strong round gets "well done", any other an invitation to try
+              again - never a comment on the player, never shaming. */}
+          <StoryCompanion surface="challenge" moment={correct / Math.max(1, total) >= 0.6 ? 'completion' : 'encouragement'} />
+
           <Text style={styles.sectionTitle} accessibilityRole="header">
             {t('challenges.v2.reviewTitle')}
           </Text>
@@ -191,6 +213,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
                 <Text style={styles.reviewExplanation} numberOfLines={experience === 'child' ? 3 : undefined}>
                   {t(`challenges.questions.${question.id}.explanation`)}
                 </Text>
+                {reviewNote(question)}
                 <AnimatedPressable
                   onPress={() => router.push(routeForSource(question) as never)}
                   hitSlop={8}
@@ -276,6 +299,8 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
         </View>
         <ProgressBar progress={(index + (answered ? 1 : 0)) / questions.length} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
 
+        {index === 0 && !answered ? <StoryCompanion surface="challenge" moment="challenge" /> : null}
+
         <Text style={[styles.question, isAdult && styles.questionEditorial, experience === 'child' && styles.questionChild]} accessibilityRole="header">
           {t(`challenges.questions.${question.id}.question`)}
         </Text>
@@ -297,6 +322,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
               </Text>
             </View>
             <Text style={styles.explanation}>{t(`challenges.questions.${question.id}.explanation`)}</Text>
+            {reviewNote(question)}
             <View style={styles.feedbackActions}>
               <AnimatedPressable onPress={() => router.push(routeForSource(question) as never)} accessibilityRole="link" accessibilityLabel={`${t('challenges.learnMore')}: ${sourceTitle(question)}`}>
                 <Text style={styles.learnMore}>{t('challenges.learnMore')} →</Text>
@@ -428,6 +454,7 @@ function SourceLink({ label, route }: { label: string; route: string }) {
 }
 
 const styles = StyleSheet.create({
+  reviewNote: { ...textStyles.small, color: colors.textMuted },
   root: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.md, gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

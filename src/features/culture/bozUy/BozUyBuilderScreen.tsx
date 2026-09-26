@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LabAboutNote } from '@/features/culture/components/LabAboutNote';
+
 import { UserAvatar } from '@/components/avatar';
 import { Button, Card, ConfirmationModal, IconButton } from '@/components/ui';
 import { useIsTablet } from '@/hooks/useIsTablet';
@@ -91,6 +93,7 @@ export function BozUyBuilderScreen({ onPressBack }: BozUyBuilderScreenProps) {
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        <LabAboutNote lab="bozUy" />
         <StepIndicator stepCount={BOZ_UY_STEPS.length} currentStepIndex={stepIndex} />
 
         <View style={isTablet ? styles.tabletRow : undefined}>

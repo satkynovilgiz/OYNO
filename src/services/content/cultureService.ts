@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/services/supabase/client';
 
+import { localizeMaterial } from './localizedContent';
+import { useLocalizer } from './translationsService';
 import type { CultureCategoryRow, CultureMaterialRow } from './types';
 
 export async function fetchCultureCategories(): Promise<CultureCategoryRow[]> {
@@ -26,10 +28,14 @@ export function useCultureCategories() {
   return useQuery({ queryKey: ['culture_categories'], queryFn: fetchCultureCategories });
 }
 
+/** Materials come back localized for the app language (see
+ * localizedContent.ts), with an honest Kyrgyz fallback. */
 export function useCultureMaterials() {
-  return useQuery({ queryKey: ['culture_materials'], queryFn: fetchCultureMaterials });
+  const { many } = useLocalizer(localizeMaterial);
+  return useQuery({ queryKey: ['culture_materials'], queryFn: fetchCultureMaterials, select: many });
 }
 
 export function useCultureMaterial(id: string) {
-  return useQuery({ queryKey: ['culture_material', id], queryFn: () => fetchCultureMaterial(id) });
+  const { maybe } = useLocalizer(localizeMaterial);
+  return useQuery({ queryKey: ['culture_material', id], queryFn: () => fetchCultureMaterial(id), select: maybe });
 }

@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LabAboutNote } from '@/features/culture/components/LabAboutNote';
+
 import { UserAvatar } from '@/components/avatar';
 import { AnimatedPressable, Button, Card, ProgressBar } from '@/components/ui';
 import { komuzTracks } from '@/features/culture/audioData';
@@ -101,6 +103,7 @@ export function KomuzLearnScreen({ onPressBack }: KomuzLearnScreenProps) {
       <Text style={styles.stepLabel}>{t('culture.komuz.stepLabel', { current: stepIndex + 1, total: KOMUZ_LESSON_STEPS.length })}</Text>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        <LabAboutNote lab="komuz" />
         {isLoading ? (
           <ActivityIndicator color={colors.primary} />
         ) : (

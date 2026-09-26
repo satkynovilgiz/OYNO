@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/services/supabase/client';
 
+import { localizeCultureItem } from './localizedContent';
+import { useLocalizer } from './translationsService';
 import type { CultureItemRow } from './types';
 
 export async function fetchCultureItems(categoryId: string): Promise<CultureItemRow[]> {
@@ -26,10 +28,16 @@ export async function fetchAllCultureItems(): Promise<CultureItemRow[]> {
   return data;
 }
 
+// Every hook below returns rows already localized for the app language
+// (react-query `select`, so the cached raw Kyrgyz rows are untouched and
+// every screen - Culture, Daily, Search, Saved, Offline - shows the same
+// title for the same item).
 export function useCultureItems(categoryId: string) {
+  const { many } = useLocalizer(localizeCultureItem);
   return useQuery({
     queryKey: ['culture_items', categoryId],
     queryFn: () => fetchCultureItems(categoryId),
+    select: many,
   });
 }
 
@@ -39,13 +47,16 @@ export function useCultureItems(categoryId: string) {
  * as `useCultureItems`, just without the `category_id` filter - not a new
  * data source. */
 export function useAllCultureItems() {
-  return useQuery({ queryKey: ['culture_items', 'all'], queryFn: fetchAllCultureItems });
+  const { many } = useLocalizer(localizeCultureItem);
+  return useQuery({ queryKey: ['culture_items', 'all'], queryFn: fetchAllCultureItems, select: many });
 }
 
 export function useCultureItem(id: string) {
+  const { maybe } = useLocalizer(localizeCultureItem);
   return useQuery({
     queryKey: ['culture_item', id],
     queryFn: () => fetchCultureItem(id),
     enabled: !!id,
+    select: maybe,
   });
 }

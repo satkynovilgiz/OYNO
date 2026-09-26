@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '@/services/supabase/client';
 
+import { localizeQuest, localizeRegion } from './localizedContent';
+import { useLocalizer } from './translationsService';
 import type { ExploreRegionRow, QuestRow } from './types';
 
 export async function fetchExploreRegions(): Promise<ExploreRegionRow[]> {
@@ -22,18 +24,24 @@ export async function fetchCurrentQuest(): Promise<QuestRow | null> {
   return data;
 }
 
+// Facts and quest text come back localized (localizedContent.ts); names
+// are already per-language columns.
 export function useExploreRegions() {
-  return useQuery({ queryKey: ['explore_regions'], queryFn: fetchExploreRegions });
+  const { many } = useLocalizer(localizeRegion);
+  return useQuery({ queryKey: ['explore_regions'], queryFn: fetchExploreRegions, select: many });
 }
 
 export function useExploreRegion(id: string | undefined) {
+  const { maybe } = useLocalizer(localizeRegion);
   return useQuery({
     queryKey: ['explore_regions', id],
     queryFn: () => fetchExploreRegion(id as string),
     enabled: !!id,
+    select: maybe,
   });
 }
 
 export function useCurrentQuest() {
-  return useQuery({ queryKey: ['quests', 'current'], queryFn: fetchCurrentQuest });
+  const { maybe } = useLocalizer(localizeQuest);
+  return useQuery({ queryKey: ['quests', 'current'], queryFn: fetchCurrentQuest, select: maybe });
 }

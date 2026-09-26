@@ -47,7 +47,9 @@ export type AnalyticsEventName =
   | 'sync_started'
   | 'sync_completed'
   | 'sync_failed'
-  | 'sync_conflict_merged';
+  | 'sync_conflict_merged'
+  | 'sources_opened'
+  | 'companion_moment_shown';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

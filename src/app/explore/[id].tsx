@@ -13,9 +13,10 @@ import { useDiscoveries } from '@/services/content/discoveriesService';
 import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
 import { useQuestSteps } from '@/services/content/questStepsService';
 import { regionTagline } from '@/services/content/regionTaglines';
+import { useQuestProgress } from '@/features/quests/useQuests';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
-import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
+import type { QuestStep } from '@/services/explore/questSteps';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -36,6 +37,7 @@ export default function ExploreLocationRoute() {
   const { data: regions, isLoading: regionsLoading, error: regionsError } = regionsQuery;
   const { data: discoveries, isLoading: discoveriesLoading } = discoveriesQuery;
   const { data: questRow } = useCurrentQuest();
+  const guidedProgress = useQuestProgress();
   const { data: questSteps } = useQuestSteps(questRow?.id);
   const progress = useProgressStore();
   const trailSignals = useTrailSignals();
@@ -114,7 +116,9 @@ export default function ExploreLocationRoute() {
     name: mapExploreRegionName(row),
     tagline: regionTagline(row, i18n.language as 'kg' | 'ru' | 'en'),
     facts: row.facts,
+    factsTranslation: row.factsTranslation,
     status: row.status,
+    sources: row.sources ?? null,
     discoveredPercent: completion.percent,
   };
 
@@ -139,18 +143,17 @@ export default function ExploreLocationRoute() {
   // Explore card shows) when one exists.
   const heroImage = localizedDiscoveries.find((d) => d.imageSource)?.imageSource ?? natureSiteImages[row.id] ?? null;
 
-  // "Related quest" only when the active quest's next real, incomplete
-  // step genuinely targets this location or a discovery inside it -
-  // never shown speculatively.
+  // Related guided quest: only one whose unfinished step is to visit THIS
+  // destination - never shown speculatively.
   let relatedQuest: RelatedQuest = null;
-  if (questRow && !progress.questCompleted) {
-    const nextStep = findNextIncompleteStep(questStepsList, progress.completedQuestStepIds);
-    if (nextStep) {
-      const discoveryRegionId =
-        nextStep.stepType === 'DISCOVER_ITEM' ? ((discoveries ?? []).find((d) => d.id === nextStep.targetId)?.region_id ?? null) : null;
-      if (resolveStepRoute(nextStep, discoveryRegionId) === `/explore/${row.id}`) {
-        relatedQuest = { title: questRow.title, ctaLabel: questRow.cta_label };
-      }
+  let relatedQuestId: string | null = null;
+  for (const entry of guidedProgress) {
+    if (entry.status === 'completed') continue;
+    const visitHere = entry.steps.find(({ step, state }) => step.type === 'explore_destination' && step.targetId === row.id && state !== 'completed');
+    if (visitHere) {
+      relatedQuest = { title: entry.quest.title[i18n.language as 'kg' | 'ru' | 'en'] ?? entry.quest.title.kg, ctaLabel: t('quests.open') };
+      relatedQuestId = entry.quest.id;
+      break;
     }
   }
 
@@ -181,7 +184,7 @@ export default function ExploreLocationRoute() {
       onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/explore'))}
       onPressDiscovery={(discoveryId) => useProgressStore.getState().discoverExploreItem(discoveryId)}
       onToggleFavorite={() => toggleFavoriteWithFeedback(row.kind, row.id)}
-      onPressRelatedQuest={() => router.push('/explore' as never)}
+      onPressRelatedQuest={() => relatedQuestId && router.push(`/quests/${relatedQuestId}` as never)}
     />
   );
 }

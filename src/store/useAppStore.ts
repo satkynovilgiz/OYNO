@@ -94,8 +94,10 @@ export const useAppStore = create<AppState>((set) => ({
     if (isRealUser()) {
       const userId = useAuthStore.getState().user?.id;
       const { data, error } = await supabase.from('profiles').select('character_id').eq('id', userId).maybeSingle();
-      if (!error && data?.character_id) {
-        const characterId = data.character_id as CharacterId;
+      // An unknown server value (e.g. from an older build) is ignored, the
+      // same as an unknown cached one.
+      if (!error && (ALL_CHARACTER_IDS as string[]).includes(data?.character_id ?? '')) {
+        const characterId = data!.character_id as CharacterId;
         set({ characterId, isCharacterLoaded: true });
         void persistCharacterCache(characterId);
         return;

@@ -53,7 +53,10 @@ describe('offline manifest', () => {
       ['discoveries'],
       ['quests', 'current'],
       ['quest_steps', 'lost-shyrdak'],
+      // RU/EN translations travel with every download (read offline too).
+      ['content_translations'],
     ]);
+    expect(queryKeysForDownload('culture_item', 'boz-uy-tunduk', {})).toEqual([['culture_item', 'boz-uy-tunduk'], ['content_translations']]);
     const keys = queryKeysForDownload('collection', 'horse-culture', { collection: getCollection('horse-culture') });
     expect(keys.slice(0, 2)).toEqual([['culture_items', 'all'], ['culture_materials']]);
     expect(keys).toContainEqual(['culture_item', 'horse-kok-boru']);

@@ -1,3 +1,5 @@
+import type { TranslationMeta } from './localizedContent';
+
 import type { ExploreDiscoveryCategory, LocalizedText, VerificationStatus } from '@/features/explore/types';
 
 export type CultureCategoryRow = {
@@ -23,6 +25,9 @@ export type CultureMaterialRow = {
   accuracy_level: CultureAccuracyLevel;
   sources: string[] | null;
   image_url: string | null;
+  /** Set by the localized content hooks (localizedContent.ts) - which
+   * language this row's text is actually in. Absent on raw DB rows. */
+  translation?: TranslationMeta;
 };
 
 export type ExploreRegionRow = {
@@ -33,8 +38,13 @@ export type ExploreRegionRow = {
   name_en: string;
   tagline: string;
   facts: string[];
+  /** Real source URLs (20260927000003); null until recorded. */
+  sources?: string[] | null;
   status: VerificationStatus;
   sort_order: number;
+  /** Set by useExploreRegions: whether `facts` are in the app language
+   * or the canonical Kyrgyz. Absent on raw DB rows. */
+  factsTranslation?: import('./localizedContent').TranslationStatus;
 };
 
 export type QuestRow = {
@@ -44,6 +54,9 @@ export type QuestRow = {
   subtitle: string;
   total_count: number;
   cta_label: string;
+  /** Set by the localized content hooks (localizedContent.ts) - which
+   * language this row's text is actually in. Absent on raw DB rows. */
+  translation?: TranslationMeta;
 };
 
 export type CultureAccuracyLevel = 'verified' | 'partially_verified' | 'unverified';
@@ -93,6 +106,9 @@ export type CultureItemRow = {
    * which case the bundled cultureItemImages lookup (data.ts) is still
    * used as the fallback. */
   image_url: string | null;
+  /** Set by the localized content hooks (localizedContent.ts) - which
+   * language this row's text is actually in. Absent on raw DB rows. */
+  translation?: TranslationMeta;
 };
 
 export function mapExploreRegionName(row: ExploreRegionRow): LocalizedText {

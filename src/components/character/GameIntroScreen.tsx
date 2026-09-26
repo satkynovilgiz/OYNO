@@ -8,6 +8,7 @@ import type { SupportedLanguage } from '@/i18n';
 import { hasSeenGameIntro, markGameIntroSeen } from '@/services/ageExperience/gameIntroSeen';
 import { resolveGameIntroPresentation } from '@/services/ageExperience/guideCharacterGating';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, radii, spacing, typography } from '@/theme';
 import { getGameHostConfig, type GameIntroLine } from '@games/gameHostCharacters';
 
@@ -53,10 +54,18 @@ export function GameIntroScreen({ gameId, howToPlayText, onFinish }: GameIntroSc
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.92);
 
+  const reducedMotion = useReducedMotion();
+
   useEffect(() => {
+    // Reduce Motion: the host simply appears - no pop-in.
+    if (reducedMotion) {
+      opacity.value = 1;
+      scale.value = 1;
+      return;
+    }
     opacity.value = withTiming(1, { duration: 220 });
     scale.value = withSpring(1, { damping: 14, stiffness: 180 });
-  }, [step, opacity, scale]);
+  }, [step, opacity, scale, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

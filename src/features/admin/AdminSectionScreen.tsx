@@ -169,7 +169,15 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
 
           <Button
             label={isNew ? 'Create' : 'Save'}
-            onPress={() => saveMutation.mutate(formValues)}
+            onPress={() => {
+              // e.g. "verified" needs a real source - checked before saving.
+              const problem = section.validate?.(formValues) ?? null;
+              if (problem) {
+                setSaveError(problem);
+                return;
+              }
+              saveMutation.mutate(formValues);
+            }}
             loading={saveMutation.isPending}
           />
         </ScrollView>

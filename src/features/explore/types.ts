@@ -18,9 +18,14 @@ export type ExploreLocation = {
   name: LocalizedText;
   /** Short kg subtitle for the location card/header. */
   tagline: string;
-  /** Sourced, kg-language facts. See content/explore/{id}.md for citations. */
+  /** Sourced facts - in the app language when a full reviewed translation
+   * exists, otherwise the canonical Kyrgyz (see `factsLanguage`). */
   facts: string[];
+  /** 'available' = facts are in the app language; 'fallback_to_kg' = Kyrgyz. */
+  factsTranslation?: import('@/services/content/localizedContent').TranslationStatus;
   status: VerificationStatus;
+  /** Real source URLs recorded for this destination (may be empty). */
+  sources?: string[] | null;
   /** Real per-user completion percent, from calculateRegionCompletion. */
   discoveredPercent: number;
 };

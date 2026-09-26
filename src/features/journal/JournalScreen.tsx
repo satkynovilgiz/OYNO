@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { AnimatedPressable, Button, IconButton, MediaImage } from '@/components/ui';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import type { SupportedLanguage } from '@/i18n';
@@ -88,6 +89,7 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
           </ScrollView>
         ) : null}
 
+        {total === 0 ? <StoryCompanion surface="emptyJournal" moment="empty" /> : null}
         {groups.length === 0 ? (
           <LibraryEmptyState icon={NotebookPen} tone={colors.primary} title={t('journal.empty')} description={t('journal.emptyBody')} />
         ) : (

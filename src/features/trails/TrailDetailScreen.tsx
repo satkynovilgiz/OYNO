@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, HeroCard, IconButton, ProgressBar } from '@/components/ui';
@@ -127,6 +128,12 @@ export function TrailDetailScreen({ trail, onPressBack }: TrailDetailScreenProps
           <Text style={styles.kicker}>{t('trails.kicker')}</Text>
           <Text style={[styles.intro, isAdult && styles.introEditorial]}>{trail.intro[language] ?? trail.intro.kg}</Text>
         </View>
+
+        {isComplete || progress.completed === 0 ? (
+          <View style={styles.pad}>
+            <StoryCompanion surface="trail" moment={isComplete ? 'completion' : 'intro'} />
+          </View>
+        ) : null}
 
         {progress.total > 0 ? (
           <View style={[styles.pad, styles.progressBlock]}>

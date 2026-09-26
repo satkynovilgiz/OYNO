@@ -207,6 +207,7 @@ type ProgressState = ProgressFields & {
   discoverCulture: () => Promise<void>;
   claimDailyChallenge: () => Promise<boolean>;
   claimDailyGift: () => Promise<boolean>;
+  claimGuidedQuest: (questId: string) => Promise<'claimed' | 'alreadyClaimed' | 'notComplete' | 'unavailable'>;
   claimDailyPlay: () => Promise<boolean>;
   claimDailyQuiz: (answers: { question_id: string; choice_index: number }[]) => Promise<{ correct: number; total: number; rewarded: boolean } | null>;
   saveOymoCreation: (params: { name: string; layers: unknown; backgroundColor: string; symmetryMode: string }) => Promise<boolean>;
@@ -489,6 +490,19 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       applyProgress(result.progress);
       track('reward_claimed', { source: 'daily_challenge' });
       return true;
+    },
+
+    // Guided quest reward: the server re-checks every step against its own
+    // records and grants the reward once per account (claim_guided_quest).
+    claimGuidedQuest: async (questId) => {
+      const result = (await callAction('claim_guided_quest', { p_quest_id: questId })) as (RpcResult & { claimed?: boolean; alreadyClaimed?: boolean }) | null;
+      if (!result) return 'unavailable';
+      applyProgress(result.progress, result.newlyUnlocked);
+      if (result.claimed) {
+        track('reward_claimed', { source: 'guided_quest' });
+        return 'claimed';
+      }
+      return result.alreadyClaimed ? 'alreadyClaimed' : 'notComplete';
     },
 
     claimDailyGift: async () => {

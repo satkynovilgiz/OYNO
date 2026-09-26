@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { LibraryEmptyState, LibraryFilterChips, LibraryHeader } from '@/components/library/LibraryChrome';
 import { offlineKindFor } from '@/components/library/contentTypeMeta';
 import { AnimatedPressable, Button, FadeSlideIn, Rail, SectionHeader, useRailItemWidth } from '@/components/ui';
@@ -111,6 +112,7 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
       </LibraryHeader>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        {view.total === 0 ? <StoryCompanion surface="emptySaved" moment="empty" /> : null}
         {view.total === 0 ? (
           <LibraryEmptyState icon={Heart} tone={colors.accentTerracotta} title={t('saved.emptyTitle')} description={t('saved.v2.emptyBody')}>
             <Button label={t('saved.v2.explore')} variant="primary" onPress={() => onPressItem('/explore')} />

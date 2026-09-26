@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AgeExperienceTransition, AnimatedPressable, FadeSlideIn, HeroEntrance, IconButton, ProgressBar } from '@/components/ui';
 import { formatDayLabel } from '@/features/daily/formatDayLabel';
@@ -302,6 +303,9 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
             ]}
           />
         </HeroEntrance>
+
+        {/* "Start" for a fresh passport, "look how far" once anything real is recorded. */}
+        <StoryCompanion surface="journey" moment={passport.unlocked > 0 || summary.achievements.unlocked > 0 || Object.values(challengeResults).some((result) => !!result.completedAt) || visibleEntries(journalEntries).length > 0 ? 'discovery' : 'empty'} />
 
         <AgeExperienceTransition style={styles.sections}>
           {getJourneySectionOrder(experience).map((id, index) => (

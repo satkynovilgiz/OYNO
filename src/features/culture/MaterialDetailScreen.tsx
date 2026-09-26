@@ -3,11 +3,14 @@ import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { SourcesAndNotes } from '@/components/content/SourcesAndNotes';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
-import { AnimatedPressable, Badge, HeroEntrance, IconButton } from '@/components/ui';
+import { Badge, HeroEntrance, IconButton } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
 import { joinNarration } from '@/services/audioGuide/narration';
 import type { CultureMaterialRow } from '@/services/content/types';
@@ -25,7 +28,9 @@ type MaterialDetailScreenProps = {
  * culture_materials rows instead of culture_items rows (the two content
  * tables aren't unified - see the audit's note on why). */
 export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailScreenProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Body is in the app language only when fully translated; else Kyrgyz.
+  const bodyLanguage = i18n.language !== 'kg' && material.translation?.status === 'available' ? (i18n.language as 'ru' | 'en') : 'kg';
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_material', material.id)));
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_material', material.id);
@@ -80,12 +85,14 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
         <View style={styles.contentBody}>
           <View style={styles.headerBlock}>
             <Badge label={t(`culture.materials.types.${material.kind}`)} color={colors.surfaceAlt} textColor={colors.primary} />
-            <Badge label={t(`culture.item.accuracy.${material.accuracy_level}`)} color={colors.surfaceAlt} textColor={colors.textSecondary} />
           </View>
 
+          <KyrgyzOnlyNote status={material.translation?.status} language={i18n.language} />
           {material.body ? (
-            // Materials are Kyrgyz-authored (single title/body columns).
-            <AudioGuidePlayer contentKey={`culture_material:${material.id}`} narration={{ lang: 'kg', text: joinNarration([material.title, material.body]) }} />
+            <AudioGuidePlayer
+              contentKey={`culture_material:${material.id}`}
+              narration={{ lang: bodyLanguage, text: joinNarration([bodyLanguage === 'kg' ? (material.translation?.titles.kg ?? material.title) : material.title, material.body]) }}
+            />
           ) : null}
 
           {material.body ? (
@@ -94,18 +101,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
             <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
           )}
 
-          {material.sources && material.sources.length > 0 ? (
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>{t('culture.item.sourcesLabel')}</Text>
-              {material.sources.map((url) => (
-                <AnimatedPressable key={url} onPress={() => Linking.openURL(url)} accessibilityRole="link">
-                  <Text style={styles.sourceLink} numberOfLines={1}>
-                    {url}
-                  </Text>
-                </AnimatedPressable>
-              ))}
-            </View>
-          ) : null}
+          <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} />
         </View>
       </ScrollView>
     </View>

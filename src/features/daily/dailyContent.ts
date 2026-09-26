@@ -69,12 +69,15 @@ export function buildDailyTextBlocks(item: CultureItemRow, experience: AgeExperi
   }
 
   const fields = DAILY_TEXT_FIELDS.filter((field) => !!item[field]?.trim()).slice(0, depth.blocks);
+  // Field text is in the app language only when the localized resolver
+  // found a full reviewed translation; otherwise it is the Kyrgyz source.
+  const fieldLang: SupportedLanguage = language !== 'kg' && item.translation?.status === 'available' && item.translation.language === language ? language : 'kg';
   return fields.map((field, index) => {
     const raw = (item[field] as string).trim();
     return {
       labelKey: depth.sentences !== null && index === 0 ? null : LABEL_KEY_BY_FIELD[field],
       text: depth.sentences !== null ? firstSentences(raw, depth.sentences) : raw,
-      lang: 'kg' as const,
+      lang: fieldLang,
     };
   });
 }

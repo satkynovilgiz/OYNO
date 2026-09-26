@@ -96,8 +96,15 @@ export function buildCultureItemCatalog(items: CultureItemRow[], categories: Cul
     metadata: categoryTitleById.get(item.category_id) ?? null,
     thumbnail: cultureItemImages[item.id]?.[0] ?? null,
     route: `/culture/item/${item.id}`,
-    searchText: item.alt_names ? [item.title, item.alt_names] : [item.title],
+    // Every language's title that exists (KG canonical + reviewed RU/EN
+    // translations) plus real alternate names - a translation added in
+    // the database is searchable immediately, no second index.
+    searchText: uniqueText([...Object.values(item.translation?.titles ?? { kg: item.title }), item.title, item.alt_names]),
   }));
+}
+
+function uniqueText(values: (string | null | undefined)[]): string[] {
+  return Array.from(new Set(values.filter((value): value is string => !!value?.trim())));
 }
 
 export function buildCultureMaterialCatalog(materials: CultureMaterialRow[]): CatalogItem[] {
@@ -108,7 +115,7 @@ export function buildCultureMaterialCatalog(materials: CultureMaterialRow[]): Ca
     metadata: material.duration_minutes ? `${material.duration_minutes} min` : null,
     thumbnail: cultureMaterialImages[material.id] ?? null,
     route: `/culture/material/${material.id}`,
-    searchText: [material.title],
+    searchText: uniqueText([...Object.values(material.translation?.titles ?? {}), material.title]),
   }));
 }
 

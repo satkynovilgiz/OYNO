@@ -1,4 +1,5 @@
 import { fetchTable, fetchViaRpc } from '@/services/admin/adminService';
+import { verificationError } from '@/services/content/verification';
 
 export type AdminFieldType = 'text' | 'textarea' | 'number' | 'array' | 'select';
 
@@ -27,6 +28,9 @@ export type AdminSectionConfig = {
    * supabase/migrations/20260825000001_admin.sql and
    * 20260829000004_admin_content_extended.sql. */
   toParams: (values: Record<string, string>) => Record<string, unknown>;
+  /** Blocks saving with a message (e.g. "verified" without a source) -
+   * the database enforces the same rule for new writes. */
+  validate?: (values: Record<string, string>) => string | null;
 };
 
 function toIntOrNull(value: string): number | null {
@@ -78,6 +82,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       { key: 'accuracy_level', label: 'Accuracy level', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
       { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
     ],
+    validate: (v) => verificationError(v.accuracy_level, toArray(v.sources)),
     toParams: (v) => ({
       p_id: v.id,
       p_kind: v.kind,
@@ -125,6 +130,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
+    validate: (v) => verificationError(v.accuracy_level, toArray(v.sources)),
     toParams: (v) => ({
       p_id: v.id,
       p_category_id: v.category_id,
@@ -165,8 +171,10 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       { key: 'tagline', label: 'Tagline', type: 'text' },
       { key: 'facts', label: 'Facts (one per line, cited/sourced)', type: 'array' },
       { key: 'status', label: 'Verification status', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
+      { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
+    validate: (v) => verificationError(v.status, toArray(v.sources)),
     toParams: (v) => ({
       p_id: v.id,
       p_kind: v.kind,
@@ -177,6 +185,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       p_facts: toArray(v.facts),
       p_status: v.status || 'unverified',
       p_sort_order: toIntOrNull(v.sort_order) ?? 0,
+      p_sources: toArray(v.sources),
     }),
   },
   {
@@ -225,6 +234,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       { key: 'published', label: 'Published', type: 'select', options: ['true', 'false'] },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
+    validate: (v) => verificationError(v.accuracy_level, toArray(v.sources)),
     toParams: (v) => ({
       p_id: v.id,
       p_region_id: v.region_id.trim() || null,
@@ -273,6 +283,54 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       p_title_ru: v.title_ru,
       p_title_en: v.title_en,
       p_sort_order: toIntOrNull(v.sort_order) ?? 0,
+    }),
+  },
+  {
+    // Editor-only review notes (never readable by the app).
+    id: 'content_review_notes',
+    label: 'Review notes (editors only)',
+    idField: 'id',
+    titleField: 'id',
+    fetch: () => fetchViaRpc('admin_get_content_review_notes'),
+    upsertRpc: 'admin_upsert_content_review_note',
+    deleteRpc: 'admin_delete_content_review_note',
+    fields: [
+      { key: 'content_type', label: 'Content type', type: 'select', options: ['culture_item', 'culture_material', 'explore_region', 'discovery'] },
+      { key: 'content_id', label: 'Content ID', type: 'text' },
+      { key: 'note', label: 'Note (what still needs checking, which source to consult)', type: 'textarea' },
+    ],
+    toParams: (v) => ({ p_content_type: v.content_type, p_content_id: v.content_id.trim(), p_note: v.note.trim() }),
+  },
+  {
+    // RU/EN translations of long-form content (Kyrgyz stays in the
+    // content rows). One row = one field of one item in one language.
+    id: 'content_translations',
+    label: 'Translations (RU / EN)',
+    idField: 'id',
+    titleField: 'id',
+    fetch: () => fetchViaRpc('admin_get_content_translations'),
+    upsertRpc: 'admin_upsert_content_translation',
+    deleteRpc: 'admin_delete_content_translation_by_id',
+    fields: [
+      { key: 'content_type', label: 'Content type', type: 'select', options: ['culture_item', 'culture_material', 'explore_region', 'quest'] },
+      { key: 'content_id', label: 'Content ID (same id as the Kyrgyz row)', type: 'text' },
+      { key: 'language', label: 'Language', type: 'select', options: ['ru', 'en'] },
+      {
+        key: 'field',
+        label: 'Field (for destination facts: fact.0, fact.1, ...)',
+        type: 'select',
+        options: ['title', 'alt_names', 'origin', 'history', 'cultural_meaning', 'when_used', 'ingredients', 'traditional_method', 'who_participates', 'objects_used', 'regional_notes', 'modern_status', 'fun_facts', 'description', 'body', 'subtitle', 'cta_label', 'fact.0', 'fact.1', 'fact.2', 'fact.3'],
+      },
+      { key: 'value', label: 'Translated text', type: 'textarea' },
+      { key: 'status', label: 'Status (only "reviewed" is shown in the app)', type: 'select', options: ['reviewed', 'draft'] },
+    ],
+    toParams: (v) => ({
+      p_content_type: v.content_type,
+      p_content_id: v.content_id.trim(),
+      p_language: v.language,
+      p_field: v.field,
+      p_value: v.value.trim(),
+      p_status: v.status || 'draft',
     }),
   },
   {

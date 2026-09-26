@@ -3,10 +3,13 @@ import { router } from 'expo-router';
 import { ArrowRight, Check, ChevronLeft, ChevronRight, Clock, TriangleAlert } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
 import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, EmptyState, FadeSlideIn, IconButton, Skeleton } from '@/components/ui';
 import { interactiveExperienceForCategory, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
@@ -158,7 +161,13 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
   // in one language (a Kyrgyz field never gets read with a ru/en voice).
   const blockLangs = new Set(discovery.textBlocks.map((block) => block.lang));
   const narration: Narration | null =
-    blockLangs.size === 1 ? { lang: discovery.textBlocks[0].lang, text: joinNarration([item.title, ...discovery.textBlocks.map((block) => block.text)]) } : null;
+    blockLangs.size === 1
+      ? {
+          lang: discovery.textBlocks[0].lang,
+          // Title in the same language as the text, never a mix.
+          text: joinNarration([discovery.textBlocks[0].lang === 'kg' ? (item.translation?.titles.kg ?? item.title) : item.title, ...discovery.textBlocks.map((block) => block.text)]),
+        }
+      : null;
   const dayLabel = formatDayLabel(discovery.dateKey, language);
 
   return (
@@ -213,8 +222,12 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
         </View>
 
         <View style={styles.sheet}>
+          {discovery.isCompleted ? null : <StoryCompanion surface="daily" moment="intro" />}
+
           {/* "Listen · 2 min" - shown only when audio genuinely works here. */}
           <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} hideWhenUnavailable />
+
+          {leadBlock && leadBlock.lang !== language ? <KyrgyzOnlyNote status="fallback_to_kg" language={language} /> : null}
 
           {leadBlock ? (
             <FadeSlideIn>
@@ -269,6 +282,7 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
 
           {discovery.isCompleted ? (
             <FadeSlideIn style={styles.block}>
+              <StoryCompanion surface="daily" moment="completion" />
               <DailyCompletedState discovery={discovery} experience={experience} />
             </FadeSlideIn>
           ) : (

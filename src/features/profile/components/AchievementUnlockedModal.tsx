@@ -11,6 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
@@ -99,6 +100,12 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
             {achievement ? <Text style={styles.earnedBy}>{t('profile.achievements.v2.earnedBy', { requirement: t(achievement.requirementKey) })}</Text> : null}
           </Animated.View>
 
+          {achievement ? (
+            <View style={styles.companion}>
+              <StoryCompanion surface="achievement" moment="completion" />
+            </View>
+          ) : null}
+
           <View style={styles.cta}>
             <Button label={t('profile.achievements.unlockedCta')} variant="accent" block onPress={onDismiss} />
           </View>
@@ -116,6 +123,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xl,
   },
+  companion: { alignSelf: 'stretch' },
   sheet: {
     width: '100%',
     maxWidth: 320,

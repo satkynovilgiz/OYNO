@@ -1,4 +1,5 @@
 import type { CharacterEmotion, CharacterId } from '@/components/character/characterAssets';
+import { resolveCompanion } from '@/components/companion/companionModel';
 import type { LocalizedText } from '@/features/explore/types';
 
 export type GameIntroLine = {
@@ -255,6 +256,10 @@ export const gameHostCharacters: Record<string, GameHostConfig> = {
   },
 };
 
+/** A host without complete art (Бөрү, Тулпар, Элчи - not released yet) is
+ * presented by the default companion instead of a placeholder; the lines
+ * are written character-neutral so they read the same. */
 export function getGameHostConfig(gameId: string): GameHostConfig | null {
-  return gameHostCharacters[gameId] ?? null;
+  const host = gameHostCharacters[gameId];
+  return host ? { ...host, characterId: resolveCompanion(host.characterId) } : null;
 }

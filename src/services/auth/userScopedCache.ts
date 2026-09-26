@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/useAuthStore';
  * security decides what the server returns), so their cache keys carry no
  * user id. Everything else in the query cache is public content.
  */
-export const USER_SCOPED_QUERY_ROOTS = ['admin_role', 'admin_section', 'oymo_creations', 'shyrdak_creation'] as const;
+export const USER_SCOPED_QUERY_ROOTS = ['admin_role', 'admin_section', 'oymo_creations', 'shyrdak_creation', 'guided_quests_claimed'] as const;
 
 export function clearUserScopedQueries(client: QueryClient): void {
   client.removeQueries({ predicate: (query) => (USER_SCOPED_QUERY_ROOTS as readonly string[]).includes(String(query.queryKey[0])) });

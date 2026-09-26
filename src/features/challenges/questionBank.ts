@@ -104,3 +104,32 @@ export function routeForSource(question: Pick<ChallengeQuestion, 'sourceType' | 
   if (question.sourceType === 'culture_material') return `/culture/material/${question.sourceId}`;
   return `/culture/item/${question.sourceId}`;
 }
+
+/**
+ * Questions whose answer relies on a claim that is flagged for human
+ * verification in docs/CONTENT_AUDIT.md §5. Their answers are not changed
+ * here - they are just never presented as settled knowledge.
+ */
+export const QUESTIONS_WITH_CLAIMS_UNDER_REVIEW: ReadonlySet<string> = new Set([
+  'kochkor-muyuz',
+  'shyrdak-edges',
+  'shyrdak-blue',
+  'hooves',
+  'komuz-strings',
+  'kok-boru-rules',
+  'image-son-kol',
+  'sary-chelek-depth',
+  'lenin-peak',
+  'arslanbob-forest',
+]);
+
+type ReviewLevel = 'verified' | 'partially_verified' | 'unverified';
+const RANK: Record<ReviewLevel, number> = { unverified: 0, partially_verified: 1, verified: 2 };
+
+/** A question's review state = its source entry's state, capped at
+ * "partially verified" when the answer rests on a flagged claim. */
+export function questionReviewLevel(questionId: string, sourceLevel: string | null | undefined): ReviewLevel {
+  const level: ReviewLevel = sourceLevel === 'verified' || sourceLevel === 'partially_verified' ? sourceLevel : 'unverified';
+  if (QUESTIONS_WITH_CLAIMS_UNDER_REVIEW.has(questionId) && RANK[level] > RANK.partially_verified) return 'partially_verified';
+  return level;
+}

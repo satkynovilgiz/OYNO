@@ -1,6 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronRight, Compass, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+
+import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { SourcesAndNotes } from '@/components/content/SourcesAndNotes';
 import { ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -95,6 +98,7 @@ export function LocationDetailScreen({
   const { config } = useAgeExperience();
   const tone = TONES[toneIndex % TONES.length];
   const locationName = location.name[i18n.language as SupportedLanguage] ?? location.name.kg;
+  const factsLanguage: SupportedLanguage = location.factsTranslation === 'available' ? (i18n.language as SupportedLanguage) : 'kg';
   const heroAspectRatio = resolveByCardScale(config.cardScale, HERO_ASPECT_RATIO_BY_CARD_SCALE);
   const isChild = config.textComplexity === 'minimal';
   const isAdult = config.characterProminence === 'subtle';
@@ -192,13 +196,18 @@ export function LocationDetailScreen({
           <Text style={[styles.intro, isAdult && styles.introEditorial]}>{location.tagline}</Text>
 
           {/* 3. The story: real sourced facts, read as paragraphs, with the
-              compact audio guide right above them. Tagline and facts are
-              Kyrgyz-authored (explore_regions); narration stays Kyrgyz. */}
+              compact audio guide right above them. Narration is read in the
+              facts' real language and never mixes languages (the tagline is
+              only included when it is in that same language). */}
           <FadeSlideIn style={styles.section} index={0}>
             <SectionHeader title={t('explore.locationDetail.story')} inset={0} editorialTitle={isAdult} />
+            <KyrgyzOnlyNote status={location.factsTranslation} language={i18n.language} />
             <AudioGuidePlayer
               contentKey={`region:${location.id}`}
-              narration={{ lang: 'kg', text: joinNarration([location.name.kg, location.tagline, ...(isChild ? location.facts.slice(0, 2) : location.facts)]) }}
+              narration={{
+                lang: factsLanguage,
+                text: joinNarration([location.name[factsLanguage] ?? location.name.kg, ...(factsLanguage === i18n.language ? [location.tagline] : []), ...(isChild ? location.facts.slice(0, 2) : location.facts)]),
+              }}
             />
             {(isChild ? location.facts.slice(0, 2) : location.facts).map((fact, index) => (
               <View key={index} style={styles.factRow}>
@@ -288,6 +297,8 @@ export function LocationDetailScreen({
           ) : null}
 
           {!questFirst ? questCard : null}
+
+          <SourcesAndNotes contentType="explore_region" level={location.status} sources={location.sources} />
         </View>
       </ScrollView>
       {shareHost}

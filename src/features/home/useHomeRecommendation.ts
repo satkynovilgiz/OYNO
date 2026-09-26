@@ -10,7 +10,7 @@ import { cultureCategoryImages, cultureItemImages } from '@/features/culture/dat
 import type { CultureCategoryId } from '@/features/culture/types';
 import { INTERACTIVE_EXPERIENCES, routeForInteractiveExperience } from '@/features/culture/interactiveExperiences';
 import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
-import { natureSiteImages, questBackgroundFor } from '@/features/explore/data';
+import { natureSiteImages } from '@/features/explore/data';
 import { gameArt } from '@/features/games/gamesCatalog';
 import { mockGamesList } from '@/features/games/mockData';
 import { progressGameIdFor } from '@/features/games/progressGameIds';
@@ -20,15 +20,15 @@ import { buildPassport } from '@/features/journey/passport';
 import { resolveTrailStep, routeForTrailStep } from '@/features/trails/trailDisplay';
 import { computeTrailProgress, PLAY_TRACKED_GAME_IDS } from '@/features/trails/trailProgress';
 import { getTrail, trails } from '@/features/trails/trailsData';
+import { pickActiveQuest } from '@/features/quests/questProgress';
+import { getGuidedQuest, questStepRoute } from '@/features/quests/questsData';
+import { useQuestProgress } from '@/features/quests/useQuests';
 import { useTrailSignals } from '@/features/trails/useTrailSignals';
 import type { SupportedLanguage } from '@/i18n';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureMaterials } from '@/services/content/cultureService';
-import { useDiscoveries } from '@/services/content/discoveriesService';
-import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
-import { useQuestSteps } from '@/services/content/questStepsService';
+import { useExploreRegions } from '@/services/content/exploreService';
 import { mapExploreRegionName } from '@/services/content/types';
-import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { isRouteAvailableOffline } from '@/services/offline/offlineAvailability';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
@@ -70,30 +70,27 @@ export function useHomeRecommendation(): { recommendation: HomeRecommendation; d
   const { data: regions } = useExploreRegions();
   const { data: cultureItems } = useAllCultureItems();
   const { data: cultureMaterials } = useCultureMaterials();
-  const { data: questRow } = useCurrentQuest();
-  const { data: questStepRows } = useQuestSteps(questRow?.id);
-  const { data: discoveries } = useDiscoveries();
+  // Guided Quests (the legacy single quest is retired from Home): the one
+  // active quest continues at its real current step; otherwise the first
+  // not-started quest is suggested via its detail screen.
+  const questProgress = useQuestProgress();
+  const activeQuest = pickActiveQuest(questProgress);
+  const suggestedQuest = activeQuest ?? questProgress.find((entry) => entry.status === 'notStarted') ?? null;
 
   const recommendation = useMemo(() => {
-    const questSteps: QuestStep[] = (questStepRows ?? []).map((row) => ({
-      id: row.id,
-      questId: row.quest_id,
-      stepOrder: row.step_order,
-      stepType: row.step_type,
-      targetId: row.target_id,
-    }));
-    const nextQuestStep = findNextIncompleteStep(questSteps, progress.completedQuestStepIds);
-    const questNextRoute = nextQuestStep
-      ? resolveStepRoute(nextQuestStep, nextQuestStep.stepType === 'DISCOVER_ITEM' ? ((discoveries ?? []).find((d) => d.id === nextQuestStep.targetId)?.region_id ?? null) : null)
-      : null;
-
     return buildHomeJourneyRecommendation({
       trails: trails.map((trail) => {
         const trailProgress = computeTrailProgress(trail, trailSignals);
         return { trail, progress: trailProgress, nextRoute: trailProgress.nextStep ? routeForTrailStep(trailProgress.nextStep) : null };
       }),
-      quest: questRow
-        ? { id: questRow.id, current: progress.questFoundCount, total: questRow.total_count, completed: progress.questCompleted, nextRoute: questNextRoute }
+      quest: suggestedQuest
+        ? {
+            id: suggestedQuest.quest.id,
+            current: suggestedQuest.completed,
+            total: suggestedQuest.total,
+            completed: suggestedQuest.status === 'completed',
+            nextRoute: suggestedQuest.status === 'active' && suggestedQuest.currentStep ? questStepRoute(suggestedQuest.currentStep) : `/quests/${suggestedQuest.quest.id}`,
+          }
         : null,
       daily: today ? { itemId: today.item.id, isCompleted: today.isCompleted } : null,
       collections: collections.map((collection) => ({ collection, progress: computeCollectionProgress(collection, collectionSignals) })),
@@ -110,7 +107,7 @@ export function useHomeRecommendation(): { recommendation: HomeRecommendation; d
       isAvailable: (route) => !isOffline || isRouteAvailableOffline(route, queryClient),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trailSignals, collectionSignals, progress, today, regions, questRow, questStepRows, discoveries, language, isOffline]);
+  }, [trailSignals, collectionSignals, progress, today, regions, suggestedQuest, language, isOffline]);
 
   const display = useMemo<HomeRecommendationDisplay>(() => {
     const sources = { regions: regions ?? [], cultureItems: cultureItems ?? [], cultureMaterials: cultureMaterials ?? [] };
@@ -142,14 +139,16 @@ export function useHomeRecommendation(): { recommendation: HomeRecommendation; d
           ctaLabel: nextTitle ? `${t('home.journey.continue')} → ${nextTitle}` : t('home.journey.start'),
         };
       }
-      case 'quest':
+      case 'quest': {
+        const guided = getGuidedQuest(recommendation.contentId ?? '');
         return {
           eyebrow,
-          title: questRow?.title ?? '',
-          subtitle: questRow?.subtitle ?? progressText,
-          imageSource: questBackgroundFor(recommendation.contentId ?? ''),
+          title: guided ? (guided.title[language] ?? guided.title.kg) : '',
+          subtitle: progressText,
+          imageSource: guided?.heroImage ?? journeyBackdrop,
           ctaLabel: recommendation.mode === 'continue' ? t('home.journey.continue') : t('home.journey.start'),
         };
+      }
       case 'daily':
         return {
           eyebrow,
@@ -208,7 +207,7 @@ export function useHomeRecommendation(): { recommendation: HomeRecommendation; d
         };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recommendation, regions, cultureItems, cultureMaterials, questRow, today, language, trailSignals, progress.gameStats]);
+  }, [recommendation, regions, cultureItems, cultureMaterials, today, language, trailSignals, progress.gameStats]);
 
   const recent = useMemo<RecentDisplay[]>(
     () =>

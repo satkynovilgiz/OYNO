@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { forwardRef } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
@@ -18,9 +18,11 @@ export const SHARE_CARD_HEIGHT = 450;
  *            one line the user typed for the card, linked content
  *   badge    an earned achievement: the medal art whole (never cropped) on
  *            forest green, its title - no rank, no rarity, no user data
+ *   creation a design the user made in a Culture Lab (oymo, shyrdak):
+ *            the live artwork, the lab it came from - nothing else
  * All share the wordmark, cream/forest/gold and a small oymo rule.
  */
-export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge';
+export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge' | 'creation';
 
 export type ShareCardContent = {
   title: string;
@@ -40,6 +42,10 @@ export type ShareCardContent = {
   stat?: string | null;
   /** `journal` variant: the linked OYNO content's name. */
   linkedLabel?: string | null;
+  /** `creation` variant: the user's design rendered live (SVG/views), and
+   * its natural size so the card can scale it to fit. */
+  artwork?: ReactNode;
+  artworkSize?: { width: number; height: number };
 };
 
 type ShareCardProps = ShareCardContent & {
@@ -52,6 +58,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
   const variant = props.variant ?? 'story';
   if (variant === 'journal') return <JournalCard ref={ref} {...props} />;
   if (variant === 'badge') return <BadgeCard ref={ref} {...props} />;
+  if (variant === 'creation') return <CreationCard ref={ref} {...props} />;
   return <PhotoCard ref={ref} {...props} variant={variant} />;
 });
 
@@ -168,6 +175,30 @@ const BadgeCard = forwardRef<View, ShareCardProps>(function BadgeCard({ title, l
   );
 });
 
+const CREATION_FRAME = 240;
+
+const CreationCard = forwardRef<View, ShareCardProps>(function CreationCard({ title, label, artwork, artworkSize }, ref) {
+  const size = artworkSize ?? { width: CREATION_FRAME, height: CREATION_FRAME };
+  const scale = Math.min(CREATION_FRAME / size.width, CREATION_FRAME / size.height);
+  return (
+    <View ref={ref} collapsable={false} style={[styles.card, styles.paper, styles.creationCard]}>
+      <View style={[styles.paperBrand, styles.creationBrand]}>
+        <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
+        <Text style={styles.paperLabel} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={styles.paperWordmark}>OYNO</Text>
+      </View>
+      <View style={styles.creationFrame}>
+        <View style={{ width: size.width, height: size.height, transform: [{ scale }] }}>{artwork}</View>
+      </View>
+      <Text style={[styles.paperTitle, styles.creationTitle]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
+        {title}
+      </Text>
+    </View>
+  );
+});
+
 function Brand({ light }: { light: boolean }) {
   return (
     <View style={styles.brandRow}>
@@ -222,5 +253,9 @@ const styles = StyleSheet.create({
   paperWordmark: { ...editorial(textStyles.title), fontSize: 15, letterSpacing: 2.5, color: colors.primary },
   paperTitle: { ...editorial(textStyles.h1), color: colors.textPrimary },
   paperExcerpt: { ...textStyles.body, fontSize: 16, lineHeight: 22, fontStyle: 'italic', color: colors.textSecondary },
+  creationCard: { alignItems: 'center', justifyContent: 'space-between' },
+  creationFrame: { width: CREATION_FRAME + 24, height: CREATION_FRAME + 24, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: '#FFFDF7', overflow: 'hidden' },
+  creationTitle: { textAlign: 'center' },
+  creationBrand: { alignSelf: 'stretch' },
   paperLinked: { ...textStyles.caption, fontWeight: '700', color: colors.primary, marginTop: 'auto' },
 });

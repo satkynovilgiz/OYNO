@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LabAboutNote } from '@/features/culture/components/LabAboutNote';
+
 import { Button, IconButton, Toggle } from '@/components/ui';
 import { useIsTablet } from '@/hooks/useIsTablet';
 import { track } from '@/services/analytics/analytics';
@@ -17,6 +19,7 @@ import {
   toggleBorder,
   type ShyrdakConfig,
 } from '@/services/culture/shyrdakConfig';
+import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, spacing, typography } from '@/theme';
@@ -24,7 +27,7 @@ import { colors, spacing, typography } from '@/theme';
 import { ColorSwatches } from '../oymo/components/ColorSwatches';
 import { SymmetryControl } from '../oymo/components/SymmetryControl';
 import { PatternGrid } from './components/PatternGrid';
-import { ShyrdakCanvas } from './components/ShyrdakCanvas';
+import { CANVAS_HEIGHT, CANVAS_WIDTH, ShyrdakCanvas } from './components/ShyrdakCanvas';
 import { WhatIsThisModal } from './components/WhatIsThisModal';
 
 type ShyrdakCreatorScreenProps = {
@@ -37,6 +40,7 @@ export function ShyrdakCreatorScreen({ onPressBack }: ShyrdakCreatorScreenProps)
   const isTablet = useIsTablet();
   const { data: savedCreation } = useShyrdakCreation();
   const isGuest = useAuthStore((state) => state.status === 'guest');
+  const { share, shareHost } = useShareCard();
 
   const [config, setConfig] = useState<ShyrdakConfig>(DEFAULT_SHYRDAK_CONFIG);
   const [showWhatIsThis, setShowWhatIsThis] = useState(false);
@@ -111,6 +115,21 @@ export function ShyrdakCreatorScreen({ onPressBack }: ShyrdakCreatorScreenProps)
     </View>
   );
 
+  // The design itself, the lab name and OYNO branding - nothing private.
+  function handleShare() {
+    void share(
+      {
+        variant: 'creation',
+        title: t('culture.labs.myDesign'),
+        label: t('culture.interactive.shyrdak'),
+        imageSource: null,
+        artwork: <ShyrdakCanvas baseColor={config.baseColor} secondaryColor={config.secondaryColor} patternId={config.patternId} borderEnabled={config.borderEnabled} symmetryMode={config.symmetryMode} />,
+        artworkSize: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+      },
+      t('culture.labs.shareMessage'),
+    );
+  }
+
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -123,6 +142,7 @@ export function ShyrdakCreatorScreen({ onPressBack }: ShyrdakCreatorScreenProps)
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        <LabAboutNote lab="shyrdak" />
         <View style={isTablet ? styles.tabletRow : undefined}>
           <View style={styles.canvasColumn}>
             <ShyrdakCanvas
@@ -137,6 +157,7 @@ export function ShyrdakCreatorScreen({ onPressBack }: ShyrdakCreatorScreenProps)
               onPress={handleSave}
               loading={isSaving}
             />
+            <Button label={t('culture.labs.shareDesign')} variant="secondary" onPress={handleShare} />
             {isGuest && !saved && <Text style={styles.saveHint}>{t('culture.oymo.save.guestHint')}</Text>}
             {!isGuest && saveError && <Text style={styles.saveError}>{t('culture.oymo.save.error')}</Text>}
           </View>
@@ -148,6 +169,7 @@ export function ShyrdakCreatorScreen({ onPressBack }: ShyrdakCreatorScreenProps)
       </ScrollView>
 
       <WhatIsThisModal visible={showWhatIsThis} onClose={() => setShowWhatIsThis(false)} />
+      {shareHost}
     </View>
   );
 }

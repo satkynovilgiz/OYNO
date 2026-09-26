@@ -1,9 +1,11 @@
-import { ChevronLeft, Layers, Palette, Redo2, Shapes, Undo2, Wand2 } from 'lucide-react-native';
+import { ChevronLeft, Layers, Palette, Redo2, Shapes, Share2, Undo2, Wand2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { LabAboutNote } from '@/features/culture/components/LabAboutNote';
 
 import { AnimatedPressable, Button, ConfirmationModal, IconButton } from '@/components/ui';
 import { useIsTablet } from '@/hooks/useIsTablet';
@@ -23,6 +25,7 @@ import {
 } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
 import { useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
+import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -50,6 +53,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   const queryClient = useQueryClient();
   const { data: creations } = useOymoCreations();
   const isGuest = useAuthStore((state) => state.status === 'guest');
+  const { share, shareHost } = useShareCard();
 
   const [history, setHistory] = useState<OymoEditorState[]>([EMPTY_OYMO_STATE]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -120,6 +124,22 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
     setHistoryIndex(0);
     setSymmetryMode(creation.symmetry_mode);
     setSelectedLayerId(null);
+  }
+
+  // Shares only the design itself (rendered live), the lab's name and OYNO
+  // branding - never the account or anything private.
+  function handleShare() {
+    void share(
+      {
+        variant: 'creation',
+        title: t('culture.labs.myDesign'),
+        label: t('culture.interactive.oymo'),
+        imageSource: null,
+        artwork: <OymoCanvas layers={editorState.layers} backgroundColor={editorState.backgroundColor} symmetryMode={symmetryMode} selectedLayerId={null} onTapCanvas={() => {}} onSelectLayer={() => {}} />,
+        artworkSize: { width: CANVAS_SIZE, height: CANVAS_SIZE },
+      },
+      t('culture.labs.shareMessage'),
+    );
   }
 
   async function handleSave(name: string) {
@@ -215,6 +235,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        <LabAboutNote lab="oymo" />
         <View style={isTablet ? styles.tabletRow : undefined}>
           {isTablet && panel}
 
@@ -222,6 +243,8 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
             <View style={styles.historyRow}>
               <IconButton icon={Undo2} shape="roundedSquare" accessibilityLabel={t('culture.oymo.undo')} onPress={handleUndo} disabled={historyIndex === 0} />
               <IconButton icon={Redo2} shape="roundedSquare" accessibilityLabel={t('culture.oymo.redo')} onPress={handleRedo} disabled={historyIndex >= history.length - 1} />
+              <View style={styles.historySpacer} />
+              <IconButton icon={Share2} shape="roundedSquare" accessibilityLabel={t('culture.labs.shareDesign')} onPress={handleShare} disabled={editorState.layers.length === 0} />
             </View>
 
             <OymoCanvas
@@ -304,6 +327,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingDeleteCreation(null)}
       />
+      {shareHost}
     </View>
   );
 }
@@ -368,7 +392,10 @@ const styles = StyleSheet.create({
   historyRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
+  },
+  historySpacer: {
+    flex: 1,
   },
   canvasActions: {
     flexDirection: 'row',
