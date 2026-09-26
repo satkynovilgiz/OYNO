@@ -15,6 +15,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useDiscoveries } from '@/services/content/discoveriesService';
 import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
 import { useQuestSteps } from '@/services/content/questStepsService';
+import { regionTagline } from '@/services/content/regionTaglines';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
 import { filterRegions, type ExploreFilterId } from '@/services/explore/filters';
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
@@ -115,7 +116,7 @@ export function ExploreScreen() {
           .map((region) => ({
             id: region.id,
             name: mapExploreRegionName(region)[language] ?? region.name_kg,
-            tagline: region.tagline,
+            tagline: regionTagline(region, language),
           }))
       : null;
 
@@ -128,7 +129,7 @@ export function ExploreScreen() {
     .map((region) => ({
       id: region.id,
       name: mapExploreRegionName(region)[language] ?? region.name_kg,
-      tagline: region.tagline,
+      tagline: regionTagline(region, language),
       imageSource: natureSiteImages[region.id] ?? null,
       toneIndex: Math.max(0, allNatureIds.indexOf(region.id)),
       visited: progress.visitedRegionIds.includes(region.id),
@@ -156,7 +157,7 @@ export function ExploreScreen() {
     .map((region, index) => ({
       id: region.id,
       name: mapExploreRegionName(region)[language] ?? region.name_kg,
-      tagline: region.tagline,
+      tagline: regionTagline(region, language),
       imageSource: natureSiteImages[region.id] ?? null,
       toneIndex: index,
       visited: progress.visitedRegionIds.includes(region.id),

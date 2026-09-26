@@ -52,8 +52,10 @@ export const game3DRegistry: Game3DRegistryEntry[] = [
     id: 'kok_boru',
     titleKey: 'games3d.titles.kokBoru',
     route: '/games/kok-boru',
-    // Phase A only (Section "KOK BORU — PHASED DEVELOPMENT"): 1 player, 1
-    // horse, pick up/carry/score. No AI opponent/stealing/match rules yet.
+    // Simplified 1v1 slice: player + one AI rival, proximity pickup/steal,
+    // carry to your goal circle, 2-minute clock. NOT the team game - no
+    // teams, no full rules, no advanced AI, no multiplayer (future phases,
+    // docs/3D_GAMES.md).
     status: 'PARTIAL',
     orientation: 'landscape',
     thumbnail: null,

@@ -13,6 +13,7 @@ import { useCollectionSignals } from '@/features/collections/useCollectionProgre
 import { komuzTracks } from './audioData';
 import type { SupportedLanguage } from '@/i18n';
 import { dayNumber, localDateKey } from '@/services/daily/dailyDiscovery';
+import { cultureCategoryTitle } from '@/services/content/cultureCategoryTitles';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -72,7 +73,7 @@ export function CultureScreen() {
   const categories = (categoryRows ?? []).map((row) => {
     const id = row.id as CultureCategoryId;
     const count = allItems ? allItems.filter((item) => item.category_id === id).length : null;
-    return { id, title: row.title, image: cultureCategoryImages[id], count: count && count > 0 ? count : null };
+    return { id, title: cultureCategoryTitle(row, language), image: cultureCategoryImages[id], count: count && count > 0 ? count : null };
   });
 
   const collectionCards = collections.map((collection) => {

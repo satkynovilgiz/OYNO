@@ -17,6 +17,7 @@ import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { gameHaptics } from '../../haptics/gameHaptics';
 import { preloadCharacterModel } from '../../shared/assets/preloadModels';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
+import { DrawStrengthMeter } from '../../ui/DrawStrengthMeter';
 import { ErrorOverlay } from '../../ui/ErrorOverlay';
 import { GameAboutCard } from '../../ui/GameAboutCard';
 import { GameHUD } from '../../ui/GameHUD';
@@ -182,6 +183,8 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
     recordedResultRef.current = false;
     setIsNewBest(false);
     countdownShownRef.current = false;
+    // A restart from a pause taken mid-countdown starts a fresh 3-2-1.
+    setShowCountdown(false);
     game.restart();
   }, [game]);
 
@@ -240,6 +243,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
                 minDrawMs={aim.MIN_DRAW_MS}
                 maxDrawMs={aim.MAX_DRAW_MS}
                 bullseyeSignalMs={bullseyeSignalMs}
+                shots={game.shots}
               />
             </Game3DCanvas>
           </View>
@@ -260,6 +264,8 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
           that phase flips to RESULT, so gating this on READY/PLAYING would
           silently drop the last popup. Its own timer fades it out. */}
       <ShotFeedback event={shotFeedback} />
+
+      {game.phase === 'READY' ? <DrawStrengthMeter isDrawing={aim.isDrawing} drawStartedAtMs={aim.drawStartedAtMs} minDrawMs={aim.MIN_DRAW_MS} maxDrawMs={aim.MAX_DRAW_MS} /> : null}
 
       <GameIntroCard visible={game.phase === 'INTRO'} title={t('games3d.titles.jaaAtuu')} onDone={game.finishIntro} />
 

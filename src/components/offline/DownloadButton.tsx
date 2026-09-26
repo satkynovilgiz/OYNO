@@ -11,7 +11,7 @@ import { colors, radii, spacing, typography } from '@/theme';
 type DownloadButtonProps = {
   kind: OfflineKind;
   contentId: string;
-  /** Content name, for the accessibility label ("Download Son-Kol…"). */
+  /** Content name, for the accessibility label ("Download Son-Köl…"). */
   title: string;
 };
 

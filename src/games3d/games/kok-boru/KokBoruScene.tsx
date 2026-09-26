@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { ChaseCamera, type ChaseCameraTarget } from '../../camera/ChaseCamera';
 import { clampFrameDelta } from '../../core/frameDelta';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
-import type { HorseController } from '../../shared/horse/HorseController';
+import { publishStamina, type HorseController } from '../../shared/horse/HorseController';
 import { HorseLoader } from '../../shared/horse/HorseLoader';
 import type { HorseVisualState } from '../../shared/horse/HorseModel';
 import { computeAiSteering } from './KokBoruAI';
@@ -33,6 +33,8 @@ type KokBoruSceneProps = {
   moveX: SharedValue<number>;
   moveZ: SharedValue<number>;
   sprintHeld: SharedValue<boolean>;
+  stamina?: SharedValue<number>;
+  sprintAvailable?: SharedValue<boolean>;
   onTick: (dt: number) => void;
 };
 
@@ -53,6 +55,8 @@ export function KokBoruScene({
   moveX,
   moveZ,
   sprintHeld,
+  stamina,
+  sprintAvailable,
   onTick,
 }: KokBoruSceneProps) {
   const playerGroupRef = useRef<THREE.Group>(null);
@@ -70,6 +74,7 @@ export function KokBoruScene({
 
     if (phase === 'PLAYING') {
       player.step({ moveX: moveX.value, moveZ: moveZ.value, sprintHeld: sprintHeld.value }, clampedDelta);
+      publishStamina(player, stamina, sprintAvailable);
 
       if (showAiHorse) {
         // The AI's target follows the match state it's already being told

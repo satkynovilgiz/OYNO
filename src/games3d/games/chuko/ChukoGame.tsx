@@ -101,6 +101,8 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
 
   const handleRestart = useCallback(() => {
     countdownShownRef.current = false;
+    setShowCountdown(false);
+    setLandingMessage(null);
     game.restart();
   }, [game]);
 
@@ -135,12 +137,28 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
     // result" chime, same layering as Ordo's pieceHit+clear.
     audioRef.current.play('land', 0.5);
     if (outcome.scoreDelta > 0) audioRef.current.play('success', 0.55);
-    if (side === 'player') {
-      setLandingMessage(outcome.scoreDelta > 0 ? t('games3d.chuko.landingHit', { count: outcome.captured.length }) : t('games3d.chuko.landingMiss'));
-      const timer = setTimeout(() => setLandingMessage(null), 1600);
-      return () => clearTimeout(timer);
-    }
+    // Every throw is explained - the opponent's too, so the score change
+    // is never a mystery.
+    const count = outcome.captured.length;
+    setLandingMessage(
+      side === 'player'
+        ? count > 0
+          ? t('games3d.chuko.landingHit', { count })
+          : t('games3d.chuko.landingMiss')
+        : count > 0
+          ? t('games3d.chuko.landingHitAi', { count })
+          : t('games3d.chuko.landingMissAi'),
+    );
   }, [game.lastOutcome, t]);
+
+  // Own timer, keyed on the message: the old timer lived in the effect
+  // above and was cancelled whenever `lastOutcome` changed (restart,
+  // practice reset), leaving the banner stuck on screen.
+  useEffect(() => {
+    if (!landingMessage) return;
+    const timer = setTimeout(() => setLandingMessage(null), 1600);
+    return () => clearTimeout(timer);
+  }, [landingMessage]);
 
   const handleRelease = useCallback(
     (payload: { angleOffset: number; power: number }) => {
@@ -159,6 +177,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
 
   const handleResetPieces = useCallback(() => {
     setHasThrown(false);
+    setLandingMessage(null);
     game.resetPieces();
   }, [game]);
 
@@ -215,7 +234,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
       ) : null}
 
       <StatusBanner visible={!!turnLabel} text={turnLabel ?? ''} top="12%" />
-      <StatusBanner visible={!!landingMessage} text={landingMessage ?? ''} tone="accent" top="20%" />
+      <StatusBanner visible={!!landingMessage && game.phase !== 'RESULT' && game.phase !== 'PAUSED'} text={landingMessage ?? ''} tone="accent" top="22%" maxWidth="70%" />
 
       <PracticeBar
         visible={mode === 'practice' && inGameplayPhase}

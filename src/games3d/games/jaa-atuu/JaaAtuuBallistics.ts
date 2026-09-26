@@ -60,9 +60,9 @@ export function arrowPositionAt(
   return out;
 }
 
-export function arrowVelocityAt(shot: PendingShot, elapsedSeconds: number, config: JaaAtuuDifficultyConfig): THREE.Vector3 {
+export function arrowVelocityAt(shot: PendingShot, elapsedSeconds: number, config: JaaAtuuDifficultyConfig, out = new THREE.Vector3()): THREE.Vector3 {
   const { direction, speed } = launchDirection(shot, config);
-  return new THREE.Vector3(
+  return out.set(
     direction.x * speed,
     direction.y * speed - GRAVITY * elapsedSeconds,
     direction.z * speed,
@@ -91,4 +91,45 @@ export function resolveImpact(point: THREE.Vector3, targetCenter: THREE.Vector3)
     score: ring?.score ?? 0,
     hitOffset: { x: localX, y: localY },
   };
+}
+
+export const GROUND_Y = 0;
+export const MAX_FLIGHT_SECONDS = 4;
+
+export type FlightOutcome = {
+  /** Seconds from release until the arrow stops (target face, ground, or
+   * the safety timeout). */
+  endTime: number;
+  /** Exact world position where the flight ends. */
+  endPoint: THREE.Vector3;
+  impact: ImpactResult;
+};
+
+/**
+ * Where and when this shot ends, solved analytically from the same
+ * parabola the arrow is drawn along - so the score is exactly the point
+ * where the arc crosses the target plane, identical at 30, 60 or 120 fps
+ * (the scene used to judge the first *rendered* frame past the plane,
+ * which could be up to ~0.5 m further along at full power).
+ */
+export function resolveFlight(shot: PendingShot, config: JaaAtuuDifficultyConfig): FlightOutcome {
+  const { direction, speed } = launchDirection(shot, config);
+  const targetCenter = getTargetCenter(config);
+
+  // Target plane: z(t) = z0 + dz·v·t  (dz < 0 flies toward the target).
+  const vz = direction.z * speed;
+  const planeTime = vz < 0 ? (targetCenter.z - ARCHER_POSITION.z) / vz : Number.POSITIVE_INFINITY;
+
+  // Ground: y0 + vy·t - g·t²/2 = GROUND_Y  →  the positive root.
+  const vy = direction.y * speed;
+  const a = 0.5 * GRAVITY;
+  const c = GROUND_Y - ARCHER_POSITION.y;
+  const groundTime = (vy + Math.sqrt(vy * vy - 4 * a * c)) / (2 * a);
+
+  if (planeTime <= groundTime && planeTime <= MAX_FLIGHT_SECONDS) {
+    const endPoint = arrowPositionAt(shot, planeTime, config);
+    return { endTime: planeTime, endPoint, impact: resolveImpact(endPoint, targetCenter) };
+  }
+  const endTime = Math.min(groundTime, MAX_FLIGHT_SECONDS);
+  return { endTime, endPoint: arrowPositionAt(shot, endTime, config), impact: { ring: null, score: 0, hitOffset: null } };
 }

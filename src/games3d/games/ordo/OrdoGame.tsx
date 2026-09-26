@@ -23,12 +23,14 @@ import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
 import { StatusBanner } from '../../ui/StatusBanner';
+import { describeOrdoOutcome, type OrdoOutcomeMessage } from './ordoOutcomeMessage';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useOrdoGame } from './OrdoController';
 import { createOrdoAudio } from './ordoAudio';
 import { OrdoScene } from './OrdoScene';
 import type { OrdoDifficulty, OrdoMode } from './OrdoTypes';
 
+const OUTCOME_BANNER_MS = 1800;
 const TUTORIAL_STEPS = ['games3d.ordo.tutorial1', 'games3d.ordo.tutorial2', 'games3d.ordo.tutorial3'];
 const GAME_ID = 'ordo';
 
@@ -54,6 +56,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
 
   const audioRef = useRef(createOrdoAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
+  const [outcomeMessage, setOutcomeMessage] = useState<OrdoOutcomeMessage | null>(null);
   const prevTurnPhaseRef = useRef(game.phase);
 
   // First-time "what is this / how to play" flow (same pattern as
@@ -108,6 +111,8 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
 
   const handleRestart = useCallback(() => {
     countdownShownRef.current = false;
+    setShowCountdown(false);
+    setOutcomeMessage(null);
     game.restart();
   }, [game]);
 
@@ -147,7 +152,20 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
     void hapticFor(scoreDelta, khan);
     audioRef.current.play('pieceHit', 0.55);
     if (scoreDelta > 0 || khan) audioRef.current.play('clear', 0.6);
+
+    // Say what the rules decided (a khan hit too early used to return to
+    // the ring silently). Captures in `summary` already include this throw.
+    const cleared = outcome.legalCaptures.filter((piece) => piece.kind === 'regular').length;
+    const capturesAfter = side === 'player' ? game.summary.playerCaptures : game.summary.aiCaptures;
+    setOutcomeMessage(describeOrdoOutcome(outcome, side, capturesAfter - cleared));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastOutcome]);
+
+  useEffect(() => {
+    if (!outcomeMessage) return;
+    const timer = setTimeout(() => setOutcomeMessage(null), OUTCOME_BANNER_MS);
+    return () => clearTimeout(timer);
+  }, [outcomeMessage]);
 
   // Turn-change cue (Section "turn change") - fires only on an actual
   // PLAYER_TURN<->AI_TURN transition, not on every phase change (SETTLING
@@ -247,6 +265,13 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
       ) : null}
 
       <StatusBanner visible={!!turnLabel} text={turnLabel ?? ''} top="12%" />
+      <StatusBanner
+        visible={!!outcomeMessage && game.phase !== 'RESULT' && game.phase !== 'PAUSED'}
+        text={outcomeMessage ? t(outcomeMessage.key, outcomeMessage.params) : ''}
+        tone={outcomeMessage?.tone}
+        top="22%"
+        maxWidth="70%"
+      />
 
       <PracticeBar
         visible={mode === 'practice' && inGameplayPhase}

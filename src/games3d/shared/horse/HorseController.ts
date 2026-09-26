@@ -1,3 +1,5 @@
+import type { SharedValue } from 'react-native-reanimated';
+
 /** Shared kinematic horse controller (Section 37/88: "prefer controlled
  * character movement", not a physics-driven horse simulation) - used by
  * both Kyz Kuumai and Kok Boru (Section "Do not implement a completely
@@ -77,6 +79,12 @@ export class HorseController {
   private canSprint = true;
   private static readonly RECOVERY_THRESHOLD_RATIO = 0.2;
 
+  /** Whether sprint can engage right now (false while recovering after
+   * running out) - for the HUD, so the lockout is visible, not mysterious. */
+  get sprintAvailable(): boolean {
+    return this.canSprint;
+  }
+
   constructor(
     readonly config: HorseControllerConfig = DEFAULT_HORSE_CONFIG,
     startX = 0,
@@ -123,4 +131,15 @@ export class HorseController {
     const speedRatio = this.speed / this.config.maxSpeed;
     this.state = this.speed < 0.15 ? 'IDLE' : speedRatio < 0.4 ? 'WALK' : speedRatio < 0.95 ? 'TROT' : 'GALLOP';
   }
+}
+
+/** Mirrors the player horse's stamina into the Sprint button's shared
+ * values - only when it changes by >1% (not a cross-thread write every
+ * frame). */
+export function publishStamina(horse: HorseController, stamina?: SharedValue<number>, sprintAvailable?: SharedValue<boolean>) {
+  if (stamina) {
+    const fraction = horse.stamina / horse.config.staminaMax;
+    if (Math.abs(stamina.value - fraction) > 0.01 || (fraction === 1 && stamina.value !== 1)) stamina.value = fraction;
+  }
+  if (sprintAvailable && sprintAvailable.value !== horse.sprintAvailable) sprintAvailable.value = horse.sprintAvailable;
 }

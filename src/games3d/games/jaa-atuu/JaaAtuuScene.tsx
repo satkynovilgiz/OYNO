@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import * as THREE from 'three';
 
@@ -13,14 +13,12 @@ import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { GAME_INTRO_DURATION_MS } from '../../ui/GameIntroCard';
 import { ArcheryRange } from './ArcheryRange';
 import type { PendingShot } from './JaaAtuuController';
-import { ARCHER_POSITION, arrowPositionAt, arrowVelocityAt, getTargetCenter, resolveImpact } from './JaaAtuuBallistics';
+import { ARCHER_POSITION, arrowPositionAt, arrowVelocityAt, getTargetCenter, resolveFlight } from './JaaAtuuBallistics';
 import { ARROW_FORWARD, JaaAtuuArrow } from './JaaAtuuArrow';
 import { BOW_STRING_TIP_Y, BOW_STRING_TIP_Z, JaaAtuuBow, type JaaAtuuBowHandle } from './JaaAtuuBow';
 import { JaaAtuuTarget } from './JaaAtuuTarget';
 import type { ArrowShot, JaaAtuuDifficultyConfig, JaaAtuuPhase } from './JaaAtuuTypes';
 
-const GROUND_Y = 0;
-const MAX_FLIGHT_SECONDS = 4;
 const INTRO_START_OFFSET = new THREE.Vector3(5, 5.5, 9);
 /** A short dolly out from the gameplay aim-camera position to a wider 3/4
  * hero angle when a round ends (Section: "camera cinematics" benchmark
@@ -40,6 +38,10 @@ const stringQuaternion = new THREE.Quaternion();
 const topTip = new THREE.Vector3(0, BOW_STRING_TIP_Y, BOW_STRING_TIP_Z);
 const bottomTip = new THREE.Vector3(0, -BOW_STRING_TIP_Y, BOW_STRING_TIP_Z);
 const nockPoint = new THREE.Vector3();
+// Per-frame scratch objects for the flying arrow (no allocation per frame).
+const flightPosition = new THREE.Vector3();
+const flightVelocity = new THREE.Vector3();
+const flightQuaternion = new THREE.Quaternion();
 
 /** Re-poses a unit-height string-segment cylinder to run from a fixed limb
  * tip to the shared moving nock point, instead of letting the whole string
@@ -69,6 +71,10 @@ type JaaAtuuSceneProps = {
   minDrawMs: number;
   maxDrawMs: number;
   bullseyeSignalMs?: number;
+  /** This round's resolved shots - hits stay visible on the target face at
+   * their exact scored position, so the player sees *where* each arrow
+   * landed, not only the "+25" popup. Cleared on restart. */
+  shots: ArrowShot[];
 };
 
 export function JaaAtuuScene({
@@ -83,6 +89,7 @@ export function JaaAtuuScene({
   minDrawMs,
   maxDrawMs,
   bullseyeSignalMs,
+  shots,
 }: JaaAtuuSceneProps) {
   const arrowGroupRef = useRef<THREE.Group>(null);
   const bowRef = useRef<JaaAtuuBowHandle>(null);
@@ -91,6 +98,16 @@ export function JaaAtuuScene({
   const resolvedRef = useRef(false);
 
   const targetCenter = useMemo(() => getTargetCenter(config), [config]);
+  // Solved once per shot: exact end time/point and the score it earns.
+  const flight = useMemo(() => (pendingShot ? resolveFlight(pendingShot, config) : null), [pendingShot, config]);
+
+  // A new shot (or a restart that clears one mid-flight) always starts the
+  // flight clock from zero - a restart after pausing mid-flight used to
+  // leave the old elapsed time behind for the next arrow.
+  useEffect(() => {
+    flightElapsedRef.current = 0;
+    resolvedRef.current = false;
+  }, [pendingShot]);
 
   useFrame((_state, delta) => {
     // Live bow-draw feedback (Section 26) - mutated directly, never via
@@ -111,29 +128,19 @@ export function JaaAtuuScene({
     if (archer?.rightShoulder) applyDrawPose(archer.rightShoulder, pull, true);
     if (archer?.leftShoulder) applyDrawPose(archer.leftShoulder, pull, false);
 
-    if (phase !== 'PLAYING' || !pendingShot || !arrowGroupRef.current) return;
+    if (phase !== 'PLAYING' || !pendingShot || !flight || !arrowGroupRef.current || resolvedRef.current) return;
 
-    if (flightElapsedRef.current === 0) resolvedRef.current = false;
-    flightElapsedRef.current += clampFrameDelta(delta);
+    flightElapsedRef.current = Math.min(flightElapsedRef.current + clampFrameDelta(delta), flight.endTime);
     const t = flightElapsedRef.current;
 
-    const position = arrowPositionAt(pendingShot, t, config);
-    arrowGroupRef.current.position.copy(position);
+    arrowGroupRef.current.position.copy(arrowPositionAt(pendingShot, t, config, flightPosition));
+    const velocity = arrowVelocityAt(pendingShot, t, config, flightVelocity).normalize();
+    arrowGroupRef.current.quaternion.copy(flightQuaternion.setFromUnitVectors(ARROW_FORWARD, velocity));
 
-    const velocity = arrowVelocityAt(pendingShot, t, config).normalize();
-    const quaternion = new THREE.Quaternion().setFromUnitVectors(ARROW_FORWARD, velocity);
-    arrowGroupRef.current.quaternion.copy(quaternion);
-
-    const crossedTargetPlane = position.z <= targetCenter.z;
-    const hitGround = position.y <= GROUND_Y;
-    const timedOut = t > MAX_FLIGHT_SECONDS;
-
-    if (!resolvedRef.current && (crossedTargetPlane || hitGround || timedOut)) {
+    if (t >= flight.endTime) {
+      // Lands exactly on the solved point - the same point that is scored.
       resolvedRef.current = true;
-      flightElapsedRef.current = 0;
-
-      const impact = crossedTargetPlane ? resolveImpact(position, targetCenter) : { ring: null, score: 0, hitOffset: null };
-      onResolveShot({ aimX: pendingShot.aimX, aimY: pendingShot.aimY, power: pendingShot.power, ...impact });
+      onResolveShot({ aimX: pendingShot.aimX, aimY: pendingShot.aimY, power: pendingShot.power, ...flight.impact });
     }
   });
 
@@ -164,7 +171,7 @@ export function JaaAtuuScene({
 
       <ArcheryRange targetDistance={config.targetDistance} />
 
-      <JaaAtuuTarget center={targetCenter} />
+      <JaaAtuuTarget center={targetCenter} hits={shots} />
 
       <group position={[ARCHER_POSITION.x, 0, ARCHER_POSITION.z]} rotation={[0, ARCHER_FACING, 0]}>
         <CharacterLoader ref={archerRef} variant={CHARACTER_PRESETS.playerArcher} />

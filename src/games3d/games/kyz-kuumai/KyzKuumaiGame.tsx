@@ -26,6 +26,8 @@ import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
+import { formatGameUnit } from '../../ui/gameUnits';
+import { CATCH_RADIUS_M } from './KyzKuumaiTypes';
 import { StatusBanner } from '../../ui/StatusBanner';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKyzKuumaiGame } from './KyzKuumaiController';
@@ -38,6 +40,9 @@ const GAME_ID = 'kyz_kuumai';
 // Coaching text per checkpoint reached (Section "KYZ KUUMAI PRACTICE":
 // teach steering, then sprint, then turning) - index 0 is shown before any
 // checkpoint, index 1 after the 1st, etc.
+const OBJECTIVE_BANNER_SECONDS = 3;
+/** Show "within reach" once the gap is under this many catch radii. */
+const CLOSE_HINT_FACTOR = 2.5;
 const COACHING_KEYS = [
   'games3d.kyzKuumai.coachSteer',
   'games3d.kyzKuumai.coachSprint',
@@ -52,7 +57,7 @@ type KyzKuumaiGameProps = {
 
 export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuumaiGameProps) {
   useTrackScreenView('games3d_kyz_kuumai');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const game = useKyzKuumaiGame(difficulty, mode);
   useGameLifecycle('landscape', game.pause);
@@ -125,6 +130,12 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   // Checkpoint cue (Section "checkpoint") - `checkpointEvent.key` increments
   // once per checkpoint crossed (KyzKuumaiController.ts), so this fires
   // exactly once per checkpoint rather than once per render.
+  // A restart clears the event; forget the last key too, so the new run's
+  // first checkpoint (key 1 again) still gets its cue.
+  useEffect(() => {
+    if (!game.checkpointEvent) lastCheckpointKeyRef.current = null;
+  }, [game.checkpointEvent]);
+
   useEffect(() => {
     const key = game.checkpointEvent?.key ?? null;
     if (key === null || key === lastCheckpointKeyRef.current) return;
@@ -183,17 +194,17 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   const resultStats = useMemo(() => {
     if (mode === 'practice') {
       return [
-        { label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(1)}s` },
-        { label: t('games3d.kyzKuumai.topSpeed'), value: `${game.summary.topSpeed.toFixed(1)} m/s` },
+        { label: t('games3d.kyzKuumai.time'), value: formatGameUnit(t, i18n.language, 'seconds', game.summary.elapsedSeconds) },
+        { label: t('games3d.kyzKuumai.topSpeed'), value: formatGameUnit(t, i18n.language, 'metersPerSecond', game.summary.topSpeed) },
         { label: t('games3d.kyzKuumai.checkpoints'), value: `${checkpointsReached}/${game.totalCheckpoints}` },
       ];
     }
     return [
-      { label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(1)}s` },
-      { label: t('games3d.kyzKuumai.topSpeed'), value: `${game.summary.topSpeed.toFixed(1)} m/s` },
-      { label: t('games3d.kyzKuumai.closest'), value: `${game.summary.closestDistance.toFixed(1)}m` },
+      { label: t('games3d.kyzKuumai.time'), value: formatGameUnit(t, i18n.language, 'seconds', game.summary.elapsedSeconds) },
+      { label: t('games3d.kyzKuumai.topSpeed'), value: formatGameUnit(t, i18n.language, 'metersPerSecond', game.summary.topSpeed) },
+      { label: t('games3d.kyzKuumai.closest'), value: formatGameUnit(t, i18n.language, 'meters', game.summary.closestDistance) },
     ];
-  }, [game.summary, game.totalCheckpoints, checkpointsReached, mode, t]);
+  }, [game.summary, game.totalCheckpoints, checkpointsReached, mode, t, i18n.language]);
 
   const resultTitle =
     mode === 'practice'
@@ -202,7 +213,18 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
         ? t('games3d.kyzKuumai.caughtTitle')
         : t('games3d.kyzKuumai.notCaughtTitle');
 
-  const coachingText = mode === 'practice' && playing ? t(COACHING_KEYS[Math.min(checkpointsReached, COACHING_KEYS.length - 1)]) : null;
+  // Always one clear immediate goal: practice coaches by checkpoint; a real
+  // chase states the objective as it starts, then says so (from the real
+  // distance) once the rider is almost within catching range.
+  const coachingText = !playing
+    ? null
+    : mode === 'practice'
+      ? t(COACHING_KEYS[Math.min(checkpointsReached, COACHING_KEYS.length - 1)])
+      : game.liveElapsedSeconds < OBJECTIVE_BANNER_SECONDS
+        ? t('games3d.kyzKuumai.objective')
+        : game.liveDistance > 0 && game.liveDistance < CATCH_RADIUS_M * CLOSE_HINT_FACTOR
+          ? t('games3d.kyzKuumai.closeHint')
+          : null;
 
   return (
     <View style={styles.root}>
@@ -216,6 +238,8 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
             moveX={joystick.moveX}
             moveZ={joystick.moveZ}
             sprintHeld={sprint.sprintHeld}
+            stamina={sprint.stamina}
+            sprintAvailable={sprint.sprintAvailable}
             onTick={handleTick}
           />
         </Game3DCanvas>
@@ -229,9 +253,9 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
           primaryStat={
             mode === 'practice'
               ? { label: t('games3d.kyzKuumai.checkpoints'), value: `${checkpointsReached}/${game.totalCheckpoints}` }
-              : { label: t('games3d.kyzKuumai.distance'), value: `${game.liveDistance.toFixed(1)}m` }
+              : { label: t('games3d.kyzKuumai.distance'), value: formatGameUnit(t, i18n.language, 'meters', game.liveDistance) }
           }
-          timerValue={`${game.liveElapsedSeconds.toFixed(0)}s`}
+          timerValue={formatGameUnit(t, i18n.language, 'seconds', game.liveElapsedSeconds, 0)}
         />
       ) : null}
 
@@ -243,7 +267,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
             <VirtualJoystickView gesture={joystick.gesture} knobX={joystick.knobX} knobY={joystick.knobY} />
           </View>
           <View pointerEvents="box-none" style={styles.controlSlot}>
-            <SprintButtonView sprintHeld={sprint.sprintHeld} onPressIn={handleSprintPressIn} />
+            <SprintButtonView sprintHeld={sprint.sprintHeld} stamina={sprint.stamina} sprintAvailable={sprint.sprintAvailable} onPressIn={handleSprintPressIn} />
           </View>
         </View>
       ) : null}

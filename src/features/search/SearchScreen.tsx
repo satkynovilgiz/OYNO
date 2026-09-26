@@ -99,8 +99,8 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
   const catalog = useMemo<CatalogItem[]>(
     () => [
       ...buildExploreCatalog(regions ?? [], language),
-      ...buildCultureCategoryCatalog(categories ?? []),
-      ...buildCultureItemCatalog(items ?? [], categories ?? []),
+      ...buildCultureCategoryCatalog(categories ?? [], language),
+      ...buildCultureItemCatalog(items ?? [], categories ?? [], language),
       ...buildInteractiveExperienceCatalog(t),
       ...buildCultureMaterialCatalog(materials ?? []),
       ...buildCollectionCatalog(collections, language, null),

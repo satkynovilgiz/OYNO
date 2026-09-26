@@ -67,8 +67,6 @@
     },
     "verifyEmail": {
       "title": "Verify your email",
-      "descriptionPrefix": "An 8-digit code was sent to ",
-      "descriptionSuffix": ".",
       "codeError": "Enter the 8-digit code.",
       "resendCooldown": "Resend ({{seconds}}s)",
       "resend": "Resend code",
@@ -79,8 +77,6 @@
     },
     "verifyResetCode": {
       "title": "Verification code",
-      "descriptionPrefix": "Enter the code sent to ",
-      "descriptionSuffix": ".",
       "codeError": "Enter the 8-digit code.",
       "submit": "Verify"
     },
@@ -191,8 +187,8 @@
       "deleteCancel": "Cancel",
       "deleteConfirmHint": "Enter your password to confirm.",
       "passwordLabel": "Password",
-      "customizeAvatar": "Customize Avatar",
-      "storyCompanion": "Story companion"
+      "customizeAvatar": "Edit your avatar",
+      "storyCompanion": "Your OYNO guide"
     },
     "experience": {
       "title": "Experience",
@@ -425,7 +421,7 @@
       "arkan-tartysh": "Arkan Tartysh",
       "ak-terek-kok-terek": "Ak Terek – Kok Terek",
       "zholuk-tashtamay": "Zholuk Tashtamay",
-      "zhaa-atuu": "Archery",
+      "zhaa-atuu": "Jaa Atuu",
       "kyz-kuumay": "Kyz Kuumai",
       "kok-boru": "Kok Boru",
       "beshbarmak-challenge": "Beshbarmak Challenge",
@@ -538,8 +534,8 @@
     }
   },
   "characterSelect": {
-    "title": "Choose your character",
-    "subtitle": "This character becomes the face of your profile",
+    "title": "Your OYNO guide",
+    "subtitle": "Choose who shows you around OYNO. This is your guide, not your avatar.",
     "continue": "Continue",
     "guestHint": "Create an account to save your progress",
     "comingSoon": "Coming soon"
@@ -584,6 +580,20 @@
       "mouth": "Mouth",
       "eyeColor": "Eye color",
       "hairColor": "Hair color"
+    },
+    "yourAvatar": "Your avatar",
+    "swatchSkin": "Skin tone {{index}} of {{total}}",
+    "colorNames": {
+      "black": "Black",
+      "darkBrown": "Dark brown",
+      "brown": "Brown",
+      "lightBrown": "Light brown",
+      "auburn": "Auburn",
+      "gray": "Gray",
+      "white": "White",
+      "hazel": "Hazel",
+      "green": "Green",
+      "blue": "Blue"
     }
   },
   "language": {
@@ -652,7 +662,7 @@
         "18+": "Deeper stories"
       },
       "places": {
-        "sonKol": "Son-Kol",
+        "sonKol": "Son-Köl",
         "saryChelek": "Sary-Chelek",
         "alay": "Alay"
       }
@@ -1112,11 +1122,34 @@
   },
   "profileSetup": {
     "title": "Set up your profile",
-    "description": "Other players will see you by this name.",
+    "description": "Your display name in OYNO - a first name or a nickname is fine.",
     "nameLabel": "Name",
-    "namePlaceholder": "Bek Asanov",
+    "namePlaceholder": "e.g. Aiperi",
     "nameError": "Please enter your name.",
-    "continue": "Continue"
+    "continue": "Continue",
+    "v2": {
+      "step": "Step {{current}} of {{total}}",
+      "name": {
+        "title": "What should we call you?",
+        "body": "Your display name in OYNO. A first name or a nickname is fine - it doesn't have to be your full name.",
+        "label": "Display name"
+      },
+      "guide": {
+        "title": "Choose your guide",
+        "body": "Your guide appears in stories, trails and games to show you around OYNO. It isn't your profile picture - you'll create that next.",
+        "selected": "Selected",
+        "save": "Choose this guide",
+        "changeNote": "Changing your guide keeps your avatar and progress as they are."
+      },
+      "avatar": {
+        "title": "Now create yourself",
+        "body": "This avatar is you - it appears on your profile. Your guide stays separate.",
+        "editorTitle": "Your avatar",
+        "saveFailed": "Couldn't save your avatar. Try again.",
+        "willSync": "Your avatar is saved on this phone and will sync when you're online."
+      },
+      "nameNotSaved": "Couldn't save your name right now - you can change it in Settings > Account."
+    }
   },
   "notificationsScreen": {
     "backLabel": "Back",
@@ -1438,7 +1471,7 @@
       "PLAYABLE": "Playable"
     },
     "titles": {
-      "jaaAtuu": "Archery",
+      "jaaAtuu": "Jaa Atuu",
       "ordo": "Ordo",
       "chuko": "Chuko",
       "kyzKuumai": "Kyz Kuumai",
@@ -1492,7 +1525,8 @@
       "tutorial3": "Release to shoot!",
       "miss": "MISS",
       "aboutDescription": "Jaa Atuu is Kyrgyz archery. This is a mobile-adapted target round, not a historical reconstruction.",
-      "aboutObjective": "Hit the center of the target with all 5 arrows."
+      "aboutObjective": "Hit the center of the target with all 5 arrows.",
+      "drawStrength": "Draw strength"
     },
     "intro": {
       "start": "START!"
@@ -1510,7 +1544,18 @@
       "aboutObjective": "Clear 3 pieces, then capture the khan before your opponent does.",
       "practiceLabel": "PRACTICE",
       "practiceGuidance": "Drag back to aim, release to throw",
-      "resetPieces": "Reset pieces"
+      "resetPieces": "Reset pieces",
+      "outcome": {
+        "khanCaptured": "Khan captured!",
+        "khanCapturedAi": "Opponent captured the khan",
+        "khanTooEarly": "Too early - the khan goes back. Clear {{count}} more first",
+        "khanTooEarlyAi": "Opponent hit the khan too early - it goes back",
+        "khanOpen": "Cleared {{count}} - now you can capture the khan!",
+        "cleared": "Cleared: {{count}}",
+        "clearedAi": "Opponent cleared: {{count}}",
+        "noCapture": "Nothing left the circle",
+        "noCaptureAi": "Opponent missed"
+      }
     },
     "chuko": {
       "tutorial1": "This is one variant of chuko - drag back to throw",
@@ -1520,7 +1565,9 @@
       "aboutDescription": "Chuko is a family of Kyrgyz throwing games played with astragalus bones - this builds one simplified variant (throw-and-collect).",
       "aboutObjective": "Collect the most pieces before the circle empties.",
       "landingHit": "Knocked out {{count}}!",
-      "landingMiss": "Missed"
+      "landingMiss": "Missed",
+      "landingHitAi": "Opponent knocked out {{count}}",
+      "landingMissAi": "Opponent missed"
     },
     "controls": {
       "sprint": "SPRINT"
@@ -1542,15 +1589,17 @@
       "coachSteer": "Steer with the left stick toward the marker",
       "coachSprint": "Nice! Hold SPRINT on the straight to go faster",
       "coachTurn": "Ease off sprint before the turn so you don't overshoot",
-      "coachFinish": "Almost there - head for the finish!"
+      "coachFinish": "Almost there - head for the finish!",
+      "objective": "Catch the lead rider before the finish",
+      "closeHint": "Almost within reach - sprint!"
     },
     "kokBoru": {
-      "tutorial1": "Ride up to the object to pick it up",
+      "tutorial1": "Ride up to the ulak to pick it up",
       "tutorial2": "Carry it into your goal circle to score",
       "tutorial3": "Ride close to the rival to steal it back if they have it",
       "pickUp": "PICK UP",
       "throw": "DROP",
-      "possession": "Object",
+      "possession": "Ulak",
       "you": "You",
       "opponent": "Rival",
       "free": "Free",
@@ -1559,10 +1608,16 @@
       "notScoredTitle": "TIME'S UP",
       "playerScored": "YOU SCORED!",
       "aiScored": "RIVAL SCORED",
-      "aboutDescription": "Kok Boru is Kyrgyz horseback polo - carry the object into your goal to score, and steal it back if your rival takes it.",
+      "aboutDescription": "Kok Boru is a traditional Kyrgyz horseback game: riders compete for the ulak and carry it into the goal. This is a simplified one-on-one version - take the ulak, keep it, and score.",
       "aboutObjective": "Score more goals than your rival before the 2-minute clock runs out.",
-      "resetObject": "Reset object",
-      "scoredCount": "Scored"
+      "resetObject": "Reset the ulak",
+      "scoredCount": "Scored",
+      "objective": {
+        "free": "Get to the ulak first",
+        "freePractice": "Ride up to the ulak and press PICK UP",
+        "carrying": "You have the ulak - ride into your goal circle",
+        "rivalHas": "Rival has the ulak - ride close to take it"
+      }
     },
     "about": {
       "objectiveLabel": "GOAL",
@@ -1573,6 +1628,11 @@
     },
     "tutorial": {
       "step": "{{current}} / {{total}}"
+    },
+    "units": {
+      "seconds": "{{value}} s",
+      "meters": "{{value}} m",
+      "metersPerSecond": "{{value}} m/s"
     }
   },
   "search": {
@@ -2105,11 +2165,11 @@
         "explanation": "The tunduk is the round opening at the top of the boz uy's roof."
       },
       "kok-boru-unesco": {
-        "question": "Kök Börü was added to UNESCO's Intangible Cultural Heritage list in 2017.",
+        "question": "Kok Boru was added to UNESCO's Intangible Cultural Heritage list in 2017.",
         "explanation": "True - it was inscribed in December 2017."
       },
       "kok-boru-rules": {
-        "question": "Who developed Kök Börü's modern unified rules in 1996?",
+        "question": "Who developed Kok Boru's modern unified rules in 1996?",
         "explanation": "They were developed by film director Bolot Shamshiev.",
         "options": {
           "kashgari": "Mahmud Kashgari",
@@ -2144,8 +2204,8 @@
         "explanation": "True - a saddle showed its owner's standing and taste."
       },
       "image-kok-boru": {
-        "question": "Which picture shows Kök Börü?",
-        "explanation": "Kök Börü is the game where the unity of horse and rider shows most clearly."
+        "question": "Which picture shows Kok Boru?",
+        "explanation": "Kok Boru is the game where the unity of horse and rider shows most clearly."
       },
       "shyrdak-unesco": {
         "question": "In which year was the craft of shyrdak and ala-kiyiz added to UNESCO's list?",

@@ -32,7 +32,10 @@ export function useVirtualJoystick() {
       // the stick UP (negative screen Y) should mean forward.
       moveZ.value = Math.sin(angle) * dead;
     })
-    .onEnd(() => {
+    // onFinalize (not onEnd) always runs - also when the gesture is
+    // cancelled (pause, system gesture). With onEnd only, the last stick
+    // input stuck and the horse kept riding after Resume.
+    .onFinalize(() => {
       'worklet';
       knobX.value = withSpring(0);
       knobY.value = withSpring(0);

@@ -55,7 +55,7 @@ src/games3d/
     ordo/        Circle-clearing/khan-capture - PARTIAL, not yet device-tested
     chuko/       Throw-and-collect - PARTIAL, not yet device-tested
     kyz-kuumai/  Horse chase - PARTIAL, not yet device-tested
-    kok-boru/    Phase A vertical slice (pickup/carry/score, no AI yet) - PARTIAL, not yet device-tested
+    kok-boru/    simplified 1v1 slice (one AI rival, proximity pickup/steal, carry, score, 2-min clock) - PARTIAL, not yet device-tested
 ```
 
 Every game follows the same shape: `<Name>Game.tsx` (screen, wires shared
@@ -709,3 +709,53 @@ a higher/farther-back camera offset for situational awareness. Both riders
 now go through `HorseLoader` (the real CC0 GLB horse, same as Kyz Kuumai) -
 Phase A had this on the raw procedural `HorseModel` directly; that was a
 real gap fixed in this pass, not a new asset.
+
+
+## Gameplay Polish 2.0 (2026-09-26)
+
+All five games stay **PARTIAL** - nothing here was run on a physical
+iPhone (no iOS build exists yet). Code-verified only.
+
+**Shared**
+- Controls: `AimController` activates on touch-down (`minDistance(0)`), so
+  "hold to draw, release to shoot" works without dragging; cancelled
+  gestures never fire. `DragPowerController` and `VirtualJoystick` reset in
+  `onFinalize` - a tap no longer leaves the pull indicator on screen, and a
+  cancelled stick (pause mid-ride) no longer keeps the horse riding after
+  Resume.
+- `TacticalCamera` (Ordo, Chuko) no longer allocates vectors every frame.
+- `ui/gameUnits.ts`: localized units and decimal commas (s/m/m/s were
+  hardcoded English).
+- `/games/3d-lab` renders Not Found outside `__DEV__` (it was reachable by
+  deep link in production).
+
+**Jaa Atuu** - scoring now uses the analytically solved plane crossing
+(`resolveFlight`), identical at any frame rate (it used the first rendered
+frame past the target, up to ~0.5 m further). Flight clock resets on every
+new shot and on restart (a restart after pausing mid-flight skewed the next
+arrow). Hits stay on the target face at their exact scored offset (newest
+gold-fletched). Draw-strength meter on the UI thread.
+
+**Ordo** - an outcome line explains what the rules engine decided: khan
+captured, khan hit too early (returns - with how many pieces are still
+needed; this used to happen silently), "khan is open now", pieces cleared,
+nothing captured - for both sides (`ordoOutcomeMessage.ts`, tested).
+
+**Chuko** - landing message timer fixed (a restart or practice reset within
+1.6 s left it stuck on screen); opponent throws are explained too.
+
+**Kyz Kuumai** - normal chase states the objective as it starts and says
+"almost within reach" from the real distance; first-checkpoint cue after a
+restart no longer skipped.
+
+**Kok Boru** - one persistent objective line from the real possession state
+(get to the ulak / you have it - ride to your goal / rival has it).
+
+### Kok Boru - future phases (not implemented)
+Teams, full traditional rules, advanced opponent AI, online multiplayer.
+The current build is a simplified 1v1 practice/match slice.
+
+### Requires a real device
+Touch feel of every control, FPS and heat for all five games, camera
+comfort, audio timing, haptics, safe areas in landscape on notch/Dynamic
+Island phones, background/foreground pause behaviour, GL context loss.

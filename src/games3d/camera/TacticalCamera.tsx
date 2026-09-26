@@ -29,14 +29,18 @@ export function TacticalCamera({ center, overviewOffset, followPointRef }: Tacti
   const currentPosition = useRef<THREE.Vector3 | null>(null);
   const currentLookAt = useRef<THREE.Vector3 | null>(null);
 
+  // Scratch vectors reused every frame (this camera runs continuously in
+  // Ordo and Chuko - it used to allocate 2-3 vectors per frame).
+  const targetPosition = useRef(new THREE.Vector3()).current;
+  const followOffset = useRef(new THREE.Vector3()).current;
+
   useFrame((_state, delta) => {
     const followPoint = followPointRef.current;
     const targetLookAt = followPoint ?? center;
     // Follow the action a little, but stay mostly tactical - blend only
     // 35% of the way toward the follow point's offset from center.
-    const targetPosition = followPoint
-      ? center.clone().addScaledVector(overviewOffset, 1).lerp(followPoint.clone().add(overviewOffset), 0.35)
-      : center.clone().add(overviewOffset);
+    targetPosition.copy(center).add(overviewOffset);
+    if (followPoint) targetPosition.lerp(followOffset.copy(followPoint).add(overviewOffset), 0.35);
 
     if (!currentPosition.current) currentPosition.current = targetPosition.clone();
     if (!currentLookAt.current) currentLookAt.current = targetLookAt.clone();

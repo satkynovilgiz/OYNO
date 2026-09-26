@@ -27,6 +27,7 @@ import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
+import { formatGameUnit } from '../../ui/gameUnits';
 import { StatusBanner } from '../../ui/StatusBanner';
 import { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { useKokBoruGame } from './KokBoruController';
@@ -43,7 +44,7 @@ type KokBoruGameProps = {
 
 export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   useTrackScreenView('games3d_kok_boru');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const game = useKokBoruGame(mode);
   useGameLifecycle('landscape', game.pause);
@@ -177,6 +178,15 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const playing = game.phase === 'PLAYING';
   const hudVisible = playing || game.phase === 'PAUSED' || game.phase === 'GOAL_PAUSE';
 
+  const objectiveKey =
+    game.possession === 'PLAYER'
+      ? 'games3d.kokBoru.objective.carrying'
+      : game.possession === 'AI'
+        ? 'games3d.kokBoru.objective.rivalHas'
+        : mode === 'practice'
+          ? 'games3d.kokBoru.objective.freePractice'
+          : 'games3d.kokBoru.objective.free';
+
   const actionLabel = game.possession === 'PLAYER' ? t('games3d.kokBoru.throw') : t('games3d.kokBoru.pickUp');
   const actionEnabled = game.possession === 'PLAYER' || game.canPickUp;
   const handleAction = game.possession === 'PLAYER' ? game.drop : game.pickUp;
@@ -184,15 +194,15 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const resultStats = useMemo(() => {
     if (mode === 'practice') {
       return [
-        { label: t('games3d.kyzKuumai.time'), value: `${game.summary.elapsedSeconds.toFixed(1)}s` },
-        { label: t('games3d.kyzKuumai.topSpeed'), value: `${game.summary.topSpeed.toFixed(1)} m/s` },
+        { label: t('games3d.kyzKuumai.time'), value: formatGameUnit(t, i18n.language, 'seconds', game.summary.elapsedSeconds) },
+        { label: t('games3d.kyzKuumai.topSpeed'), value: formatGameUnit(t, i18n.language, 'metersPerSecond', game.summary.topSpeed) },
       ];
     }
     return [
       { label: t('games3d.kokBoru.you'), value: String(game.summary.playerScore) },
       { label: t('games3d.kokBoru.opponent'), value: String(game.summary.aiScore) },
     ];
-  }, [game.summary, mode, t]);
+  }, [game.summary, mode, t, i18n.language]);
 
   const resultTitle =
     mode === 'practice'
@@ -228,6 +238,8 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
             moveX={joystick.moveX}
             moveZ={joystick.moveZ}
             sprintHeld={sprint.sprintHeld}
+            stamina={sprint.stamina}
+            sprintAvailable={sprint.sprintAvailable}
             onTick={game.onTick}
           />
         </Game3DCanvas>
@@ -253,9 +265,13 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
               ? { label: t('games3d.kokBoru.opponent'), value: String(game.score.ai) }
               : { label: t('games3d.kokBoru.scoredCount'), value: String(game.practiceScoreCount) }
           }
-          timerValue={mode === 'normal' ? `${(timeRemaining ?? 0).toFixed(0)}s` : undefined}
+          timerValue={mode === 'normal' ? formatGameUnit(t, i18n.language, 'seconds', timeRemaining ?? 0, 0) : undefined}
         />
       ) : null}
+
+      {/* Always answers "do I have it / where do I go" from the real
+          possession state - the scoreboard alone never said who holds it. */}
+      <StatusBanner visible={playing} text={t(objectiveKey)} tone={game.possession === 'PLAYER' ? 'accent' : 'neutral'} top="14%" maxWidth="70%" />
 
       <StatusBanner
         visible={game.phase === 'GOAL_PAUSE'}
@@ -272,7 +288,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
           </View>
           <View pointerEvents="box-none" style={[styles.controlSlot, styles.rightControls]}>
             {mode === 'practice' ? <ContextActionButton label={actionLabel} enabled={actionEnabled} onPress={handleAction} /> : null}
-            <SprintButtonView sprintHeld={sprint.sprintHeld} />
+            <SprintButtonView sprintHeld={sprint.sprintHeld} stamina={sprint.stamina} sprintAvailable={sprint.sprintAvailable} />
           </View>
         </View>
       ) : null}

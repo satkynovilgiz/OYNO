@@ -12,6 +12,7 @@ import { track } from '@/services/analytics/analytics';
 import { useDiscoveries } from '@/services/content/discoveriesService';
 import { useCurrentQuest, useExploreRegions } from '@/services/content/exploreService';
 import { useQuestSteps } from '@/services/content/questStepsService';
+import { regionTagline } from '@/services/content/regionTaglines';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
 import { computeRegionCompletions } from '@/services/explore/regionAggregation';
 import { findNextIncompleteStep, resolveStepRoute, type QuestStep } from '@/services/explore/questSteps';
@@ -111,7 +112,7 @@ export default function ExploreLocationRoute() {
     id: row.id,
     kind: row.kind,
     name: mapExploreRegionName(row),
-    tagline: row.tagline,
+    tagline: regionTagline(row, i18n.language as 'kg' | 'ru' | 'en'),
     facts: row.facts,
     status: row.status,
     discoveredPercent: completion.percent,

@@ -9,6 +9,8 @@ import { gameTitleKey, type GameListItem } from '@/features/games/types';
 import type { Collection } from '@/features/collections/collectionsData';
 import type { Trail } from '@/features/trails/trailsData';
 import type { SupportedLanguage } from '@/i18n';
+import { cultureCategoryTitle } from '@/services/content/cultureCategoryTitles';
+import { regionTagline } from '@/services/content/regionTaglines';
 import { mapExploreRegionName, type CultureCategoryRow, type CultureItemRow, type CultureMaterialRow, type ExploreRegionRow } from '@/services/content/types';
 
 /**
@@ -71,24 +73,22 @@ export function buildGameCatalog(games: GameListItem[], t: TFunction): CatalogIt
   }));
 }
 
-export function buildCultureCategoryCatalog(categories: CultureCategoryRow[]): CatalogItem[] {
+export function buildCultureCategoryCatalog(categories: CultureCategoryRow[], language: SupportedLanguage = 'kg'): CatalogItem[] {
   return categories.map((category) => ({
     contentType: 'culture_category',
     id: category.id,
-    // Category titles are authored once, not per-locale, at the DB level
-    // today (culture_categories.title is a single `text` column) - shown
-    // as-is regardless of the active app language, the same way
-    // CultureScreen itself already renders it.
-    title: category.title,
+    // The DB title is Kyrgyz-only; RU/EN come from the reviewed overlay
+    // (cultureCategoryTitles.ts). Search matches all three.
+    title: cultureCategoryTitle(category, language),
     metadata: null,
     thumbnail: cultureCategoryImages[category.id as CultureCategoryId] ?? null,
     route: category.id === 'games' ? '/games' : `/culture/${category.id}`,
-    searchText: [category.title],
+    searchText: Array.from(new Set(LANGUAGES.map((lng) => cultureCategoryTitle(category, lng)))),
   }));
 }
 
-export function buildCultureItemCatalog(items: CultureItemRow[], categories: CultureCategoryRow[]): CatalogItem[] {
-  const categoryTitleById = new Map(categories.map((category) => [category.id, category.title]));
+export function buildCultureItemCatalog(items: CultureItemRow[], categories: CultureCategoryRow[], language: SupportedLanguage = 'kg'): CatalogItem[] {
+  const categoryTitleById = new Map(categories.map((category) => [category.id, cultureCategoryTitle(category, language)]));
   return items.map((item) => ({
     contentType: 'culture_item',
     id: item.id,
@@ -119,7 +119,7 @@ export function buildExploreCatalog(regions: ExploreRegionRow[], language: Suppo
       contentType: region.kind,
       id: region.id,
       title: resolveLocalized(name, language),
-      metadata: region.tagline || null,
+      metadata: regionTagline(region, language) || null,
       // Real photos exist for nature sites; regions keep the tonal fallback.
       thumbnail: natureSiteImages[region.id] ?? null,
       route: `/explore/${region.id}`,

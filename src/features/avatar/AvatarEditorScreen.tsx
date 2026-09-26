@@ -1,13 +1,14 @@
-import { Dices, RotateCcw, X } from 'lucide-react-native';
+import { ChevronLeft, Dices, RotateCcw, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, ConfirmationModal, IconButton, TextButton } from '@/components/ui';
+import { SetupSteps } from '@/features/profileSetup/SetupSteps';
 import { applySelection } from '@/services/avatar/avatarCatalog';
 import { randomizeAvatar } from '@/services/avatar/randomizeAvatar';
-import { colors, spacing, typography } from '@/theme';
+import { colors, editorial, spacing, textStyles, typography } from '@/theme';
 
 import { AvatarPreview } from './components/AvatarPreview';
 import { CategoryTabBar } from './components/CategoryTabBar';
@@ -24,6 +25,8 @@ type AvatarEditorScreenProps = {
    * this component stays store-free, mirroring CharacterSelectScreen's
    * own prop-driven convention. */
   mode?: 'standalone' | 'onboarding';
+  /** Profile setup step number (onboarding only). */
+  setupStep?: number;
   initialConfig: AvatarConfig;
   /** Precomputed by the caller (route/ProfileSetupScreen) from
    * useProgressStore + avatarUnlocks.getUnlockedItemIds - kept out of
@@ -42,6 +45,7 @@ function isSameConfig(a: AvatarConfig, b: AvatarConfig): boolean {
 
 export function AvatarEditorScreen({
   mode = 'standalone',
+  setupStep,
   initialConfig,
   unlockedItemIds,
   isSaving = false,
@@ -81,20 +85,32 @@ export function AvatarEditorScreen({
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {mode === 'onboarding' ? (
-          <TextButton label={t('avatar.skip')} tone="muted" onPress={() => onSkip?.()} />
+          <>
+            <IconButton icon={ChevronLeft} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={onCancel} />
+            {setupStep ? <SetupSteps current={setupStep} /> : <View />}
+            <TextButton label={t('avatar.skip')} tone="muted" onPress={() => !isSaving && onSkip?.()} disabled={isSaving} />
+          </>
         ) : (
-          <IconButton icon={X} shape="circle" accessibilityLabel={t('avatar.closeLabel')} onPress={handleClose} />
+          <>
+            <IconButton icon={X} shape="circle" accessibilityLabel={t('avatar.closeLabel')} onPress={handleClose} />
+            <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
+              {t('profileSetup.v2.avatar.editorTitle')}
+            </Text>
+            {/* Balances the close button; the one Done action is in the footer. */}
+            <View style={styles.headerSpacer} />
+          </>
         )}
-        <Text style={styles.title} numberOfLines={1}>
-          {t('avatar.title')}
-        </Text>
-        <TextButton
-          label={mode === 'onboarding' ? t('avatar.continue') : t('avatar.done')}
-          onPress={() => onComplete(draft)}
-        />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {mode === 'onboarding' ? (
+          <View style={styles.intro}>
+            <Text style={styles.introTitle} accessibilityRole="header">
+              {t('profileSetup.v2.avatar.title')}
+            </Text>
+            <Text style={styles.introBody}>{t('profileSetup.v2.avatar.body')}</Text>
+          </View>
+        ) : null}
         <AvatarPreview config={draft} />
 
         <View style={styles.utilityRow}>
@@ -139,13 +155,20 @@ export function AvatarEditorScreen({
           ))}
         </View>
 
-        {saveError ? <Text style={styles.errorText}>{t('avatar.saveErrorTitle')}</Text> : null}
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.sm }]}>
+        {/* Right above the action it belongs to, announced when it appears. */}
+        {saveError ? (
+          <Text style={styles.errorText} accessibilityLiveRegion="polite" accessibilityRole="alert">
+            {t('profileSetup.v2.avatar.saveFailed')}
+          </Text>
+        ) : null}
         <Button
           label={saveError ? t('avatar.saveErrorRetry') : mode === 'onboarding' ? t('avatar.continue') : t('avatar.done')}
-          onPress={() => onComplete(draft)}
+          size="lg"
+          block
+          onPress={() => !isSaving && onComplete(draft)}
           loading={isSaving}
         />
       </View>
@@ -186,8 +209,23 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   title: {
-    ...typography.h1,
+    ...typography.h2,
     color: colors.textPrimary,
+    flexShrink: 1,
+  },
+  headerSpacer: {
+    width: 44,
+  },
+  intro: {
+    gap: 4,
+  },
+  introTitle: {
+    ...editorial(textStyles.h1),
+    color: colors.textPrimary,
+  },
+  introBody: {
+    ...textStyles.body,
+    color: colors.textSecondary,
   },
   content: {
     paddingHorizontal: spacing.md,
@@ -211,8 +249,9 @@ const styles = StyleSheet.create({
   },
   errorText: {
     ...typography.caption,
-    color: colors.danger,
+    color: colors.error,
     textAlign: 'center',
+    marginBottom: spacing.xs,
   },
   footer: {
     paddingHorizontal: spacing.md,

@@ -57,10 +57,16 @@ export function useAimController({ enabled, onDrawStart, onRelease }: UseAimCont
 
   const gesture = Gesture.Pan()
     .enabled(enabled)
+    // Activate on touch-down: "hold to draw, release to shoot" must work
+    // without dragging. A Pan only calls onEnd after it activates, so a
+    // still hold used to never fire and left the bow drawn.
+    .minDistance(0)
     .onBegin(() => {
       'worklet';
       isDrawing.value = true;
       power.value = 0;
+      aimX.value = 0;
+      aimY.value = 0;
       drawStartedAtMs.value = Date.now();
       runOnJS(handleDrawStart)();
     })
@@ -69,10 +75,16 @@ export function useAimController({ enabled, onDrawStart, onRelease }: UseAimCont
       aimX.value = Math.max(-1, Math.min(1, event.translationX / MAX_AIM_DRAG_PX));
       aimY.value = Math.max(-1, Math.min(1, -event.translationY / MAX_AIM_DRAG_PX));
     })
-    .onEnd(() => {
+    .onEnd((_event, success) => {
       'worklet';
       isDrawing.value = false;
-      runOnJS(handleRelease)(aimX.value, aimY.value);
+      // A cancelled gesture (pause, system interruption) never shoots.
+      if (success) runOnJS(handleRelease)(aimX.value, aimY.value);
+    })
+    .onFinalize(() => {
+      'worklet';
+      // Always runs - the bow never stays drawn after any kind of ending.
+      isDrawing.value = false;
     });
 
   return { gesture, aimX, aimY, power, isDrawing, drawStartedAtMs, MIN_DRAW_MS, MAX_DRAW_MS };

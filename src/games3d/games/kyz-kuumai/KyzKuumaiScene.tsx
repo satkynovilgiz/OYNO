@@ -8,7 +8,7 @@ import { clampFrameDelta } from '../../core/frameDelta';
 import { CHARACTER_PRESETS } from '../../shared/characters/CharacterTypes';
 import { HorseLoader } from '../../shared/horse/HorseLoader';
 import type { HorseVisualState } from '../../shared/horse/HorseModel';
-import type { HorseController } from '../../shared/horse/HorseController';
+import { publishStamina, type HorseController } from '../../shared/horse/HorseController';
 import { KyzKuumaiCourse } from './KyzKuumaiCourse';
 import { computeAiHorseInput } from './KyzKuumaiAI';
 import type { KyzKuumaiPhase } from './KyzKuumaiTypes';
@@ -24,10 +24,12 @@ type KyzKuumaiSceneProps = {
   moveX: SharedValue<number>;
   moveZ: SharedValue<number>;
   sprintHeld: SharedValue<boolean>;
+  stamina?: SharedValue<number>;
+  sprintAvailable?: SharedValue<boolean>;
   onTick: (dt: number) => void;
 };
 
-export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, showAiHorse, moveX, moveZ, sprintHeld, onTick }: KyzKuumaiSceneProps) {
+export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, showAiHorse, moveX, moveZ, sprintHeld, stamina, sprintAvailable, onTick }: KyzKuumaiSceneProps) {
   const playerGroupRef = useRef<THREE.Group>(null);
   const aiGroupRef = useRef<THREE.Group>(null);
   const playerVisualRef = useRef<HorseVisualState>({ speed: 0, maxSpeed: 1, state: 'IDLE' });
@@ -40,6 +42,7 @@ export function KyzKuumaiScene({ phase, playerHorseRef, aiHorseRef, showAiHorse,
     if (phase === 'PLAYING') {
       const player = playerHorseRef.current;
       player.step({ moveX: moveX.value, moveZ: moveZ.value, sprintHeld: sprintHeld.value }, clampedDelta);
+      publishStamina(player, stamina, sprintAvailable);
 
       if (showAiHorse) {
         const ai = aiHorseRef.current;

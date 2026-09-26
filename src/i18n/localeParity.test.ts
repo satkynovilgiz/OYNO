@@ -59,12 +59,12 @@ describe('locale key parity (en/ru/kg)', () => {
   it('has no value accidentally left in a different script than its own locale', () => {
     const cyrillic = /[Ѐ-ӿ]/;
     const latinWord = /\b[A-Za-z]{4,}\b/;
-    // Terms that legitimately appear in Latin script inside en/ru/kg text
-    // regardless of locale (brand name, borrowed technical terms, and the
-    // culturally-specific game/craft names this app intentionally keeps
-    // transliterated rather than translating).
-    const allowedLatinInNonEnglish =
-      /\b(OYNO|Google|Apple|XP|Haptics|ID|PDF|URL|iOS|Android|VS|email|Jaa Atuu|Ordo|Chuko|Kok Boru|Kyz Kuumai|Komuz|Challenge|Cooking World)\b/gi;
+    // Terms that legitimately appear in Latin script inside ru/kg text: the
+    // brand, platform/company names and a few technical abbreviations. Game
+    // and craft names are NOT here - in ru/kg they are written in Cyrillic
+    // (English words like "Challenge" used to be allowlisted and hid
+    // untranslated titles).
+    const allowedLatinInNonEnglish = /\b(OYNO|Google|Apple|XP|Haptics|ID|PDF|URL|iOS|Android|VS|email)\b/gi;
 
     const enKeys = flattenKeys(en);
     for (const key of enKeys) {

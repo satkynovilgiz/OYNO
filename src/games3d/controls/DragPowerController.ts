@@ -59,10 +59,17 @@ export function useDragPowerController({ enabled, onRelease }: UseDragPowerContr
       pullY.value = Math.max(0, event.translationY);
       power.value = Math.max(0, Math.min(1, pullY.value / MAX_PULL_PX));
     })
-    .onEnd(() => {
+    .onEnd((_event, success) => {
       'worklet';
       isPulling.value = false;
-      runOnJS(handleRelease)(pullX.value, pullY.value);
+      // A cancelled gesture (pause, system interruption) never launches.
+      if (success) runOnJS(handleRelease)(pullX.value, pullY.value);
+    })
+    .onFinalize(() => {
+      'worklet';
+      // A tap that never became a drag doesn't reach onEnd - without this
+      // the pull indicator stayed on screen.
+      isPulling.value = false;
     });
 
   return { gesture, pullX, pullY, power, isPulling };

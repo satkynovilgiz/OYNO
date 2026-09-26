@@ -69,7 +69,7 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
   const catalog = useMemo<CatalogItem[]>(
     () => [
       ...buildExploreCatalog(regions ?? [], language),
-      ...buildCultureItemCatalog(items ?? [], categories ?? []),
+      ...buildCultureItemCatalog(items ?? [], categories ?? [], language),
       ...buildInteractiveExperienceCatalog(t),
       ...buildCultureMaterialCatalog(materials ?? []),
       ...buildGameCatalog(mockGamesList, t),

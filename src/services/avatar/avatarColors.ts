@@ -46,3 +46,12 @@ export function hairColorHex(id: HairColorId): string {
 export function eyeColorHex(id: EyeColorId): string {
   return EYE_COLOR_SWATCHES.find((s) => s.id === id)?.hex ?? EYE_COLOR_SWATCHES[0].hex;
 }
+
+/** Dark check on light colours, light check on dark ones - the white
+ * check used to vanish on light skin tones and white hair. */
+export function swatchCheckColor(hex: string): string {
+  const value = hex.replace('#', '');
+  const [r, g, b] = [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16) / 255);
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance > 0.55 ? '#1E1A16' : '#FFFFFF';
+}

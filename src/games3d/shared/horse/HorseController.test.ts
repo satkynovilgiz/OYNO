@@ -1,4 +1,4 @@
-import { DEFAULT_HORSE_CONFIG, HorseController } from './HorseController';
+import { DEFAULT_HORSE_CONFIG, HorseController, publishStamina } from './HorseController';
 
 describe('HorseController', () => {
   it('accelerates toward the target speed rather than jumping to it instantly', () => {
@@ -91,5 +91,21 @@ describe('HorseController', () => {
     expect(horse.x).toBeCloseTo(5);
     expect(horse.z).toBeCloseTo(5);
     expect(horse.state).toBe('IDLE');
+  });
+});
+
+describe('stamina HUD mirror', () => {
+  it('publishes stamina and the recovery lockout so the Sprint button can show them', () => {
+    const horse = new HorseController(DEFAULT_HORSE_CONFIG);
+    const stamina = { value: 1 } as unknown as Parameters<typeof publishStamina>[1] & { value: number };
+    const available = { value: true } as unknown as Parameters<typeof publishStamina>[2] & { value: boolean };
+    for (let i = 0; i < 400 && horse.sprintAvailable; i++) {
+      horse.step({ moveX: 0, moveZ: -1, sprintHeld: true }, 1 / 30);
+      publishStamina(horse, stamina, available);
+    }
+    // Ran out -> the lockout latched, and the button sees it.
+    expect(horse.sprintAvailable).toBe(false);
+    expect(available.value).toBe(false);
+    expect(stamina.value).toBeLessThan(0.05);
   });
 });

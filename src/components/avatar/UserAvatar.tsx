@@ -2,9 +2,10 @@ import { Sparkles } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, View } from 'react-native';
 
-import { CharacterAvatar, type CharacterId } from '@/components/character';
+import type { CharacterId } from '@/components/character';
 import { AVATAR_BUST_ART } from '@/services/avatar/avatarArt';
 import type { AvatarConfig } from '@/services/avatar/avatarConfig';
+import { createDefaultAvatarConfig } from '@/services/avatar/defaultAvatar';
 import { colors } from '@/theme';
 
 export type UserAvatarSize = 'tiny' | 'small' | 'medium' | 'large' | 'profile';
@@ -18,11 +19,12 @@ const SIZE_PX: Record<UserAvatarSize, number> = {
 };
 
 type UserAvatarProps = {
-  characterId: CharacterId;
-  /** null = the user has never explicitly saved a customized avatar -
-   * renders exactly what this app already shows today (the story
-   * character's portrait), so every existing account looks unchanged
-   * until they opt in. See useAvatarStore's `hasEverSaved` flag. */
+  /** Kept for call-site compatibility; NOT rendered. The Story Companion
+   * is the OYNO guide, never the user's picture. */
+  characterId?: CharacterId;
+  /** null = the user has never saved a customized avatar - renders the
+   * real default avatar (the same one "Skip" in setup saves), not the
+   * companion's portrait. See useAvatarStore's `hasEverSaved` flag. */
   avatarConfig: AvatarConfig | null;
   size?: UserAvatarSize;
 };
@@ -40,7 +42,9 @@ type UserAvatarProps = {
  * requirements appendix); this is an honest one-portrait-per-base
  * placeholder, not a finished composited illustration.
  */
-export function UserAvatar({ characterId, avatarConfig, size = 'medium' }: UserAvatarProps) {
+const DEFAULT_AVATAR = createDefaultAvatarConfig();
+
+export function UserAvatar({ avatarConfig, size = 'medium' }: UserAvatarProps) {
   const { t } = useTranslation();
   const px = SIZE_PX[size];
   // Only the large Profile-header instance gets the gold "this is the
@@ -49,24 +53,22 @@ export function UserAvatar({ characterId, avatarConfig, size = 'medium' }: UserA
   // accent instead of being sprinkled on every avatar in the app.
   const isHero = size === 'profile';
 
-  if (!avatarConfig) {
-    return (
-      <View style={isHero ? [styles.heroRing, { borderRadius: (px + 6) / 2 }] : undefined}>
-        <CharacterAvatar characterId={characterId} emotion="happy" size={px} />
-      </View>
-    );
-  }
+  // Identity is always the user's avatar - the default one until they
+  // customize (it used to fall back to the Story Companion's portrait).
+  const config = avatarConfig ?? DEFAULT_AVATAR;
 
   const dimensionStyle = { width: px, height: px, borderRadius: px / 2 };
   const badgeSize = Math.max(16, Math.round(px * 0.3));
 
   return (
     <View style={isHero ? [styles.heroRing, { borderRadius: (px + 6) / 2 }] : undefined}>
-      <View style={[styles.wrap, dimensionStyle, isHero && styles.wrapHero]} accessibilityLabel={t('avatar.wipAvatarLabel')}>
-        <Image source={AVATAR_BUST_ART[avatarConfig.base]} style={dimensionStyle} resizeMode="cover" />
-        <View style={[styles.badge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
-          <Sparkles size={badgeSize * 0.6} color={colors.textOnPrimary} strokeWidth={2.25} />
-        </View>
+      <View style={[styles.wrap, dimensionStyle, isHero && styles.wrapHero]} accessibilityLabel={avatarConfig ? t('avatar.wipAvatarLabel') : t('avatar.yourAvatar')}>
+        <Image source={AVATAR_BUST_ART[config.base]} style={dimensionStyle} resizeMode="cover" />
+        {avatarConfig ? (
+          <View style={[styles.badge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>
+            <Sparkles size={badgeSize * 0.6} color={colors.textOnPrimary} strokeWidth={2.25} />
+          </View>
+        ) : null}
       </View>
     </View>
   );
