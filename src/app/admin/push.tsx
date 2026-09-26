@@ -1,7 +1,12 @@
 import { router } from 'expo-router';
 
+import { AdminGate } from '@/features/admin/AdminGate';
 import { AdminPushScreen } from '@/features/admin/AdminPushScreen';
 
 export default function AdminPushRoute() {
-  return <AdminPushScreen onPressBack={() => router.back()} />;
+  return (
+    <AdminGate>
+      <AdminPushScreen onPressBack={() => router.back()} />
+    </AdminGate>
+  );
 }

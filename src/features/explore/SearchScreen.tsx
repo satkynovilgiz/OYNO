@@ -44,7 +44,9 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
   const language = i18n.language as SupportedLanguage;
 
   function handleSubmit() {
-    if (query.trim()) track('explore_search', { query: query.trim() });
+    // High-level only: never the typed text itself (free text can hold
+    // anything personal, and events are stored per user).
+    if (query.trim()) track('explore_search', { length: query.trim().length, results: results.length });
   }
 
   const sections: { key: 'region' | 'nature' | 'discovery'; titleKey: string; items: SearchItem[] }[] = [

@@ -13,6 +13,7 @@ import { track } from '@/services/analytics/analytics';
 import { initSentry } from '@/services/monitoring/sentry';
 import { decideRouteGuardRedirect } from '@/services/navigation/routeGuard';
 import { registerForPushNotifications } from '@/services/notifications/pushRegistration';
+import { bindUserScopedCache } from '@/services/auth/userScopedCache';
 import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
 import { ErrorBoundary } from '@/components/system/ErrorBoundary';
@@ -45,6 +46,10 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 // bodies) so a crash during boot is still reported, not just crashes that
 // happen after RootLayout mounts.
 initSentry();
+
+// One person's cached rows (admin role, their oymo/shyrdak creations) are
+// never shown to the next account on this device.
+bindUserScopedCache(queryClient);
 
 // Routes reachable without a session (the auth flow itself, plus the splash
 // gate which does its own one-time redirect).

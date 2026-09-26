@@ -9,6 +9,13 @@ device verification.
 Build under test: `__________` (EAS build id) · iOS version: `______` ·
 Device: `__________` · Tester: `______` · Date: `______`
 
+## Current state (2026-09-26)
+
+- **Physical iPhone verified:** none — no iOS build has been produced yet.
+- **Release blockers:** real OYNO app icon (template still in `assets/icon.png`), `ios.appleTeamId`, Apple portal setup (App IDs, App Group, Push), first iOS preview build.
+- **Before App Review:** Sign in with Apple vs. Google (Guideline 4.8); `supportsTablet` decision.
+- Full matrix and issue log: [`DEVICE_QA.md`](./DEVICE_QA.md). Readiness verdict: [`TESTFLIGHT_READINESS.md`](./TESTFLIGHT_READINESS.md).
+
 ## Before installing
 
 - [ ] `ios.appleTeamId` set in `app.json` (needed for the widget extension signing)
@@ -20,7 +27,9 @@ Device: `__________` · Tester: `______` · Date: `______`
 ## Real iPhone verification
 
 - [ ] onboarding — first launch, language pick, age group, welcome slides; no notification or photo permission prompt appears
-- [ ] auth — sign up, email code, sign in, sign out, password reset, guest mode
+- [ ] auth — sign up, email code, sign in, sign out, password reset, guest mode; guest → Settings → Sign in opens Sign in (not Home); errors appear in the app language; airplane mode shows the offline message (no spinner)
+- [ ] account switching — guest → A → sign out → B: none of A's Journal, achievements, notifications, saved items, oymo/shyrdak creations or admin row appear, even briefly
+- [ ] admin deep link — `oyno://admin/push` on a non-admin account shows Not Found
 - [ ] Home — journey card, recently explored, Daily entry, safe areas on notch/Dynamic Island
 - [ ] games — each game starts, plays, finishes, records a play; back returns to Games
 - [ ] Explore — nature sites carousel reaches the last card; region/detail screens

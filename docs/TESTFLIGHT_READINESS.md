@@ -1,6 +1,7 @@
 # OYNO — EAS iOS Beta / TestFlight Readiness
 
-Status as of **2026-09-24**. Companion to
+Status as of **2026-09-26** (release-candidate audit on `main`). Companion to
+[`DEVICE_QA.md`](./DEVICE_QA.md) (device QA matrix + issue log),
 [`RELEASE_CANDIDATE_CHECKLIST.md`](./RELEASE_CANDIDATE_CHECKLIST.md) (the
 per-feature device test script) and [`VISUAL_QA.md`](./VISUAL_QA.md).
 
@@ -20,6 +21,15 @@ per-feature device test script) and [`VISUAL_QA.md`](./VISUAL_QA.md).
 4. **No iOS build has ever been made** for this project (EAS build history:
    two SDK 54 Android builds and one failed SDK 57 Android build). The
    first iOS build is itself the real test of signing and the widget target.
+
+5. **Sign in with Apple decision (App Store Guideline 4.8)** — the live
+   Supabase project has **Google enabled and Apple disabled**; the app shows
+   only enabled providers, so testers see Google alone. Enable Apple in
+   Supabase (Apple Services ID + key) or disable Google before App Review.
+   Does not block an internal preview build.
+
+Re-checked 2026-09-26: `ios.appleTeamId` still absent; `assets/icon.png`
+still the Expo template; `eas build:list --platform ios` still empty.
 
 Once 1–3 are done, the repo is **ready for a preview build**. It is not
 TestFlight-ready until a production build is generated and the device
@@ -158,6 +168,23 @@ public release.
 - `npx expo-doctor` — 21/21 checks pass (after `npx expo install --fix`: patch-level alignment of 24 `expo-*` packages within SDK 57; nothing else upgraded)
 - `npx expo prebuild --platform ios --no-install` — succeeds (in a throwaway copy; no `ios/` committed — `/ios` and `/android` are gitignored, Expo CNG)
 - CI (`.github/workflows/ci.yml`: `npm ci`, `tsc`, `jest --ci`) — unchanged. `expo-doctor` was **not** added to CI: it calls the network (npm/Expo API) and would make CI flaky.
+
+## 7b. Release-candidate audit (2026-09-26)
+
+| Level | Result |
+| --- | --- |
+| CODE VERIFIED | `npm ci` clean · `npx tsc --noEmit` pass · `npm test` 85 suites / 747 tests pass · `npx expo-doctor` 21/21 |
+| CI VERIFIED | GitHub Actions CI green on `ad34469` (and the three commits before it); re-run on the RC commit |
+| Web build | 20 key routes × KG 390 + RU 375: 0 page errors, 0 horizontal overflow, 0 raw i18n keys; unknown route → not-found |
+| PHYSICAL IPHONE VERIFIED | **Nothing yet** — no iOS build exists |
+| APPLE PORTAL VERIFIED | **Nothing** — no Team ID / App IDs / App Group confirmed |
+| BLOCKED | Every device item in `DEVICE_QA.md` |
+
+Fixed in this pass (details in `DEVICE_QA.md` issue log):
+
+- **RC-2 (P1 privacy)** Explore search sent the typed query to analytics → now only length + result count.
+- **RC-3 (P1 privacy)** React Query cache was never cleared between accounts; oymo/shyrdak creations and the admin role are cached without a user id → cleared on every account change.
+- **RC-4 (P2)** `/admin/push` and `/admin/<section>` rendered for non-admins via deep link → not-found unless the account has an admin role (server already enforced).
 
 ## 8. Assets
 

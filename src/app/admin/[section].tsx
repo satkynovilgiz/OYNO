@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { AdminGate } from '@/features/admin/AdminGate';
 import { AdminSectionScreen } from '@/features/admin/AdminSectionScreen';
 import { getAdminSection } from '@/features/admin/sections';
 import { colors } from '@/theme';
@@ -17,7 +18,11 @@ export default function AdminSectionRoute() {
     );
   }
 
-  return <AdminSectionScreen section={section} onPressBack={() => router.back()} />;
+  return (
+    <AdminGate>
+      <AdminSectionScreen section={section} onPressBack={() => router.back()} />
+    </AdminGate>
+  );
 }
 
 const styles = StyleSheet.create({
