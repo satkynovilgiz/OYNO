@@ -27,7 +27,7 @@ function DestinationBadges({ id, visited }: { id: string; visited: boolean }) {
   return (
     <View style={styles.badges}>
       {visited ? <PhotoBadge kind="visited" label={t('explore.v2.visited')} /> : null}
-      {downloaded ? <PhotoBadge kind="offline" label={t('explore.v2.offline')} /> : null}
+      {downloaded ? <PhotoBadge kind="offline" label={t('offline.available')} /> : null}
     </View>
   );
 }

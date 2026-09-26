@@ -1172,6 +1172,39 @@
         "traveler": "Complete one quest",
         "bozUyGuest": "Visit the Boz Üy",
         "komuzchu": "Discover one Culture item"
+      },
+      "v2": {
+        "categories": {
+          "explore": "Explore",
+          "culture": "Culture",
+          "games": "Games"
+        },
+        "recentTitle": "Recently earned",
+        "earnedOn": "Earned {{date}}",
+        "categoryComplete": "Collection complete",
+        "levelTitle": "Level {{level}}",
+        "xpToNext": "{{current}} / {{max}} XP to the next level",
+        "coins": "Coins",
+        "rewardsTitle": "Rewards",
+        "giftTitle": "Daily gift",
+        "giftReady": "+{{xp}} XP and +{{coins}} coins ready",
+        "giftClaimed": "Claimed today",
+        "giftClaim": "Claim",
+        "giftToast": "+{{xp}} XP · +{{coins}} coins",
+        "emptyTitle": "Earn your first achievement",
+        "emptyBody": "Explore OYNO - every achievement comes from a real discovery.",
+        "explore": "Start exploring",
+        "earnedBy": "Earned by: {{requirement}}",
+        "share": "Share",
+        "go": {
+          "explore": "Go to Explore",
+          "culture": "Open",
+          "games": "Play",
+          "daily": "Open today's discovery"
+        },
+        "earnedA11y": "{{title}}. Earned. {{requirement}}",
+        "lockedA11y": "{{title}}. Locked. How to unlock: {{requirement}}",
+        "shareLabel": "OYNO achievement"
       }
     },
     "favoriteGames": {
@@ -1700,6 +1733,32 @@
       "available": "{{title}} available offline",
       "remove": "Remove the offline copy of {{title}}",
       "retry": "Retry downloading {{title}}"
+    },
+    "v2": {
+      "subtitle": "OYNO content that opens without internet",
+      "downloading": "Downloading",
+      "needsAttention": "Needs attention",
+      "failed": "Download didn't finish",
+      "saved": "Saved {{date}}",
+      "removing": "Removing…",
+      "offlineNow": "You're offline - downloads still open.",
+      "infoTitle": "What works offline",
+      "infoBody": "Downloaded places, collections and articles open without internet. Games and komuz music are built into the app, so they are always available. Search, sync and anything not downloaded need a connection.",
+      "appOpenNote": "Downloads run only while the app is open.",
+      "removeOneTitle": "Remove the offline copy?",
+      "removeOneMessage": "Only the copy on this device is removed. Your progress, saved items and passport stay as they are.",
+      "removed": "Offline copy removed",
+      "retryStarted": "Downloading again…",
+      "explore": "Explore OYNO",
+      "emptyTitle": "Save for offline",
+      "emptyBody": "Download places, stories and collections - they open without internet.",
+      "itemCount": "Available offline: {{count}}",
+      "measuredNote": "The size is data actually stored. Photos built into the app aren't copied.",
+      "units": {
+        "b": "B",
+        "kb": "KB",
+        "mb": "MB"
+      }
     }
   },
   "trails": {

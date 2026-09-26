@@ -5,7 +5,7 @@ import { getCollection } from '@/features/collections/collectionsData';
 import type { CultureItemRow, CultureMaterialRow, QuestRow } from '@/services/content/types';
 import { queryClient } from '@/services/queryClient';
 
-import { deleteQueries, hydrateQueryClient, measureOfflineBytes, readManifest, writeManifest, writeQuery } from './offlineCache';
+import { deleteQueries, hydrateQueryClient, measureOfflineBytes, pruneOrphanQueries, readManifest, writeManifest, writeQuery } from './offlineCache';
 import {
   downloadId,
   EMPTY_MANIFEST,
@@ -62,6 +62,11 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
 
   load: async () => {
     const manifest = await readManifest();
+    // Awaited BEFORE the store reports loaded: boot starts refreshAll() only
+    // after load() resolves, so no download can be writing yet - any stored
+    // query no manifest entry references is a leftover of an interrupted
+    // download, and removing it can't race a new one.
+    await pruneOrphanQueries(manifest);
     await hydrateQueryClient(queryClient, manifest);
     set({ manifest, isLoaded: true });
   },

@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
+import { enqueueUnlocks } from '@/services/progress/unlockQueue';
+
 import { track } from '@/services/analytics/analytics';
 import type { AchievementId } from '@/services/progress/types';
 import { safeJsonParse } from '@/services/storage/safeJson';
@@ -180,7 +182,11 @@ type ProgressState = ProgressFields & {
   gameStats: Record<string, GameStat>;
   discoveredExploreIds: string[];
   unlockedAchievementIds: AchievementId[];
+  /** Head of the unlock-modal queue (null when nothing is waiting). */
   lastUnlockedAchievementId: AchievementId | null;
+  /** Newly unlocked achievements still to be shown, oldest first - so two
+   * unlocks at once show one after the other instead of dropping one. */
+  pendingAchievementIds: AchievementId[];
   visitedRegionIds: string[];
   /** region id -> when it was first visited (the real server timestamp,
    * `user_region_visits.visited_at`). Read by the Discovery Passport to
@@ -239,10 +245,15 @@ export const useProgressStore = create<ProgressState>((set, get) => {
 
     newlyUnlocked?.forEach((id) => track('achievement_unlocked', { achievementId: id }));
 
+    // Only a server-reported *new* unlock is queued - loading existing
+    // progress never replays old achievements as "new".
+    const genuinelyNew = newlyUnlocked?.filter((id) => !current.unlockedAchievementIds.includes(id));
+    const pendingAchievementIds = enqueueUnlocks(current.pendingAchievementIds, genuinelyNew);
     set({
       ...fields,
       unlockedAchievementIds,
-      lastUnlockedAchievementId: newlyUnlocked?.length ? newlyUnlocked[newlyUnlocked.length - 1] : current.lastUnlockedAchievementId,
+      pendingAchievementIds,
+      lastUnlockedAchievementId: pendingAchievementIds[0] ?? null,
       error: null,
     });
 
@@ -281,6 +292,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     discoveredExploreIds: [],
     unlockedAchievementIds: [],
     lastUnlockedAchievementId: null,
+    pendingAchievementIds: [],
     visitedRegionIds: [],
     regionVisitDates: {},
     completedQuestStepIds: [],
@@ -288,6 +300,9 @@ export const useProgressStore = create<ProgressState>((set, get) => {
     load: async (session) => {
       const token = session ?? captureAccountGeneration();
       const current = () => isAccountGenerationCurrent(token);
+      // A (re)load is an account/session boundary: a modal waiting for the
+      // previous account must never appear for the next one.
+      set({ pendingAchievementIds: [], lastUnlockedAchievementId: null });
       const pending = await pendingVisitSet();
       if (!current()) return;
       if (!isRealUser()) {
@@ -541,6 +556,9 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       return true;
     },
 
-    acknowledgeAchievement: () => set({ lastUnlockedAchievementId: null }),
+    acknowledgeAchievement: () => {
+      const rest = get().pendingAchievementIds.slice(1);
+      set({ pendingAchievementIds: rest, lastUnlockedAchievementId: rest[0] ?? null });
+    },
   };
 });

@@ -61,3 +61,18 @@ export async function hydrateQueryClient(queryClient: QueryClient, manifest: Off
     queryClient.setQueryData(stored.key, stored.data, { updatedAt: stored.savedAt });
   }
 }
+
+/**
+ * Deletes stored query results that no manifest entry references - what an
+ * interrupted download (app killed, storage error) can leave behind, since
+ * the manifest is only written after everything else succeeded. Only keys
+ * under the offline prefix are touched, and only unreferenced ones, so a
+ * complete download is never affected. Returns how many were removed.
+ */
+export async function pruneOrphanQueries(manifest: OfflineManifest): Promise<number> {
+  const keys: readonly string[] = await AsyncStorage.getAllKeys().catch(() => []);
+  const referenced = referencedHashes(manifest);
+  const orphans = keys.filter((key) => key.startsWith(QUERY_PREFIX) && !referenced.has(key.slice(QUERY_PREFIX.length)));
+  if (orphans.length > 0) await AsyncStorage.multiRemove(orphans).catch(() => {});
+  return orphans.length;
+}

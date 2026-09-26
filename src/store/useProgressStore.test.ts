@@ -126,6 +126,28 @@ describe('useProgressStore', () => {
     expect(useProgressStore.getState().discoveredExploreIds).toEqual(['too-teke']);
   });
 
+  it('queues each genuinely new unlock once (never replays a known one) and dequeues on acknowledge', async () => {
+    useProgressStore.setState({ unlockedAchievementIds: ['first-win'], pendingAchievementIds: [], lastUnlockedAchievementId: null });
+    mockRpc.mockResolvedValue({ data: { progress: { ...BASE_ROW, games_won: 2 }, newlyUnlocked: ['first-win', 'traveler', 'komuzchu'] }, error: null });
+
+    await useProgressStore.getState().recordGameWon('besh-tash');
+
+    expect(useProgressStore.getState().pendingAchievementIds).toEqual(['traveler', 'komuzchu']);
+    expect(useProgressStore.getState().lastUnlockedAchievementId).toBe('traveler');
+    useProgressStore.getState().acknowledgeAchievement();
+    expect(useProgressStore.getState().lastUnlockedAchievementId).toBe('komuzchu');
+    useProgressStore.getState().acknowledgeAchievement();
+    expect(useProgressStore.getState().lastUnlockedAchievementId).toBeNull();
+  });
+
+  it('a progress reload (account boundary) clears any waiting unlock modal', async () => {
+    useProgressStore.setState({ pendingAchievementIds: ['traveler'], lastUnlockedAchievementId: 'traveler' });
+    mockRpc.mockResolvedValue({ data: { progress: BASE_ROW }, error: null });
+    await useProgressStore.getState().load();
+    expect(useProgressStore.getState().lastUnlockedAchievementId).toBeNull();
+    expect(useProgressStore.getState().pendingAchievementIds).toEqual([]);
+  });
+
   it('recordGameWon merges newly-unlocked achievements without duplicating already-known ones', async () => {
     useProgressStore.setState({ unlockedAchievementIds: ['first-win'] });
     mockRpc.mockResolvedValue({

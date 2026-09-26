@@ -16,9 +16,11 @@ export const SHARE_CARD_HEIGHT = 450;
  *            trail stops) - never a rank or an intelligence label
  *   journal  scrapbook memory: framed picture on cream paper, title, the
  *            one line the user typed for the card, linked content
+ *   badge    an earned achievement: the medal art whole (never cropped) on
+ *            forest green, its title - no rank, no rarity, no user data
  * All share the wordmark, cream/forest/gold and a small oymo rule.
  */
-export type ShareCardVariant = 'story' | 'score' | 'journal';
+export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge';
 
 export type ShareCardContent = {
   title: string;
@@ -49,6 +51,7 @@ type ShareCardProps = ShareCardContent & {
 export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(props, ref) {
   const variant = props.variant ?? 'story';
   if (variant === 'journal') return <JournalCard ref={ref} {...props} />;
+  if (variant === 'badge') return <BadgeCard ref={ref} {...props} />;
   return <PhotoCard ref={ref} {...props} variant={variant} />;
 });
 
@@ -145,6 +148,26 @@ const JournalCard = forwardRef<View, ShareCardProps>(function JournalCard({ titl
   );
 });
 
+const BadgeCard = forwardRef<View, ShareCardProps>(function BadgeCard({ title, label, imageSource, completedLabel, onImageReady }, ref) {
+  return (
+    <View ref={ref} collapsable={false} style={[styles.card, styles.badgeCard]}>
+      <Brand light />
+      <View style={styles.badgeHalo} />
+      {imageSource ? <Image source={imageSource} style={styles.badgeArt} resizeMode="contain" onLoad={onImageReady} onError={onImageReady} /> : null}
+      <View style={styles.badgeText}>
+        <Text style={styles.label} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={[styles.title, styles.badgeTitle]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
+          {title}
+        </Text>
+        {completedLabel ? <Text style={styles.badgeNote}>{completedLabel}</Text> : null}
+        <Rule />
+      </View>
+    </View>
+  );
+});
+
 function Brand({ light }: { light: boolean }) {
   return (
     <View style={styles.brandRow}>
@@ -182,6 +205,12 @@ const styles = StyleSheet.create({
   scoreValue: { ...editorial(textStyles.display), fontSize: 84, lineHeight: 92, color: colors.textOnDark, paddingHorizontal: spacing.lg },
   footerRule: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   ruleLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(232,185,61,0.5)' },
+  badgeCard: { backgroundColor: colors.surfaceFeature, alignItems: 'center', justifyContent: 'flex-end' },
+  badgeHalo: { position: 'absolute', top: 66, width: 230, height: 230, borderRadius: 115, backgroundColor: 'rgba(232,185,61,0.14)' },
+  badgeArt: { position: 'absolute', top: 76, width: 210, height: 210 },
+  badgeText: { alignSelf: 'stretch', padding: spacing.lg, gap: spacing.xs, alignItems: 'center' },
+  badgeTitle: { textAlign: 'center', fontSize: 30, lineHeight: 36 },
+  badgeNote: { ...textStyles.caption, color: colors.textOnDarkSecondary, textAlign: 'center' },
   // Journal: cream paper, framed picture with a strip of gold "tape".
   paper: { backgroundColor: colors.surfaceElevated, justifyContent: 'flex-start', padding: spacing.lg, gap: spacing.md },
   frame: { height: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: colors.surfaceFeature, borderWidth: 5, borderColor: '#FFFDF7', transform: [{ rotate: '-1.5deg' }] },

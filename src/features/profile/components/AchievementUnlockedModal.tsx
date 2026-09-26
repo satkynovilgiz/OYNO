@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Modal, StyleSheet, Text, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { AccessibilityInfo, Image, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -14,7 +14,7 @@ import Animated, {
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
 
@@ -36,6 +36,9 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
 
   useEffect(() => {
     if (!achievement) return;
+    // One success tap per real unlock (the modal shows only for new ones).
+    if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    AccessibilityInfo.announceForAccessibility?.(`${t('profile.achievements.unlockedTitle')} ${t(achievement.titleKey)}`);
 
     // Reduce Motion: show the badge and a steady glow at once - no spring,
     // no endless breathing loop.
@@ -58,13 +61,8 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
     contentOpacity.value = withDelay(120, withTiming(1, { duration: 260 }));
     contentTranslateY.value = withDelay(120, withTiming(0, { duration: 260 }));
     glowOpacity.value = withDelay(60, withTiming(0.55, { duration: 300 }));
-    glowScale.value = withDelay(
-      60,
-      withSequence(
-        withTiming(1.15, { duration: 400 }),
-        withRepeat(withSequence(withTiming(1.25, { duration: 900 }), withTiming(1.1, { duration: 900 })), -1, true),
-      ),
-    );
+    // One gentle settle - no endless breathing loop.
+    glowScale.value = withDelay(60, withSequence(withTiming(1.2, { duration: 380 }), withTiming(1.12, { duration: 420 })));
   }, [achievement, reducedMotion, badgeScale, glowScale, glowOpacity, contentOpacity, contentTranslateY]);
 
   const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: badgeScale.value }] }));
@@ -92,15 +90,18 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
           <View style={styles.badgeStage}>
             <Animated.View style={[styles.glow, glowStyle]} />
             <Animated.View style={[styles.badgeRing, badgeStyle]}>
-              {achievement && <Image source={achievement.iconSource} style={styles.badge} resizeMode="cover" />}
+              {achievement && <Image source={achievement.iconSource} style={styles.badge} resizeMode="contain" />}
             </Animated.View>
           </View>
 
-          <Animated.View style={contentStyle}>
+          <Animated.View style={[styles.textBlock, contentStyle]}>
             <Text style={styles.title}>{achievement ? t(achievement.titleKey) : null}</Text>
+            {achievement ? <Text style={styles.earnedBy}>{t('profile.achievements.v2.earnedBy', { requirement: t(achievement.requirementKey) })}</Text> : null}
           </Animated.View>
 
-          <Button label={t('profile.achievements.unlockedCta')} onPress={onDismiss} />
+          <View style={styles.cta}>
+            <Button label={t('profile.achievements.unlockedCta')} variant="accent" block onPress={onDismiss} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -118,13 +119,24 @@ const styles = StyleSheet.create({
   sheet: {
     width: '100%',
     maxWidth: 320,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceFeature,
     borderRadius: radii.xxl,
     padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.accentGold,
+  },
+  textBlock: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  earnedBy: {
+    ...typography.caption,
+    color: colors.textOnDarkSecondary,
+    textAlign: 'center',
+  },
+  cta: {
+    alignSelf: 'stretch',
+    marginTop: spacing.xs,
   },
   ornamentRow: {
     flexDirection: 'row',
@@ -147,26 +159,22 @@ const styles = StyleSheet.create({
     width: 128,
     height: 128,
     borderRadius: 64,
-    backgroundColor: colors.accentGold,
+    backgroundColor: 'rgba(232,185,61,0.35)',
   },
   badgeRing: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    padding: 4,
-    backgroundColor: colors.accentGold,
+    width: 116,
+    height: 116,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badge: {
     width: '100%',
     height: '100%',
-    borderRadius: 48,
-    backgroundColor: colors.surfaceAlt,
   },
   title: {
     ...typography.h1,
-    color: colors.textPrimary,
+    fontFamily: fontFamily.wordmark,
+    color: colors.textOnDark,
     textAlign: 'center',
   },
 });

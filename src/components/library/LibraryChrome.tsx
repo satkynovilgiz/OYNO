@@ -23,7 +23,7 @@ export function LibraryHeader({ title, subtitle, onPressBack, children }: { titl
               <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
               <Text style={styles.eyebrow}>{t('library.eyebrow')}</Text>
             </View>
-            <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
+            <Text style={styles.title} accessibilityRole="header" numberOfLines={2}>
               {title}
             </Text>
           </View>

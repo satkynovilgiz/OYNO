@@ -1,155 +1,103 @@
-import { CircleCheck, Lock } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { CircleCheck, Lock, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button } from '@/components/ui';
-import { colors, radii, spacing, typography } from '@/theme';
+import type { SupportedLanguage } from '@/i18n';
+import { formatLongDate } from '@/services/i18n/formatDate';
+import { localDateKey } from '@/services/daily/dailyDiscovery';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
+import { cardRadii, colors, editorial, elevation, radii, spacing, textStyles } from '@/theme';
 
-import type { ProfileAchievement } from '../types';
+import type { AchievementCard } from '../achievementsModel';
 
-type AchievementDetailSheetProps = {
-  achievement: ProfileAchievement | null;
-  unlocked: boolean;
-  onClose: () => void;
-};
+const GO_KEY: Record<string, string> = { '/games': 'games', '/explore': 'explore', '/daily': 'daily' };
 
-/** Lightweight reusable detail view for a tapped achievement (spec "Task
- * 11... if no achievement-detail functionality currently exists, create a
- * lightweight reusable detail sheet/modal rather than another giant
- * screen") - one modal, driven entirely by whichever achievement was
- * tapped, not five separate screens. Shows the real requirement text for
- * a locked achievement (mirrors the actual predicate in
- * services/progress/achievements.ts) or a simple unlocked confirmation -
- * never an invented description or reward, since neither exists in the
- * data model. */
-export function AchievementDetailSheet({ achievement, unlocked, onClose }: AchievementDetailSheetProps) {
-  const { t } = useTranslation();
+/**
+ * Compact bottom sheet for one achievement: the medal, title, clear state
+ * (earned with its real date if recorded / locked with the real
+ * requirement), and ONE action - where to earn it, or Share once earned
+ * (through the normal share preview). No trophy fanfare.
+ */
+export function AchievementDetailSheet({ card, onClose, onShare }: { card: AchievementCard | null; onClose: () => void; onShare: (card: AchievementCard) => void }) {
+  const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
+  if (!card) return null;
+  const requirement = t(card.requirementKey);
+  const goLabel = t(`profile.achievements.v2.go.${GO_KEY[card.route] ?? 'culture'}`);
 
   return (
-    <Modal visible={!!achievement} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-          <View style={styles.ornamentRow}>
-            <OymoOrnament size={11} color={colors.accentGold} strokeWidth={1.5} />
-            <OymoOrnament size={13} color={colors.accentGold} strokeWidth={1.5} />
-            <OymoOrnament size={11} color={colors.accentGold} strokeWidth={1.5} />
-          </View>
-
-          {achievement ? (
-            <>
-              <View style={styles.badgeStage}>
-                <Image source={achievement.iconSource} style={[styles.badgeImage, !unlocked && styles.badgeLocked]} resizeMode="contain" />
-              </View>
-
-              <Text style={styles.title}>{t(achievement.titleKey)}</Text>
-
-              <View style={[styles.statusPill, unlocked ? styles.statusPillUnlocked : styles.statusPillLocked]}>
-                {unlocked ? (
-                  <CircleCheck size={14} color={colors.textOnPrimary} strokeWidth={2.25} />
-                ) : (
-                  <Lock size={13} color={colors.textOnDark} strokeWidth={2.25} />
-                )}
-                <Text style={[styles.statusText, unlocked && styles.statusTextUnlocked]}>
-                  {t(unlocked ? 'profile.achievements.unlockedBadge' : 'profile.achievements.lockedBadge')}
-                </Text>
-              </View>
-
-              {!unlocked ? (
-                <View style={styles.requirementBlock}>
-                  <Text style={styles.requirementLabel}>{t('profile.achievements.requirementLabel')}</Text>
-                  <Text style={styles.requirementText}>{t(achievement.requirementKey)}</Text>
-                </View>
-              ) : null}
-
-              <Button label={t('common.back')} variant="secondary" onPress={onClose} />
-            </>
+    <Modal visible transparent animationType={reducedMotion ? 'none' : 'slide'} onRequestClose={onClose} statusBarTranslucent>
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')} />
+      <View style={[styles.sheet, elevation.floating, { paddingBottom: insets.bottom + spacing.md }]} accessibilityViewIsModal>
+        <View style={styles.handle} />
+        <View style={[styles.badgeStage, card.earned && styles.badgeStageEarned]}>
+          <Image source={card.iconSource} style={[styles.badge, !card.earned && styles.badgeLocked]} resizeMode="contain" accessibilityIgnoresInvertColors />
+          {!card.earned ? (
+            <View style={styles.lock}>
+              <Lock size={14} color={colors.textOnDark} strokeWidth={2.5} />
+            </View>
           ) : null}
-        </Pressable>
-      </Pressable>
+        </View>
+        <Text style={styles.category}>{t(`profile.achievements.v2.categories.${card.category}`)}</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          {t(card.titleKey)}
+        </Text>
+        <View style={[styles.status, card.earned ? styles.statusEarned : styles.statusLocked]}>
+          {card.earned ? <CircleCheck size={14} color={colors.textPrimary} strokeWidth={2.5} /> : <Lock size={13} color={colors.textSecondary} strokeWidth={2.5} />}
+          <Text style={[styles.statusText, card.earned && styles.statusTextEarned]}>
+            {card.earned && card.earnedAt
+              ? t('profile.achievements.v2.earnedOn', { date: formatLongDate(localDateKey(new Date(card.earnedAt)), i18n.language as SupportedLanguage) })
+              : t(card.earned ? 'profile.achievements.unlockedBadge' : 'profile.achievements.lockedBadge')}
+          </Text>
+        </View>
+        <View style={styles.requirement}>
+          <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
+          <Text style={styles.requirementText}>
+            {card.earned ? t('profile.achievements.v2.earnedBy', { requirement }) : `${t('profile.achievements.requirementLabel')}: ${requirement}`}
+          </Text>
+        </View>
+        <View style={styles.actions}>
+          {card.earned ? (
+            <Button label={t('profile.achievements.v2.share')} icon={<Share2 size={16} color={colors.textPrimary} strokeWidth={2.25} />} variant="accent" block onPress={() => onShare(card)} />
+          ) : (
+            <Button
+              label={goLabel}
+              variant="primary"
+              block
+              onPress={() => {
+                onClose();
+                router.push(card.route as never);
+              }}
+            />
+          )}
+        </View>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(19,32,24,0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-  },
-  sheet: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: colors.surface,
-    borderRadius: radii.xxl,
-    padding: spacing.xl,
-    gap: spacing.sm,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.accentGold,
-  },
-  ornamentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  badgeStage: {
-    width: 140,
-    height: 140,
-    marginVertical: spacing.xs,
-  },
-  badgeImage: {
-    width: '100%',
-    height: '100%',
-  },
-  badgeLocked: {
-    opacity: 0.55,
-  },
-  title: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xxs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radii.pill,
-  },
-  statusPillLocked: {
-    backgroundColor: colors.accentBrown,
-  },
-  statusPillUnlocked: {
-    backgroundColor: colors.primary,
-  },
-  statusText: {
-    ...typography.small,
-    fontWeight: '700',
-    color: colors.textOnDark,
-  },
-  statusTextUnlocked: {
-    color: colors.textOnPrimary,
-  },
-  requirementBlock: {
-    width: '100%',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radii.lg,
-    padding: spacing.sm,
-    gap: 2,
-    alignItems: 'center',
-  },
-  requirementLabel: {
-    ...typography.overline,
-    color: colors.textSecondary,
-  },
-  requirementText: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
+  backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.5)' },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: spacing.xs, paddingTop: spacing.xs, paddingHorizontal: spacing.lg, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle, marginBottom: spacing.sm },
+  badgeStage: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
+  badgeStageEarned: { backgroundColor: 'rgba(232,185,61,0.18)' },
+  badge: { width: 132, height: 132 },
+  badgeLocked: { opacity: 0.6 },
+  lock: { position: 'absolute', right: 10, bottom: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(19,32,24,0.8)' },
+  category: { ...textStyles.overline, color: colors.accentTerracotta, marginTop: spacing.xs },
+  title: { ...editorial(textStyles.h1), color: colors.textPrimary, textAlign: 'center' },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.sm, paddingVertical: 5, borderRadius: radii.pill },
+  statusEarned: { backgroundColor: colors.accentGold },
+  statusLocked: { backgroundColor: colors.surfaceMuted },
+  statusText: { ...textStyles.small, color: colors.textSecondary },
+  statusTextEarned: { color: colors.textPrimary },
+  requirement: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs, paddingHorizontal: spacing.md },
+  requirementText: { ...textStyles.body, color: colors.textSecondary, textAlign: 'center', flexShrink: 1 },
+  actions: { alignSelf: 'stretch', marginTop: spacing.md },
 });
