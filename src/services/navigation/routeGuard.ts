@@ -38,7 +38,10 @@ export function decideRouteGuardRedirect(state: RouteGuardState): string | null 
   if (hasCompletedOnboarding && hasChosenAgeGroup && !isAuthenticatedOrGuest && !isUngatedRoute) {
     return '/sign-in';
   }
-  if (isAuthenticatedOrGuest && (pathname === '/sign-in' || pathname === '/sign-up')) {
+  // Only a signed-in account is bounced away from the auth screens. A
+  // guest opens them on purpose (Settings > Sign in / Create account) to
+  // connect what they've done to an account.
+  if (authStatus === 'authenticated' && (pathname === '/sign-in' || pathname === '/sign-up')) {
     return '/home';
   }
   return null;

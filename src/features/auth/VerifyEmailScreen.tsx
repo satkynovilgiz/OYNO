@@ -1,11 +1,11 @@
-import { MailCheck } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { AnimatedPressable, Button, IconChip, OtpCodeInput, TextButton } from '@/components/ui';
-import { colors, radii, spacing, typography } from '@/theme';
+import { AnimatedPressable, Button, OtpCodeInput, TextButton } from '@/components/ui';
+import { cardRadii, colors, spacing, textStyles } from '@/theme';
+
+import { AuthShell, FormMessage } from './AuthShell';
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -19,9 +19,11 @@ type VerifyEmailScreenProps = {
   onBackToSignIn: () => void;
 };
 
+/** Email verification after Create account: the 8-digit code, a resend
+ * that only ever happens on tap (with a cooldown - never automatic), and
+ * clear ways out (change email / back to sign in). */
 export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onResend, onChangeEmail, onBackToSignIn }: VerifyEmailScreenProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
@@ -40,6 +42,7 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
   }, [code, localError]);
 
   const handleSubmit = () => {
+    if (isSubmitting) return;
     if (code.length !== 8) {
       setLocalError(t('auth.verifyEmail.codeError'));
       return;
@@ -48,9 +51,8 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
     onSubmit(code);
   };
 
-  // Auto-submit once all 8 digits are entered - the manual "Verify" button
-  // stays as a fallback (e.g. to retry after a failed attempt without
-  // retyping, since a wrong code leaves `code` unchanged).
+  // Auto-submit once all 8 digits are entered; the button stays as the
+  // retry path after a failed attempt (the code is left unchanged).
   useEffect(() => {
     if (code.length === 8 && code !== autoSubmittedCodeRef.current && !isSubmitting) {
       autoSubmittedCodeRef.current = code;
@@ -72,139 +74,46 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
   };
 
   const shownError = localError ?? error;
+  const resendDisabled = cooldown > 0 || isResending;
+  const resendLabel = cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend');
 
   return (
-    <KeyboardAvoidingView
-      style={styles.avoider}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={insets.top}
+    <AuthShell
+      hero="compact"
+      title={t('auth.verifyEmail.title')}
+      subtitle={t('auth.v2.verify.subtitle', { email })}
+      footer={
+        <View style={styles.links}>
+          <TextButton label={t('auth.verifyEmail.changeEmail')} onPress={onChangeEmail} tone="muted" />
+          <TextButton label={t('auth.verifyEmail.backToSignIn')} onPress={onBackToSignIn} tone="muted" />
+        </View>
+      }
     >
-      <ScrollView
-        contentContainerStyle={[
-          styles.root,
-          { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl },
-        ]}
-        keyboardShouldPersistTaps="handled"
+      <View style={styles.code}>
+        <OtpCodeInput value={code} onChangeText={setCode} error={!!shownError} autoFocus />
+      </View>
+      <FormMessage tone="error" message={shownError} />
+      {resendConfirmed && !shownError ? <FormMessage tone="success" message={t('auth.verifyEmail.resendConfirmed')} /> : null}
+      <Button label={t('auth.verifyEmail.submit')} size="lg" block onPress={handleSubmit} loading={isSubmitting} />
+      <AnimatedPressable
+        style={styles.resend}
+        onPress={handleResend}
+        disabled={resendDisabled}
+        haptic={resendDisabled ? false : 'light'}
+        accessibilityRole="button"
+        accessibilityLabel={resendLabel}
+        accessibilityState={{ disabled: resendDisabled, busy: isResending }}
       >
-        <View style={styles.content}>
-          <IconChip icon={MailCheck} size={64} iconSize={30} color={colors.primary} />
-
-          <View style={styles.textBlock}>
-            <Text style={styles.title}>{t('auth.verifyEmail.title')}</Text>
-            <Text style={styles.description}>
-              {t('auth.verifyEmail.descriptionPrefix')}
-              <Text style={styles.emailText}>{email}</Text>
-              {t('auth.verifyEmail.descriptionSuffix')}
-            </Text>
-          </View>
-
-          <View style={styles.codeBlock}>
-            <OtpCodeInput value={code} onChangeText={setCode} error={!!shownError} autoFocus />
-            {shownError ? <Text style={styles.errorText}>{shownError}</Text> : null}
-          </View>
-
-          <View style={styles.resendBlock}>
-            {resendConfirmed && !shownError ? (
-              <Text style={styles.confirmedText}>{t('auth.verifyEmail.resendConfirmed')}</Text>
-            ) : null}
-            <AnimatedPressable
-              style={styles.resendPill}
-              onPress={handleResend}
-              disabled={cooldown > 0 || isResending}
-              haptic={cooldown > 0 || isResending ? false : 'light'}
-              accessibilityRole="button"
-              accessibilityLabel={cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend')}
-              accessibilityState={{ disabled: cooldown > 0 || isResending }}
-            >
-              <Text style={[styles.resendLink, (cooldown > 0 || isResending) && styles.resendLinkDisabled]}>
-                {cooldown > 0 ? t('auth.verifyEmail.resendCooldown', { seconds: cooldown }) : t('auth.verifyEmail.resend')}
-              </Text>
-            </AnimatedPressable>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Button label={t('auth.verifyEmail.submit')} onPress={handleSubmit} loading={isSubmitting} />
-          <View style={styles.linksRow}>
-            <TextButton label={t('auth.verifyEmail.changeEmail')} onPress={onChangeEmail} tone="muted" />
-            <TextButton label={t('auth.verifyEmail.backToSignIn')} onPress={onBackToSignIn} tone="muted" />
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={[styles.resendText, resendDisabled && styles.resendTextDisabled]}>{resendLabel}</Text>
+      </AnimatedPressable>
+    </AuthShell>
   );
 }
 
 const styles = StyleSheet.create({
-  avoider: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  root: {
-    flexGrow: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl,
-  },
-  content: {
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  textBlock: {
-    alignItems: 'center',
-    gap: spacing.xxs,
-  },
-  title: {
-    ...typography.display,
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
-  description: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  emailText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  codeBlock: {
-    width: '100%',
-    maxWidth: 360,
-    gap: spacing.xs,
-  },
-  errorText: {
-    ...typography.small,
-    color: colors.danger,
-    textAlign: 'center',
-  },
-  resendBlock: {
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  confirmedText: {
-    ...typography.small,
-    color: colors.primary,
-  },
-  resendPill: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    overflow: 'hidden',
-  },
-  resendLink: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  resendLinkDisabled: {
-    color: colors.textMuted,
-  },
-  footer: {
-    gap: spacing.md,
-  },
-  linksRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
+  code: { alignSelf: 'stretch', maxWidth: 380, width: '100%', marginTop: spacing.xs },
+  resend: { alignSelf: 'center', minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: cardRadii.chip, backgroundColor: colors.surfaceMuted },
+  resendText: { ...textStyles.caption, fontWeight: '700', color: colors.primary },
+  resendTextDisabled: { color: colors.textMuted },
+  links: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
 });

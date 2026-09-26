@@ -1,159 +1,140 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button, TextButton, TextField } from '@/components/ui';
-import { colors, radii, spacing, typography } from '@/theme';
+import type { OAuthProvider } from '@/services/auth';
+import { colors, spacing, textStyles } from '@/theme';
 
-type FieldErrors = Partial<Record<'name' | 'email' | 'password' | 'confirmPassword', string>>;
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 8;
+import { AuthDivider, AuthShell, FormMessage } from './AuthShell';
+import { EMAIL_PLACEHOLDER, MIN_PASSWORD_LENGTH, normalizeEmail, validateSignUp, type FieldErrors } from './authValidation';
 
 type SignUpScreenProps = {
   onSubmit: (input: { name: string; email: string; password: string }) => Promise<boolean>;
   isSubmitting: boolean;
   serverError: string | null;
   onPressSignIn: () => void;
-  onPressGoogle: () => Promise<void>;
-  onPressApple: () => Promise<void>;
+  oauthProviders: OAuthProvider[];
+  onPressOAuth: (provider: OAuthProvider) => Promise<void>;
+  isGuest: boolean;
+  onPressBack?: () => void;
+  large?: boolean;
 };
 
-export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignIn, onPressGoogle, onPressApple }: SignUpScreenProps) {
+/**
+ * Create account - only what the account really needs: a name (shown on
+ * the profile), email and one password (with show/hide instead of a
+ * "confirm password" field). The one rule shown is the backend's own:
+ * at least 8 characters.
+ */
+export function SignUpScreen({ onSubmit, isSubmitting, serverError, onPressSignIn, oauthProviders, onPressOAuth, isGuest, onPressBack, large = false }: SignUpScreenProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [errors, setErrors] = useState<FieldErrors<'name' | 'email' | 'password'>>({});
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
-  const validate = (): boolean => {
-    const nextErrors: FieldErrors = {};
-    if (!name.trim()) nextErrors.name = t('auth.signUp.nameError');
-    if (!EMAIL_PATTERN.test(email.trim())) nextErrors.email = t('auth.signUp.emailError');
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      nextErrors.password = t('auth.signUp.passwordError', { count: MIN_PASSWORD_LENGTH });
-    }
-    if (confirmPassword !== password) nextErrors.confirmPassword = t('auth.signUp.confirmPasswordError');
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
+  const clear = (field: 'name' | 'email' | 'password') => errors[field] && setErrors((current) => ({ ...current, [field]: undefined }));
 
   const handleSubmit = async () => {
-    if (!validate()) return;
-    await onSubmit({ name: name.trim(), email: email.trim(), password });
+    if (isSubmitting) return;
+    const next = validateSignUp({ name, email, password });
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+    await onSubmit({ name: name.trim(), email: normalizeEmail(email), password });
   };
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>{t('auth.signUp.title')}</Text>
-
-      <View style={styles.form}>
-        <TextField
-          label={t('auth.signUp.nameLabel')}
-          value={name}
-          onChangeText={setName}
-          error={errors.name}
-          placeholder={t('auth.signUp.namePlaceholder')}
-        />
-        <TextField
-          label={t('auth.emailLabel')}
-          value={email}
-          onChangeText={setEmail}
-          error={errors.email}
-          placeholder="you@example.com"
-          keyboardType="email-address"
-          autoComplete="email"
-        />
-        <TextField
-          label={t('auth.signIn.passwordLabel')}
-          value={password}
-          onChangeText={setPassword}
-          error={errors.password}
-          secure
-          autoComplete="password-new"
-        />
-        <TextField
-          label={t('auth.signUp.confirmPasswordLabel')}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          error={errors.confirmPassword}
-          secure
-        />
-
-        {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
-
-        <Button label={t('auth.signUp.submit')} onPress={handleSubmit} loading={isSubmitting} />
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{t('auth.signIn.or')}</Text>
-          <View style={styles.dividerLine} />
+    <AuthShell
+      title={t('auth.v2.signUp.title')}
+      subtitle={t('auth.v2.signUp.subtitle')}
+      onPressBack={onPressBack}
+      footer={
+        <View style={styles.switchRow}>
+          <Text style={styles.switchText}>{t('auth.signUp.hasAccount')}</Text>
+          <TextButton label={t('auth.signUp.signInLink')} onPress={onPressSignIn} />
         </View>
+      }
+    >
+      {isGuest ? <FormMessage tone="info" message={t('auth.v2.guest.mergeNote')} /> : null}
 
-        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={onPressGoogle} disabled={isSubmitting} />
-        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={onPressApple} disabled={isSubmitting} />
-      </View>
+      <TextField
+        label={t('auth.signUp.nameLabel')}
+        value={name}
+        onChangeText={(value) => {
+          setName(value);
+          clear('name');
+        }}
+        error={errors.name ? t(errors.name) : null}
+        autoCapitalize="words"
+        autoComplete="name"
+        textContentType="name"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => emailRef.current?.focus()}
+        large={large}
+      />
+      <TextField
+        inputRef={emailRef}
+        label={t('auth.emailLabel')}
+        value={email}
+        onChangeText={(value) => {
+          setEmail(value);
+          clear('email');
+        }}
+        error={errors.email ? t(errors.email) : null}
+        placeholder={EMAIL_PLACEHOLDER}
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="username"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        large={large}
+      />
+      <TextField
+        inputRef={passwordRef}
+        label={t('auth.signIn.passwordLabel')}
+        value={password}
+        onChangeText={(value) => {
+          setPassword(value);
+          clear('password');
+        }}
+        error={errors.password ? t(errors.password, { count: MIN_PASSWORD_LENGTH }) : null}
+        hint={t('auth.v2.passwordRule', { count: MIN_PASSWORD_LENGTH })}
+        secure
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="go"
+        onSubmitEditing={handleSubmit}
+        large={large}
+      />
 
-      <View style={styles.footerRow}>
-        <Text style={styles.footerText}>{t('auth.signUp.hasAccount')}</Text>
-        <TextButton label={t('auth.signUp.signInLink')} onPress={onPressSignIn} />
-      </View>
-    </ScrollView>
+      <FormMessage tone="error" message={serverError} />
+      <Button label={t('auth.v2.signUp.submit')} size="lg" block onPress={handleSubmit} loading={isSubmitting} />
+
+      {oauthProviders.length > 0 ? (
+        <>
+          <AuthDivider label={t('auth.signIn.or')} />
+          {oauthProviders.map((provider) => (
+            <Button
+              key={provider}
+              label={t(provider === 'apple' ? 'auth.signIn.continueWithApple' : 'auth.signIn.continueWithGoogle')}
+              variant="secondary"
+              block
+              onPress={() => void onPressOAuth(provider)}
+              disabled={isSubmitting}
+            />
+          ))}
+        </>
+      ) : null}
+    </AuthShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.xl,
-  },
-  title: {
-    ...typography.display,
-    color: colors.textPrimary,
-  },
-  form: {
-    gap: spacing.md,
-  },
-  serverError: {
-    ...typography.caption,
-    color: colors.danger,
-    textAlign: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.surfaceBorder,
-  },
-  dividerText: {
-    ...typography.small,
-    color: colors.textMuted,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xxs,
-  },
-  footerText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
+  switchRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: spacing.xxs },
+  switchText: { ...textStyles.caption, color: colors.textSecondary },
 });

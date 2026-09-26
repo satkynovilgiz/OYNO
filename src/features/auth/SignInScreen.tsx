@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button, TextButton, TextField } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+import type { OAuthProvider } from '@/services/auth';
+import { colors, spacing, textStyles } from '@/theme';
+
+import { AuthDivider, AuthShell, FormMessage } from './AuthShell';
+import { EMAIL_PLACEHOLDER, normalizeEmail, validateSignIn, type FieldErrors } from './authValidation';
 
 type SignInScreenProps = {
   onSubmit: (input: { email: string; password: string }) => Promise<boolean>;
@@ -12,141 +15,136 @@ type SignInScreenProps = {
   serverError: string | null;
   onPressSignUp: () => void;
   onPressForgotPassword: () => void;
-  onPressGoogle: () => Promise<void>;
-  onPressApple: () => Promise<void>;
+  /** Only the providers really enabled for this project. */
+  oauthProviders: OAuthProvider[];
+  onPressOAuth: (provider: OAuthProvider) => Promise<void>;
+  /** Shown when this person is exploring as a guest (upgrading). */
+  isGuest: boolean;
+  /** Absent when guest mode isn't offered here (already a guest). */
+  onContinueAsGuest?: () => void;
+  onPressBack?: () => void;
+  large?: boolean;
 };
 
+/**
+ * Sign in: brand photo, one line on what an account adds, email +
+ * password (AutoFill-ready), Forgot password, the error right above the
+ * action, Sign in; social sign-in only for providers that exist; then
+ * Create account and - first-class, not hidden - Continue without account.
+ */
 export function SignInScreen({
   onSubmit,
   isSubmitting,
   serverError,
   onPressSignUp,
   onPressForgotPassword,
-  onPressGoogle,
-  onPressApple,
+  oauthProviders,
+  onPressOAuth,
+  isGuest,
+  onContinueAsGuest,
+  onPressBack,
+  large = false,
 }: SignInScreenProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-
-  const validate = (): boolean => {
-    const nextErrors: { email?: string; password?: string } = {};
-    if (!email.trim()) nextErrors.email = t('auth.signIn.emailError');
-    if (!password) nextErrors.password = t('auth.signIn.passwordError');
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
+  const [errors, setErrors] = useState<FieldErrors<'email' | 'password'>>({});
+  const passwordRef = useRef<TextInput>(null);
 
   const handleSubmit = async () => {
-    if (!validate()) return;
-    await onSubmit({ email: email.trim(), password });
+    if (isSubmitting) return;
+    const next = validateSignIn({ email, password });
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+    await onSubmit({ email: normalizeEmail(email), password });
   };
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
-      keyboardShouldPersistTaps="handled"
+    <AuthShell
+      title={t('auth.v2.signIn.title')}
+      subtitle={t('auth.v2.signIn.subtitle')}
+      onPressBack={onPressBack}
+      footer={
+        <>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchText}>{t('auth.v2.signIn.newHere')}</Text>
+            <TextButton label={t('auth.v2.signIn.createAccount')} onPress={onPressSignUp} />
+          </View>
+          {onContinueAsGuest ? (
+            <View style={styles.guest}>
+              <Button label={t('auth.v2.guest.continue')} variant="ghost" block onPress={onContinueAsGuest} disabled={isSubmitting} />
+              <Text style={styles.guestNote}>{t('auth.v2.guest.note')}</Text>
+            </View>
+          ) : null}
+        </>
+      }
     >
-      <Text style={styles.title}>{t('auth.signIn.title')}</Text>
+      {isGuest ? <FormMessage tone="info" message={t('auth.v2.guest.mergeNote')} /> : null}
 
-      <View style={styles.form}>
+      <TextField
+        label={t('auth.emailLabel')}
+        value={email}
+        onChangeText={(value) => {
+          setEmail(value);
+          if (errors.email) setErrors((current) => ({ ...current, email: undefined }));
+        }}
+        error={errors.email ? t(errors.email) : null}
+        placeholder={EMAIL_PLACEHOLDER}
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="username"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+        large={large}
+      />
+      <View style={styles.passwordBlock}>
         <TextField
-          label={t('auth.emailLabel')}
-          value={email}
-          onChangeText={setEmail}
-          error={errors.email}
-          placeholder="you@example.com"
-          keyboardType="email-address"
-          autoComplete="email"
-        />
-        <TextField
+          inputRef={passwordRef}
           label={t('auth.signIn.passwordLabel')}
           value={password}
-          onChangeText={setPassword}
-          error={errors.password}
+          onChangeText={(value) => {
+            setPassword(value);
+            if (errors.password) setErrors((current) => ({ ...current, password: undefined }));
+          }}
+          error={errors.password ? t(errors.password) : null}
           secure
-          autoComplete="password"
+          autoComplete="current-password"
+          textContentType="password"
+          returnKeyType="go"
+          onSubmitEditing={handleSubmit}
+          large={large}
         />
-
-        <TextButton
-          label={t('auth.signIn.forgotPassword')}
-          onPress={onPressForgotPassword}
-          style={styles.forgotLink}
-        />
-
-        {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
-
-        <Button label={t('auth.signIn.submit')} onPress={handleSubmit} loading={isSubmitting} />
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{t('auth.signIn.or')}</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <Button label={t('auth.signIn.continueWithGoogle')} variant="secondary" onPress={onPressGoogle} disabled={isSubmitting} />
-        <Button label={t('auth.signIn.continueWithApple')} variant="secondary" onPress={onPressApple} disabled={isSubmitting} />
+        <TextButton label={t('auth.v2.signIn.forgot')} onPress={onPressForgotPassword} style={styles.forgot} />
       </View>
 
-      <View style={styles.footerRow}>
-        <Text style={styles.footerText}>{t('auth.signIn.noAccount')}</Text>
-        <TextButton label={t('auth.signIn.signUpLink')} onPress={onPressSignUp} />
-      </View>
-    </ScrollView>
+      <FormMessage tone="error" message={serverError} />
+      <Button label={t('auth.signIn.submit')} size="lg" block onPress={handleSubmit} loading={isSubmitting} />
+
+      {oauthProviders.length > 0 ? (
+        <>
+          <AuthDivider label={t('auth.signIn.or')} />
+          {oauthProviders.map((provider) => (
+            <Button
+              key={provider}
+              label={t(provider === 'apple' ? 'auth.signIn.continueWithApple' : 'auth.signIn.continueWithGoogle')}
+              variant="secondary"
+              block
+              onPress={() => void onPressOAuth(provider)}
+              disabled={isSubmitting}
+            />
+          ))}
+        </>
+      ) : null}
+    </AuthShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.xl,
-  },
-  title: {
-    ...typography.display,
-    color: colors.textPrimary,
-  },
-  form: {
-    gap: spacing.md,
-  },
-  forgotLink: {
-    alignSelf: 'flex-end',
-  },
-  serverError: {
-    ...typography.caption,
-    color: colors.danger,
-    textAlign: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.sm,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.surfaceBorder,
-  },
-  dividerText: {
-    ...typography.small,
-    color: colors.textMuted,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xxs,
-  },
-  footerText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
+  passwordBlock: { gap: spacing.xs },
+  forgot: { alignSelf: 'flex-end' },
+  switchRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: spacing.xxs },
+  switchText: { ...textStyles.caption, color: colors.textSecondary },
+  guest: { alignSelf: 'stretch', gap: spacing.xs, alignItems: 'center' },
+  guestNote: { ...textStyles.small, color: colors.textMuted, textAlign: 'center' },
 });

@@ -87,8 +87,12 @@ describe('decideRouteGuardRedirect', () => {
     expect(decideRouteGuardRedirect(baseState({ authStatus: 'authenticated', pathname: '/sign-up' }))).toBe('/home');
   });
 
-  it('bounces a guest away from /sign-up back to /home too', () => {
-    expect(decideRouteGuardRedirect(baseState({ authStatus: 'guest', pathname: '/sign-up' }))).toBe('/home');
+  // A guest opens Sign in / Create account on purpose (Settings) to connect
+  // their progress to an account - bouncing them to /home made those
+  // Settings buttons do nothing.
+  it('lets a guest open /sign-in and /sign-up to create or join an account', () => {
+    expect(decideRouteGuardRedirect(baseState({ authStatus: 'guest', pathname: '/sign-up' }))).toBeNull();
+    expect(decideRouteGuardRedirect(baseState({ authStatus: 'guest', pathname: '/sign-in' }))).toBeNull();
   });
 
   it('does nothing for a fully-onboarded, authenticated user on a normal gated route', () => {

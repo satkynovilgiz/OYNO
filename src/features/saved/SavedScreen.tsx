@@ -1,14 +1,14 @@
-import { ArrowDownToLine, ChevronRight, Compass, Heart } from 'lucide-react-native';
+import { ChevronRight, CloudDownload, Heart } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LibraryEmptyState, LibraryFilterChips, LibraryHeader, LibrarySectionHeader } from '@/components/library/LibraryChrome';
-import { LibraryContentCard, LibraryContentRow } from '@/components/library/LibraryContentRow';
+import { LibraryEmptyState, LibraryFilterChips, LibraryHeader } from '@/components/library/LibraryChrome';
 import { offlineKindFor } from '@/components/library/contentTypeMeta';
-import { AnimatedPressable, FadeSlideIn } from '@/components/ui';
+import { AnimatedPressable, Button, FadeSlideIn, Rail, SectionHeader, useRailItemWidth } from '@/components/ui';
 import { mockGamesList } from '@/features/games/mockData';
+import { buildRecentlyExplored } from '@/features/home/homeRecommendation';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import {
@@ -24,10 +24,13 @@ import { useCultureCategories, useCultureMaterials } from '@/services/content/cu
 import { useExploreRegions } from '@/services/content/exploreService';
 import { downloadId } from '@/services/offline/offlineManifest';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
+import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore, type FavoriteContentType } from '@/store/useFavoritesStore';
-import { colors, radii, spacing, typography } from '@/theme';
+import { useProgressStore } from '@/store/useProgressStore';
+import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
-import { filterSavedItems, resolveSavedItems, type SavedFilter } from './savedFilters';
+import { SavedContentCard } from './SavedContentCard';
+import { buildSavedView, savedFilterOptions, visibleSections, type SavedEntry, type SavedFilter } from './savedModel';
 import { toggleFavoriteWithFeedback } from './toggleFavoriteWithFeedback';
 
 type SavedScreenProps = {
@@ -35,13 +38,15 @@ type SavedScreenProps = {
   onPressItem: (route: string) => void;
 };
 
-const FILTERS: SavedFilter[] = ['all', 'games', 'culture', 'places'];
-
 /**
- * Saved - "Your OYNO" personal collection: everything the user chose to
- * keep, newest first, from the one Favorites model. Filters are exactly
- * the categories that model supports. Offline Downloads is a separate
- * library (linked here, never mixed into Favorites).
+ * Saved - the user's own OYNO library, over the ONE favorites store:
+ *   header     "Your OYNO" / Saved + one line
+ *   summary    real saved count, real "available offline" count, a link
+ *              to the Offline manager (downloads are managed there only)
+ *   Continue   saved items the user also explored recently (real dates)
+ *   sections   Places / Culture / Games - only those with content
+ * Removing is instant (local-first store, unchanged sync path) and only
+ * un-saves: progress and offline copies are never touched.
  */
 export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
   const { t, i18n } = useTranslation();
@@ -49,10 +54,12 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
   const [filter, setFilter] = useState<SavedFilter>('all');
+  const railWidth = useRailItemWidth('compact', experience === 'child' ? 0.6 : 0.5);
 
   const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
   const offlineEntries = useOfflineStore((state) => state.manifest.entries);
-  const offlineCount = Object.keys(offlineEntries).length;
+  const regionVisitDates = useProgressStore((state) => state.regionVisitDates);
+  const dailyCompletions = useDailyDiscoveryStore((state) => state.completions);
 
   const { data: categories } = useCultureCategories();
   const { data: materials } = useCultureMaterials();
@@ -61,82 +68,101 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
 
   const catalog = useMemo<CatalogItem[]>(
     () => [
-      ...buildGameCatalog(mockGamesList, t),
-      ...buildCultureItemCatalog(items ?? [], categories ?? []),
-      ...buildCultureMaterialCatalog(materials ?? []),
       ...buildExploreCatalog(regions ?? [], language),
+      ...buildCultureItemCatalog(items ?? [], categories ?? []),
       ...buildInteractiveExperienceCatalog(t),
+      ...buildCultureMaterialCatalog(materials ?? []),
+      ...buildGameCatalog(mockGamesList, t),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [categories, materials, items, regions, language],
   );
 
-  const savedItems = useMemo(() => resolveSavedItems(favoriteIds, catalog), [favoriteIds, catalog]);
-  const visibleItems = useMemo(() => filterSavedItems(savedItems, filter), [savedItems, filter]);
-  const isOffline = (item: CatalogItem) => {
-    const kind = offlineKindFor(item.contentType);
-    return !!kind && !!offlineEntries[downloadId(kind, item.id)];
-  };
-  const open = (item: CatalogItem) => item.route && onPressItem(item.route);
-  const unsave = (item: CatalogItem) => void toggleFavoriteWithFeedback(item.contentType as FavoriteContentType, item.id);
+  const view = useMemo(
+    () =>
+      buildSavedView({
+        favoriteIds,
+        catalog,
+        isOffline: (item) => {
+          const kind = offlineKindFor(item.contentType);
+          return !!kind && !!offlineEntries[downloadId(kind, item.id)];
+        },
+        recent: buildRecentlyExplored(regionVisitDates, dailyCompletions, 20),
+      }),
+    [favoriteIds, catalog, offlineEntries, regionVisitDates, dailyCompletions],
+  );
+
+  const filters = experience === 'child' ? [] : savedFilterOptions(view);
+  const activeFilter = filters.includes(filter) ? filter : 'all';
+  const sections = visibleSections(view, activeFilter);
+  const useTiles = experience === 'preteen';
+
+  const open = (entry: SavedEntry) => entry.item.route && onPressItem(entry.item.route);
+  const remove = (entry: SavedEntry) => void toggleFavoriteWithFeedback(entry.item.contentType as FavoriteContentType, entry.item.id);
+
+  const card = (entry: SavedEntry, layout: 'row' | 'tile') => (
+    <SavedContentCard key={entry.key} item={entry.item} offline={entry.offline} experience={experience} layout={layout} onOpen={() => open(entry)} onRemove={() => remove(entry)} />
+  );
 
   return (
     <View style={styles.root}>
-      <LibraryHeader title={t('saved.title')} subtitle={t('library.savedSubtitle')} onPressBack={onPressBack}>
-        {savedItems.length > 0 && experience !== 'child' ? (
-          <LibraryFilterChips options={FILTERS} value={filter} label={(option) => t(`saved.filters.${option}`)} onChange={setFilter} />
-        ) : null}
+      <LibraryHeader title={t('saved.title')} subtitle={t('saved.v2.subtitle')} onPressBack={onPressBack}>
+        {filters.length > 0 ? <LibraryFilterChips options={filters} value={activeFilter} label={(option) => t(option === 'all' ? 'saved.filters.all' : `saved.v2.sections.${option}`)} onChange={setFilter} /> : null}
       </LibraryHeader>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
-        <AnimatedPressable style={styles.offlineEntry} onPress={() => onPressItem('/offline')} hoverEffect accessibilityRole="button" accessibilityLabel={`${t('offline.library.title')}${offlineCount ? `, ${offlineCount}` : ''}`}>
-          <View style={styles.offlineIcon}>
-            <ArrowDownToLine size={16} color={colors.primary} strokeWidth={2.25} />
-          </View>
-          <Text style={styles.offlineText}>{t('offline.library.title')}</Text>
-          {offlineCount > 0 ? <Text style={styles.offlineCount}>{offlineCount}</Text> : null}
-          <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
-        </AnimatedPressable>
-
-        {savedItems.length === 0 ? (
-          <LibraryEmptyState icon={Heart} tone={colors.accentTerracotta} title={t('saved.emptyTitle')} description={t('saved.emptyDescription')}>
-            <AnimatedPressable style={styles.cta} onPress={() => onPressItem('/explore')} accessibilityRole="button" accessibilityLabel={t('library.browse.places')}>
-              <Compass size={14} color={colors.primary} strokeWidth={2.25} />
-              <Text style={styles.ctaText}>{t('library.browse.places')}</Text>
-            </AnimatedPressable>
+        {view.total === 0 ? (
+          <LibraryEmptyState icon={Heart} tone={colors.accentTerracotta} title={t('saved.emptyTitle')} description={t('saved.v2.emptyBody')}>
+            <Button label={t('saved.v2.explore')} variant="primary" onPress={() => onPressItem('/explore')} />
           </LibraryEmptyState>
-        ) : visibleItems.length === 0 ? (
-          <LibraryEmptyState icon={Heart} tone={colors.accentTerracotta} title={t('saved.emptyFilterTitle')} description={t('saved.emptyFilterDescription')} />
         ) : (
-          <FadeSlideIn key={filter} style={styles.section}>
-            <LibrarySectionHeader title={t(`saved.filters.${filter}`)} count={visibleItems.length} />
-            {experience === 'preteen' ? (
-              <View style={styles.grid}>
-                {visibleItems.map((item) => (
-                  <View key={`${item.contentType}:${item.id}`} style={styles.gridCell}>
-                    <LibraryContentCard item={{ ...item, subtitle: item.metadata }} saved offline={isOffline(item)} onPress={() => open(item)} />
+          <>
+            {/* Real counts only; downloads are managed in Offline. */}
+            <View style={styles.summary}>
+              <View style={styles.summaryText} accessible accessibilityLabel={[t('saved.v2.count', { count: view.total }), view.offlineCount > 0 ? t('saved.v2.offlineCount', { count: view.offlineCount }) : null].filter(Boolean).join('. ')}>
+                <Text style={styles.summaryTitle}>{t('saved.v2.count', { count: view.total })}</Text>
+                {view.offlineCount > 0 ? <Text style={styles.summaryMeta}>{t('saved.v2.offlineCount', { count: view.offlineCount })}</Text> : null}
+              </View>
+              <AnimatedPressable style={styles.downloads} onPress={() => onPressItem('/offline')} press="soft" accessibilityRole="button" accessibilityLabel={t('offline.library.title')}>
+                <CloudDownload size={15} color={colors.primary} strokeWidth={2.25} />
+                <Text style={styles.downloadsText} numberOfLines={1}>
+                  {t('saved.v2.downloads')}
+                </Text>
+                <ChevronRight size={14} color={colors.textMuted} strokeWidth={2.25} />
+              </AnimatedPressable>
+            </View>
+
+            {activeFilter === 'all' && view.continueExploring.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title={t('saved.v2.continueTitle')} size="sm" inset={0} />
+                <Text style={styles.sectionHint}>{t('saved.v2.continueHint')}</Text>
+                <Rail itemWidth={railWidth} style={styles.bleed}>
+                  {view.continueExploring.map((entry) => (
+                    <View key={entry.key} style={{ width: railWidth }}>
+                      {card(entry, 'tile')}
+                    </View>
+                  ))}
+                </Rail>
+              </View>
+            ) : null}
+
+            {sections.map((section, index) => (
+              <FadeSlideIn key={`${activeFilter}:${section.id}`} index={index} style={styles.section}>
+                <SectionHeader title={t(`saved.v2.sections.${section.id}`)} count={section.entries.length} size="sm" inset={0} />
+                {useTiles ? (
+                  <View style={styles.grid}>
+                    {section.entries.map((entry) => (
+                      <View key={entry.key} style={styles.gridCell}>
+                        {card(entry, 'tile')}
+                      </View>
+                    ))}
                   </View>
-                ))}
-              </View>
-            ) : (
-              <View style={styles.list}>
-                {visibleItems.map((item) => (
-                  <LibraryContentRow
-                    key={`${item.contentType}:${item.id}`}
-                    item={{ ...item, subtitle: item.metadata }}
-                    experience={experience}
-                    offline={isOffline(item)}
-                    onPress={() => open(item)}
-                    trailing={
-                      <AnimatedPressable style={styles.unsave} onPress={() => unsave(item)} haptic="light" accessibilityRole="button" accessibilityLabel={`${t('saved.removeLabel')}: ${item.title}`}>
-                        <Heart size={18} color={colors.accentTerracotta} fill={colors.accentTerracotta} strokeWidth={0} />
-                      </AnimatedPressable>
-                    }
-                  />
-                ))}
-              </View>
-            )}
-          </FadeSlideIn>
+                ) : (
+                  <View style={styles.list}>{section.entries.map((entry) => card(entry, 'row'))}</View>
+                )}
+              </FadeSlideIn>
+            ))}
+          </>
         )}
       </ScrollView>
     </View>
@@ -145,16 +171,17 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: spacing.md, gap: spacing.md, paddingTop: spacing.xs },
+  content: { paddingHorizontal: spacing.md, gap: spacing.lg, paddingTop: spacing.xs },
+  summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
+  summaryText: { flex: 1, gap: 2 },
+  summaryTitle: { ...textStyles.title, color: colors.textPrimary },
+  summaryMeta: { ...textStyles.caption, color: colors.textSecondary },
+  downloads: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, paddingHorizontal: spacing.sm, borderRadius: cardRadii.chip, backgroundColor: colors.surfaceElevated, maxWidth: '55%' },
+  downloadsText: { ...textStyles.small, fontWeight: '700', color: colors.primary, flexShrink: 1 },
   section: { gap: spacing.sm },
-  list: { gap: spacing.xxs },
+  sectionHint: { ...textStyles.caption, color: colors.textMuted, marginTop: -spacing.xs },
+  bleed: { marginHorizontal: -spacing.md },
+  list: { gap: spacing.xs },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
   gridCell: { width: '48%' },
-  offlineEntry: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
-  offlineIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceAlt },
-  offlineText: { ...typography.bodyBold, color: colors.textPrimary, flex: 1 },
-  offlineCount: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
-  unsave: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  cta: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
-  ctaText: { ...typography.caption, fontWeight: '700', color: colors.primary },
 });

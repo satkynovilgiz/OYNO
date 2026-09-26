@@ -1,81 +1,55 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, TextField } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+
+import { AuthShell, FormMessage } from './AuthShell';
+import { EMAIL_PLACEHOLDER, emailError, normalizeEmail } from './authValidation';
 
 type ForgotPasswordScreenProps = {
   onSubmit: (email: string) => Promise<void>;
   isSubmitting: boolean;
   serverError: string | null;
+  onPressBack?: () => void;
+  large?: boolean;
 };
 
-export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError }: ForgotPasswordScreenProps) {
+/** Step 1 of reset: the account email -> an 8-digit code is emailed. The
+ * next screen only opens after the request really succeeded. */
+export function ForgotPasswordScreen({ onSubmit, isSubmitting, serverError, onPressBack, large = false }: ForgotPasswordScreenProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!email.trim()) {
-      setError(t('auth.forgotPassword.emailError'));
-      return;
-    }
-    setError(null);
-    await onSubmit(email.trim());
+    if (isSubmitting) return;
+    const key = emailError(email);
+    setError(key);
+    if (key) return;
+    await onSubmit(normalizeEmail(email));
   };
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>{t('auth.forgotPassword.title')}</Text>
-      <Text style={styles.description}>{t('auth.forgotPassword.description')}</Text>
-
+    <AuthShell hero="compact" title={t('auth.v2.forgot.title')} subtitle={t('auth.v2.forgot.subtitle')} onPressBack={onPressBack}>
       <TextField
-        label="Email"
+        label={t('auth.emailLabel')}
         value={email}
-        onChangeText={setEmail}
-        error={error ?? undefined}
-        placeholder="you@example.com"
+        onChangeText={(value) => {
+          setEmail(value);
+          if (error) setError(null);
+        }}
+        error={error ? t(error) : null}
+        placeholder={EMAIL_PLACEHOLDER}
         keyboardType="email-address"
         autoComplete="email"
+        textContentType="username"
+        returnKeyType="send"
+        onSubmitEditing={handleSubmit}
+        autoFocus
+        large={large}
       />
-
-      {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
-
-      <Button label={t('auth.forgotPassword.submit')} onPress={handleSubmit} loading={isSubmitting} />
-    </ScrollView>
+      <FormMessage tone="error" message={serverError} />
+      <Button label={t('auth.v2.forgot.submit')} size="lg" block onPress={handleSubmit} loading={isSubmitting} />
+    </AuthShell>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.md,
-  },
-  title: {
-    ...typography.display,
-    color: colors.textPrimary,
-  },
-  description: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  serverError: {
-    ...typography.caption,
-    color: colors.danger,
-    textAlign: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.sm,
-  },
-});

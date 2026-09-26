@@ -33,6 +33,9 @@ import {
   type PendingVisits,
 } from './outbox';
 import { invalidateActiveSync, syncAccountState, type SyncReport } from './syncEngine';
+// Registers recent search queries as account-bound (cleared with the rest
+// of an account's local state) - the Search screen may never have loaded.
+import '@/services/search/recentSearches';
 
 /**
  * Account transitions for the local, account-bound state:

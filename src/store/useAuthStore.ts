@@ -11,6 +11,8 @@ import {
   type SignUpResult,
 } from '@/services/auth';
 import { track } from '@/services/analytics/analytics';
+import { localizeAuthError } from '@/services/auth/authErrors';
+import { isOfflineNow } from '@/services/offline/networkStatus';
 import { supabase } from '@/services/supabase/client';
 
 /** "guest" = explored without an account (spec: guests can browse/play
@@ -40,6 +42,12 @@ let signingOut = false;
 
 export function registerAccountHooks(hooks: AccountHooks): void {
   accountHooks = hooks;
+}
+
+/** Known-offline: fail fast with a clear message instead of a request
+ * that can only spin and time out. Unknown connectivity counts as online. */
+function offlineMessage(): string | null {
+  return isOfflineNow() ? localizeAuthError(new AuthError('network-error', '')) : null;
 }
 
 type AuthState = {
@@ -98,6 +106,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signUp: async (input) => {
+    // A second tap while the first request runs is ignored.
+    if (get().isSubmitting) return false;
+    const offline = offlineMessage();
+    if (offline) {
+      set({ error: offline });
+      return false;
+    }
     set({ isSubmitting: true, error: null });
     try {
       const result = await authService.signUp(input);
@@ -110,12 +125,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       return result;
     } catch (error) {
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'signUp') });
       return false;
     }
   },
 
   signIn: async (input) => {
+    // A second tap while the first request runs is ignored.
+    if (get().isSubmitting) return false;
+    const offline = offlineMessage();
+    if (offline) {
+      set({ error: offline });
+      return false;
+    }
     set({ isSubmitting: true, error: null });
     try {
       const session = await authService.signIn(input);
@@ -124,12 +146,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       track('sign_in');
       return true;
     } catch (error) {
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'signIn') });
       return false;
     }
   },
 
   signInWithOAuth: async (provider) => {
+    const offline = offlineMessage();
+    if (offline) {
+      set({ error: offline });
+      return false;
+    }
     set({ isSubmitting: true, error: null });
     try {
       const { session, isNewUser } = await authService.signInWithOAuth(provider);
@@ -142,7 +169,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ isSubmitting: false });
         return 'cancelled';
       }
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'signIn') });
       return false;
     }
   },
@@ -161,6 +188,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   verifyEmail: async (email, code) => {
+    // A second tap while the first request runs is ignored.
+    if (get().isSubmitting) return false;
+    const offline = offlineMessage();
+    if (offline) {
+      set({ error: offline });
+      return false;
+    }
     set({ isSubmitting: true, error: null });
     try {
       const session = await authService.verifyEmail(email, code);
@@ -169,18 +203,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       track('sign_up');
       return true;
     } catch (error) {
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'verify') });
       return false;
     }
   },
 
   resendVerificationEmail: async (email) => {
+    const offline = offlineMessage();
+    if (offline) {
+      set({ error: offline });
+      return false;
+    }
     set({ error: null });
     try {
       await authService.resendVerificationEmail(email);
       return true;
     } catch (error) {
-      set({ error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ error: localizeAuthError(error, 'verify') });
       return false;
     }
   },
@@ -195,7 +234,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ status: 'unauthenticated', user: null, isSubmitting: false });
       return true;
     } catch (error) {
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'account') });
       return false;
     }
   },
@@ -208,7 +247,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       track('profile_updated');
       return true;
     } catch (error) {
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'account') });
       return false;
     }
   },
@@ -220,7 +259,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isSubmitting: false });
       return true;
     } catch (error) {
-      set({ isSubmitting: false, error: error instanceof AuthError ? error.message : 'Белгисиз ката кетти.' });
+      set({ isSubmitting: false, error: localizeAuthError(error, 'account') });
       return false;
     }
   },

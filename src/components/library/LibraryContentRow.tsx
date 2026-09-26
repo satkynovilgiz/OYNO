@@ -1,7 +1,8 @@
 import { ArrowDownToLine, ChevronRight, Heart } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import { Image } from 'expo-image';
+import { StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
@@ -30,7 +31,9 @@ export function LibraryArt({ item, size, radius }: { item: LibraryItem; size: nu
   if (item.thumbnail && !failed) {
     return (
       <View style={[styles.art, frame]}>
-        <Image source={item.thumbnail} style={styles.fill} resizeMode="cover" onError={() => setFailed(true)} accessibilityIgnoresInvertColors />
+        {/* expo-image: decoded at the frame's size (never the full-resolution
+            bitmap for a thumbnail) and memory/disk cached across screens. */}
+        <Image source={item.thumbnail as never} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={120} onError={() => setFailed(true)} accessibilityIgnoresInvertColors />
       </View>
     );
   }

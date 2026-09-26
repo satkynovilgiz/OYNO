@@ -1,21 +1,24 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { VerifyResetCodeScreen } from '@/features/auth/VerifyResetCodeScreen';
-import { authService, AuthError } from '@/services/auth';
+import { authService } from '@/services/auth';
+import { localizeAuthError } from '@/services/auth/authErrors';
 
 export default function VerifyResetCodeRoute() {
-  const { t } = useTranslation();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const backToEmail = () => (router.canGoBack() ? router.back() : router.replace('/forgot-password'));
+
   return (
     <VerifyResetCodeScreen
-      email={email}
+      email={email ?? ''}
       isSubmitting={isSubmitting}
       error={error}
+      onPressBack={backToEmail}
+      onRequestNewCode={backToEmail}
       onSubmit={async (code) => {
         setIsSubmitting(true);
         setError(null);
@@ -23,7 +26,7 @@ export default function VerifyResetCodeRoute() {
           await authService.verifyPasswordResetCode(email, code);
           router.push('/reset-password');
         } catch (err) {
-          setError(err instanceof AuthError ? err.message : t('common.unknownError'));
+          setError(localizeAuthError(err, 'reset'));
         } finally {
           setIsSubmitting(false);
         }

@@ -14,6 +14,8 @@ export type AuthSession = {
 export type AuthErrorCode =
   | 'invalid-email'
   | 'weak-password'
+  /** New password equals the current one. */
+  | 'same-password'
   | 'password-mismatch'
   | 'email-taken'
   | 'invalid-credentials'

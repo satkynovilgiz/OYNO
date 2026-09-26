@@ -51,14 +51,24 @@ export function mapSupabaseError(error: SupabaseAuthErrorType | { message: strin
     over_email_send_rate_limit: ['rate-limited', 'Өтө көп аракет. Бир аздан кийин кайра аракет кылыңыз.'],
     over_request_rate_limit: ['rate-limited', 'Өтө көп аракет. Бир аздан кийин кайра аракет кылыңыз.'],
     user_not_found: ['user-not-found', 'Колдонуучу табылган жок.'],
-    same_password: ['weak-password', 'Жаңы сырсөз азыркыдан айырмаланышы керек.'],
+    same_password: ['same-password', 'Жаңы сырсөз азыркыдан айырмаланышы керек.'],
   };
 
+  const name = (error as { name?: string } | null)?.name ?? '';
   if (code && byCode[code]) {
     const [errCode, msg] = byCode[code];
     return new AuthError(errCode, msg);
   }
-  if (/network/i.test(message)) return new AuthError('network-error', 'Интернет байланышын текшериңиз.');
+  // No (or an expired) recovery/verification session - e.g. a reset
+  // screen reached after the code's session timed out.
+  if (name === 'AuthSessionMissingError' || /session.*(missing|expired)|jwt expired/i.test(message)) {
+    return new AuthError('invalid-code', 'Коддун мөөнөтү бүттү. Кайра сурап көрүңүз.');
+  }
+  // fetch() failures surface as AuthRetryableFetchError / "Failed to fetch"
+  // (web) / "Network request failed" (native) - all mean "no connection".
+  if (/network|failed to fetch|load failed/i.test(message) || name === 'AuthRetryableFetchError') {
+    return new AuthError('network-error', 'Интернет байланышын текшериңиз.');
+  }
   if (/invalid.*(email|credentials)|credentials/i.test(message)) {
     return new AuthError('invalid-credentials', 'Email же сырсөз туура эмес.');
   }

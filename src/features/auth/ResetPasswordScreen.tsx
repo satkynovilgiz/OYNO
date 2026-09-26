@@ -1,120 +1,105 @@
-import { CheckCircle2 } from 'lucide-react-native';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { CircleCheck } from 'lucide-react-native';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button, TextField } from '@/components/ui';
-import { colors, spacing, typography } from '@/theme';
+import { colors, spacing, textStyles } from '@/theme';
 
-type FieldErrors = { password?: string; confirmPassword?: string };
-
-const MIN_PASSWORD_LENGTH = 8;
+import { AuthShell, FormMessage } from './AuthShell';
+import { MIN_PASSWORD_LENGTH, validateNewPassword, type FieldErrors } from './authValidation';
 
 type ResetPasswordScreenProps = {
   onSubmit: (newPassword: string) => Promise<boolean>;
   isSubmitting: boolean;
   serverError: string | null;
   onPressSignIn: () => void;
+  /** Expired / invalid reset session: start over with a new code. */
+  onRequestNewCode: () => void;
+  expired: boolean;
 };
 
-export function ResetPasswordScreen({ onSubmit, isSubmitting, serverError, onPressSignIn }: ResetPasswordScreenProps) {
+/** Step 3 of reset: the new password (typed twice - there's no other way
+ * to check it before it replaces the old one), then a clear success state
+ * that sends the person to Sign in with it. */
+export function ResetPasswordScreen({ onSubmit, isSubmitting, serverError, onPressSignIn, onRequestNewCode, expired }: ResetPasswordScreenProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [errors, setErrors] = useState<FieldErrors<'password' | 'confirmPassword'>>({});
   const [succeeded, setSucceeded] = useState(false);
+  const confirmRef = useRef<TextInput>(null);
 
   const handleSubmit = async () => {
-    const nextErrors: FieldErrors = {};
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      nextErrors.password = t('auth.resetPassword.passwordError', { count: MIN_PASSWORD_LENGTH });
-    }
-    if (confirmPassword !== password) nextErrors.confirmPassword = t('auth.resetPassword.confirmPasswordError');
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
-    const ok = await onSubmit(password);
-    if (ok) setSucceeded(true);
+    if (isSubmitting) return;
+    const next = validateNewPassword({ password, confirmPassword });
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+    if (await onSubmit(password)) setSucceeded(true);
   };
 
   if (succeeded) {
     return (
-      <View style={[styles.root, styles.successRoot, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}>
-        <View style={styles.successContent}>
-          <CheckCircle2 size={64} color={colors.primary} strokeWidth={1.5} />
-          <Text style={styles.successTitle}>{t('auth.resetPassword.successTitle')}</Text>
+      <AuthShell hero="compact" title={t('auth.v2.reset.successTitle')} subtitle={t('auth.v2.reset.successBody')}>
+        <View style={styles.success} accessibilityLiveRegion="polite">
+          <CircleCheck size={40} color={colors.success} strokeWidth={1.75} />
         </View>
-        <Button label={t('auth.resetPassword.successCta')} onPress={onPressSignIn} />
-      </View>
+        <Button label={t('auth.resetPassword.successCta')} size="lg" block onPress={onPressSignIn} />
+      </AuthShell>
+    );
+  }
+
+  if (expired) {
+    return (
+      <AuthShell hero="compact" title={t('auth.v2.reset.expiredTitle')} subtitle={t('auth.v2.errors.resetExpired')}>
+        <Button label={t('auth.v2.resetCode.newCode')} size="lg" block onPress={onRequestNewCode} />
+        <Button label={t('auth.resetPassword.successCta')} variant="text" block onPress={onPressSignIn} />
+      </AuthShell>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xl }]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>{t('auth.resetPassword.title')}</Text>
-
+    <AuthShell hero="compact" title={t('auth.resetPassword.title')} subtitle={t('auth.v2.reset.subtitle')}>
       <TextField
         label={t('auth.resetPassword.newPasswordLabel')}
         value={password}
-        onChangeText={setPassword}
-        error={errors.password}
+        onChangeText={(value) => {
+          setPassword(value);
+          if (errors.password) setErrors((current) => ({ ...current, password: undefined }));
+        }}
+        error={errors.password ? t(errors.password, { count: MIN_PASSWORD_LENGTH }) : null}
+        hint={t('auth.v2.passwordRule', { count: MIN_PASSWORD_LENGTH })}
         secure
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => confirmRef.current?.focus()}
+        autoFocus
       />
       <TextField
+        inputRef={confirmRef}
         label={t('auth.resetPassword.confirmPasswordLabel')}
         value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        error={errors.confirmPassword}
+        onChangeText={(value) => {
+          setConfirmPassword(value);
+          if (errors.confirmPassword) setErrors((current) => ({ ...current, confirmPassword: undefined }));
+        }}
+        error={errors.confirmPassword ? t(errors.confirmPassword) : null}
         secure
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="done"
+        onSubmitEditing={handleSubmit}
       />
-
-      {serverError ? <Text style={styles.serverError}>{serverError}</Text> : null}
-
-      <Button label={t('auth.resetPassword.submit')} onPress={handleSubmit} loading={isSubmitting} />
-    </ScrollView>
+      <FormMessage tone="error" message={serverError} />
+      <Button label={t('auth.resetPassword.submit')} size="lg" block onPress={handleSubmit} loading={isSubmitting} />
+      <Text style={styles.note}>{t('auth.v2.reset.signInAfter')}</Text>
+    </AuthShell>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    paddingHorizontal: spacing.xl,
-    gap: spacing.md,
-  },
-  title: {
-    ...typography.display,
-    color: colors.textPrimary,
-  },
-  serverError: {
-    ...typography.caption,
-    color: colors.danger,
-    textAlign: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.sm,
-  },
-  successRoot: {
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  successContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  successTitle: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    textAlign: 'center',
-  },
+  success: { alignItems: 'center', paddingVertical: spacing.sm },
+  note: { ...textStyles.small, color: colors.textMuted, textAlign: 'center' },
 });

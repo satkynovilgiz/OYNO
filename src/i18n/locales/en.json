@@ -83,6 +83,65 @@
       "descriptionSuffix": ".",
       "codeError": "Enter the 8-digit code.",
       "submit": "Verify"
+    },
+    "v2": {
+      "passwordRule": "At least 8 characters",
+      "signIn": {
+        "title": "Welcome back",
+        "subtitle": "Sync your progress, Journey and private Journal across devices.",
+        "newHere": "New to OYNO?",
+        "createAccount": "Create account",
+        "forgot": "Forgot password?"
+      },
+      "signUp": {
+        "title": "Create your account",
+        "subtitle": "Keep your progress, Passport and Journal safe on every device.",
+        "submit": "Create account"
+      },
+      "guest": {
+        "continue": "Continue without account",
+        "note": "Explore and play right away. You can sign in any time.",
+        "mergeNote": "What you have saved and explored on this phone will be connected to this account."
+      },
+      "forgot": {
+        "title": "Reset your password",
+        "subtitle": "Enter your account email and we'll send you an 8-digit code.",
+        "submit": "Send code"
+      },
+      "resetCode": {
+        "subtitle": "If an account exists for {{email}}, we sent it an 8-digit code.",
+        "newCode": "Get a new code"
+      },
+      "reset": {
+        "subtitle": "Choose a new password for your account.",
+        "successTitle": "Password changed",
+        "successBody": "Sign in with your new password.",
+        "expiredTitle": "This code has expired",
+        "signInAfter": "You'll sign in again with the new password."
+      },
+      "verify": {
+        "subtitle": "We sent an 8-digit code to {{email}}. Enter it to finish creating your account."
+      },
+      "errors": {
+        "emailRequired": "Enter your email.",
+        "emailInvalid": "This email address looks incomplete.",
+        "passwordRequired": "Enter your password.",
+        "passwordShort": "Use at least 8 characters.",
+        "passwordMismatch": "The passwords don't match.",
+        "nameRequired": "Enter your name.",
+        "invalidCredentials": "The email or password is incorrect.",
+        "wrongPassword": "That password is incorrect.",
+        "emailTaken": "An account with this email already exists. Try signing in.",
+        "samePassword": "Choose a password different from your current one.",
+        "notVerified": "Confirm your email first - check your inbox for the code.",
+        "invalidCode": "That code isn't right or has expired.",
+        "invalidResetCode": "That code isn't right or has expired. You can get a new one.",
+        "resetExpired": "For your security, reset codes only work for a short time. Get a new code to continue.",
+        "rateLimited": "Too many attempts. Please wait a minute and try again.",
+        "offline": "You're offline. Connect to the internet to sign in - you can keep exploring without an account.",
+        "sessionEnded": "Your session has ended. Please sign in again.",
+        "unknown": "Something went wrong. Please try again."
+      }
     }
   },
   "settings": {
@@ -127,7 +186,7 @@
       "deletePasswordError": "Please enter your password.",
       "deleteWrongPassword": "Incorrect password.",
       "deleteModalTitle": "Delete account",
-      "deleteModalMessage": "This action cannot be undone. All your progress (XP, collection, achievements) will be permanently deleted.",
+      "deleteModalMessage": "This cannot be undone. Your account and everything saved to it - progress, achievements, Passport, saved items and your private Journal - will be permanently deleted.",
       "deleteConfirm": "Delete",
       "deleteCancel": "Cancel",
       "deleteConfirmHint": "Enter your password to confirm.",
@@ -1536,6 +1595,23 @@
       "materials": "Materials",
       "trails": "Trails",
       "collections": "Collections"
+    },
+    "v2": {
+      "placeholder": "Search OYNO",
+      "fieldHint": "Finds places, culture, collections, trails and games",
+      "clearRecent": "Clear",
+      "searchFor": "Search for {{query}}",
+      "browseTitle": "Browse",
+      "categories": {
+        "places": "Places",
+        "culture": "Culture",
+        "games": "Games",
+        "trails": "Trails"
+      },
+      "resultCount": "Results: {{count}}",
+      "showAll": "Show all",
+      "showLess": "Show less",
+      "noResultsHint": "Try another spelling, or open a section:"
     }
   },
   "collections": {
@@ -1574,6 +1650,22 @@
       "culture_material": "Material",
       "culture_item": "Culture",
       "interactive_experience": "Culture"
+    },
+    "v2": {
+      "subtitle": "Places, stories and games to come back to.",
+      "sections": {
+        "places": "Places",
+        "culture": "Culture",
+        "games": "Games"
+      },
+      "downloads": "Downloads",
+      "continueTitle": "Continue exploring",
+      "continueHint": "Saved things you opened recently",
+      "emptyBody": "Save places, stories and experiences you want to return to - tap the heart.",
+      "explore": "Explore OYNO",
+      "removeA11y": "Remove from Saved: {{title}}",
+      "count": "{{count}} saved",
+      "offlineCount": "{{count}} available offline"
     }
   },
   "daily": {
@@ -2322,7 +2414,7 @@
   },
   "toast": {
     "saved": "Saved",
-    "removed": "Removed from saved",
+    "removed": "Removed from Saved",
     "downloaded": "Available offline",
     "journalSaved": "Journal entry saved"
   }
