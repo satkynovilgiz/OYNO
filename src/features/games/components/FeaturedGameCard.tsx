@@ -38,6 +38,8 @@ export function FeaturedGameCard({ game, experience, onPress }: { game: GameList
     >
       <GameArt source={gameArt(game, 'large')} title={title} style={StyleSheet.absoluteFill} ornamentSize={120} />
       <LinearGradient colors={['rgba(19,32,24,0.1)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.92)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+      {/* Text sits on the left: a soft side fade keeps it legible over bright skies. */}
+      <LinearGradient colors={['rgba(19,32,24,0.55)', 'rgba(19,32,24,0)']} locations={[0, 0.75]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
       <View style={styles.badge}>
         <OymoOrnament size={11} color={colors.accentGold} strokeWidth={1.75} />
         <Text style={styles.badgeText}>{t('games.featured.label')}</Text>

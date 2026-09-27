@@ -100,7 +100,9 @@ look soft on 3× screens. Replace when higher-resolution art exists.
 | --- | --- | --- |
 | `games/*/thumbnail.png` (akTerekKokTerek, arkanTartysh, beshTash, beshbarmak, cookingWorld, toguzKorgool, zholukTashtamay) | 228×146 | Games tiles, Home Play rail |
 | `games/{chuko,kyzKuumay,ordo,zhaaAtuu}/thumbnail.png` | 384×256 | Games tiles, Home Play rail |
-| `games/art/games_world_hero.jpg`, `zhaa_atuu_featured.jpg` | ~768×512 | Games hero / featured |
+| `games/WorldofGames/oyno_nomad_games_hero.jpg` | 1536×1024 | Games hero |
+| `games/art/zhaa_atuu_featured.jpg` | ~768×512 | Games featured |
+| `games/featured/kyz_kuumai_featured.jpg` | 1448×1086 | Kyz Kuumai featured / detail hero |
 | `explore/discovery_*.png` | 300×362 | Discoveries rows, Profile collection |
 | `culture/material_*.png` | 155-504 wide | Culture "new materials" rail |
 | `culture/cat_games.png` | 535×390 | Culture category grid (Games) |

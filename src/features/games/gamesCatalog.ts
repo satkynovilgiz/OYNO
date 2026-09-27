@@ -1,8 +1,8 @@
 import type { ImageSourcePropType } from 'react-native';
 
 import kokBoruArt from '@assets/img/games/kokBoru/thumbnail.jpg';
-import kyzKuumaiArt from '@assets/img/OYNO_design/culture/horse/kyz_kuumai.jpg';
-import gamesWorldHero from '@assets/img/games/art/games_world_hero.jpg';
+import kyzKuumaiArt from '@assets/img/games/featured/kyz_kuumai_featured.jpg';
+import gamesWorldHero from '@assets/img/games/WorldofGames/oyno_nomad_games_hero.jpg';
 import zhaaAtuuArt from '@assets/img/games/art/zhaa_atuu_featured.jpg';
 
 import type { GameStat } from '@/store/useProgressStore';
@@ -22,8 +22,8 @@ export const GAMES_HERO_ART: ImageSourcePropType = gamesWorldHero;
 
 /**
  * Large-format art for games whose card thumbnail is too small for a
- * full-width card. Only real OYNO assets: the Horse Culture photography
- * and the OYNO traditional-games artwork (archery set).
+ * full-width card. Only real OYNO assets: Kök-börü photography and the
+ * OYNO traditional-games artwork (Kyz kuumai chase, archery set).
  */
 const LARGE_ART: Record<string, ImageSourcePropType> = {
   'kok-boru': kokBoruArt,

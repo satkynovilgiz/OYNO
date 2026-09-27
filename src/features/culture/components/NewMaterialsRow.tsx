@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { CompactContentCard, TextButton } from '@/components/ui';
 import { colors, spacing, typography } from '@/theme';
@@ -13,8 +13,17 @@ type NewMaterialsRowProps = {
   onPressSeeAll?: () => void;
 };
 
+const GAP = spacing.sm;
+
+/** One width for every card: two full cards plus a clear ~30% of the next,
+ * so the row reads as scrollable without accidental slivers. */
+export function materialCardWidth(screenWidth: number): number {
+  return Math.round(Math.min(180, Math.max(140, (screenWidth - spacing.md - GAP * 2) / 2.3)));
+}
+
 export function NewMaterialsRow({ materials, onPressMaterial, onPressSeeAll }: NewMaterialsRowProps) {
   const { t } = useTranslation();
+  const cardWidth = materialCardWidth(useWindowDimensions().width);
 
   return (
     <View style={styles.section}>
@@ -33,11 +42,14 @@ export function NewMaterialsRow({ materials, onPressMaterial, onPressSeeAll }: N
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
+        snapToInterval={cardWidth + GAP}
+        decelerationRate="fast"
       >
         {materials.map((material) => (
           <CompactContentCard
             key={material.id}
             imageSource={material.imageSource}
+            width={cardWidth}
             title={material.title}
             meta={`${t(`culture.materials.types.${material.type}`)} · ${t('culture.materials.duration', { count: material.durationMinutes })}`}
             onPress={() => onPressMaterial?.(material)}
@@ -64,6 +76,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: spacing.md,
-    gap: spacing.sm,
+    gap: GAP,
+    alignItems: 'flex-start',
   },
 });
