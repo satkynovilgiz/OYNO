@@ -103,8 +103,9 @@ look soft on 3× screens. Replace when higher-resolution art exists.
 | `games/WorldofGames/oyno_nomad_games_hero.jpg` | 1536×1024 | Games hero |
 | `games/art/zhaa_atuu_featured.jpg` | ~768×512 | Games featured |
 | `games/featured/kyz_kuumai_featured.jpg` | 1448×1086 | Kyz Kuumai featured / detail hero |
+| `oyno_kyrgyzstan_3d_map_full.jpg` | 1448×1086 | Explore map preview + `/explore/map` (one illustrated atlas; pins from `illustratedMap.ts`) |
 | `explore/discovery_*.png` | 300×362 | Discoveries rows, Profile collection |
-| `culture/material_*.png` | 155-504 wide | Culture "new materials" rail |
+| `culture/material_*.png` | 1448×1086 | Culture "new materials" rail (4:3 cover frame) |
 | `culture/cat_games.png` | 535×390 | Culture category grid (Games) |
 | `culture/oymo/*.jpg` | 114-306 wide | Oymo motif items - HomeArtwork/MediaImage swap in the category photo when used full-bleed |
 

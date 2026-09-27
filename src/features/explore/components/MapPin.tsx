@@ -12,6 +12,12 @@ type MapPinProps = {
   color: string;
   variant?: MapPinVariant;
   onPress?: () => void;
+  /** Smaller marker for the compact preview map. */
+  compact?: boolean;
+  /** Draw the name under the pin. Off where the map art already paints the
+   * place name, so two labels never stack; the name is always the pin's
+   * accessibility label. */
+  showLabel?: boolean;
 };
 
 // Classic teardrop marker path in a 24x32 viewBox: a circular head (y 0-24)
@@ -19,12 +25,12 @@ type MapPinProps = {
 const PIN_PATH =
   'M12 0C5.373 0 0 5.373 0 12c0 9 12 20 12 20s12-11 12-20c0-6.627-5.373-12-12-12z';
 
-/** A single teardrop marker on KyrgyzstanMap, anchored so its tip points at
- * the target coordinate and its label sits below. "landmark" pins render
+/** A single teardrop marker for the map. Its bottom edge is the pin's tip,
+ * so the caller anchors that edge on the place; the label sits below. "landmark" pins render
  * larger with a building glyph (Бишкек, Ош); others show a plain dot. */
-export function MapPin({ label, color, variant = 'default', onPress }: MapPinProps) {
+export function MapPin({ label, color, variant = 'default', onPress, compact = false, showLabel = true }: MapPinProps) {
   const isLandmark = variant === 'landmark';
-  const width = isLandmark ? 38 : 30;
+  const width = compact ? (isLandmark ? 24 : 20) : isLandmark ? 38 : 30;
   const height = (width * 32) / 24;
 
   return (
@@ -32,9 +38,11 @@ export function MapPin({ label, color, variant = 'default', onPress }: MapPinPro
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
+      // Small markers still get a comfortable touch area.
+      hitSlop={compact ? 12 : 6}
       style={styles.wrap}
     >
-      <View style={{ width, height, marginTop: -height }}>
+      <View style={{ width, height }}>
         <Svg width={width} height={height} viewBox="0 0 24 32">
           <Path d={PIN_PATH} fill={color} stroke={colors.surface} strokeWidth={1} />
           {isLandmark ? null : <Circle cx={12} cy={12} r={4} fill={colors.surface} />}
@@ -45,9 +53,11 @@ export function MapPin({ label, color, variant = 'default', onPress }: MapPinPro
           </View>
         ) : null}
       </View>
-      <Text style={styles.label} numberOfLines={1}>
-        {label}
-      </Text>
+      {showLabel ? (
+        <Text style={styles.label} numberOfLines={1}>
+          {label}
+        </Text>
+      ) : null}
     </AnimatedPressable>
   );
 }

@@ -2,15 +2,14 @@ import { router } from 'expo-router';
 import { Check, ChevronLeft, Minus, Plus, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AccessibilityInfo, findNodeHandle, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { AccessibilityInfo, findNodeHandle, Image, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, G, Path, Pattern } from 'react-native-svg';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, Button, IconButton, MediaImage, PhotoBadge, Skeleton } from '@/components/ui';
-import { LOCATION_TONES, natureSiteCoordinates, natureSiteImages } from '@/features/explore/data';
+import { LOCATION_TONES, natureSiteImages } from '@/features/explore/data';
 import { buildPassport, type PassportStamp } from '@/features/journey/passport';
 import type { SupportedLanguage } from '@/i18n';
 import type { AgeExperience } from '@/services/ageExperience/types';
@@ -21,27 +20,35 @@ import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, elevation, fontFamily, motion, radii, spacing, textStyles, typography } from '@/theme';
 
-import { KYRGYZSTAN_PATH, MAP_VIEWBOX_HEIGHT, MAP_VIEWBOX_WIDTH, projectLonLat } from './kyrgyzstanGeometry';
+import { ILLUSTRATED_MAP_ASPECT, ILLUSTRATED_MAP_COORDINATES, ILLUSTRATED_MAP_IMAGE, panLimits } from './illustratedMap';
 import { pinNudge, spreadPins, type PinSpread } from './pinSpread';
 
 const MIN_SCALE = 1;
-const MAX_SCALE = 4;
+/** The atlas is 1448 px wide and fills ~1.25x the frame width at rest, so
+ * 3x keeps it close to one source pixel per screen point - sharper than
+ * letting it blur at 4x. */
+const MAX_SCALE = 3;
 const DOUBLE_TAP_SCALE = 2.4;
 const FRAME_GUTTER = spacing.md;
 const FRAME_BORDER = 1;
 const LABEL_WIDTH = 116;
 /** Room kept under the map table for the hint line + places strip. */
 const HINT_SPACE = 28 + 64;
+/** At most this much of the atlas's width is cropped off at rest (it
+ * covers a taller map table) - the whole of Kyrgyzstan's core, Issyk-Kul
+ * included, stays in view; the far edges are a pan away. */
+const MAX_REST_COVER = 1.25;
 const ZOOM_STEP = 1.6;
 
-/** Which side of its pin each name sits on - the three sites around the
- * Chuy/Naryn highlands are close together, so their labels fan out instead
- * of stacking on top of each other. Presentation only. */
+/** Which side of its pin each name sits on - chosen so close sites fan
+ * out and no name lands on a city name painted on the atlas (Bishkek,
+ * Jalal-Abad, Naryn). Presentation only. */
 const LABEL_SIDE: Record<string, 'top' | 'bottom' | 'left' | 'right'> = {
   'ala-too': 'right',
-  suusamyr: 'top',
-  'son-kol': 'bottom',
+  suusamyr: 'bottom',
+  'son-kol': 'right',
   'sary-chelek': 'left',
+  arslanbob: 'left',
 };
 
 /** Pin visual size and touch target per age - bigger, easier for children. */
@@ -56,6 +63,7 @@ const PIN: Record<AgeExperience, { size: number; hit: number; label: number; alw
   adult: { size: 20, hit: 44, label: 11, alwaysLabel: true },
 };
 
+/** `x`/`y`: position on the illustrated atlas, 0..1 of its width/height. */
 type MapPlace = PassportStamp & { tagline: string; x: number; y: number };
 
 function clamp(value: number, min: number, max: number) {
@@ -64,9 +72,11 @@ function clamp(value: number, min: number, max: number) {
 }
 
 /**
- * Interactive Kyrgyzstan map (/explore/map) - an offline SVG outline of
- * the country (Natural Earth, see kyrgyzstanGeometry.ts) with the six
- * existing nature destinations pinned at their real positions. Everything
+ * Interactive Kyrgyzstan map (/explore/map) - the OYNO illustrated atlas
+ * (illustratedMap.ts, the same art as the Explore preview) with the six
+ * existing nature destinations pinned where they appear on it. The art is
+ * an illustration, not exact geography: pins are placed on the painting,
+ * real lat/lon stays in natureSiteCoordinates. Everything
  * shown about a place comes from what the app already has: names and
  * taglines from `explore_regions`, photos from `natureSiteImages`, and the
  * visited state from `buildPassport` - the same function (and the same
@@ -105,15 +115,14 @@ export function InteractiveMapScreen({
   const places = useMemo<MapPlace[]>(
     () =>
       passport.stamps.flatMap((stamp) => {
-        const coords = natureSiteCoordinates[stamp.id];
-        if (!coords) return [];
-        const { x, y } = projectLonLat(coords.lon, coords.lat);
+        const position = ILLUSTRATED_MAP_COORDINATES[stamp.id];
+        if (!position) return [];
         return [
           {
             ...stamp,
             tagline: regions?.find((row) => row.id === stamp.id)?.tagline ?? '',
-            x,
-            y,
+            x: position.xPercent / 100,
+            y: position.yPercent / 100,
           },
         ];
       }),
@@ -123,25 +132,28 @@ export function InteractiveMapScreen({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = places.find((place) => place.id === selectedId) ?? null;
 
-  // Frame + map geometry (map is fitted to the frame width).
+  // Frame + map geometry. The map table is as tall as the space allows,
+  // from the atlas's own full-width height up to MAX_REST_COVER of it; the
+  // atlas then covers the table (never letterboxed), centred.
   const [frameWidth, setFrameWidth] = useState(0);
   const [availableHeight, setAvailableHeight] = useState(0);
   const reducedMotion = useReducedMotion();
-  const mapHeight = frameWidth * (MAP_VIEWBOX_HEIGHT / MAP_VIEWBOX_WIDTH);
-  // The map table takes the screen: as tall as the space allows (up to
-  // ~1.9x the country's own height, so zoomed pans have room), never less
-  // than the original 1.3x.
-  const frameHeight = Math.round(Math.max(mapHeight * 1.3, Math.min(availableHeight - HINT_SPACE, mapHeight * 1.9)));
+  const fitHeight = frameWidth / ILLUSTRATED_MAP_ASPECT;
+  const frameHeight = Math.round(Math.max(fitHeight, Math.min(availableHeight - HINT_SPACE, fitHeight * MAX_REST_COVER)));
+  const mapHeight = frameHeight;
+  const mapWidth = frameHeight * ILLUSTRATED_MAP_ASPECT;
+  /** How far the atlas's left edge sits outside the table at rest. */
+  const restOverhang = (mapWidth - frameWidth) / 2;
 
   // Close pins (Ala-Too / Suusamyr / Son-Köl) are nudged apart so their
   // touch targets never overlap at phone width; the nudge fades on zoom.
   const pinSpreads = useMemo(
     () =>
       spreadPins(
-        places.map((place) => ({ x: (place.x / MAP_VIEWBOX_WIDTH) * frameWidth, y: (place.y / MAP_VIEWBOX_HEIGHT) * mapHeight })),
+        places.map((place) => ({ x: place.x * mapWidth, y: place.y * mapHeight })),
         pin.hit,
       ),
-    [places, frameWidth, mapHeight, pin.hit],
+    [places, mapWidth, mapHeight, pin.hit],
   );
 
   const scale = useSharedValue(1);
@@ -150,22 +162,21 @@ export function InteractiveMapScreen({
   const ty = useSharedValue(0);
   const savedTx = useSharedValue(0);
   const savedTy = useSharedValue(0);
-  const bounds = useSharedValue({ w: 0, h: 0, frameH: 0 });
+  const bounds = useSharedValue({ w: 0, h: 0, frameW: 0, frameH: 0 });
 
   useEffect(() => {
-    bounds.value = { w: frameWidth, h: mapHeight, frameH: frameHeight };
-  }, [frameWidth, mapHeight, frameHeight, bounds]);
+    bounds.value = { w: mapWidth, h: mapHeight, frameW: frameWidth, frameH: frameHeight };
+  }, [mapWidth, mapHeight, frameWidth, frameHeight, bounds]);
 
-  // Pan limits: the zoomed map may move only as far as it overflows the
-  // frame, so the country can never be dragged away.
+  // Pan limits: the map may move only as far as it overflows the frame, so
+  // the atlas can never be dragged away and no blank edge ever shows.
   const pinch = Gesture.Pinch()
     .onUpdate((event) => {
       scale.value = clamp(savedScale.value * event.scale, MIN_SCALE, MAX_SCALE);
     })
     .onEnd(() => {
       savedScale.value = scale.value;
-      const maxX = (bounds.value.w * (scale.value - 1)) / 2;
-      const maxY = Math.max(0, (bounds.value.h * scale.value - bounds.value.frameH) / 2);
+      const { maxX, maxY } = panLimits(bounds.value.w, bounds.value.h, bounds.value.frameW, bounds.value.frameH, scale.value);
       tx.value = withTiming(clamp(tx.value, -maxX, maxX));
       ty.value = withTiming(clamp(ty.value, -maxY, maxY));
       savedTx.value = clamp(tx.value, -maxX, maxX);
@@ -176,8 +187,7 @@ export function InteractiveMapScreen({
     .minDistance(6)
     .averageTouches(true)
     .onUpdate((event) => {
-      const maxX = (bounds.value.w * (scale.value - 1)) / 2;
-      const maxY = Math.max(0, (bounds.value.h * scale.value - bounds.value.frameH) / 2);
+      const { maxX, maxY } = panLimits(bounds.value.w, bounds.value.h, bounds.value.frameW, bounds.value.frameH, scale.value);
       tx.value = clamp(savedTx.value + event.translationX, -maxX, maxX);
       ty.value = clamp(savedTy.value + event.translationY, -maxY, maxY);
     })
@@ -208,8 +218,7 @@ export function InteractiveMapScreen({
     const duration = reducedMotion ? 0 : motion.duration.base;
     scale.value = withTiming(next, { duration });
     savedScale.value = next;
-    const maxX = (bounds.value.w * (next - 1)) / 2;
-    const maxY = Math.max(0, (bounds.value.h * next - bounds.value.frameH) / 2);
+    const { maxX, maxY } = panLimits(bounds.value.w, bounds.value.h, bounds.value.frameW, bounds.value.frameH, next);
     const nextTx = clamp(tx.value, -maxX, maxX);
     const nextTy = clamp(ty.value, -maxY, maxY);
     tx.value = withTiming(nextTx, { duration });
@@ -292,34 +301,22 @@ export function InteractiveMapScreen({
         {frameWidth > 0 && !isLoading ? (
           <GestureDetector gesture={gesture}>
             <View style={[styles.frame, { height: frameHeight }]} accessibilityHint={t('explore.map.gestureHint')}>
-              <Animated.View style={[{ width: frameWidth, height: mapHeight }, mapStyle]}>
-                <Svg width={frameWidth} height={mapHeight} viewBox={`0 0 ${MAP_VIEWBOX_WIDTH} ${MAP_VIEWBOX_HEIGHT}`}>
-                  <Defs>
-                    {/* Faint ridge chevrons - a quiet mountain texture. */}
-                    <Pattern id="ridges" patternUnits="userSpaceOnUse" width={34} height={22}>
-                      <Path d="M3 17 L10 9 L17 17 M18 8 L24 2 L30 8" stroke="rgba(47,82,51,0.13)" strokeWidth={1.4} fill="none" />
-                    </Pattern>
-                  </Defs>
-                  <G>
-                    <Path d={KYRGYZSTAN_PATH} fill={colors.surface} fillRule="evenodd" />
-                    <Path d={KYRGYZSTAN_PATH} fill="url(#ridges)" fillRule="evenodd" />
-                    <Path d={KYRGYZSTAN_PATH} fill="none" stroke={colors.primary} strokeWidth={3.2} strokeLinejoin="round" />
-                    <Path d={KYRGYZSTAN_PATH} fill="none" stroke={colors.accentGold} strokeWidth={0.9} strokeLinejoin="round" opacity={0.9} />
-                  </G>
-                </Svg>
+              {/* Art and pins are one transformed surface - they move together. */}
+              <Animated.View style={[{ width: mapWidth, height: mapHeight }, mapStyle]}>
+                <Image source={ILLUSTRATED_MAP_IMAGE} style={{ width: mapWidth, height: mapHeight }} resizeMode="cover" accessibilityIgnoresInvertColors />
 
                 {places.map((place, index) => (
                   <MapPin
                     key={place.id}
                     place={place}
-                    left={(place.x / MAP_VIEWBOX_WIDTH) * frameWidth}
-                    top={(place.y / MAP_VIEWBOX_HEIGHT) * mapHeight}
+                    left={place.x * mapWidth}
+                    top={place.y * mapHeight}
                     scale={scale}
                     spread={pinSpreads[index]}
                     size={pin.size}
                     hit={pin.hit}
                     labelSize={pin.label}
-                    labelSide={labelSideFor(place, (place.x / MAP_VIEWBOX_WIDTH) * frameWidth, pin.alwaysLabel, pin.label)}
+                    labelSide={labelSideFor(place, place.x * mapWidth - restOverhang, pin.alwaysLabel, pin.label)}
                     showLabel={pin.alwaysLabel || place.id === selectedId}
                     editorial={isAdult}
                     selected={place.id === selectedId}
@@ -466,7 +463,7 @@ function MapPin({ place, left, top, scale, spread, size, hit, labelSize, labelSi
         </View>
       </AnimatedPressable>
       {showLabel ? (
-        <View style={[styles.pinLabelBox, labelPosition(labelSide, hit, size)]} pointerEvents="none">
+        <View style={[styles.pinLabelBox, labelPosition(labelSide, hit, size), { alignItems: labelSide === 'left' ? 'flex-end' : labelSide === 'right' ? 'flex-start' : 'center' }]} pointerEvents="none">
           <Text
             style={[
               styles.pinLabel,
@@ -643,11 +640,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: FRAME_GUTTER,
     gap: spacing.xs,
   },
-  // Clipped "map table": the zoomed country never paints outside it.
+  // Clipped "map table": the zoomed atlas never paints outside it. The
+  // background is the stable ground while the art loads (or if it fails).
   frame: {
     width: '100%',
     overflow: 'hidden',
     justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: radii.xl,
     backgroundColor: colors.surfaceAlt,
     borderWidth: FRAME_BORDER,
@@ -673,8 +672,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
   },
+  // Dimmed, never hidden - still findable over the busy atlas art.
   pinDimmed: {
-    opacity: 0.3,
+    opacity: 0.5,
   },
   trailChip: {
     ...typography.small,
@@ -709,11 +709,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: LABEL_WIDTH,
   },
+  // A small light pill: app labels read clearly over the busy atlas art
+  // and never look like (or merge with) the names painted into it.
   pinLabel: {
     ...typography.small,
     color: colors.primary,
-    textShadowColor: 'rgba(251,243,227,0.9)',
-    textShadowRadius: 3,
+    overflow: 'hidden',
+    paddingHorizontal: 5,
+    borderRadius: radii.sm,
+    backgroundColor: 'rgba(251,243,227,0.9)',
   },
   pinLabelEditorial: {
     fontFamily: fontFamily.wordmark,

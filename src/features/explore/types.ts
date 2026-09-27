@@ -37,8 +37,6 @@ export type MapPinVariant = 'default' | 'landmark';
  * survives the pinch-zoom/pan transform without extra layout math. */
 export type ExploreMapPin = {
   locationId: string;
-  xPercent: number;
-  yPercent: number;
   color: string;
   variant: MapPinVariant;
 };

@@ -40,6 +40,7 @@ import {
   RecentPlacesRow,
 } from './components';
 import { discoveryImages, exploreMapPins, natureSiteImages } from './data';
+import { ILLUSTRATED_MAP_COORDINATES } from './map/illustratedMap';
 import { getExploreSectionOrder, pickFeaturedDestination, type ExploreSectionId } from './exploreSections';
 import type { ExploreDiscovery } from './types';
 
@@ -92,23 +93,24 @@ export function ExploreScreen() {
     .filter((region) => region.kind === 'region' && filteredRegionIds.has(region.id))
     .map((region) => {
       const pin = exploreMapPins.find((p) => p.locationId === region.id);
-      return pin
+      const position = ILLUSTRATED_MAP_COORDINATES[region.id];
+      return pin && position
         ? {
             id: region.id,
             label: mapExploreRegionName(region)[language] ?? region.name_kg,
-            xPercent: pin.xPercent,
-            yPercent: pin.yPercent,
+            ...position,
+            color: pin.color,
+            variant: pin.variant,
             state: completions[region.id]?.state,
           }
         : null;
     })
     .filter((pin): pin is NonNullable<typeof pin> => pin !== null);
 
-  // The map's pins are baked into map_terrain.jpg itself (see
-  // KyrgyzstanMap's own comment) - filtering mapPins only removes invisible
-  // tap targets/state badges, it can never visually hide a baked pin. This
-  // list is the actual visible effect of a filter, shown only while a
-  // filter is active so it doesn't duplicate the unfiltered home screen.
+  // Filtering removes a region's pin from the map; the painted city names
+  // on the atlas art itself stay. This list is the clear effect of a
+  // filter, shown only while one is active so it doesn't duplicate the
+  // unfiltered home screen.
   const filteredRegionsList =
     activeFilters.length > 0
       ? (regions ?? [])
