@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Compass, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +23,7 @@ import { useShareCard } from '@/services/share/useShareCard';
 import { cardRadii, colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
 import { buildPlaceShareCard } from './placeShareCard';
+import { getRegionExperience, regionHubRoute } from './regions/regionExperiences';
 import { DiscoveriesRow, formatVisitDate } from './components';
 import { LOCATION_TONES } from './data';
 import type { ExploreDiscovery, ExploreLocation } from './types';
@@ -205,6 +207,15 @@ export function LocationDetailScreen({
           {/* 2. Short introduction (the region's real tagline). */}
           <Text style={[styles.intro, isAdult && styles.introEditorial]}>{location.tagline}</Text>
 
+          {/* This place has a Region Hub - one quiet way in. */}
+          {getRegionExperience(location.id) ? (
+            <AnimatedPressable style={styles.regionLink} onPress={() => router.push(regionHubRoute(location.id) as never)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('regionHub.openRegion', { name: locationName })}>
+              <Compass size={16} color={colors.primary} strokeWidth={2.25} />
+              <Text style={styles.regionLinkText}>{t('regionHub.openRegion', { name: locationName })}</Text>
+              <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
+            </AnimatedPressable>
+          ) : null}
+
           {/* 3. The story: real sourced facts, read as paragraphs, with the
               compact audio guide right above them. Narration is read in the
               facts' real language and never mixes languages (the tagline is
@@ -319,6 +330,8 @@ export function LocationDetailScreen({
 }
 
 const styles = StyleSheet.create({
+  regionLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: spacing.xs, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: 999, backgroundColor: colors.surfaceElevated },
+  regionLinkText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },
   root: {
     flex: 1,
     backgroundColor: colors.background,

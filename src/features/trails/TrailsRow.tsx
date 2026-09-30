@@ -30,7 +30,8 @@ function trailCta(progress: TrailProgress, t: (key: string) => string): string |
  * title, real stop count, real tracked progress and Start / Continue.
  * No durations (none exist in the data).
  */
-export function TrailsRow({ experience = 'teen' }: { experience?: AgeExperience }) {
+/** `trailIds` limits the row to those trails (e.g. a Region Hub's). */
+export function TrailsRow({ experience = 'teen', trailIds }: { experience?: AgeExperience; trailIds?: readonly string[] }) {
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
   const signals = useTrailSignals();
@@ -40,7 +41,7 @@ export function TrailsRow({ experience = 'teen' }: { experience?: AgeExperience 
     <View style={styles.section}>
       <SectionHeader title={t('trails.sectionTitle')} editorialTitle={experience === 'adult'} />
       <Rail itemWidth={width} snap>
-        {trails.map((trail) => {
+        {trails.filter((trail) => !trailIds || trailIds.includes(trail.id)).map((trail) => {
           const progress = computeTrailProgress(trail, signals);
           const title = trail.title[language] ?? trail.title.kg;
           const done = progress.status === 'completed';

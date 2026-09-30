@@ -2640,6 +2640,38 @@
         "saved": "This is where your own collection of favourite finds will live.",
         "journal": "Your journal is waiting for its first memory. What did you discover today?",
         "quests": "Pick a quest and I'll guide you step by step."
+      },
+      "region": {
+        "intro": "Let's discover this region together - start here."
+      }
+    }
+  },
+  "regionHub": {
+    "kicker": "Region",
+    "progress": "{{completed}} / {{total}} explored",
+    "progressLabel": "Region progress",
+    "startHere": "Start here",
+    "start": {
+      "destination": "Visit {{name}}",
+      "discovery": "Find “{{name}}”",
+      "trail": "Continue the trail “{{name}}”",
+      "quest": "Continue the quest “{{name}}”",
+      "done": "New places will appear here as OYNO grows.",
+      "doneTitle": "Everything here is explored"
+    },
+    "sections": {
+      "places": "Places",
+      "discoveries": "Discoveries",
+      "culture": "Culture",
+      "quests": "Quests"
+    },
+    "showOnMap": "Show on map",
+    "shareLabel": "Share {{name}}",
+    "shareMessage": "{{name}} on OYNO",
+    "openRegion": "Explore the {{name}} region",
+    "regions": {
+      "ysyk-kol": {
+        "intro": "A lake region in the northeast of Kyrgyzstan, between the Küngöy and Terskey Ala-Too ranges."
       }
     }
   }
