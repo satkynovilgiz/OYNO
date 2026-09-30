@@ -101,6 +101,6 @@ Verified so far: TypeScript, Jest, and web (Chrome) only. Not yet on an iPhone o
 | Audio | Speed 1x / 1.25x / 1.5x with device TTS | Rate mapping differs per platform |
 | Admin | Sign in as a content_editor: search/filter, edit a culture item, save translations RU/EN, review note, preview, unsaved-changes prompt on swipe-back / Android back | Needs an admin account; not testable as guest |
 | Admin | Long textareas with the keyboard open; Save bar stays reachable | Keyboard behaviour |
-| Feedback | Send a content report online and offline (queued, sends on reconnect). Before migration 20260929000001 it must still arrive via the legacy function with the context in the message; after it, in the structured columns | Real submission was deliberately not sent from web QA |
+| Feedback | Send a content report online and offline (queued, sends on reconnect); it should arrive in the structured columns (migration 20260929000001 is live) and show in /admin/feedback for an admin account | Real submission was deliberately not sent from web QA |
 | Feedback | Account A queues a report offline → signs out → B signs in → reconnect: report arrives unlinked | Real accounts (logic covered by `feedback.test.ts`) |
 | Feedback | Attach one screenshot, remove it; screen capture disabled on Journal/account screens | Native capture module |

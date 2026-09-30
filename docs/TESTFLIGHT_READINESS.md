@@ -34,10 +34,10 @@ Re-checked 2026-09-26 and again 2026-09-29: `ios.appleTeamId` still absent;
 still empty; Supabase auth settings still Google on / Apple off;
 `ios.supportsTablet` still `true` (iPad decision open, `DEVICE_QA.md` RC-6).
 
-6. **Pending migration** — `20260929000001_feedback_v2.sql` is not applied
-   (checked 2026-09-29). The app still works without it (reports fall back
-   to the original function with the context kept in the message; the admin
-   feedback inbox shows a "needs migration" line). Apply before testers.
+~~6. Pending migration `20260929000001_feedback_v2.sql`~~ — **applied**
+   (re-checked later on 2026-09-29: `submit_beta_feedback_v2` answers its own
+   `INVALID_INPUT` validation; `admin_get_beta_feedback` refuses the anon key
+   with `permission denied`, as designed). No migration is pending.
 
 Once 1–3 are done, the repo is **ready for a preview build**. It is not
 TestFlight-ready until a production build is generated and the device
@@ -166,7 +166,7 @@ Newest seven (checked 2026-09-29):
 | `20260927000002_content_translations_batch1.sql` | 20 translated items / 6 destinations | **yes** (276 reviewed rows) | Kyrgyz fallback |
 | `20260927000003_content_verification.sql` | destination sources, "verified needs a source" | **yes** (sources returned) | destinations show no sources |
 | `20260927000004_guided_quests.sql` | quest reward claim | **yes** (`claim_guided_quest` answers `NOT_AUTHENTICATED` to the anon key) | progress shows; reward reports "will sync later" |
-| `20260929000001_feedback_v2.sql` | feedback categories/context, admin inbox | **NO** (`PGRST202` function not found) | reports send via `submit_beta_feedback` with legacy category + context in the message; admin inbox shows "needs migration" |
+| `20260929000001_feedback_v2.sql` | feedback categories/context, admin inbox | **yes** (applied later on 2026-09-29; first check that day returned `PGRST202`) | reports would send via `submit_beta_feedback` with legacy category + context in the message; admin inbox would show "needs migration" |
 
 Earlier (confirmed 2026-09-23/24):
 
@@ -214,6 +214,7 @@ Fixed in this pass (details in `DEVICE_QA.md` issue log):
 | `npx jest --silent --ci` | **99 suites / 894 tests pass** |
 | `npx expo-doctor` | **20/21** — one failure: patch drift within SDK 57 (`expo` 57.0.25→~57.0.26, `expo-constants` 57.0.19→~57.0.20, `expo-router` 57.0.23→~57.0.24, `expo-updates` 57.0.23→~57.0.24). Not changed in this pass (`expo-updates` is native); run `npx expo install --fix` right before the next preview build |
 | Web route crawl (RU 375) | 21 routes incl. bad ids and admin deep links as a guest: no page errors, no raw server text, no horizontal overflow |
+| CI | GitHub Actions green on `598a594` (and `2008def`, `e705e9b`) |
 | PHYSICAL DEVICE | **Nothing new verified** — still no iOS build |
 
 ## 8. Assets
@@ -239,7 +240,7 @@ touching native modules or config needs a new build.
 - [ ] App Group created
 - [x] App + Widget App Group entitlements match *(verified in generated project)*
 - [ ] EAS credentials valid
-- [ ] Supabase migrations applied *(41 of 42: everything through `20260927000004` verified live on 2026-09-29; `20260929000001_feedback_v2` NOT applied; the oldest are assumed — confirm in the dashboard)*
+- [x] Supabase migrations applied *(the newest 13 verified live by read-only checks, through `20260929000001_feedback_v2` on 2026-09-29; the oldest are assumed — confirm in the dashboard's migration history)*
 - [x] Environment values configured *(Supabase in all three EAS environments; Sentry optional, off)*
 - [ ] Real app icon added
 - [ ] Notifications tested

@@ -12,7 +12,7 @@ Device: `__________` · Tester: `______` · Date: `______`
 ## Current state (2026-09-26, re-checked 2026-09-29)
 
 - **Physical iPhone verified:** none — no iOS build has been produced yet.
-- **Release blockers:** real OYNO app icon (template still in `assets/icon.png`), `ios.appleTeamId`, Apple portal setup (App IDs, App Group, Push), first iOS preview build, migration `20260929000001_feedback_v2.sql` (not applied as of 2026-09-29).
+- **Release blockers:** real OYNO app icon (template still in `assets/icon.png`), `ios.appleTeamId`, Apple portal setup (App IDs, App Group, Push), first iOS preview build. (All 42 migrations now applied — `20260929000001_feedback_v2.sql` confirmed live on 2026-09-29.)
 - **Before App Review:** Sign in with Apple vs. Google (Guideline 4.8); `supportsTablet` decision.
 - Full matrix and issue log: [`DEVICE_QA.md`](./DEVICE_QA.md). Readiness verdict: [`TESTFLIGHT_READINESS.md`](./TESTFLIGHT_READINESS.md).
 
@@ -22,7 +22,7 @@ Device: `__________` · Tester: `______` · Date: `______`
 - [ ] App Group `group.com.ilgizsatkynov.oyno.widgets` registered in the Apple Developer portal and enabled for **both** `com.ilgizsatkynov.oyno` and `com.ilgizsatkynov.oyno.widget`
 - [ ] EAS credentials generated for both bundle ids (`eas credentials`)
 - [ ] `npx expo install --fix` run — was 21/21 on 2026-09-24; **20/21 on 2026-09-29** (SDK 57 patch drift: expo, expo-constants, expo-router, expo-updates). Re-run right before the build
-- [ ] `supabase/migrations/20260929000001_feedback_v2.sql` applied (all 41 earlier ones verified or assumed live — see `TESTFLIGHT_READINESS.md` §6)
+- [x] `supabase/migrations/20260929000001_feedback_v2.sql` applied (confirmed live 2026-09-29; see `TESTFLIGHT_READINESS.md` §6)
 - [ ] Fresh native build made (`eas build -p ios --profile preview`); the preview channel's older binaries lack view-shot, sharing, media-library, speech and the widget extension
 
 ## Real iPhone verification
