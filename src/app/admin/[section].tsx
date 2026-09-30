@@ -10,17 +10,16 @@ export default function AdminSectionRoute() {
   const { section: sectionId } = useLocalSearchParams<{ section: string }>();
   const section = getAdminSection(sectionId ?? '');
 
-  if (!section) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.message}>Unknown admin section.</Text>
-      </View>
-    );
-  }
-
+  // The gate runs first, so a non-admin never learns which sections exist.
   return (
     <AdminGate>
-      <AdminSectionScreen section={section} onPressBack={() => router.back()} />
+      {section ? (
+        <AdminSectionScreen section={section} onPressBack={() => router.back()} />
+      ) : (
+        <View style={styles.center}>
+          <Text style={styles.message}>Unknown admin section.</Text>
+        </View>
+      )}
     </AdminGate>
   );
 }

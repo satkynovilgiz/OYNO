@@ -6,6 +6,8 @@ import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
+import { useTabBarLayout } from './tabBarLayout';
+
 export type TabId = 'home' | 'games' | 'explore' | 'culture' | 'profile';
 
 type TabItem = {
@@ -31,7 +33,7 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
   const { t } = useTranslation();
 
   return (
-    <View style={styles.bar} accessibilityRole="tablist">
+    <View style={styles.bar} accessibilityRole="tablist" onLayout={(event) => useTabBarLayout.getState().setHeight(event.nativeEvent.layout.height)}>
       {TABS.map((tab) => {
         const isActive = tab.id === activeTab;
         const color = isActive ? colors.primary : colors.textMuted;

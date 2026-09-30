@@ -16,6 +16,7 @@ import { registerForPushNotifications } from '@/services/notifications/pushRegis
 import { bindUserScopedCache } from '@/services/auth/userScopedCache';
 import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
+import { AudioMiniPlayer } from '@/components/audio/AudioMiniPlayer';
 import { ErrorBoundary } from '@/components/system/ErrorBoundary';
 import { OfflineBanner } from '@/components/system/OfflineBanner';
 import { ReminderSync } from '@/components/system/ReminderSync';
@@ -268,6 +269,9 @@ export default function RootLayout() {
               achievement={lastUnlockedAchievementId ? (getAchievement(lastUnlockedAchievementId) ?? null) : null}
               onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
             />
+            <SilentErrorBoundary name="audio-mini-player">
+              <AudioMiniPlayer />
+            </SilentErrorBoundary>
             <OfflineBanner />
             <ToastHost />
             <SilentErrorBoundary name="activity">

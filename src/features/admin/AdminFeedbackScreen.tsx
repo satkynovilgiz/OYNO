@@ -1,0 +1,130 @@
+import { useQuery } from '@tanstack/react-query';
+import { ChevronLeft } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { AnimatedPressable, IconButton } from '@/components/ui';
+import { fetchViaRpc } from '@/services/admin/adminService';
+import { colors, radii, spacing, typography } from '@/theme';
+
+/** A report as admin_get_beta_feedback returns it - what the reporter sent,
+ * without account identifiers (no user id; contact email only as a flag). */
+export type AdminFeedbackRow = {
+  id: string;
+  created_at: string;
+  category: string;
+  message: string;
+  content_type: string | null;
+  content_id: string | null;
+  content_language: string | null;
+  suggested_correction: string | null;
+  source_url: string | null;
+  diagnostics: { appVersion?: string | null; platform?: string; osVersion?: string; language?: string; route?: string | null } | null;
+  has_screenshot: boolean;
+  has_contact_email: boolean;
+};
+
+const FILTERS: { id: string | null; label: string }[] = [
+  { id: null, label: 'All' },
+  { id: 'bug', label: 'Bug' },
+  { id: 'translation', label: 'Translation' },
+  { id: 'culture_correction', label: 'Culture correction' },
+  { id: 'image', label: 'Image' },
+  { id: 'suggestion', label: 'Suggestion' },
+];
+
+/** Read-only inbox of beta feedback and content reports, filterable by
+ * category. Nothing here edits content: a correction is a lead for an
+ * editor to check against sources. Source links are shown as text, never
+ * opened from here. */
+export function AdminFeedbackScreen({ onPressBack }: { onPressBack: () => void }) {
+  const insets = useSafeAreaInsets();
+  const [category, setCategory] = useState<string | null>(null);
+  const { data, isLoading, error } = useQuery({ queryKey: ['admin_feedback'], queryFn: () => fetchViaRpc<AdminFeedbackRow>('admin_get_beta_feedback') });
+  const rows = (data ?? []).filter((row) => !category || row.category === category);
+
+  return (
+    <View style={styles.root}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel="Back" onPress={onPressBack} />
+        <Text style={styles.title} numberOfLines={1}>
+          Feedback & content reports
+        </Text>
+        <View style={{ width: 44 }} />
+      </View>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
+        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Category filter">
+          {FILTERS.map((filter) => (
+            <AnimatedPressable
+              key={filter.label}
+              style={[styles.chip, category === filter.id && styles.chipActive]}
+              onPress={() => setCategory(filter.id)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: category === filter.id }}
+              accessibilityLabel={filter.label}
+            >
+              <Text style={[styles.chipText, category === filter.id && styles.chipTextActive]}>{filter.label}</Text>
+            </AnimatedPressable>
+          ))}
+        </View>
+        {isLoading ? <ActivityIndicator color={colors.primary} /> : null}
+        {error ? <Text style={styles.error}>{/function|admin_get_beta_feedback/i.test((error as Error).message) ? 'The feedback inbox needs migration 20260929000001_feedback_v2.sql.' : (error as Error).message}</Text> : null}
+        {!isLoading && !error ? <Text style={styles.muted}>{rows.length} reports (latest 200)</Text> : null}
+        {rows.map((row) => (
+          <View key={row.id} style={styles.card}>
+            <View style={styles.cardHead}>
+              <Text style={styles.category}>{row.category}</Text>
+              <Text style={styles.muted}>{new Date(row.created_at).toLocaleString()}</Text>
+            </View>
+            {row.content_id ? (
+              <Text style={styles.meta} selectable>
+                {row.content_type}:{row.content_id}
+                {row.content_language ? ` · ${row.content_language}` : ''}
+              </Text>
+            ) : null}
+            <Text style={styles.message} selectable>
+              {row.message}
+            </Text>
+            {row.suggested_correction ? (
+              <Text style={styles.message} selectable>
+                <Text style={styles.label}>Suggested: </Text>
+                {row.suggested_correction}
+              </Text>
+            ) : null}
+            {row.source_url ? (
+              <Text style={styles.meta} selectable>
+                Source (unverified, not opened): {row.source_url}
+              </Text>
+            ) : null}
+            <Text style={styles.muted}>
+              {[row.diagnostics?.platform, row.diagnostics?.osVersion, row.diagnostics?.appVersion && `v${row.diagnostics.appVersion}`, row.diagnostics?.language, row.diagnostics?.route].filter(Boolean).join(' · ')}
+              {row.has_screenshot ? ' · has image' : ''}
+              {row.has_contact_email ? ' · reporter shared an email (see dashboard)' : ''}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingBottom: spacing.sm, gap: spacing.sm },
+  title: { ...typography.bodyBold, fontSize: 17, color: colors.textPrimary, flex: 1, textAlign: 'center' },
+  content: { paddingHorizontal: spacing.md, gap: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  chip: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radii.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { ...typography.caption, color: colors.textPrimary },
+  chipTextActive: { color: colors.textOnPrimary, fontWeight: '700' },
+  card: { gap: spacing.xs, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  category: { ...typography.overline, color: colors.accentTerracotta },
+  meta: { ...typography.small, fontWeight: '600', color: colors.textSecondary },
+  message: { ...typography.body, color: colors.textPrimary },
+  label: { fontWeight: '700' },
+  muted: { ...typography.small, color: colors.textMuted },
+  error: { ...typography.small, color: colors.danger },
+});

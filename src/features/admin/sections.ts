@@ -1,4 +1,5 @@
 import { fetchTable, fetchViaRpc } from '@/services/admin/adminService';
+import type { TranslatedContentType } from '@/services/content/localizedContent';
 import { verificationError } from '@/services/content/verification';
 
 export type AdminFieldType = 'text' | 'textarea' | 'number' | 'array' | 'select';
@@ -9,15 +10,33 @@ export type AdminFieldConfig = {
   type: AdminFieldType;
   options?: string[];
   /** array fields: newline-separated in the UI, split/joined on save/load. */
+  /** Saving is blocked while this is empty. */
+  required?: boolean;
+  /** 'sources': one URL per line, each checked, edited as a list. */
+  kind?: 'sources';
 };
 
 export type AdminRow = Record<string, unknown>;
 
+export type AdminGroup = 'Culture' | 'Explore' | 'Quests' | 'Translations & review' | 'Quiz';
+
+export type AdminLinkTable = 'culture_items' | 'culture_materials' | 'explore_regions' | 'discoveries' | 'quests' | 'quiz_questions';
+
+/** A field that must name an existing row elsewhere. */
+export type AdminLink = { field: string; table: AdminLinkTable; label: string };
+
 export type AdminSectionConfig = {
   id: string;
   label: string;
+  group: AdminGroup;
   idField: string;
   titleField: string;
+  /** Column holding the verification level, when the section has one. */
+  verificationField?: string;
+  /** Long-form content with RU/EN rows in content_translations. */
+  contentType?: TranslatedContentType;
+  /** Linked ids to check before saving (may depend on the values). */
+  links?: (values: Record<string, string>) => AdminLink[];
   fields: AdminFieldConfig[];
   fetch: () => Promise<AdminRow[]>;
   upsertRpc: string;
@@ -47,9 +66,26 @@ function toArray(value: string): string[] {
     .filter(Boolean);
 }
 
+/** Which table a legacy quest step's target lives in, per step type. */
+const STEP_TARGET_TABLE: Record<string, AdminLinkTable | undefined> = {
+  VISIT_LOCATION: 'explore_regions',
+  DISCOVER_ITEM: 'discoveries',
+  OPEN_CULTURE_ITEM: 'culture_items',
+  COMPLETE_QUIZ: 'quiz_questions',
+};
+
+const CONTENT_TYPE_TABLE: Record<string, AdminLinkTable | undefined> = {
+  culture_item: 'culture_items',
+  culture_material: 'culture_materials',
+  explore_region: 'explore_regions',
+  discovery: 'discoveries',
+  quest: 'quests',
+};
+
 export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   {
     id: 'culture_categories',
+    group: 'Culture',
     label: 'Culture categories',
     idField: 'id',
     titleField: 'title',
@@ -57,14 +93,17 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_culture_category',
     deleteRpc: 'admin_delete_culture_category',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
-      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
+      { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
     toParams: (v) => ({ p_id: v.id, p_title: v.title, p_sort_order: toIntOrNull(v.sort_order) ?? 0 }),
   },
   {
     id: 'culture_materials',
+    group: 'Culture',
+    verificationField: 'accuracy_level',
+    contentType: 'culture_material',
     label: 'Culture materials',
     idField: 'id',
     titleField: 'title',
@@ -72,15 +111,15 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_culture_material',
     deleteRpc: 'admin_delete_culture_material',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
       { key: 'kind', label: 'Kind', type: 'select', options: ['today_discovery', 'reading', 'video', 'game'] },
-      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'description', label: 'Description', type: 'textarea' },
       { key: 'duration_minutes', label: 'Duration (minutes)', type: 'number' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
       { key: 'body', label: 'Body (reading content)', type: 'textarea' },
       { key: 'accuracy_level', label: 'Accuracy level', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
-      { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
+      { key: 'sources', label: 'Sources', type: 'array', kind: 'sources' },
     ],
     validate: (v) => verificationError(v.accuracy_level, toArray(v.sources)),
     toParams: (v) => ({
@@ -97,6 +136,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   },
   {
     id: 'culture_items',
+    group: 'Culture',
+    verificationField: 'accuracy_level',
+    contentType: 'culture_item',
     label: 'Culture items (customs/dishes/crafts)',
     idField: 'id',
     titleField: 'title',
@@ -104,7 +146,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_culture_item',
     deleteRpc: 'admin_delete_culture_item',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
       {
         key: 'category_id',
         label: 'Category',
@@ -112,7 +154,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
         options: ['boz-uy', 'oymo', 'shyrdak', 'komuz', 'music', 'clothing', 'horse', 'food', 'games', 'tradition'],
       },
       { key: 'subgroup', label: 'Subgroup', type: 'text' },
-      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'alt_names', label: 'Alternate names', type: 'text' },
       { key: 'type_label', label: 'Type', type: 'select', options: ['', 'custom', 'practice', 'ritual', 'ceremony', 'festival'] },
       { key: 'origin', label: 'Origin', type: 'textarea' },
@@ -127,7 +169,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
       { key: 'modern_status', label: 'Modern status', type: 'text' },
       { key: 'fun_facts', label: 'Fun facts', type: 'textarea' },
       { key: 'accuracy_level', label: 'Accuracy level', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
-      { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
+      { key: 'sources', label: 'Sources', type: 'array', kind: 'sources' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
     validate: (v) => verificationError(v.accuracy_level, toArray(v.sources)),
@@ -156,6 +198,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   },
   {
     id: 'explore_regions',
+    group: 'Explore',
+    verificationField: 'status',
+    contentType: 'explore_region',
     label: 'Explore regions & nature sites',
     idField: 'id',
     titleField: 'name_kg',
@@ -163,15 +208,15 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_explore_region',
     deleteRpc: 'admin_delete_explore_region',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
       { key: 'kind', label: 'Kind', type: 'select', options: ['region', 'nature'] },
-      { key: 'name_kg', label: 'Name (Kyrgyz)', type: 'text' },
+      { key: 'name_kg', label: 'Name (Kyrgyz)', type: 'text', required: true },
       { key: 'name_ru', label: 'Name (Russian)', type: 'text' },
       { key: 'name_en', label: 'Name (English)', type: 'text' },
       { key: 'tagline', label: 'Tagline', type: 'text' },
       { key: 'facts', label: 'Facts (one per line, cited/sourced)', type: 'array' },
       { key: 'status', label: 'Verification status', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
-      { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
+      { key: 'sources', label: 'Sources', type: 'array', kind: 'sources' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
     validate: (v) => verificationError(v.status, toArray(v.sources)),
@@ -190,6 +235,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   },
   {
     id: 'quests',
+    group: 'Quests',
+    contentType: 'quest',
     label: 'Quests',
     idField: 'id',
     titleField: 'title',
@@ -197,9 +244,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_quest',
     deleteRpc: 'admin_delete_quest',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
       { key: 'character_id', label: 'Character', type: 'select', options: ['bek', 'aidana', 'aiana', 'boru', 'tulpar', 'elchi'] },
-      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'title', label: 'Title', type: 'text', required: true },
       { key: 'subtitle', label: 'Subtitle', type: 'text' },
       { key: 'total_count', label: 'Total steps', type: 'number' },
       { key: 'cta_label', label: 'CTA label', type: 'text' },
@@ -215,6 +262,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   },
   {
     id: 'discoveries',
+    group: 'Explore',
+    verificationField: 'accuracy_level',
+    links: () => [{ field: 'region_id', table: 'explore_regions', label: 'Region ID' }],
     label: 'Explore discoveries',
     idField: 'id',
     titleField: 'title_kg',
@@ -222,15 +272,15 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_discovery',
     deleteRpc: 'admin_delete_discovery',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
       { key: 'region_id', label: 'Region ID (optional - leave blank if not region-specific)', type: 'text' },
       { key: 'category', label: 'Category', type: 'select', options: ['nature', 'culture', 'animals', 'food'] },
-      { key: 'title_kg', label: 'Title (Kyrgyz)', type: 'text' },
+      { key: 'title_kg', label: 'Title (Kyrgyz)', type: 'text', required: true },
       { key: 'title_ru', label: 'Title (Russian)', type: 'text' },
       { key: 'title_en', label: 'Title (English)', type: 'text' },
       { key: 'xp_reward', label: 'XP reward', type: 'number' },
       { key: 'accuracy_level', label: 'Accuracy level', type: 'select', options: ['verified', 'partially_verified', 'unverified'] },
-      { key: 'sources', label: 'Sources (one URL per line)', type: 'array' },
+      { key: 'sources', label: 'Sources', type: 'array', kind: 'sources' },
       { key: 'published', label: 'Published', type: 'select', options: ['true', 'false'] },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
     ],
@@ -251,6 +301,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   },
   {
     id: 'quest_steps',
+    group: 'Quests',
+    links: (v) => [{ field: 'quest_id', table: 'quests', label: 'Quest ID' }, ...(STEP_TARGET_TABLE[v.step_type] ? [{ field: 'target_id', table: STEP_TARGET_TABLE[v.step_type]!, label: 'Target ID' }] : [])],
     label: 'Quest steps',
     idField: 'id',
     titleField: 'title_kg',
@@ -258,8 +310,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_quest_step',
     deleteRpc: 'admin_delete_quest_step',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
-      { key: 'quest_id', label: 'Quest ID', type: 'text' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
+      { key: 'quest_id', label: 'Quest ID', type: 'text', required: true },
       { key: 'step_order', label: 'Step order', type: 'number' },
       {
         key: 'step_type',
@@ -267,8 +319,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
         type: 'select',
         options: ['VISIT_LOCATION', 'DISCOVER_ITEM', 'OPEN_CULTURE_ITEM', 'COMPLETE_QUIZ'],
       },
-      { key: 'target_id', label: 'Target ID (region/discovery/culture-item id)', type: 'text' },
-      { key: 'title_kg', label: 'Title (Kyrgyz)', type: 'text' },
+      { key: 'target_id', label: 'Target ID (region/discovery/culture-item id)', type: 'text', required: true },
+      { key: 'title_kg', label: 'Title (Kyrgyz)', type: 'text', required: true },
       { key: 'title_ru', label: 'Title (Russian)', type: 'text' },
       { key: 'title_en', label: 'Title (English)', type: 'text' },
       { key: 'sort_order', label: 'Sort order', type: 'number' },
@@ -288,6 +340,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   {
     // Editor-only review notes (never readable by the app).
     id: 'content_review_notes',
+    group: 'Translations & review',
+    links: (v) => (CONTENT_TYPE_TABLE[v.content_type] ? [{ field: 'content_id', table: CONTENT_TYPE_TABLE[v.content_type]!, label: 'Content ID' }] : []),
     label: 'Review notes (editors only)',
     idField: 'id',
     titleField: 'id',
@@ -296,8 +350,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     deleteRpc: 'admin_delete_content_review_note',
     fields: [
       { key: 'content_type', label: 'Content type', type: 'select', options: ['culture_item', 'culture_material', 'explore_region', 'discovery'] },
-      { key: 'content_id', label: 'Content ID', type: 'text' },
-      { key: 'note', label: 'Note (what still needs checking, which source to consult)', type: 'textarea' },
+      { key: 'content_id', label: 'Content ID', type: 'text', required: true },
+      { key: 'note', label: 'Note (what still needs checking, which source to consult)', type: 'textarea', required: true },
     ],
     toParams: (v) => ({ p_content_type: v.content_type, p_content_id: v.content_id.trim(), p_note: v.note.trim() }),
   },
@@ -305,6 +359,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     // RU/EN translations of long-form content (Kyrgyz stays in the
     // content rows). One row = one field of one item in one language.
     id: 'content_translations',
+    group: 'Translations & review',
+    links: (v) => (CONTENT_TYPE_TABLE[v.content_type] ? [{ field: 'content_id', table: CONTENT_TYPE_TABLE[v.content_type]!, label: 'Content ID' }] : []),
     label: 'Translations (RU / EN)',
     idField: 'id',
     titleField: 'id',
@@ -313,7 +369,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     deleteRpc: 'admin_delete_content_translation_by_id',
     fields: [
       { key: 'content_type', label: 'Content type', type: 'select', options: ['culture_item', 'culture_material', 'explore_region', 'quest'] },
-      { key: 'content_id', label: 'Content ID (same id as the Kyrgyz row)', type: 'text' },
+      { key: 'content_id', label: 'Content ID (same id as the Kyrgyz row)', type: 'text', required: true },
       { key: 'language', label: 'Language', type: 'select', options: ['ru', 'en'] },
       {
         key: 'field',
@@ -321,7 +377,7 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
         type: 'select',
         options: ['title', 'alt_names', 'origin', 'history', 'cultural_meaning', 'when_used', 'ingredients', 'traditional_method', 'who_participates', 'objects_used', 'regional_notes', 'modern_status', 'fun_facts', 'description', 'body', 'subtitle', 'cta_label', 'fact.0', 'fact.1', 'fact.2', 'fact.3'],
       },
-      { key: 'value', label: 'Translated text', type: 'textarea' },
+      { key: 'value', label: 'Translated text', type: 'textarea', required: true },
       { key: 'status', label: 'Status (only "reviewed" is shown in the app)', type: 'select', options: ['reviewed', 'draft'] },
     ],
     toParams: (v) => ({
@@ -335,6 +391,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
   },
   {
     id: 'quiz_questions',
+    group: 'Quiz',
+    links: () => [{ field: 'source_region_id', table: 'explore_regions', label: 'Source region ID' }],
     label: 'Culture quiz questions',
     idField: 'id',
     titleField: 'question',
@@ -342,8 +400,8 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_quiz_question',
     deleteRpc: 'admin_delete_quiz_question',
     fields: [
-      { key: 'id', label: 'ID (slug)', type: 'text' },
-      { key: 'question', label: 'Question', type: 'textarea' },
+      { key: 'id', label: 'ID (slug)', type: 'text', required: true },
+      { key: 'question', label: 'Question', type: 'textarea', required: true },
       { key: 'choices', label: 'Choices (exactly 4 lines)', type: 'array' },
       { key: 'correct_index', label: 'Correct choice index (0-3)', type: 'number' },
       { key: 'source_region_id', label: 'Source region ID (optional)', type: 'text' },

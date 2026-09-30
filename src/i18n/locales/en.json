@@ -1879,14 +1879,18 @@
     "restart": "Restart",
     "stop": "Stop listening",
     "speed": "Speed {{rate}}×",
-    "nowListening": "Audio guide",
     "finished": "Finished",
     "error": "Audio couldn't play",
-    "unavailable": {
-      "noVoice": "This device has no English voice, so listening isn't available.",
-      "noContentInLanguage": "This content is only written in Kyrgyz so far, so there's no English narration yet.",
-      "noEngine": "Listening isn't available on this device."
-    }
+    "title": "Audio guide",
+    "resume": "Resume",
+    "paused": "Paused",
+    "unavailableOffline": "Audio unavailable offline",
+    "playbackSpeed": "Playback speed",
+    "timeOf": "{{elapsed}} of {{duration}}",
+    "percent": "{{percent}}% listened",
+    "progress": "Listening progress",
+    "miniPlayer": "Audio guide player",
+    "openContent": "Opens the page you are listening to"
   },
   "offline": {
     "banner": "Offline mode",
@@ -2345,14 +2349,15 @@
     "categoryLabel": "Category",
     "categories": {
       "bug": "Bug",
+      "translation": "Translation issue",
+      "culture_correction": "Incorrect cultural information",
+      "image": "Image issue",
+      "suggestion": "Feature suggestion",
+      "other": "Other",
       "ui": "UI issue",
       "content": "Content issue",
-      "translation": "Translation",
-      "performance": "Performance",
-      "other": "Other"
+      "performance": "Performance"
     },
-    "messageLabel": "What happened?",
-    "messagePlaceholder": "Describe the problem or idea…",
     "imageLabel": "Image (optional)",
     "attachScreen": "Attach current screen",
     "chooseImage": "Choose an image",
@@ -2372,9 +2377,10 @@
       "offline": "Offline",
       "build": "Build",
       "events": "Recent events",
-      "eventCount": "{{count}} technical events (screens opened, connection changes)"
+      "eventCount": "{{count}} technical events (screens opened, connection changes)",
+      "content": "Content"
     },
-    "detailsNever": "Never included: passwords, sign-in tokens, your email (unless you turn it on above), your location or private notes.",
+    "detailsNever": "Never included: passwords, sign-in tokens, your email (unless you turn it on above), your location, journal text, photos from your journal, or what you searched for.",
     "offlineNote": "You're offline - your report will be saved and sent when you're back online.",
     "send": "Send feedback",
     "sentTitle": "Thank you!",
@@ -2387,7 +2393,44 @@
     "helpEntryHint": "Report a bug or share an idea from inside the app.",
     "failedTitle": "We couldn't send this report.",
     "failedBody": "It's still saved on this phone. You can try again.",
-    "imageFailed": "This image couldn't be attached. You can still send your report without it."
+    "imageFailed": "This image couldn't be attached. You can still send your report without it.",
+    "messageLabels": {
+      "bug": "What happened?",
+      "translation": "What's wrong with the translation?",
+      "culture_correction": "What seems incorrect?",
+      "image": "What's wrong with the image?",
+      "suggestion": "What would you like to see?",
+      "other": "Your message"
+    },
+    "messagePlaceholders": {
+      "bug": "What did you do, and what went wrong?",
+      "translation": "Quote the words that read wrong, and why.",
+      "culture_correction": "Which statement seems incorrect, and why?",
+      "image": "Wrong object, low quality, doesn’t match the text…",
+      "suggestion": "Describe your idea…",
+      "other": "Write your message…"
+    },
+    "about": "Reporting about",
+    "translation": {
+      "languageLabel": "Which language?",
+      "languages": {
+        "kg": "Kyrgyz",
+        "ru": "Russian",
+        "en": "English"
+      }
+    },
+    "correction": {
+      "suggestedLabel": "Suggested correction (optional)",
+      "suggestedPlaceholder": "How should it read?",
+      "sourceLabel": "Source link (optional)",
+      "sourceHint": "A book, museum or article page that supports the correction.",
+      "sourceInvalid": "This doesn’t look like a web address. Paste the full page link.",
+      "reviewNote": "Editors review every report against sources - nothing in the app changes automatically."
+    },
+    "charactersLeft": "{{count}} characters left",
+    "accountLink": "You are signed in, so this report is linked to your account on our server (to prevent spam). Your email is included only if you turn it on.",
+    "reportIssue": "Report an issue",
+    "reportIssueHint": "Tell the team if something here is incorrect, badly translated or shows the wrong image."
   },
   "journal": {
     "title": "My Journal",

@@ -1,44 +1,44 @@
-import { Headphones, HeadphoneOff, Pause, Play, RotateCcw, X } from 'lucide-react-native';
+import { usePathname } from 'expo-router';
+import { CloudOff, Headphones, Pause, Play, RotateCcw, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, ProgressBar } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
 import { recordedAudioFor } from '@/services/audioGuide/contentAudio';
-import { estimateListenMinutes, resolveAudioPlan, type Narration, type VoiceInfo } from '@/services/audioGuide/narration';
-import { isSpeechEngineAvailable, loadVoices, useAudioGuideStore, type PlaybackRate } from '@/services/audioGuide/useAudioGuideStore';
+import { estimateListenMinutes, formatAudioTime, isPlayableNow, offlineAvailabilityFor, resolveAudioPlan, type Narration, type VoiceInfo } from '@/services/audioGuide/narration';
+import { isSpeechEngineAvailable, loadVoices, PLAYBACK_RATES, useAudioGuideStore } from '@/services/audioGuide/useAudioGuideStore';
+import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { colors, radii, spacing, typography } from '@/theme';
-
-const RATES: PlaybackRate[] = [0.75, 1, 1.25];
 
 type AudioGuidePlayerProps = {
   /** `<contentType>:<id>` - also the key into `contentAudio` recordings. */
   contentKey: string;
   /** The visible content to read, in the language it's written in. */
   narration: Narration | null;
-  /** Daily OYNO shows the control only when audio actually works. */
-  hideWhenUnavailable?: boolean;
+  /** Shown in the mini player once the listener leaves this screen. */
+  title: string;
 };
 
-function formatTime(seconds: number): string {
-  const whole = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
-}
-
 /**
- * OYNO's compact audio guide - one control used by every detail screen.
- * Recorded narration (contentAudio) wins; otherwise device TTS, but only
- * when the text exists in the app language and the device has a real
- * voice for it; otherwise a short honest note. Playback belongs to the
- * single `useAudioGuideStore` session and stops when this control unmounts
- * (leaving the screen), the app backgrounds, or the language changes.
+ * OYNO's audio guide - the one listening control every detail screen uses
+ * (Culture item, Material, Explore destination, Daily). Recorded narration
+ * (contentAudio) wins; otherwise device TTS, but only when the text exists
+ * in the app language and the device has a real voice for it. When neither
+ * works, nothing is shown - no dead Play button.
+ *
+ * Playback belongs to the single `useAudioGuideStore` session: starting
+ * another narration stops this one, leaving the screen hands it to the mini
+ * player, backgrounding the app pauses it, and a language change stops it.
  */
-export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = false }: AudioGuidePlayerProps) {
+export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePlayerProps) {
   const { t, i18n } = useTranslation();
   const appLanguage = i18n.language as SupportedLanguage;
   const sessionKey = `${contentKey}:${appLanguage}`;
+  const route = usePathname();
+  const { isOffline } = useNetworkStatus();
 
   const recorded = recordedAudioFor(contentKey, appLanguage);
   const needsVoices = !recorded && !!narration && narration.lang === appLanguage && isSpeechEngineAvailable();
@@ -66,34 +66,36 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
   const elapsed = useAudioGuideStore((state) => state.elapsed);
   const duration = useAudioGuideStore((state) => state.duration);
   const rate = useAudioGuideStore((state) => state.rate);
+  const canSeek = useAudioGuideStore((state) => state.canSeek);
 
-  // Leaving the screen ends this narration (no background playback).
-  useEffect(() => () => useAudioGuideStore.getState().stop(sessionKey), [sessionKey]);
+  // While this screen shows the full player, the mini player stays hidden.
+  useEffect(() => useAudioGuideStore.getState().registerHost(sessionKey), [sessionKey]);
 
-  if (!plan) return null;
+  if (!plan || plan.kind === 'unavailable') return null;
 
-  if (plan.kind === 'unavailable') {
-    if (hideWhenUnavailable || plan.reason === 'empty') return null;
+  const availability = offlineAvailabilityFor(plan);
+  if (!active && !isPlayableNow(availability, isOffline)) {
     return (
-      <View style={styles.unavailable}>
-        <HeadphoneOff size={15} color={colors.textMuted} strokeWidth={2} />
-        <Text style={styles.unavailableText}>{t(`audioGuide.unavailable.${plan.reason}`)}</Text>
+      <View style={styles.offline} accessible accessibilityLabel={t('audioGuide.unavailableOffline')}>
+        <CloudOff size={15} color={colors.textMuted} strokeWidth={2} />
+        <Text style={styles.offlineText}>{t('audioGuide.unavailableOffline')}</Text>
       </View>
     );
   }
 
-  const minutes = narration ? estimateListenMinutes(narration.text) : null;
+  const store = useAudioGuideStore.getState();
 
   if (!active) {
-    const label = minutes && plan.kind === 'tts' ? t('audioGuide.listenWithTime', { count: minutes }) : t('audioGuide.listen');
+    const minutes = narration && plan.kind === 'tts' ? estimateListenMinutes(narration.text) : null;
+    const label = minutes ? t('audioGuide.listenWithTime', { count: minutes }) : t('audioGuide.listen');
     return (
       <AnimatedPressable
         style={styles.listen}
-        onPress={() => useAudioGuideStore.getState().start(sessionKey, plan)}
+        onPress={() => store.start(sessionKey, plan, { title, route })}
         press="strong"
         haptic="light"
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={`${t('audioGuide.title')}: ${label}`}
       >
         <Headphones size={16} color={colors.primary} strokeWidth={2.25} />
         <Text style={styles.listenText}>{label}</Text>
@@ -102,19 +104,13 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
   }
 
   const isPlaying = status === 'playing';
-  const store = useAudioGuideStore.getState();
+  const toggleLabel = isPlaying ? t('audioGuide.pause') : status === 'paused' ? t('audioGuide.resume') : t('audioGuide.play');
+  const progressText = duration ? t('audioGuide.timeOf', { elapsed: formatAudioTime(elapsed ?? 0), duration: formatAudioTime(duration) }) : t('audioGuide.percent', { percent: Math.round(progress * 100) });
 
   return (
     <View style={styles.player}>
       <View style={styles.row}>
-        <AnimatedPressable
-          style={styles.playButton}
-          onPress={store.toggle}
-          press="strong"
-          haptic="light"
-          accessibilityRole="button"
-          accessibilityLabel={isPlaying ? t('audioGuide.pause') : t('audioGuide.play')}
-        >
+        <AnimatedPressable style={styles.playButton} onPress={store.toggle} press="strong" haptic="light" accessibilityRole="button" accessibilityLabel={toggleLabel}>
           {isPlaying ? <Pause size={18} color={colors.accentGold} strokeWidth={2.5} /> : <Play size={18} color={colors.accentGold} strokeWidth={2.5} />}
         </AnimatedPressable>
 
@@ -122,15 +118,21 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
           <View style={styles.trackHeader}>
             <OymoOrnament size={9} color={colors.accentGoldPressed} strokeWidth={1.75} />
             <Text style={styles.trackLabel} numberOfLines={1}>
-              {status === 'error' ? t('audioGuide.error') : status === 'finished' ? t('audioGuide.finished') : t('audioGuide.nowListening')}
+              {status === 'error' ? t('audioGuide.error') : status === 'finished' ? t('audioGuide.finished') : t('audioGuide.title')}
             </Text>
             {duration ? (
               <Text style={styles.time}>
-                {formatTime(elapsed ?? 0)} / {formatTime(duration)}
+                {formatAudioTime(elapsed ?? 0)} / {formatAudioTime(duration)}
               </Text>
             ) : null}
           </View>
-          <ProgressBar progress={progress} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceAlt} />
+          {canSeek && duration ? (
+            <SeekBar progress={progress} valueText={progressText} onSeek={store.seek} />
+          ) : (
+            <View accessible accessibilityRole="progressbar" accessibilityLabel={t('audioGuide.progress')} accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100), text: progressText }}>
+              <ProgressBar progress={progress} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceAlt} />
+            </View>
+          )}
         </View>
 
         <AnimatedPressable style={styles.iconButton} onPress={store.restart} hitSlop={6} press="strong" accessibilityRole="button" accessibilityLabel={t('audioGuide.restart')}>
@@ -141,8 +143,8 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
         </AnimatedPressable>
       </View>
 
-      <View style={styles.rates} accessibilityRole="radiogroup">
-        {RATES.map((option) => (
+      <View style={styles.rates} accessibilityRole="radiogroup" accessibilityLabel={t('audioGuide.playbackSpeed')}>
+        {PLAYBACK_RATES.map((option) => (
           <AnimatedPressable
             key={option}
             style={[styles.rate, rate === option && styles.rateActive]}
@@ -158,6 +160,28 @@ export function AudioGuidePlayer({ contentKey, narration, hideWhenUnavailable = 
         ))}
       </View>
     </View>
+  );
+}
+
+/** Tap-to-seek progress for recordings (the only audio that can seek);
+ * screen readers adjust it in 10% steps. */
+function SeekBar({ progress, valueText, onSeek }: { progress: number; valueText: string; onSeek: (fraction: number) => void }) {
+  const { t } = useTranslation();
+  const [width, setWidth] = useState(0);
+  return (
+    <Pressable
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      onPress={(event: GestureResponderEvent) => width > 0 && onSeek(event.nativeEvent.locationX / width)}
+      hitSlop={{ top: 12, bottom: 12 }}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={t('audioGuide.progress')}
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100), text: valueText }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={(event) => onSeek(progress + (event.nativeEvent.actionName === 'increment' ? 0.1 : -0.1))}
+    >
+      <ProgressBar progress={progress} height={6} fillColor={colors.accentGold} trackColor={colors.surfaceAlt} />
+    </Pressable>
   );
 }
 
@@ -178,12 +202,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
-  unavailable: {
+  offline: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.xs,
   },
-  unavailableText: {
+  offlineText: {
     ...typography.small,
     fontWeight: '500',
     color: colors.textMuted,

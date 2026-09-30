@@ -55,10 +55,15 @@ export function loadVoices(): Promise<VoiceInfo[]> {
 }
 
 export type AudioGuideStatus = 'idle' | 'playing' | 'paused' | 'finished' | 'error';
-export type PlaybackRate = 0.75 | 1 | 1.25;
+export type PlaybackRate = 1 | 1.25 | 1.5;
+export const PLAYBACK_RATES: PlaybackRate[] = [1, 1.25, 1.5];
+
+/** What the mini player needs to show and reopen the narration. */
+export type AudioSessionMeta = { title: string; route: string | null };
 
 type AudioGuideState = {
   sessionKey: string | null;
+  meta: AudioSessionMeta | null;
   status: AudioGuideStatus;
   /** 0..1 */
   progress: number;
@@ -66,12 +71,23 @@ type AudioGuideState = {
   elapsed: number | null;
   duration: number | null;
   rate: PlaybackRate;
-  start: (sessionKey: string, plan: AudioPlan) => void;
+  /** Only recorded audio can seek; device speech reads sentence by sentence. */
+  canSeek: boolean;
+  /** Sessions whose full player is on screen right now (the mini player
+   * stays hidden for those). */
+  hosts: Record<string, number>;
+  start: (sessionKey: string, plan: AudioPlan, meta: AudioSessionMeta) => void;
   toggle: () => void;
+  /** Pauses only if playing - used for interruptions (app backgrounded). */
+  pause: () => void;
   restart: () => void;
+  /** 0..1 of the recording; ignored when `canSeek` is false. */
+  seek: (fraction: number) => void;
   setRate: (rate: PlaybackRate) => void;
   /** Stops everything, or only if `sessionKey` is the active session. */
   stop: (sessionKey?: string) => void;
+  /** Registers a mounted full player; returns its unregister. */
+  registerHost: (sessionKey: string) => () => void;
 };
 
 // The one active engine. Module-level so there can never be two.
@@ -169,9 +185,11 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
   function installGlobalListeners() {
     if (listenersInstalled) return;
     listenersInstalled = true;
-    // No background playback: leaving the app ends the session.
+    // No background playback: going to the background PAUSES (keeping the
+    // position) - coming back never restarts from zero and never resumes on
+    // its own; the listener taps play when ready.
     AppState.addEventListener('change', (state) => {
-      if (state !== 'active') get().stop();
+      if (state === 'background') get().pause();
     });
     // A different language means different narration - never keep reading
     // the previous one.
@@ -180,19 +198,47 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
 
   return {
     sessionKey: null,
+    meta: null,
     status: 'idle',
     progress: 0,
     elapsed: null,
     duration: null,
     rate: 1,
+    canSeek: false,
+    hosts: {},
 
-    start: (sessionKey, plan) => {
+    start: (sessionKey, plan, meta) => {
       installGlobalListeners();
+      // One narration at a time: whatever was playing is released first.
       releaseEngine();
       activePlan = plan;
-      set({ sessionKey, status: 'idle', progress: 0, elapsed: null, duration: null });
+      set({ sessionKey, meta, status: 'idle', progress: 0, elapsed: null, duration: null, canSeek: plan.kind === 'recorded' });
       if (plan.kind === 'tts') speakFrom(0);
       else if (plan.kind === 'recorded') startRecorded(plan.source);
+    },
+
+    pause: () => {
+      if (get().status === 'playing') get().toggle();
+    },
+
+    seek: (fraction) => {
+      const { duration, canSeek } = get();
+      if (!canSeek || !player || !duration) return;
+      const clamped = Math.min(1, Math.max(0, fraction));
+      void player.seekTo(clamped * duration);
+      set({ elapsed: clamped * duration, progress: clamped, status: get().status === 'finished' ? 'paused' : get().status });
+    },
+
+    registerHost: (sessionKey) => {
+      set((state) => ({ hosts: { ...state.hosts, [sessionKey]: (state.hosts[sessionKey] ?? 0) + 1 } }));
+      return () =>
+        set((state) => {
+          const count = (state.hosts[sessionKey] ?? 1) - 1;
+          const hosts = { ...state.hosts };
+          if (count > 0) hosts[sessionKey] = count;
+          else delete hosts[sessionKey];
+          return { hosts };
+        });
     },
 
     toggle: () => {
@@ -243,7 +289,7 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
       if (sessionKey && get().sessionKey !== sessionKey) return;
       releaseEngine();
       activePlan = null;
-      set({ sessionKey: null, status: 'idle', progress: 0, elapsed: null, duration: null });
+      set({ sessionKey: null, meta: null, status: 'idle', progress: 0, elapsed: null, duration: null, canSeek: false });
     },
   };
 });

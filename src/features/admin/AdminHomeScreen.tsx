@@ -6,19 +6,22 @@ import { AnimatedPressable, IconButton } from '@/components/ui';
 import { useAdminRole } from '@/services/admin/adminService';
 import { colors, radii, shadows, spacing, typography } from '@/theme';
 
-import { ADMIN_SECTIONS } from './sections';
+import { ADMIN_SECTIONS, type AdminGroup } from './sections';
+
+const ADMIN_GROUPS: AdminGroup[] = ['Culture', 'Explore', 'Quests', 'Translations & review', 'Quiz'];
 
 type AdminHomeScreenProps = {
   onPressBack: () => void;
   onPressSection: (sectionId: string) => void;
   onPressPush: () => void;
+  onPressFeedback: () => void;
 };
 
 /** Internal tooling, not part of the app's localized surface - kept in
  * English deliberately (same reasoning as the rest of this file: it's for
  * whoever has an admin_roles row, not end users) rather than adding a
  * fourth i18n surface nobody but an admin will ever see. */
-export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush }: AdminHomeScreenProps) {
+export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback }: AdminHomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { data: role, isLoading } = useAdminRole();
 
@@ -42,23 +45,44 @@ export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush }: Ad
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.roleLabel}>Signed in as: {role}</Text>
 
-          <AnimatedPressable style={styles.row} onPress={onPressPush} accessibilityRole="button" accessibilityLabel="Push broadcast">
-            <Text style={styles.rowLabel}>Push notifications (broadcast)</Text>
-            <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
-          </AnimatedPressable>
+          {ADMIN_GROUPS.map((group) => {
+            const sections = ADMIN_SECTIONS.filter((section) => section.group === group);
+            if (sections.length === 0) return null;
+            return (
+              <View key={group} style={styles.group}>
+                <Text style={styles.groupTitle} accessibilityRole="header">
+                  {group}
+                </Text>
+                {sections.map((section) => (
+                  <AnimatedPressable key={section.id} style={styles.row} onPress={() => onPressSection(section.id)} accessibilityRole="button" accessibilityLabel={section.label}>
+                    <Text style={styles.rowLabel}>{section.label}</Text>
+                    <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+                  </AnimatedPressable>
+                ))}
+              </View>
+            );
+          })}
 
-          {ADMIN_SECTIONS.map((section) => (
-            <AnimatedPressable
-              key={section.id}
-              style={styles.row}
-              onPress={() => onPressSection(section.id)}
-              accessibilityRole="button"
-              accessibilityLabel={section.label}
-            >
-              <Text style={styles.rowLabel}>{section.label}</Text>
+          <View style={styles.group}>
+            <Text style={styles.groupTitle} accessibilityRole="header">
+              Feedback
+            </Text>
+            <AnimatedPressable style={styles.row} onPress={onPressFeedback} accessibilityRole="button" accessibilityLabel="Feedback and content reports">
+              <Text style={styles.rowLabel}>Feedback & content reports</Text>
               <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
             </AnimatedPressable>
-          ))}
+          </View>
+
+          {/* Push stays its own tool - saving content never sends anything. */}
+          <View style={styles.group}>
+            <Text style={styles.groupTitle} accessibilityRole="header">
+              Notifications
+            </Text>
+            <AnimatedPressable style={styles.row} onPress={onPressPush} accessibilityRole="button" accessibilityLabel="Push broadcast">
+              <Text style={styles.rowLabel}>Push notifications (broadcast)</Text>
+              <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+            </AnimatedPressable>
+          </View>
 
           <Text style={styles.footnote}>
             Achievements and game catalog entries aren't editable here yet - achievements are
@@ -107,6 +131,14 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
+  },
+  group: {
+    gap: spacing.xs,
+  },
+  groupTitle: {
+    ...typography.overline,
+    color: colors.accentTerracotta,
+    marginTop: spacing.sm,
   },
   row: {
     flexDirection: 'row',

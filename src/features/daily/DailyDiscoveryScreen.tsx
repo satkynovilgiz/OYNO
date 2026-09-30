@@ -225,7 +225,7 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
           {discovery.isCompleted ? null : <StoryCompanion surface="daily" moment="intro" />}
 
           {/* "Listen · 2 min" - shown only when audio genuinely works here. */}
-          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} hideWhenUnavailable />
+          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} title={item.title} />
 
           {leadBlock && leadBlock.lang !== language ? <KyrgyzOnlyNote status="fallback_to_kg" language={language} /> : null}
 

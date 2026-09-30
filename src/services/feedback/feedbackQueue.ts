@@ -8,11 +8,15 @@ import { createUuid } from '@/services/storage/uuid';
 import { supabase } from '@/services/supabase/client';
 
 import { sanitizeDiagnostics, type FeedbackDiagnostics } from './diagnostics';
+import { legacyCategory, legacyMessage, toServerContent, type ReportContent } from './reportContent';
 
 export const FEEDBACK_QUEUE_KEY = 'oyno.feedback.pending';
 
-export type FeedbackCategory = 'bug' | 'ui' | 'content' | 'translation' | 'performance' | 'other';
-export const FEEDBACK_CATEGORIES: FeedbackCategory[] = ['bug', 'ui', 'content', 'translation', 'performance', 'other'];
+/** What a reporter can pick. */
+export type FeedbackCategory = 'bug' | 'translation' | 'culture_correction' | 'image' | 'suggestion' | 'other';
+export const FEEDBACK_CATEGORIES: FeedbackCategory[] = ['bug', 'translation', 'culture_correction', 'image', 'suggestion', 'other'];
+/** Earlier categories - still valid for reports already queued on a phone. */
+type LegacyFeedbackCategory = 'ui' | 'content' | 'performance';
 
 export const MAX_FEEDBACK_LENGTH = 4000;
 /** Unclassified errors are retried this many times, then the report fails. */
@@ -31,9 +35,11 @@ const MAX_FAILED_KEPT = 5;
 export type PendingFeedback = {
   clientReportId: string;
   createdAt: string;
-  category: FeedbackCategory;
+  category: FeedbackCategory | LegacyFeedbackCategory;
   message: string;
   diagnostics: FeedbackDiagnostics;
+  /** Which content a content report is about (public ids only). */
+  content?: ReportContent | null;
   /** Local file of an image the tester chose to attach (never automatic). */
   screenshotUri: string | null;
   screenshotPath: string | null;
@@ -105,6 +111,7 @@ export async function enqueueFeedback(input: {
   category: FeedbackCategory;
   message: string;
   diagnostics: FeedbackDiagnostics;
+  content?: ReportContent | null;
   screenshotUri: string | null;
   accountId: string | null;
 }): Promise<PendingFeedback> {
@@ -115,6 +122,7 @@ export async function enqueueFeedback(input: {
     category: input.category,
     message: input.message.trim().slice(0, MAX_FEEDBACK_LENGTH),
     diagnostics: sanitizeDiagnostics(input.diagnostics),
+    content: input.content ?? null,
     screenshotUri: input.screenshotUri ? await keepScreenshot(input.screenshotUri, clientReportId) : null,
     screenshotPath: null,
     accountId: input.accountId,
@@ -160,6 +168,11 @@ function failureCode(error: ErrorLike): string {
 
 type SendOutcome = 'sent' | 'retry' | 'failed';
 
+/** PostgREST "function not found" - the v2 migration isn't applied yet. */
+export function isMissingFunction(error: ErrorLike): boolean {
+  return error?.code === 'PGRST202' || /could not find the function/i.test(error?.message ?? '');
+}
+
 /** 'uploaded' / 'none' (no image) / 'retry' (temporary) / 'skipped' (the
  * image was permanently refused - the text report still goes out). */
 async function uploadScreenshot(report: PendingFeedback): Promise<{ path: string | null; state: 'uploaded' | 'none' | 'retry' | 'skipped' }> {
@@ -191,16 +204,20 @@ async function sendOne(report: PendingFeedback, currentAccountId: string | null)
   if (upload.state === 'retry') return { outcome: 'retry', report: { ...report, attempts: report.attempts + 1 } };
   const withPath = { ...report, screenshotPath: upload.path };
 
-  const { error } = await supabase.rpc('submit_beta_feedback', {
+  const common = {
     p_client_report_id: withPath.clientReportId,
-    p_category: withPath.category,
-    p_message: withPath.message,
     // An optional screenshot that couldn't be uploaded never sinks the report.
     p_diagnostics: { ...sanitizeDiagnostics(withPath.diagnostics), ...(upload.state === 'skipped' ? { screenshot: 'not_uploaded' } : {}) },
     p_screenshot_path: withPath.screenshotPath,
     // Linked to an account only if the person who wrote it is the one signed in.
     p_link_account: withPath.accountId !== null && withPath.accountId === currentAccountId,
-  });
+  };
+  let { error } = await supabase.rpc('submit_beta_feedback_v2', { ...common, p_category: withPath.category, p_message: withPath.message, p_content: toServerContent(withPath.content) });
+  // A server without v2 yet: send through the original function, with the
+  // nearest old category and the content context kept in the message.
+  if (error && isMissingFunction(error)) {
+    ({ error } = await supabase.rpc('submit_beta_feedback', { ...common, p_category: legacyCategory(withPath.category), p_message: legacyMessage(withPath.message, withPath.content) }));
+  }
   if (!error) return { outcome: 'sent', report: withPath };
   const next = { ...withPath, attempts: withPath.attempts + 1 };
   if (shouldRetry(classifyFailure(error), next.attempts)) return { outcome: 'retry', report: next };

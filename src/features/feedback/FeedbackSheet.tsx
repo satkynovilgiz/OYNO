@@ -21,6 +21,7 @@ import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { currentRoute, recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { buildDiagnostics, isSensitiveRoute } from '@/services/feedback/diagnostics';
 import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult } from '@/services/feedback/feedbackQueue';
+import { buildReportContent, CONTENT_CATEGORIES, isValidReportUrl, MAX_CORRECTION_LENGTH } from '@/services/feedback/reportContent';
 import { deleteTempImage, FEEDBACK_IMAGE, normalizeToJpeg, pickerOptionsForJpeg, type PickedImage } from '@/services/media/normalizeImage';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -59,6 +60,10 @@ export function FeedbackSheet() {
 
   const [category, setCategory] = useState<FeedbackCategory>('bug');
   const [message, setMessage] = useState('');
+  const [suggestedCorrection, setSuggestedCorrection] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('');
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [contentLanguage, setContentLanguage] = useState<'kg' | 'ru' | 'en'>('kg');
   const [includeEmail, setIncludeEmail] = useState(false);
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
@@ -73,7 +78,8 @@ export function FeedbackSheet() {
   useEffect(() => {
     if (!visible || capturing) return;
     if (result === null && message === '' && !screenshotUri) {
-      setCategory(context.category ?? 'bug');
+      setCategory(context.category ?? (context.content ? 'culture_correction' : 'bug'));
+      setContentLanguage(i18n.language === 'ru' || i18n.language === 'en' ? i18n.language : 'kg');
       setRoute(currentRoute());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,6 +88,9 @@ export function FeedbackSheet() {
   function reset() {
     setCategory('bug');
     setMessage('');
+    setSuggestedCorrection('');
+    setSourceUrl('');
+    setSourceError(null);
     setIncludeEmail(false);
     deleteTempImage(screenshotUri);
     setScreenshotUri(null);
@@ -154,12 +163,20 @@ export function FeedbackSheet() {
     contactEmail: includeEmail ? (user?.email ?? null) : null,
   });
 
+  const aboutContent = context.content && CONTENT_CATEGORIES.has(category) ? context.content : null;
+
   async function send() {
     if (!message.trim() || sending) return;
+    // A source link must at least look like a web address (never opened here).
+    if (category === 'culture_correction' && sourceUrl.trim() && !isValidReportUrl(sourceUrl)) {
+      setSourceError(t('feedback.correction.sourceInvalid'));
+      return;
+    }
+    const content = buildReportContent(category, context.content, { language: contentLanguage, suggestedCorrection, sourceUrl });
     setSending(true);
     try {
       const outcome = await sendFeedbackReport(
-        { category, message, diagnostics, screenshotUri, accountId: user?.id ?? null },
+        { category, message, diagnostics, content, screenshotUri, accountId: user?.id ?? null },
         { online: !isOffline, currentAccountId: user?.id ?? null },
       );
       setReportId(outcome.clientReportId);
@@ -190,7 +207,9 @@ export function FeedbackSheet() {
     [t('feedback.details.connection'), diagnostics.online ? t('feedback.details.online') : t('feedback.details.offline')],
     [t('feedback.details.build'), [diagnostics.channel, diagnostics.runtimeVersion].filter(Boolean).join(' · ') || '-'],
     [t('feedback.details.events'), t('feedback.details.eventCount', { count: diagnostics.trail.length })],
+    ...(aboutContent ? ([[t('feedback.details.content'), `${aboutContent.contentType} · ${aboutContent.contentId}`]] as [string, string][]) : []),
   ];
+  const messageNearLimit = message.length > MAX_FEEDBACK_LENGTH * 0.8;
 
   return (
     <Modal visible={visible && !capturing} transparent animationType="slide" onRequestClose={dismiss}>
@@ -233,15 +252,73 @@ export function FeedbackSheet() {
                 })}
               </View>
 
+              {aboutContent ? (
+                <View style={styles.about} accessible accessibilityLabel={`${t('feedback.about')}: ${aboutContent.title}`}>
+                  <Text style={styles.aboutLabel}>{t('feedback.about')}</Text>
+                  <Text style={styles.aboutTitle} numberOfLines={2}>
+                    {aboutContent.title}
+                  </Text>
+                </View>
+              ) : null}
+
+              {category === 'translation' ? (
+                <>
+                  <Text style={styles.sectionLabel}>{t('feedback.translation.languageLabel')}</Text>
+                  <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t('feedback.translation.languageLabel')}>
+                    {(['kg', 'ru', 'en'] as const).map((option) => (
+                      <AnimatedPressable
+                        key={option}
+                        style={[styles.chip, contentLanguage === option && styles.chipSelected]}
+                        onPress={() => setContentLanguage(option)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: contentLanguage === option, checked: contentLanguage === option }}
+                        accessibilityLabel={t(`feedback.translation.languages.${option}`)}
+                      >
+                        <Text style={[styles.chipText, contentLanguage === option && styles.chipTextSelected]}>{t(`feedback.translation.languages.${option}`)}</Text>
+                      </AnimatedPressable>
+                    ))}
+                  </View>
+                </>
+              ) : null}
+
               <TextField
-                label={t('feedback.messageLabel')}
+                label={t(`feedback.messageLabels.${category}`)}
                 value={message}
                 onChangeText={(value) => setMessage(value.slice(0, MAX_FEEDBACK_LENGTH))}
-                placeholder={t('feedback.messagePlaceholder')}
+                placeholder={t(`feedback.messagePlaceholders.${category}`)}
                 autoCapitalize="sentences"
                 multiline
                 numberOfLines={5}
+                hint={messageNearLimit ? t('feedback.charactersLeft', { count: MAX_FEEDBACK_LENGTH - message.length }) : null}
               />
+
+              {category === 'culture_correction' ? (
+                <>
+                  <TextField
+                    label={t('feedback.correction.suggestedLabel')}
+                    value={suggestedCorrection}
+                    onChangeText={(value) => setSuggestedCorrection(value.slice(0, MAX_CORRECTION_LENGTH))}
+                    placeholder={t('feedback.correction.suggestedPlaceholder')}
+                    autoCapitalize="sentences"
+                    multiline
+                    numberOfLines={3}
+                  />
+                  <TextField
+                    label={t('feedback.correction.sourceLabel')}
+                    value={sourceUrl}
+                    onChangeText={(value) => {
+                      setSourceUrl(value);
+                      setSourceError(null);
+                    }}
+                    placeholder="https://"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                    error={sourceError}
+                    hint={t('feedback.correction.sourceHint')}
+                  />
+                  <Text style={styles.note}>{t('feedback.correction.reviewNote')}</Text>
+                </>
+              ) : null}
 
               <Text style={styles.sectionLabel}>{t('feedback.imageLabel')}</Text>
               {screenshotUri ? (
@@ -311,6 +388,7 @@ export function FeedbackSheet() {
                     </View>
                   ))}
                   <Text style={styles.note}>{t('feedback.detailsNever')}</Text>
+                  {user ? <Text style={styles.note}>{t('feedback.accountLink')}</Text> : null}
                 </View>
               ) : null}
 
@@ -345,6 +423,9 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   preview: { width: 64, height: 110, borderRadius: radii.md, backgroundColor: colors.surfaceAlt },
   note: { ...typography.small, fontWeight: '500', color: colors.textMuted },
+  about: { gap: 2, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surface },
+  aboutLabel: { ...typography.overline, color: colors.textSecondary },
+  aboutTitle: { ...typography.bodyBold, color: colors.textPrimary },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, paddingVertical: spacing.xs },
   toggleLabel: { ...typography.body, color: colors.textPrimary, flex: 1 },
   detailsToggle: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

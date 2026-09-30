@@ -4,6 +4,7 @@ import { ChevronLeft, Heart, Share2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { ReportIssueLink } from '@/components/content/ReportIssueLink';
 import { SourcesAndNotes } from '@/components/content/SourcesAndNotes';
 import { type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -174,7 +175,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           {simpleSummary ? null : <KyrgyzOnlyNote status={item.translation?.status} language={i18n.language} />}
 
           {/* 3. Compact audio guide, right where reading starts. */}
-          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} />
+          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} title={item.title} />
 
           {/* 4. Content blocks - text straight on the page, no boxes. */}
           {simpleSummary ? (
@@ -221,6 +222,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           {challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
           <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
+          <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />
         </View>
 
         {/* 7. Related real items from the same category. */}

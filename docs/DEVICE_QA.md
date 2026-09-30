@@ -84,3 +84,20 @@ Device under test (fill in): model `________` · iOS `________` · EAS build `__
 | RC-4 | P2 | `/admin/push`, `/admin/<section>` | All | Open by deep link as non-admin | Not-found | Admin tools rendered (server still refused actions) | `AdminGate` → not-found for non-admins | Web: guest `/admin/push` → not-found |
 | RC-5 | P2 (review risk) | Sign in | All | Supabase has Google enabled, Apple disabled | — | App Store Guideline 4.8 requires Sign in with Apple alongside Google | **Decision needed:** enable Apple in Supabase or disable Google | — |
 | RC-6 | P2 (decision) | iPad | iPad | `supportsTablet: true` | Designed for phone | App Store requires iPad screenshots and review on iPad; layouts are phone-first | **Decision needed:** set `supportsTablet: false` for 1.0, or QA on iPad | — |
+
+## Audio Guide 2.0 / Admin Studio 2.0 / Feedback 2.0 - device checks still to do (2026-09-29)
+
+Verified so far: TypeScript, Jest, and web (Chrome) only. Not yet on an iPhone or Android device.
+
+| Area | Check on a real device | Why web can't prove it |
+| --- | --- | --- |
+| Audio | Start Kyrgyz narration on a phone with a Kyrgyz voice; RU/EN narration only on translated items | Voice lists differ per device; web Chrome has no Kyrgyz voice |
+| Audio | Incoming call / Siri / another app's audio while narrating -> shows Paused, resumes from the same sentence | OS audio-session interruptions |
+| Audio | Unplug headphones mid-narration | Route-change behaviour of device TTS is OS-controlled (speech may continue on the speaker) |
+| Audio | Background the app -> paused; return -> still paused at the same place | AppState on device |
+| Audio | Mini player sits above the tab bar on iPhone with home indicator; hidden on games / labs / map | Safe-area insets |
+| Audio | Speed 1x / 1.25x / 1.5x with device TTS | Rate mapping differs per platform |
+| Admin | Sign in as a content_editor: search/filter, edit a culture item, save translations RU/EN, review note, preview, unsaved-changes prompt on swipe-back / Android back | Needs an admin account; not testable as guest |
+| Admin | Long textareas with the keyboard open; Save bar stays reachable | Keyboard behaviour |
+| Feedback | Send a content report online (after migration 20260929000001) and offline (queued, sends on reconnect) | Real submission was deliberately not sent from web QA |
+| Feedback | Attach one screenshot, remove it; screen capture disabled on Journal/account screens | Native capture module |

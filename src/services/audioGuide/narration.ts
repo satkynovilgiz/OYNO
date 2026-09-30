@@ -91,3 +91,32 @@ export function joinNarration(parts: (string | null | undefined)[]): string {
     .map((part) => (/[.!?…:]$/.test(part!) ? part! : `${part}.`))
     .join(' ');
 }
+
+/**
+ * Where a playable plan's sound comes from, for offline honesty:
+ * - 'bundled': a recording shipped in the app (require()) or saved on the
+ *   device - plays offline;
+ * - 'device': the phone's own text-to-speech voice - plays offline where
+ *   that voice is installed on the device;
+ * - 'network': a streamed recording - needs a connection.
+ */
+export type AudioOfflineAvailability = 'bundled' | 'device' | 'network';
+
+export function offlineAvailabilityFor(plan: Exclude<AudioPlan, { kind: 'unavailable' }>): AudioOfflineAvailability {
+  if (plan.kind === 'tts') return 'device';
+  const source = plan.source as unknown;
+  if (typeof source === 'number') return 'bundled';
+  const uri = typeof source === 'string' ? source : typeof source === 'object' && source && 'uri' in source ? String((source as { uri?: unknown }).uri ?? '') : '';
+  return /^https?:\/\//i.test(uri) ? 'network' : 'bundled';
+}
+
+/** Whether the Listen control should offer playback right now. */
+export function isPlayableNow(availability: AudioOfflineAvailability, isOffline: boolean): boolean {
+  return !(availability === 'network' && isOffline);
+}
+
+/** "m:ss" for the player's time readout. */
+export function formatAudioTime(seconds: number): string {
+  const whole = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+}

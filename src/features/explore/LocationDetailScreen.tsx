@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Compass, Heart, Share2 } from 'lucide-react-
 import { useTranslation } from 'react-i18next';
 
 import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { ReportIssueLink } from '@/components/content/ReportIssueLink';
 import { SourcesAndNotes } from '@/components/content/SourcesAndNotes';
 import { ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -204,6 +205,7 @@ export function LocationDetailScreen({
             <KyrgyzOnlyNote status={location.factsTranslation} language={i18n.language} />
             <AudioGuidePlayer
               contentKey={`region:${location.id}`}
+              title={locationName}
               narration={{
                 lang: factsLanguage,
                 text: joinNarration([location.name[factsLanguage] ?? location.name.kg, ...(factsLanguage === i18n.language ? [location.tagline] : []), ...(isChild ? location.facts.slice(0, 2) : location.facts)]),
@@ -299,6 +301,7 @@ export function LocationDetailScreen({
           {!questFirst ? questCard : null}
 
           <SourcesAndNotes contentType="explore_region" level={location.status} sources={location.sources} />
+          <ReportIssueLink contentType="explore_region" contentId={location.id} title={locationName} />
         </View>
       </ScrollView>
       {shareHost}

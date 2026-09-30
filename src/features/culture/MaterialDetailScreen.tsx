@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { ReportIssueLink } from '@/components/content/ReportIssueLink';
 import { SourcesAndNotes } from '@/components/content/SourcesAndNotes';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -91,6 +92,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
           {material.body ? (
             <AudioGuidePlayer
               contentKey={`culture_material:${material.id}`}
+              title={material.title}
               narration={{ lang: bodyLanguage, text: joinNarration([bodyLanguage === 'kg' ? (material.translation?.titles.kg ?? material.title) : material.title, material.body]) }}
             />
           ) : null}
@@ -102,6 +104,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
           )}
 
           <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} />
+          <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
         </View>
       </ScrollView>
     </View>

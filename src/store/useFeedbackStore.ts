@@ -1,13 +1,19 @@
 import { create } from 'zustand';
 
-export type FeedbackSource = 'settings' | 'error' | 'not_found';
+import type { FeedbackCategory } from '@/services/feedback/feedbackQueue';
+import type { ReportContentType } from '@/services/feedback/reportContent';
+
+export type FeedbackSource = 'settings' | 'error' | 'not_found' | 'content';
 
 export type FeedbackContext = {
   source: FeedbackSource;
   /** Sanitized crash id from RouteErrorBoundary - never a raw stack. */
   errorFingerprint?: string;
-  /** Pre-selected category (a crash is a bug). */
-  category?: 'bug';
+  /** Pre-selected category (a crash is a bug; a content report a correction). */
+  category?: FeedbackCategory;
+  /** The content a "Report an issue" link was on - its public id is sent,
+   * its title is only shown in the sheet so the reporter needn't retype it. */
+  content?: { contentType: ReportContentType; contentId: string; title: string };
 };
 
 type FeedbackState = {
