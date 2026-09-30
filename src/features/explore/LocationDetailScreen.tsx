@@ -18,12 +18,14 @@ import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { joinNarration } from '@/services/audioGuide/narration';
+import { useExploreRegion } from '@/services/content/exploreService';
 import { isTaglineLocalized } from '@/services/content/regionTaglines';
+import { mapExploreRegionName } from '@/services/content/types';
 import { useShareCard } from '@/services/share/useShareCard';
 import { cardRadii, colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
 import { buildPlaceShareCard } from './placeShareCard';
-import { getRegionExperience, regionHubRoute } from './regions/regionExperiences';
+import { regionForDestination, regionHubRoute } from './regions/regionExperiences';
 import { DiscoveriesRow, formatVisitDate } from './components';
 import { LOCATION_TONES } from './data';
 import type { ExploreDiscovery, ExploreLocation } from './types';
@@ -112,6 +114,10 @@ export function LocationDetailScreen({
   const questFirst = config.characterProminence === 'primary' || config.characterProminence === 'frequent';
 
   const { share, shareHost } = useShareCard();
+  // The Region Hub this place belongs to (the region itself or a member).
+  const homeRegion = regionForDestination(location.id);
+  const { data: homeRegionRow } = useExploreRegion(homeRegion && homeRegion.id !== location.id ? homeRegion.id : undefined);
+  const regionName = !homeRegion ? null : homeRegion.id === location.id ? locationName : homeRegionRow ? (mapExploreRegionName(homeRegionRow)[i18n.language as SupportedLanguage] ?? homeRegionRow.name_kg) : null;
   const passportLabel = passport
     ? passport.visited
       ? passport.visitedAt
@@ -207,11 +213,11 @@ export function LocationDetailScreen({
           {/* 2. Short introduction (the region's real tagline). */}
           <Text style={[styles.intro, isAdult && styles.introEditorial]}>{location.tagline}</Text>
 
-          {/* This place has a Region Hub - one quiet way in. */}
-          {getRegionExperience(location.id) ? (
-            <AnimatedPressable style={styles.regionLink} onPress={() => router.push(regionHubRoute(location.id) as never)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('regionHub.openRegion', { name: locationName })}>
+          {/* This place belongs to a Region Hub - one quiet way in. */}
+          {homeRegion && regionName ? (
+            <AnimatedPressable style={styles.regionLink} onPress={() => router.push(regionHubRoute(homeRegion.id) as never)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('regionHub.openRegion', { name: regionName })}>
               <Compass size={16} color={colors.primary} strokeWidth={2.25} />
-              <Text style={styles.regionLinkText}>{t('regionHub.openRegion', { name: locationName })}</Text>
+              <Text style={styles.regionLinkText}>{t('regionHub.openRegion', { name: regionName })}</Text>
               <ChevronRight size={16} color={colors.primary} strokeWidth={2.25} />
             </AnimatedPressable>
           ) : null}

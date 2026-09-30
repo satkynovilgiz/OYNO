@@ -80,6 +80,16 @@ export const QUESTION_BANK: ChallengeQuestion[] = [
   { id: 'lenin-peak', sourceType: 'destination', sourceId: 'alay', kind: 'trueFalse', options: TRUE_FALSE, correctOptionId: 'true' },
   { id: 'arslanbob-forest', sourceType: 'destination', sourceId: 'arslanbob', kind: 'multiple', options: [{ id: 'spruce' }, { id: 'walnut' }, { id: 'juniper' }], correctOptionId: 'walnut' },
   { id: 'suusamyr-valley', sourceType: 'destination', sourceId: 'suusamyr', kind: 'trueFalse', options: TRUE_FALSE, correctOptionId: 'false' },
+  // Regions - each restates one stored, unflagged fact of that region's own
+  // content (explore_regions facts; see features/challenges/regionalChallenges.ts).
+  { id: 'naryn-altitude-share', sourceType: 'destination', sourceId: 'naryn', kind: 'multiple', options: [{ id: 'p95' }, { id: 'p50' }, { id: 'p20' }], correctOptionId: 'p95' },
+  { id: 'naryn-lakes', sourceType: 'destination', sourceId: 'naryn', kind: 'multiple', options: [{ id: 'sary-chelek' }, { id: 'son-kol' }, { id: 'ysyk-kol' }], correctOptionId: 'son-kol' },
+  { id: 'jalal-abad-springs', sourceType: 'destination', sourceId: 'jalal-abad', kind: 'multiple', options: [{ id: 'glaciers' }, { id: 'springs' }, { id: 'dunes' }], correctOptionId: 'springs' },
+  { id: 'jalal-abad-reserve', sourceType: 'destination', sourceId: 'jalal-abad', kind: 'multiple', options: [{ id: 'son-kol' }, { id: 'alay' }, { id: 'sary-chelek' }], correctOptionId: 'sary-chelek' },
+  { id: 'arslanbob-old-trees', sourceType: 'destination', sourceId: 'arslanbob', kind: 'trueFalse', options: TRUE_FALSE, correctOptionId: 'true' },
+  { id: 'osh-fergana', sourceType: 'destination', sourceId: 'osh', kind: 'multiple', options: [{ id: 'fergana' }, { id: 'chuy' }, { id: 'talas' }], correctOptionId: 'fergana' },
+  { id: 'osh-alai', sourceType: 'destination', sourceId: 'osh', kind: 'multiple', options: [{ id: 'terskey' }, { id: 'alai' }, { id: 'kungoy' }], correctOptionId: 'alai' },
+  { id: 'achyk-tash', sourceType: 'destination', sourceId: 'alay', kind: 'multiple', options: [{ id: 'son-kol' }, { id: 'sary-chelek' }, { id: 'alay' }], correctOptionId: 'alay' },
   {
     id: 'image-son-kol',
     sourceType: 'destination',

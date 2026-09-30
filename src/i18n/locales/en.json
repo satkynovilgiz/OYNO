@@ -1150,6 +1150,10 @@
       "stops": "Stops: {{count}}",
       "places": "Places",
       "searchLabel": "Search OYNO"
+    },
+    "regions": {
+      "title": "Explore by region",
+      "completed": "Explored"
     }
   },
   "profileSetup": {
@@ -2329,6 +2333,73 @@
       "image-son-kol": {
         "question": "Which picture shows Son-Köl?",
         "explanation": "Son-Köl is a high mountain lake formed by glaciers."
+      },
+      "naryn-altitude-share": {
+        "question": "What share of Naryn Region lies above 1,000 m?",
+        "explanation": "95% of Naryn Region lies more than 1,000 m above sea level.",
+        "options": {
+          "p95": "95%",
+          "p50": "50%",
+          "p20": "20%"
+        }
+      },
+      "naryn-lakes": {
+        "question": "Which of these high mountain lakes is in Naryn Region?",
+        "explanation": "Naryn Region has high mountain lakes such as Son-Köl, Kol-Suu and Chatyr-Köl.",
+        "options": {
+          "son-kol": "Son-Köl",
+          "sary-chelek": "Sary-Chelek",
+          "ysyk-kol": "Issyk-Kul"
+        }
+      },
+      "jalal-abad-springs": {
+        "question": "What were the resorts of Jalal-Abad Region built around?",
+        "explanation": "Jalal-Abad Region’s resorts grew up around its mineral springs.",
+        "options": {
+          "springs": "Mineral springs",
+          "glaciers": "Glaciers",
+          "dunes": "Sand dunes"
+        }
+      },
+      "jalal-abad-reserve": {
+        "question": "Which biosphere reserve is in Jalal-Abad Region?",
+        "explanation": "The Sary-Chelek Biosphere Reserve and the Arslanbob walnut forest are both in Jalal-Abad Region.",
+        "options": {
+          "sary-chelek": "Sary-Chelek",
+          "son-kol": "Son-Köl",
+          "alay": "Alay"
+        }
+      },
+      "arslanbob-old-trees": {
+        "question": "Some walnut trees in Arslanbob are over a thousand years old.",
+        "explanation": "True - some of Arslanbob’s walnut trees are more than a thousand years old."
+      },
+      "osh-fergana": {
+        "question": "Osh lies in the east of which valley?",
+        "explanation": "Osh lies in the east of the Fergana Valley, at the foot of the Alai mountains.",
+        "options": {
+          "fergana": "Fergana",
+          "chuy": "Chüy",
+          "talas": "Talas"
+        }
+      },
+      "osh-alai": {
+        "question": "At the foot of which mountains does Osh lie?",
+        "explanation": "Osh lies at the foot of the Alai mountains, in the east of the Fergana Valley.",
+        "options": {
+          "alai": "The Alai mountains",
+          "terskey": "Terskey Ala-Too",
+          "kungoy": "Küngöy Ala-Too"
+        }
+      },
+      "achyk-tash": {
+        "question": "Where is the Achyk-Tash alpine camp?",
+        "explanation": "The Achyk-Tash alpine camp is in Alay, a base for mountaineering.",
+        "options": {
+          "alay": "Alay",
+          "son-kol": "Son-Köl",
+          "sary-chelek": "Sary-Chelek"
+        }
       }
     },
     "questionCount": "{{count}} questions",
@@ -2341,6 +2412,10 @@
       "yourAnswer": "Your answer",
       "correctAnswer": "Correct answer",
       "notQuite": "Not quite"
+    },
+    "regional": {
+      "title": "{{name}}: regional challenge",
+      "backToRegion": "Back to {{name}}"
     }
   },
   "feedback": {
@@ -2672,7 +2747,31 @@
     "regions": {
       "ysyk-kol": {
         "intro": "A lake region in the northeast of Kyrgyzstan, between the Küngöy and Terskey Ala-Too ranges."
+      },
+      "chuy": {
+        "intro": "The Chüy valley region, bordered to the south by the Kyrgyz Ala-Too range."
+      },
+      "talas": {
+        "intro": "A region closely tied to the Manas epic: in its second part, Semetey returns to Talas."
+      },
+      "naryn": {
+        "intro": "A high-mountain region in the Inner Tian Shan, in the centre of Kyrgyzstan."
+      },
+      "jalal-abad": {
+        "intro": "A region in the southwest of Kyrgyzstan, home to Sary-Chelek and Arslanbob."
+      },
+      "osh": {
+        "intro": "Osh lies in the east of the Fergana Valley, at the foot of the Alai mountains."
+      },
+      "batken": {
+        "intro": "A region in the southwest of Kyrgyzstan, centred on the town of Batken."
       }
+    },
+    "challenge": {
+      "title": "Regional challenge",
+      "start": "Start",
+      "retry": "Retry",
+      "best": "best {{correct}} / {{total}}"
     }
   }
 }

@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ArrowRight, Check, ChevronLeft, Map as MapIcon, Share2 } from 'lucide-react-native';
-import { useMemo } from 'react';
+import { ArrowRight, Check, ChevronLeft, GraduationCap, Map as MapIcon, Share2 } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,15 +13,14 @@ import { AnimatedPressable, Button, CompactContentCard, IconButton, ProgressBar,
 import { cultureItemImages, cultureMaterialImages } from '@/features/culture/data';
 import { DestinationRail } from '@/features/explore/components/DestinationCards';
 import { DiscoveriesRow } from '@/features/explore/components/DiscoveriesRow';
-import { discoveryImages, LOCATION_TONES, natureSiteImages } from '@/features/explore/data';
+import { discoveryImages, natureSiteImages } from '@/features/explore/data';
 import type { ExploreDiscovery } from '@/features/explore/types';
+import { regionalChallengeId, regionalChallengeQuestionIds, regionalResultKey } from '@/features/challenges/regionalChallenges';
 import { QuestCard } from '@/features/quests/QuestCard';
 import { getGuidedQuest } from '@/features/quests/questsData';
 import { useQuestProgress } from '@/features/quests/useQuests';
-import { computeTrailProgress } from '@/features/trails/trailProgress';
 import { getTrail } from '@/features/trails/trailsData';
 import { TrailsRow } from '@/features/trails/TrailsRow';
-import { useTrailSignals } from '@/features/trails/useTrailSignals';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useCultureItem } from '@/services/content/cultureItemsService';
@@ -31,11 +30,13 @@ import { useExploreRegions } from '@/services/content/exploreService';
 import { regionTagline } from '@/services/content/regionTaglines';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
 import { useShareCard } from '@/services/share/useShareCard';
+import { useChallengeStore } from '@/store/useChallengeStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
 
-import { getRegionExperience, type RegionExperienceConfig } from './regionExperiences';
-import { buildRegionShareCard, computeRegionProgress, pickStartHere, type RegionSignals } from './regionModel';
+import { getRegionExperience, regionOwnImage, regionTone, type RegionExperienceConfig } from './regionExperiences';
+import { buildRegionShareCard, computeRegionProgress, pickStartHere } from './regionModel';
+import { useRegionSignals } from './useRegionSignals';
 
 /**
  * Region Hub (/explore/region/[id]) - one reusable screen for every region
@@ -63,27 +64,20 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
   const { data: discoveryRows } = useDiscoveries();
   const visitedRegionIds = useProgressStore((state) => state.visitedRegionIds);
   const discoveredIds = useProgressStore((state) => state.discoveredExploreIds);
-  const trailSignals = useTrailSignals();
   const questProgress = useQuestProgress();
+  const signals = useRegionSignals();
 
   const regionRow = regions?.find((row) => row.id === config.id) ?? null;
   const name = regionRow ? (mapExploreRegionName(regionRow)[language] ?? regionRow.name_kg) : '';
 
-  const signals: RegionSignals = useMemo(() => {
-    const trails: RegionSignals['trails'] = {};
-    for (const id of config.trailIds) {
-      const trail = getTrail(id);
-      if (trail) trails[id] = computeTrailProgress(trail, trailSignals);
-    }
-    const quests: RegionSignals['quests'] = {};
-    for (const id of config.questIds) {
-      const entry = questProgress.find((progress) => progress.quest.id === id);
-      if (entry) quests[id] = { completed: entry.completed, total: entry.total };
-    }
-    return { visitedRegionIds, discoveredIds, trails, quests };
-  }, [config, visitedRegionIds, discoveredIds, trailSignals, questProgress]);
 
   const progress = computeRegionProgress(config, signals);
+  // Regional challenge (existing engine) - only when the region has a valid pack.
+  const challengeQuestionIds = regionalChallengeQuestionIds(config);
+  const challengeResult = useChallengeStore((state) => state.results[regionalResultKey(config.id)]);
+  useEffect(() => {
+    if (challengeQuestionIds.length > 0 && !useChallengeStore.getState().isLoaded) void useChallengeStore.getState().load();
+  }, [challengeQuestionIds.length]);
   const next = pickStartHere(config, signals);
 
   const places = config.destinationIds.flatMap((id, index) => {
@@ -94,7 +88,7 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
         id,
         name: mapExploreRegionName(row)[language] ?? row.name_kg,
         tagline: regionTagline(row, language),
-        imageSource: natureSiteImages[id] ?? (id === config.id ? config.heroImage : null),
+        imageSource: natureSiteImages[id] ?? (id === config.id ? regionOwnImage(config) : null),
         toneIndex: index,
         visited: visitedRegionIds.includes(id),
       },
@@ -107,7 +101,7 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
   });
 
   const progressText = t('regionHub.progress', { completed: progress.completed, total: progress.total });
-  const tone = LOCATION_TONES[0];
+  const tone = regionTone(config.id);
 
   function openStart() {
     if (next.kind === 'destination') router.push(`/explore/${next.id}` as never);
@@ -231,6 +225,30 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
           </View>
         ) : null}
 
+        {challengeQuestionIds.length > 0 ? (
+          <View style={styles.pad}>
+            <AnimatedPressable
+              style={styles.challenge}
+              onPress={() => router.push(`/challenges/${regionalChallengeId(config.id)}` as never)}
+              hoverEffect
+              accessibilityRole="button"
+              accessibilityLabel={`${t('regionHub.challenge.title')}. ${t('challenges.questionCount', { count: challengeQuestionIds.length })}. ${challengeResult?.completedAt ? t('regionHub.challenge.best', { correct: challengeResult.bestCorrect, total: challengeQuestionIds.length }) : ''}`}
+            >
+              <View style={styles.challengeIcon}>
+                <GraduationCap size={18} color={colors.primary} strokeWidth={2.25} />
+              </View>
+              <View style={styles.startText}>
+                <Text style={styles.startEyebrow}>{t('regionHub.challenge.title')}</Text>
+                <Text style={styles.challengeMeta}>
+                  {t('challenges.questionCount', { count: challengeQuestionIds.length })}
+                  {challengeResult?.completedAt ? ` · ${t('regionHub.challenge.best', { correct: challengeResult.bestCorrect, total: challengeQuestionIds.length })}` : ''}
+                </Text>
+              </View>
+              <Text style={styles.challengeCta}>{challengeResult?.completedAt ? t('regionHub.challenge.retry') : t('regionHub.challenge.start')}</Text>
+            </AnimatedPressable>
+          </View>
+        ) : null}
+
         <View style={styles.pad}>
           <Button label={t('regionHub.showOnMap')} variant="secondary" icon={<MapIcon size={16} color={colors.primary} strokeWidth={2.25} />} onPress={() => router.push(`/explore/map?region=${config.id}` as never)} />
         </View>
@@ -243,18 +261,18 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
 /** A linked culture item, loaded by id only (never the whole catalog). */
 function LinkedCultureItem({ id, width }: { id: string; width: number }) {
   const { data: item, isLoading } = useCultureItem(id);
-  const image = cultureItemImages[id]?.[0];
+  const image = cultureItemImages[id]?.[0] ?? null;
   if (isLoading) return <Skeleton width={width} height={width * 0.75} borderRadius={cardRadii.chip} />;
-  if (!item || !image) return null;
-  return <CompactContentCard width={width} imageSource={image} title={item.title} onPress={() => router.push(`/culture/item/${id}` as never)} />;
+  if (!item) return null;
+  return <CompactContentCard width={width} imageSource={image} fallbackTone={colors.tiles.culture} title={item.title} onPress={() => router.push(`/culture/item/${id}` as never)} />;
 }
 
 function LinkedMaterial({ id, width }: { id: string; width: number }) {
   const { data: material, isLoading } = useCultureMaterial(id);
-  const image = cultureMaterialImages[id];
+  const image = cultureMaterialImages[id] ?? null;
   if (isLoading) return <Skeleton width={width} height={width * 0.75} borderRadius={cardRadii.chip} />;
-  if (!material || !image) return null;
-  return <CompactContentCard width={width} imageSource={image} title={material.title} onPress={() => router.push(`/culture/material/${id}` as never)} />;
+  if (!material) return null;
+  return <CompactContentCard width={width} imageSource={image} fallbackTone={colors.tiles.culture} title={material.title} onPress={() => router.push(`/culture/material/${id}` as never)} />;
 }
 
 const styles = StyleSheet.create({
@@ -281,4 +299,8 @@ const styles = StyleSheet.create({
   startEyebrow: { ...textStyles.overline, color: colors.accentTerracotta },
   startTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
   startTitleChild: { fontSize: 18, lineHeight: 24 },
+  challenge: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
+  challengeIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
+  challengeMeta: { ...textStyles.caption, color: colors.textSecondary },
+  challengeCta: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },
 });

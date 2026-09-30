@@ -39,6 +39,7 @@ import {
   KyrgyzstanMap,
   RecentPlacesRow,
 } from './components';
+import { RegionRail } from './regions/RegionRail';
 import { discoveryImages, exploreMapPins, natureSiteImages } from './data';
 import { ILLUSTRATED_MAP_COORDINATES } from './map/illustratedMap';
 import { getExploreSectionOrder, pickFeaturedDestination, type ExploreSectionId } from './exploreSections';
@@ -285,6 +286,9 @@ export function ExploreScreen() {
                 }
               />
             </HeroEntrance>
+
+            {/* Explore by region - one compact card per Region Hub. */}
+            <RegionRail regions={regions ?? []} experience={experience} />
 
             {filteredRegionsList && (
               <View style={styles.horizontalPad}>

@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { NotFoundState } from '@/components/system/NotFoundState';
 import { ChallengeRunScreen } from '@/features/challenges/ChallengeRunScreen';
+import { regionForChallengeId } from '@/features/challenges/regionalChallenges';
 import { getCollection } from '@/features/collections/collectionsData';
 
 export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteErrorBoundary';
@@ -10,6 +11,7 @@ export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteEr
  * not silently fall through to the Journey Challenge and record results. */
 function isKnownChallenge(challengeId: string): boolean {
   if (challengeId === 'daily' || challengeId === 'journey') return true;
+  if (challengeId.startsWith('region-')) return !!regionForChallengeId(challengeId);
   return challengeId.startsWith('collection-') && !!getCollection(challengeId.slice('collection-'.length));
 }
 

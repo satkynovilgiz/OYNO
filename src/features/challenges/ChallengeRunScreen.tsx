@@ -27,6 +27,8 @@ import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, editorial, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
+import { regionHubRoute } from '@/features/explore/regions/regionExperiences';
+import { regionalChallengeQuestionIds, regionalResultKey, regionForChallengeId } from './regionalChallenges';
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds, pickDailyQuestionIds, scoreAnswers, type AnswerRecord } from './challengeLogic';
 import { getQuestion, questionReviewLevel, routeForSource, type ChallengeOption, type ChallengeQuestion, type OptionImageRef } from './questionBank';
 
@@ -81,7 +83,8 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
 
   const today = localDateKey();
   const collection: Collection | undefined = challengeId.startsWith('collection-') ? getCollection(challengeId.slice('collection-'.length)) : undefined;
-  const resultKey = challengeId === 'daily' ? `daily:${today}` : collection ? `collection:${collection.id}` : 'journey';
+  const region = regionForChallengeId(challengeId);
+  const resultKey = challengeId === 'daily' ? `daily:${today}` : collection ? `collection:${collection.id}` : region ? regionalResultKey(region.id) : 'journey';
 
   const questions = useMemo<ChallengeQuestion[]>(() => {
     if (!storeLoaded) return [];
@@ -91,6 +94,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
       // Pure during render; today's identity is persisted in the effect below.
       ids = useChallengeStore.getState().storedDailyIds(today) ?? pickDailyQuestionIds(today, count);
     } else if (collection) ids = collectionQuestionIds(collection);
+    else if (region) ids = regionalChallengeQuestionIds(region);
     else if (challengeId === 'journey') ids = journeyQuestionIds(visitedRegionIds, Object.values(dailyCompletions));
     return ids.map(getQuestion).filter((question): question is ChallengeQuestion => !!question);
     // Fixed for the session once chosen.
@@ -109,7 +113,16 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions.length, resultKey]);
 
-  const title = challengeId === 'daily' ? t('challenges.daily.title') : collection ? (collection.title[language] ?? collection.title.kg) : t('challenges.journey.title');
+  const regionRow = region ? regions?.find((row) => row.id === region.id) : undefined;
+  const regionName = regionRow ? (mapExploreRegionName(regionRow)[language] ?? regionRow.name_kg) : '';
+  const title =
+    challengeId === 'daily'
+      ? t('challenges.daily.title')
+      : collection
+        ? (collection.title[language] ?? collection.title.kg)
+        : region
+          ? t('challenges.regional.title', { name: regionName })
+          : t('challenges.journey.title');
 
   function sourceTitle(question: ChallengeQuestion): string {
     if (question.sourceType === 'destination') {
@@ -245,7 +258,19 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
           ) : null}
 
           <View style={styles.primary}>
-            <Button label={t('challenges.backToChallenges')} variant="secondary" size="lg" block onPress={() => router.replace('/challenges' as never)} />
+            {region ? (
+              // Launched from a Region Hub: go back to it (the hub is below
+              // this screen) - no new copy of the hub, no loop.
+              <Button
+                label={t('challenges.regional.backToRegion', { name: regionName })}
+                variant="secondary"
+                size="lg"
+                block
+                onPress={() => (router.canGoBack() ? router.back() : router.replace(regionHubRoute(region.id) as never))}
+              />
+            ) : (
+              <Button label={t('challenges.backToChallenges')} variant="secondary" size="lg" block onPress={() => router.replace('/challenges' as never)} />
+            )}
           </View>
         </ScrollView>
         {shareHost}

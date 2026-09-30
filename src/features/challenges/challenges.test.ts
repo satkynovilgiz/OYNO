@@ -17,7 +17,9 @@ import { QUESTION_BANK, routeForSource, type ChallengeQuestion } from './questio
 const MATERIAL_IDS = ['komuz-discovery', 'kalpak-history', 'boorsok-cooking', 'kyz-kuumai-game'];
 
 function sourceExists(question: ChallengeQuestion): boolean {
-  if (question.sourceType === 'destination') return !!natureSiteCoordinates[question.sourceId];
+  // Every Explore destination - nature site or region - has a content file
+  // (content/explore/<id>.md) and its own /explore/<id> page.
+  if (question.sourceType === 'destination') return !!natureSiteCoordinates[question.sourceId] || existsSync(join(__dirname, '../../../content/explore', `${question.sourceId}.md`));
   if (question.sourceType === 'culture_material') return MATERIAL_IDS.includes(question.sourceId);
   return !!cultureItemImages[question.sourceId];
 }
