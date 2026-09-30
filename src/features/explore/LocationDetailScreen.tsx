@@ -17,9 +17,11 @@ import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { joinNarration } from '@/services/audioGuide/narration';
+import { isTaglineLocalized } from '@/services/content/regionTaglines';
 import { useShareCard } from '@/services/share/useShareCard';
 import { cardRadii, colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
+import { buildPlaceShareCard } from './placeShareCard';
 import { DiscoveriesRow, formatVisitDate } from './components';
 import { LOCATION_TONES } from './data';
 import type { ExploreDiscovery, ExploreLocation } from './types';
@@ -116,12 +118,19 @@ export function LocationDetailScreen({
       : t('explore.map.pinNotDiscovered')
     : '';
 
-  // Share card = this destination's own hero art (or its tone), its name
-  // and a "Place" label; plain text on builds/platforms without image
-  // sharing (see useShareCard).
+  // Share card = this destination's own hero art (or its tone), its name,
+  // its tagline when that line is really in the app language, and its kind;
+  // plain text on builds/platforms without image sharing (see useShareCard).
   function handleShare() {
     void share(
-      { title: locationName, label: t('saved.contentTypes.region'), imageSource: heroImage, fallbackTone: tone },
+      buildPlaceShareCard({
+        name: locationName,
+        kindLabel: t(location.kind === 'nature' ? 'explore.locationDetail.kindNature' : 'explore.locationDetail.kindRegion'),
+        tagline: location.tagline,
+        taglineInAppLanguage: isTaglineLocalized(location.id, i18n.language as SupportedLanguage),
+        imageSource: heroImage,
+        fallbackTone: tone,
+      }),
       t('explore.locationDetail.shareMessage', { name: locationName }),
     );
   }
@@ -178,7 +187,7 @@ export function LocationDetailScreen({
                 onPress={onToggleFavorite}
                 variant={isFavorite ? 'primary' : 'surface'}
               />
-              <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" accessibilityLabel={t('explore.locationDetail.shareLabel')} onPress={handleShare} />
+              <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" accessibilityLabel={t('explore.locationDetail.shareNamedLabel', { name: locationName })} onPress={handleShare} />
             </View>
           </View>
           <View style={styles.heroBottom}>

@@ -28,6 +28,8 @@ export type ShareCardContent = {
   title: string;
   /** Small category label, e.g. "Табигый жер" / "Маданият". */
   label: string;
+  /** A short public line about the content (e.g. a destination's tagline). */
+  subtitle?: string | null;
   imageSource: ImageSourcePropType | null;
   /** Flat tone used when there's no photo (same tone the source screen
    * uses for that content). */
@@ -63,7 +65,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
 });
 
 const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
-  { title, label, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, excerpt, variant, stat, onImageReady },
+  { title, label, subtitle, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, excerpt, variant, stat, onImageReady },
   ref,
 ) {
   const score = variant === 'score' && !!stat;
@@ -99,6 +101,11 @@ const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
         <Text style={[styles.title, score && styles.titleScore]} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7}>
           {title}
         </Text>
+        {subtitle ? (
+          <Text style={styles.subtitle} numberOfLines={2}>
+            {subtitle}
+          </Text>
+        ) : null}
         {excerpt ? (
           <Text style={styles.excerpt} numberOfLines={3}>
             {`“${excerpt}”`}
@@ -229,6 +236,7 @@ const styles = StyleSheet.create({
   label: { ...textStyles.overline, color: colors.accentGold },
   title: { ...editorial(textStyles.display), fontSize: 34, lineHeight: 40, color: colors.textOnDark },
   titleScore: { fontSize: 26, lineHeight: 32 },
+  subtitle: { ...textStyles.body, fontSize: 17, lineHeight: 23, color: 'rgba(255,255,255,0.88)' },
   excerpt: { ...textStyles.body, fontSize: 17, lineHeight: 24, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)' },
   completed: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: spacing.sm, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.accentGold, marginTop: spacing.xxs },
   completedText: { ...textStyles.small, color: colors.textPrimary },

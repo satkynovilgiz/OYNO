@@ -1133,7 +1133,8 @@
       "trailsTitle": "Trails through this place",
       "kindNature": "Nature site",
       "kindRegion": "Region",
-      "story": "About this place"
+      "story": "About this place",
+      "shareNamedLabel": "Share {{name}}"
     },
     "v2": {
       "title": "Explore Kyrgyzstan",

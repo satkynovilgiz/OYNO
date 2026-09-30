@@ -53,3 +53,9 @@ export function regionTagline(row: Pick<ExploreRegionRow, 'id' | 'tagline'>, lan
 
 /** Tests/audit: ids with RU+EN taglines. */
 export const LOCALIZED_TAGLINE_IDS = Object.keys(TAGLINES.en);
+
+/** Whether the tagline really exists in this language (Kyrgyz is the
+ * source) - so a Kyrgyz fallback is never presented as RU/EN copy. */
+export function isTaglineLocalized(id: string, language: SupportedLanguage): boolean {
+  return language === 'kg' || !!TAGLINES[language]?.[id];
+}
