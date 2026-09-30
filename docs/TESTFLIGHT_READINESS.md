@@ -1,6 +1,7 @@
 # OYNO — EAS iOS Beta / TestFlight Readiness
 
-Status as of **2026-09-26** (release-candidate audit on `main`). Companion to
+Status as of **2026-09-26** (release-candidate audit on `main`), updated
+**2026-09-29** after the post-feature integration pass (§6, §7c). Companion to
 [`DEVICE_QA.md`](./DEVICE_QA.md) (device QA matrix + issue log),
 [`RELEASE_CANDIDATE_CHECKLIST.md`](./RELEASE_CANDIDATE_CHECKLIST.md) (the
 per-feature device test script) and [`VISUAL_QA.md`](./VISUAL_QA.md).
@@ -28,8 +29,15 @@ per-feature device test script) and [`VISUAL_QA.md`](./VISUAL_QA.md).
    Supabase (Apple Services ID + key) or disable Google before App Review.
    Does not block an internal preview build.
 
-Re-checked 2026-09-26: `ios.appleTeamId` still absent; `assets/icon.png`
-still the Expo template; `eas build:list --platform ios` still empty.
+Re-checked 2026-09-26 and again 2026-09-29: `ios.appleTeamId` still absent;
+`assets/icon.png` still the Expo template; `eas build:list --platform ios`
+still empty; Supabase auth settings still Google on / Apple off;
+`ios.supportsTablet` still `true` (iPad decision open, `DEVICE_QA.md` RC-6).
+
+6. **Pending migration** — `20260929000001_feedback_v2.sql` is not applied
+   (checked 2026-09-29). The app still works without it (reports fall back
+   to the original function with the context kept in the message; the admin
+   feedback inbox shows a "needs migration" line). Apply before testers.
 
 Once 1–3 are done, the repo is **ready for a preview build**. It is not
 TestFlight-ready until a production build is generated and the device
@@ -146,9 +154,21 @@ build can read it.
 
 ## 6. Supabase migrations the current app depends on
 
-Apply in filename order (all 36 in `supabase/migrations/`). The newest five
-back features added in September; they were confirmed present on the live
-project on 2026-09-23/24 by read-only REST checks (no writes):
+Apply in filename order (all **42** in `supabase/migrations/`). Live status
+below comes from read-only REST checks with the public key (no writes).
+
+Newest seven (checked 2026-09-29):
+
+| Migration | Needed by | Live? | If missing |
+| --- | --- | --- | --- |
+| `20260926000001_content_spelling_son_kol.sql` | Son-Köl spelling (data only) | **yes** (`name_kg` = Соң-Көл) | old spelling shows |
+| `20260927000001_content_translations.sql` | RU/EN long-form content | **yes** | app treats the table as empty → Kyrgyz fallback, no crash |
+| `20260927000002_content_translations_batch1.sql` | 20 translated items / 6 destinations | **yes** (276 reviewed rows) | Kyrgyz fallback |
+| `20260927000003_content_verification.sql` | destination sources, "verified needs a source" | **yes** (sources returned) | destinations show no sources |
+| `20260927000004_guided_quests.sql` | quest reward claim | **yes** (`claim_guided_quest` answers `NOT_AUTHENTICATED` to the anon key) | progress shows; reward reports "will sync later" |
+| `20260929000001_feedback_v2.sql` | feedback categories/context, admin inbox | **NO** (`PGRST202` function not found) | reports send via `submit_beta_feedback` with legacy category + context in the message; admin inbox shows "needs migration" |
+
+Earlier (confirmed 2026-09-23/24):
 
 1. `20260923000001_account_sync.sql` — cross-device sync (visits, daily, challenges, favorites)
 2. `20260923000002_beta_feedback.sql` — beta feedback reports + screenshots bucket
@@ -186,9 +206,19 @@ Fixed in this pass (details in `DEVICE_QA.md` issue log):
 - **RC-3 (P1 privacy)** React Query cache was never cleared between accounts; oymo/shyrdak creations and the admin role are cached without a user id → cleared on every account change.
 - **RC-4 (P2)** `/admin/push` and `/admin/<section>` rendered for non-admins via deep link → not-found unless the account has an admin role (server already enforced).
 
+## 7c. Integration pass (2026-09-29)
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | pass (exit 0) |
+| `npx jest --silent --ci` | **99 suites / 894 tests pass** |
+| `npx expo-doctor` | **20/21** — one failure: patch drift within SDK 57 (`expo` 57.0.25→~57.0.26, `expo-constants` 57.0.19→~57.0.20, `expo-router` 57.0.23→~57.0.24, `expo-updates` 57.0.23→~57.0.24). Not changed in this pass (`expo-updates` is native); run `npx expo install --fix` right before the next preview build |
+| Web route crawl (RU 375) | 21 routes incl. bad ids and admin deep links as a guest: no page errors, no raw server text, no horizontal overflow |
+| PHYSICAL DEVICE | **Nothing new verified** — still no iOS build |
+
 ## 8. Assets
 
-- Largest bundled images ≈ 1.1 MB; no oversized offenders (bundle audit in `VISUAL_QA.md`).
+- Largest bundled images (2026-09-29): four PNGs of ~2.1–2.2 MB (`culture/material_{kalpak,boorsok,kyz_kuumai}.png`, `games/kyzKuumay/thumbnail.png`) and the 1.1 MB atlas map. Two files named `.jpg` actually held PNG data (the Kyz Kuumai featured art and the atlas map) and were re-encoded as real JPEGs (same picture, 2.2→0.4 MB and 3.4→1.1 MB). Compressing the four PNGs would save ~6–7 MB — optional, not done without the owner's OK.
 - Audio: 54 MB (`assets/audio/games`, `assets/audio/komuz`); every `require`d file exists.
 - Splash: OYNO wordmark on cream `#F3E5C9` (was the Expo template grid on white); root `backgroundColor` cream as well, to avoid a white flash.
 - **Icon: placeholder — blocker** (see Verdict).
@@ -209,7 +239,7 @@ touching native modules or config needs a new build.
 - [ ] App Group created
 - [x] App + Widget App Group entitlements match *(verified in generated project)*
 - [ ] EAS credentials valid
-- [x] Supabase migrations applied *(newest five verified live; older assumed — confirm)*
+- [ ] Supabase migrations applied *(41 of 42: everything through `20260927000004` verified live on 2026-09-29; `20260929000001_feedback_v2` NOT applied; the oldest are assumed — confirm in the dashboard)*
 - [x] Environment values configured *(Supabase in all three EAS environments; Sentry optional, off)*
 - [ ] Real app icon added
 - [ ] Notifications tested

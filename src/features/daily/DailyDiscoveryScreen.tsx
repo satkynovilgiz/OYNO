@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
+import { ReportIssueLink } from '@/components/content/ReportIssueLink';
 import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -297,6 +298,9 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
               {!canComplete ? <Text style={styles.ctaHint}>{t('daily.completeHint')}</Text> : null}
             </View>
           )}
+
+          {/* Today's story is a culture item - reports go to that item. */}
+          <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />
         </View>
       </ScrollView>
     </View>

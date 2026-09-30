@@ -55,7 +55,7 @@ Device under test (fill in): model `________` · iOS `________` · EAS build `__
 | 35 | Widgets | Picker lists OYNO; small/medium/Lock Screen render; matches RN preview | BLOCKED | Needs native build |
 | 36 | Widget data | Updates after Daily / Journey / Passport / Trail change via App Group | BLOCKED | App Group chain audited 2026-09-24 |
 | 37 | Widget links | Each widget opens the right screen; bad route → not-found | BLOCKED (device) · CODE VERIFIED | `oyno:/` + route; unknown routes → `+not-found` (web) |
-| 38 | Audio guide | Play/pause, background/foreground, interruption, headphones; no background-audio promise | BLOCKED | `enableBackgroundPlayback: false` |
+| 38 | Audio guide | Play/pause/resume, leave article → mini player keeps it, background pauses / foreground stays paused, language switch stops, sign-out stops, interruption, headphones; no background-audio promise | BLOCKED (device) · CODE VERIFIED (lifecycle) | `enableBackgroundPlayback: false`; `audioGuide2.test.ts`, `integration.test.ts` (sign-out/account switch stops narration) |
 | 39 | Haptics | Intended places only, no spam | BLOCKED | — |
 | 40 | Photo permissions | Journal picker (no prompt, system picker), share save, wallpaper save — text matches | BLOCKED (device) · CODE VERIFIED | No camera/microphone/Face ID permission configured |
 | 41 | Deep links | Daily, trail, challenge, achievement, destination, culture, notification, widget; unknown → not-found | BLOCKED (device) · CODE VERIFIED | Web: unknown route → designed not-found; `/admin/push` for non-admin → not-found (**new**) |
@@ -87,7 +87,7 @@ Device under test (fill in): model `________` · iOS `________` · EAS build `__
 
 ## Audio Guide 2.0 / Admin Studio 2.0 / Feedback 2.0 - device checks still to do (2026-09-29)
 
-Verified so far: TypeScript, Jest, and web (Chrome) only. Not yet on an iPhone or Android device.
+Verified so far: TypeScript, Jest, and web (Chrome) only. Not yet on an iPhone or Android device. Re-checked in the 2026-09-29 integration pass (still web-only).
 
 | Area | Check on a real device | Why web can't prove it |
 | --- | --- | --- |
@@ -95,9 +95,12 @@ Verified so far: TypeScript, Jest, and web (Chrome) only. Not yet on an iPhone o
 | Audio | Incoming call / Siri / another app's audio while narrating -> shows Paused, resumes from the same sentence | OS audio-session interruptions |
 | Audio | Unplug headphones mid-narration | Route-change behaviour of device TTS is OS-controlled (speech may continue on the speaker) |
 | Audio | Background the app -> paused; return -> still paused at the same place | AppState on device |
-| Audio | Mini player sits above the tab bar on iPhone with home indicator; hidden on games / labs / map | Safe-area insets |
+| Audio | Leave the article while listening -> mini player continues; open the same article -> mini player hides, full player shows | Navigation + host registration on device |
+| Audio | Switch app language mid-narration -> narration stops; sign out mid-narration -> narration and mini player gone, no old title left | Store + auth events on device |
+| Audio | Mini player sits above the tab bar (never over tab buttons or the home indicator) on phones with different safe-area heights; hidden on games, labs, full map, challenges, auth/onboarding and admin | Safe-area insets |
 | Audio | Speed 1x / 1.25x / 1.5x with device TTS | Rate mapping differs per platform |
 | Admin | Sign in as a content_editor: search/filter, edit a culture item, save translations RU/EN, review note, preview, unsaved-changes prompt on swipe-back / Android back | Needs an admin account; not testable as guest |
 | Admin | Long textareas with the keyboard open; Save bar stays reachable | Keyboard behaviour |
-| Feedback | Send a content report online (after migration 20260929000001) and offline (queued, sends on reconnect) | Real submission was deliberately not sent from web QA |
+| Feedback | Send a content report online and offline (queued, sends on reconnect). Before migration 20260929000001 it must still arrive via the legacy function with the context in the message; after it, in the structured columns | Real submission was deliberately not sent from web QA |
+| Feedback | Account A queues a report offline → signs out → B signs in → reconnect: report arrives unlinked | Real accounts (logic covered by `feedback.test.ts`) |
 | Feedback | Attach one screenshot, remove it; screen capture disabled on Journal/account screens | Native capture module |

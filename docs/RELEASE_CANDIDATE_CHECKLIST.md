@@ -9,10 +9,10 @@ device verification.
 Build under test: `__________` (EAS build id) · iOS version: `______` ·
 Device: `__________` · Tester: `______` · Date: `______`
 
-## Current state (2026-09-26)
+## Current state (2026-09-26, re-checked 2026-09-29)
 
 - **Physical iPhone verified:** none — no iOS build has been produced yet.
-- **Release blockers:** real OYNO app icon (template still in `assets/icon.png`), `ios.appleTeamId`, Apple portal setup (App IDs, App Group, Push), first iOS preview build.
+- **Release blockers:** real OYNO app icon (template still in `assets/icon.png`), `ios.appleTeamId`, Apple portal setup (App IDs, App Group, Push), first iOS preview build, migration `20260929000001_feedback_v2.sql` (not applied as of 2026-09-29).
 - **Before App Review:** Sign in with Apple vs. Google (Guideline 4.8); `supportsTablet` decision.
 - Full matrix and issue log: [`DEVICE_QA.md`](./DEVICE_QA.md). Readiness verdict: [`TESTFLIGHT_READINESS.md`](./TESTFLIGHT_READINESS.md).
 
@@ -21,7 +21,8 @@ Device: `__________` · Tester: `______` · Date: `______`
 - [ ] `ios.appleTeamId` set in `app.json` (needed for the widget extension signing)
 - [ ] App Group `group.com.ilgizsatkynov.oyno.widgets` registered in the Apple Developer portal and enabled for **both** `com.ilgizsatkynov.oyno` and `com.ilgizsatkynov.oyno.widget`
 - [ ] EAS credentials generated for both bundle ids (`eas credentials`)
-- [x] `npx expo install --fix` run — expo-doctor 21/21 (2026-09-24); see `TESTFLIGHT_READINESS.md`
+- [ ] `npx expo install --fix` run — was 21/21 on 2026-09-24; **20/21 on 2026-09-29** (SDK 57 patch drift: expo, expo-constants, expo-router, expo-updates). Re-run right before the build
+- [ ] `supabase/migrations/20260929000001_feedback_v2.sql` applied (all 41 earlier ones verified or assumed live — see `TESTFLIGHT_READINESS.md` §6)
 - [ ] Fresh native build made (`eas build -p ios --profile preview`); the preview channel's older binaries lack view-shot, sharing, media-library, speech and the widget extension
 
 ## Real iPhone verification
@@ -35,7 +36,7 @@ Device: `__________` · Tester: `______` · Date: `______`
 - [ ] Explore — nature sites carousel reaches the last card; region/detail screens
 - [ ] map — pinch, pan, double-tap, zoom bounds; Ala-Too / Suusamyr / Son-Köl pins are each tappable without hitting a neighbour; preview opens/closes; VoiceOver focus moves to the preview
 - [ ] Culture — categories, items, materials, collections, share from a collection
-- [ ] Audio Guide — KG shows an honest "no Kyrgyz voice" state (never reads KG text with a RU/EN voice); RU/EN narrate; leaving the screen, backgrounding and switching language all stop narration; Komuz playlist and the guide never play together
+- [ ] Audio Guide — narration only when real audio exists (Kyrgyz text is never read with a RU/EN voice; no dead Play button); leaving an article hands playback to the mini player (above the tab bar, never over it); backgrounding pauses and returning stays paused; switching language or signing out stops narration; only one narration at a time; Komuz playlist and the guide never play together
 - [ ] Daily — today's discovery, image challenge, completion persists after restart
 - [ ] Passport/Journey — visiting Son-Köl updates Explore, Passport, Journey and the map the same way
 - [ ] Trails — progress, next step, "Show on map" highlights only the trail's places

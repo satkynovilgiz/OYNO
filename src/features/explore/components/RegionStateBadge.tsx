@@ -12,7 +12,7 @@ type RegionStateBadgeProps = {
 /** Small icon-shaped overlay at each map pin communicating region state by
  * shape, not just color (lock/dot/check/star), matching "state differentiation
  * must not rely on color alone". Nothing renders for 'available' - the
- * baked pin dot itself is already the "not yet visited" default look. */
+ * plain map pin itself is the "not yet visited" default look. */
 export function RegionStateBadge({ state }: RegionStateBadgeProps) {
   if (state === 'available') return null;
 

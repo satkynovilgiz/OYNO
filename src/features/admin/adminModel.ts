@@ -233,4 +233,14 @@ export function valuesToRow(section: AdminSectionConfig, values: Record<string, 
   return row;
 }
 
-export const COVERAGE_LABEL: Record<Coverage, string> = { complete: 'complete', partial: 'partial', missing: 'missing' };
+
+/** The inbox's admin-only error line: a clear pointer when the feedback v2
+ * migration isn't applied yet (PostgREST "function not found"), otherwise
+ * the short server message - never a stack or a secret. */
+export const FEEDBACK_INBOX_LIMIT = 200;
+export function feedbackInboxError(error: { message?: string; code?: string } | null | undefined): string | null {
+  if (!error) return null;
+  if (error.code === 'PGRST202' || /could not find the function|admin_get_beta_feedback/i.test(error.message ?? '')) return 'The feedback inbox needs migration 20260929000001_feedback_v2.sql (not applied on this project yet).';
+  if (/NOT_AUTHORIZED|permission denied/i.test(error.message ?? '')) return 'This account has no feedback-reading role.';
+  return (error.message ?? 'Could not load reports.').split('\n')[0].slice(0, 160);
+}

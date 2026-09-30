@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
+import { NotFoundState } from '@/components/system/NotFoundState';
 import { MaterialDetailScreen } from '@/features/culture/MaterialDetailScreen';
 import { useCultureMaterial } from '@/services/content/cultureService';
 import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
@@ -26,12 +27,10 @@ export default function CultureMaterialRoute() {
     );
   }
 
+  // Same as a culture item: an unknown id is Not Found, a failed load says
+  // so - both with a way back (never a dead end).
   if (error || !material) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.message}>{t('culture.loadError')}</Text>
-      </View>
-    );
+    return <NotFoundState message={error ? t('culture.loadError') : undefined} onPressBack={() => (router.canGoBack() ? router.back() : router.replace('/culture' as never))} />;
   }
 
   return <MaterialDetailScreen material={material} onPressBack={() => router.back()} />;
@@ -43,8 +42,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
-  },
-  message: {
-    color: colors.textSecondary,
   },
 });

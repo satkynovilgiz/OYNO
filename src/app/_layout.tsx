@@ -13,6 +13,7 @@ import { track } from '@/services/analytics/analytics';
 import { initSentry } from '@/services/monitoring/sentry';
 import { decideRouteGuardRedirect } from '@/services/navigation/routeGuard';
 import { registerForPushNotifications } from '@/services/notifications/pushRegistration';
+import { bindAudioToAccount } from '@/services/audioGuide/accountBinding';
 import { bindUserScopedCache } from '@/services/auth/userScopedCache';
 import { queryClient } from '@/services/queryClient';
 import { loadWithTimeout } from '@/services/storage/loadWithTimeout';
@@ -48,9 +49,10 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 // happen after RootLayout mounts.
 initSentry();
 
-// One person's cached rows (admin role, their oymo/shyrdak creations) are
-// never shown to the next account on this device.
+// One person's cached rows (admin role, their oymo/shyrdak creations) and
+// their active narration never carry over to the next account on this device.
 bindUserScopedCache(queryClient);
+bindAudioToAccount();
 
 // Routes reachable without a session (the auth flow itself, plus the splash
 // gate which does its own one-time redirect).

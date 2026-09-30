@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, IconButton } from '@/components/ui';
 import { fetchViaRpc } from '@/services/admin/adminService';
+
+import { FEEDBACK_INBOX_LIMIT, feedbackInboxError } from './adminModel';
 import { colors, radii, spacing, typography } from '@/theme';
 
 /** A report as admin_get_beta_feedback returns it - what the reporter sent,
@@ -69,8 +71,13 @@ export function AdminFeedbackScreen({ onPressBack }: { onPressBack: () => void }
           ))}
         </View>
         {isLoading ? <ActivityIndicator color={colors.primary} /> : null}
-        {error ? <Text style={styles.error}>{/function|admin_get_beta_feedback/i.test((error as Error).message) ? 'The feedback inbox needs migration 20260929000001_feedback_v2.sql.' : (error as Error).message}</Text> : null}
-        {!isLoading && !error ? <Text style={styles.muted}>{rows.length} reports (latest 200)</Text> : null}
+        {error ? <Text style={styles.error}>{feedbackInboxError(error as { message?: string; code?: string })}</Text> : null}
+        {!isLoading && !error ? (
+          <Text style={styles.muted}>
+            {rows.length} shown · from the latest {FEEDBACK_INBOX_LIMIT} reports{(data?.length ?? 0) >= FEEDBACK_INBOX_LIMIT ? ' (older ones are in the Supabase dashboard)' : ''}
+          </Text>
+        ) : null}
+        {!isLoading && !error && rows.length === 0 ? <Text style={styles.empty}>{category ? 'No reports in this category yet.' : 'No reports yet.'}</Text> : null}
         {rows.map((row) => (
           <View key={row.id} style={styles.card}>
             <View style={styles.cardHead}>
@@ -93,7 +100,7 @@ export function AdminFeedbackScreen({ onPressBack }: { onPressBack: () => void }
               </Text>
             ) : null}
             {row.source_url ? (
-              <Text style={styles.meta} selectable>
+              <Text style={[styles.meta, styles.url]} selectable>
                 Source (unverified, not opened): {row.source_url}
               </Text>
             ) : null}
@@ -126,5 +133,8 @@ const styles = StyleSheet.create({
   message: { ...typography.body, color: colors.textPrimary },
   label: { fontWeight: '700' },
   muted: { ...typography.small, color: colors.textMuted },
+  empty: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg },
+  // Long links wrap instead of overflowing the card.
+  url: Platform.OS === 'web' ? ({ wordBreak: 'break-all' } as object) : {},
   error: { ...typography.small, color: colors.danger },
 });
