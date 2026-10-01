@@ -31,7 +31,6 @@ export default function OrdoRoute() {
         difficultyOptions={['easy', 'normal', 'hard']}
         difficulty={difficulty}
         onChangeDifficulty={setDifficulty}
-        showBestScore
         cultureRoute="/culture/games"
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', 'ordo')}

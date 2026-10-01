@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart, Share2 } from 'lucide-react-native';
@@ -15,6 +16,8 @@ import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
+import { ThenAndNowSection } from '@/features/culture/thenNow/ThenAndNowSection';
+import { thenNowRoute } from '@/features/culture/thenNow/thenAndNow';
 import { cultureItemNarration, localizedSimpleSummary } from '@/services/audioGuide/contentNarration';
 import type { Narration } from '@/services/audioGuide/narration';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -48,7 +51,7 @@ const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
 
 export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack }: CultureItemDetailScreenProps) {
   const { t, i18n } = useTranslation();
-  const { config } = useAgeExperience();
+  const { config, experience } = useAgeExperience();
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_item', item.id)));
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_item', item.id);
@@ -181,6 +184,10 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
               ))}
             </View>
           )}
+
+          {/* 4b. Then & Now - only when the item has real authored
+              historical AND modern fields (derived, never stored). */}
+          <ThenAndNowSection item={item} experience={experience} language={i18n.language} onPressOpen={() => router.push(thenNowRoute(item.id) as never)} />
 
           {/* 5. Relevant images. */}
           {hasRemainingGallery ? (

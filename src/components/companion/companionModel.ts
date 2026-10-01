@@ -41,6 +41,7 @@ export const COMPANION_LINES = {
   emptySaved: { empty: 'empty.saved' },
   emptyJournal: { empty: 'empty.journal' },
   emptyQuests: { empty: 'empty.quests' },
+  recap: { completion: 'recap.busy', empty: 'recap.start' },
 } as const satisfies Record<string, Partial<Record<CompanionMomentType, string>>>;
 
 export type CompanionSurface = keyof typeof COMPANION_LINES | 'quest';
@@ -57,9 +58,9 @@ export function companionLineKey(surface: keyof typeof COMPANION_LINES, moment: 
  * editorial.
  */
 const SURFACES_BY_EXPERIENCE: Record<AgeExperience, ReadonlySet<CompanionSurface>> = {
-  child: new Set<CompanionSurface>(['quest', 'region', 'daily', 'trail', 'challenge', 'journey', 'achievement', 'emptySaved', 'emptyJournal', 'emptyQuests']),
-  preteen: new Set<CompanionSurface>(['quest', 'region', 'daily', 'trail', 'challenge', 'journey', 'achievement', 'emptySaved', 'emptyJournal', 'emptyQuests']),
-  teen: new Set<CompanionSurface>(['quest', 'region', 'daily', 'trail', 'challenge', 'journey', 'emptySaved', 'emptyJournal', 'emptyQuests']),
+  child: new Set<CompanionSurface>(['recap', 'quest', 'region', 'daily', 'trail', 'challenge', 'journey', 'achievement', 'emptySaved', 'emptyJournal', 'emptyQuests']),
+  preteen: new Set<CompanionSurface>(['recap', 'quest', 'region', 'daily', 'trail', 'challenge', 'journey', 'achievement', 'emptySaved', 'emptyJournal', 'emptyQuests']),
+  teen: new Set<CompanionSurface>(['recap', 'quest', 'region', 'daily', 'trail', 'challenge', 'journey', 'emptySaved', 'emptyJournal', 'emptyQuests']),
   adult: new Set<CompanionSurface>(['quest', 'region', 'emptySaved', 'emptyJournal', 'emptyQuests']),
 };
 

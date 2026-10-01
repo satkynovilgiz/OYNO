@@ -29,7 +29,7 @@ function contentKeysForDownload(kind: OfflineKind, contentId: string, context: {
     return keys;
   }
   if (kind === 'culture_item') {
-    // app/culture/item/[itemId].tsx: useCultureItem
+    // app/culture/item/[itemId]/index.tsx: useCultureItem
     return [['culture_item', contentId]];
   }
   // CollectionDetailScreen: useAllCultureItems + useCultureMaterials, plus

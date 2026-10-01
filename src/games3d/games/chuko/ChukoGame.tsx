@@ -10,7 +10,6 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { useDragPowerController } from '../../controls/DragPowerController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
-import { setBestScoreIfHigher } from '../../core/gameBestScore';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { gameHaptics } from '../../haptics/gameHaptics';
@@ -20,6 +19,7 @@ import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
+import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
 import { StatusBanner } from '../../ui/StatusBanner';
@@ -50,6 +50,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
   useGameLifecycle('landscape', game.pause);
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
+  const records = useRoundRecords(GAME_ID);
   const [hasThrown, setHasThrown] = useState(false);
 
   const audioRef = useRef(createChukoAudio());
@@ -109,12 +110,19 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
   useEffect(() => {
     if (game.phase !== 'RESULT') {
       recordedResultRef.current = false;
+      records.clear();
       return;
     }
     if (recordedResultRef.current) return;
     recordedResultRef.current = true;
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
-    void setBestScoreIfHigher(GAME_ID, game.summary.playerScore);
+    // Practice never reaches RESULT here, so every recorded round is a real match.
+    records.recordRound({
+      practice: mode !== 'normal',
+      result: game.summary.winner === 'player' ? 'win' : game.summary.winner === 'ai' ? 'loss' : 'draw',
+      primary: game.summary.playerScore,
+      secondary: {},
+    });
 
     if (mode === 'normal') {
       if (game.summary.winner === 'player') audioRef.current.play('success', 0.6);
@@ -273,6 +281,8 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal' }: ChukoGameP
           title={resultTitle}
           outcome={game.summary.winner === 'player' ? 'win' : game.summary.winner === 'draw' ? 'completed' : 'tryAgain'}
           stats={resultStats}
+          personalBest={records.personalBest}
+          overlay={records.shareHost}
           onReplay={handleRestart}
           onExit={handleExit}
         />

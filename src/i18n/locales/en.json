@@ -2746,6 +2746,10 @@
       },
       "region": {
         "intro": "Let's discover this region together - start here."
+      },
+      "recap": {
+        "busy": "You've been busy exploring OYNO.",
+        "start": "Every story starts somewhere. Shall we begin yours?"
       }
     }
   },
@@ -2841,5 +2845,141 @@
       "stops_many": "{{count}} stops",
       "noVoice": "This device has no voice for this language yet - open the page to read this stop."
     }
+  },
+  "gameRecords": {
+    "title": "Game records",
+    "yourRecords": "Your records",
+    "personalBest": "Personal best",
+    "newPersonalBest": "New personal best",
+    "previousBest": "Previous best: {{value}}",
+    "lastResult": "Last result",
+    "gamesPlayed": "Games played",
+    "recentGames": "Recent games",
+    "practice": "Practice",
+    "playAgain": "Play again",
+    "noRecords": "No records yet",
+    "browseGames": "Browse games",
+    "bestLine": "Best: {{value}}",
+    "playedTimes_one": "Played {{count}} time",
+    "playedTimes_other": "Played {{count}} times",
+    "profileMeta": "Your bests and recent rounds",
+    "deviceNote": "Personal bests and recent games are saved on this device. Games played is your account total.",
+    "sharePersonalBest": "Share personal best",
+    "shareMessage": "My personal best in {{game}} on OYNO: {{value}}",
+    "result": {
+      "win": "Win",
+      "loss": "Loss",
+      "draw": "Draw",
+      "completed": "Completed"
+    },
+    "unit": {
+      "points_one": "{{count}} point",
+      "points_other": "{{count}} points",
+      "goals_one": "{{count}} goal",
+      "goals_other": "{{count}} goals",
+      "count_one": "{{count}}",
+      "count_other": "{{count}}",
+      "speed_one": "{{count}} m/s",
+      "speed_other": "{{count}} m/s",
+      "time": "{{time}}",
+      "percent": "{{value}}%",
+      "points_few": "{{count}} points",
+      "points_many": "{{count}} points",
+      "goals_few": "{{count}} goals",
+      "goals_many": "{{count}} goals",
+      "count_few": "{{count}}",
+      "count_many": "{{count}}",
+      "speed_few": "{{count}} m/s",
+      "speed_many": "{{count}} m/s"
+    },
+    "metric": {
+      "captures": "Captures",
+      "topSpeed": "Top speed"
+    },
+    "playedTimes_few": "Played {{count}} times",
+    "playedTimes_many": "Played {{count}} times"
+  },
+  "thenNow": {
+    "title": "Then & Now",
+    "then": {
+      "simple": "Long ago",
+      "standard": "Then"
+    },
+    "now": {
+      "simple": "Today",
+      "standard": "Now"
+    },
+    "seeComparison": "See comparison",
+    "share": "Share Then & Now",
+    "shareMessage": "{{title}} - then and now, on OYNO",
+    "unavailable": "This item doesn't have both a historical and a modern description yet."
+  },
+  "recap": {
+    "title": "My OYNO Recap",
+    "storyTitle": "My OYNO story",
+    "allTime": "All time",
+    "scopeDevice": "Based on your activity on this device.",
+    "scopeAccount": "From your account. Personal bests are from this device.",
+    "onThisDevice": "On this device",
+    "mostPlayed": "Most played",
+    "plays_one": "{{count}} play",
+    "plays_other": "{{count}} plays",
+    "personalBestsTitle": "Personal bests",
+    "personalBestsValue_one": "Set in {{count}} game",
+    "personalBestsValue_other": "Set in {{count}} games",
+    "dailyTitle": "Daily discoveries",
+    "share": "Share recap",
+    "shareMessage": "My OYNO story so far",
+    "privateNote": "Your recap is private. It's only shared when you choose to share it.",
+    "emptyBody": "Play a game, open a Daily discovery or visit a place - your story will start to fill in here.",
+    "startStory": "Start your OYNO story",
+    "label": {
+      "games": "Games played",
+      "challenges": "Challenges completed",
+      "achievements": "Achievements",
+      "journal": "Journal memories",
+      "saved": "Saved",
+      "daily": "Daily discoveries",
+      "places": "Places visited",
+      "personalBests": "Personal bests"
+    },
+    "metric": {
+      "games_one": "{{count}} game played",
+      "games_other": "{{count}} games played",
+      "challenges_one": "{{count}} challenge",
+      "challenges_other": "{{count}} challenges",
+      "achievements_one": "{{count}} achievement",
+      "achievements_other": "{{count}} achievements",
+      "places_one": "{{count}} place",
+      "places_other": "{{count}} places",
+      "daily_one": "{{count}} day",
+      "daily_other": "{{count}} days",
+      "journal_one": "{{count}} memory",
+      "journal_other": "{{count}} memories",
+      "saved_one": "{{count}} saved",
+      "saved_other": "{{count}} saved",
+      "personalBests_one": "{{count}} personal best",
+      "personalBests_other": "{{count}} personal bests",
+      "games_few": "{{count}} games played",
+      "games_many": "{{count}} games played",
+      "challenges_few": "{{count}} challenges",
+      "challenges_many": "{{count}} challenges",
+      "achievements_few": "{{count}} achievements",
+      "achievements_many": "{{count}} achievements",
+      "places_few": "{{count}} places",
+      "places_many": "{{count}} places",
+      "daily_few": "{{count}} days",
+      "daily_many": "{{count}} days",
+      "journal_few": "{{count}} memories",
+      "journal_many": "{{count}} memories",
+      "saved_few": "{{count}} saved",
+      "saved_many": "{{count}} saved",
+      "personalBests_few": "{{count}} personal bests",
+      "personalBests_many": "{{count}} personal bests"
+    },
+    "plays_few": "{{count}} plays",
+    "plays_many": "{{count}} plays",
+    "personalBestsValue_few": "Set in {{count}} games",
+    "personalBestsValue_many": "Set in {{count}} games"
   }
 }

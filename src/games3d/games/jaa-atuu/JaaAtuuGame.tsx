@@ -12,7 +12,6 @@ import { useAimController } from '../../controls/AimController';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
-import { getBestScore, setBestScoreIfHigher } from '../../core/gameBestScore';
 import { hasSeenTutorial, markTutorialSeen } from '../../core/tutorialStorage';
 import { gameHaptics } from '../../haptics/gameHaptics';
 import { preloadCharacterModel } from '../../shared/assets/preloadModels';
@@ -24,6 +23,7 @@ import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
+import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { ShotFeedback, type ShotFeedbackEvent } from '../../ui/ShotFeedback';
 import { StartCountdown } from '../../ui/StartCountdown';
@@ -67,8 +67,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   const { active: modelsLoading, progress: modelsProgress } = useProgress();
   const config = JAA_ATUU_DIFFICULTY[game.difficulty];
 
-  const [bestScore, setBestScore] = useState<number | null>(null);
-  const [isNewBest, setIsNewBest] = useState(false);
+  const records = useRoundRecords(GAME_ID);
   const recordedResultRef = useRef(false);
 
   const audioRef = useRef(createJaaAtuuAudio());
@@ -181,11 +180,12 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
     setShotFeedback(null);
     setBullseyeSignalMs(undefined);
     recordedResultRef.current = false;
-    setIsNewBest(false);
+    records.clear();
     countdownShownRef.current = false;
     // A restart from a pause taken mid-countdown starts a fresh 3-2-1.
     setShowCountdown(false);
     game.restart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game]);
 
   // Fires once per completed round (not per render/phase-check) - a round
@@ -199,14 +199,13 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
     audioRef.current.play('result', 0.6);
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
 
-    if (mode !== 'normal') return;
-    const score = game.summary.totalScore;
-    void (async () => {
-      const previous = await getBestScore(GAME_ID);
-      const becameNewBest = await setBestScoreIfHigher(GAME_ID, score);
-      setBestScore(becameNewBest ? score : previous);
-      setIsNewBest(becameNewBest);
-    })();
+    // Practice rounds are recorded as practice and never become the best.
+    records.recordRound({
+      practice: mode !== 'normal',
+      result: 'completed',
+      primary: game.summary.totalScore,
+      secondary: { accuracy: game.summary.accuracyPercent, bullseyes: game.summary.bullseyes, bestShot: game.summary.bestShot },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -219,11 +218,11 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
       { label: t('games3d.result.accuracy'), value: `${game.summary.accuracyPercent}%` },
       { label: t('games3d.result.bullseyes'), value: String(game.summary.bullseyes) },
     ];
-    if (mode === 'normal' && bestScore !== null) {
-      stats.push({ label: t('games3d.result.personalBest'), value: String(bestScore) });
+    if (mode === 'normal' && records.bestText !== null && !records.personalBest) {
+      stats.push({ label: t('games3d.result.personalBest'), value: records.bestText });
     }
     return stats;
-  }, [game.summary, mode, bestScore, t]);
+  }, [game.summary, mode, records.bestText, records.personalBest, t]);
 
   return (
     <View style={styles.root}>
@@ -293,8 +292,9 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
       <ResultScreen
         visible={game.phase === 'RESULT'}
         title={t('games3d.result.title')}
-        banner={isNewBest ? t('games3d.result.newBest') : undefined}
         stats={resultStats}
+        personalBest={records.personalBest}
+        overlay={records.shareHost}
         onReplay={handleRestart}
         onExit={handleExit}
       />

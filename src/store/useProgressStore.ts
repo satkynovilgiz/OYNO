@@ -178,6 +178,10 @@ type RpcResult = { progress: ProgressRow; newlyUnlocked?: AchievementId[]; corre
 
 type ProgressState = ProgressFields & {
   isLoaded: boolean;
+  /** Whose progress is in memory ('guest' or the account id) - set with
+   * the data, so a screen can refuse to show numbers that were loaded for
+   * someone else while the next account's load is still on its way. */
+  loadedOwner: string | null;
   error: string | null;
   gameStats: Record<string, GameStat>;
   discoveredExploreIds: string[];
@@ -288,6 +292,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
   return {
     ...DEFAULT_FIELDS,
     isLoaded: false,
+    loadedOwner: null,
     error: null,
     gameStats: {},
     discoveredExploreIds: [],
@@ -319,6 +324,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
           regionVisitDates: pending.dates,
           completedQuestStepIds: [],
           isLoaded: true,
+          loadedOwner: 'guest',
           error: null,
         });
         return;
@@ -332,7 +338,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
       if (!stillSameUser()) return;
       if (cachedFirst && !get().isLoaded) {
         const visits = mergeVisits({ ids: cachedFirst.visitedRegionIds, dates: cachedFirst.regionVisitDates ?? {} }, pending);
-        set({ ...cachedFirst, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, error: null });
+        set({ ...cachedFirst, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, loadedOwner: currentUserId() ?? null, error: null });
       }
       try {
         const [progressRes, gameStatsRes, achievementsRes, discoveriesRes, regionVisitsRes, questStepsRes] = await Promise.all([
@@ -374,6 +380,7 @@ export const useProgressStore = create<ProgressState>((set, get) => {
           regionVisitDates,
           completedQuestStepIds,
           isLoaded: true,
+          loadedOwner: currentUserId() ?? null,
           error: null,
         });
         void writeCache({ ...fields, gameStats, unlockedAchievementIds, discoveredExploreIds, visitedRegionIds, regionVisitDates, completedQuestStepIds });
@@ -387,8 +394,8 @@ export const useProgressStore = create<ProgressState>((set, get) => {
         if (!stillSameUser()) return;
         if (cached) {
           const visits = mergeVisits({ ids: cached.visitedRegionIds, dates: cached.regionVisitDates ?? {} }, pending);
-          set({ ...cached, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, error: 'offline' });
-        } else set({ visitedRegionIds: pending.ids, regionVisitDates: pending.dates, isLoaded: true, error: 'offline' });
+          set({ ...cached, visitedRegionIds: visits.ids, regionVisitDates: visits.dates, isLoaded: true, loadedOwner: currentUserId() ?? null, error: 'offline' });
+        } else set({ visitedRegionIds: pending.ids, regionVisitDates: pending.dates, isLoaded: true, loadedOwner: currentUserId() ?? null, error: 'offline' });
       }
     },
 

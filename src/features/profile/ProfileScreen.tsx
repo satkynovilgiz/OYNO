@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, Settings, Trophy } from 'lucide-react-native';
+import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, Settings, Sparkles, Trophy } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -139,6 +139,29 @@ export function ProfileScreen() {
               </View>
               <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
             </AnimatedPressable>
+            {/* Two small private entries: per-game records and the recap. */}
+            {[
+              { route: '/profile/game-records', icon: Trophy, title: t('gameRecords.title'), meta: t('gameRecords.profileMeta') },
+              { route: '/profile/recap', icon: Sparkles, title: t('recap.title'), meta: t('recap.allTime') },
+            ].map((entry) => (
+              <AnimatedPressable
+                key={entry.route}
+                style={styles.questsRow}
+                onPress={() => router.push(entry.route as never)}
+                press="soft"
+                accessibilityRole="button"
+                accessibilityLabel={`${entry.title}. ${entry.meta}`}
+              >
+                <entry.icon size={18} color={colors.primary} strokeWidth={2} />
+                <View style={styles.questsText}>
+                  <Text style={styles.questsTitle}>{entry.title}</Text>
+                  <Text style={styles.questsMeta} numberOfLines={1}>
+                    {entry.meta}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+              </AnimatedPressable>
+            ))}
           </View>
         );
       case 'achievements':

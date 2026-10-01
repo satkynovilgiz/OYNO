@@ -25,6 +25,7 @@ import { GameIntroCard } from '../../ui/GameIntroCard';
 import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
+import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
 import { formatGameUnit } from '../../ui/gameUnits';
@@ -62,6 +63,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
+  const records = useRoundRecords(GAME_ID);
 
   const audioRef = useRef(createKokBoruAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
@@ -134,10 +136,9 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
     audioRef.current.play(playerScored ? 'goalPlayer' : 'goalAi', 0.65);
   }, [game.phase, game.lastScorer, game.score]);
 
-  // No scored/higher-is-better metric exists for practice (Phase A: score
-  // or don't) - games played only, same reasoning as Kyz Kuumai. Normal
-  // mode's win/loss/draw isn't a "best score" either, so this stays as-is
-  // for both modes.
+  // A match is win / draw / loss - not a "best score" (completion rule in
+  // GAME_RECORD_RULES.kok_boru): rounds and wins are recorded, no numeric
+  // best. Practice (score or don't) is recorded as practice.
   useEffect(() => {
     if (game.phase !== 'RESULT') {
       recordedResultRef.current = false;
@@ -146,6 +147,13 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
     if (recordedResultRef.current) return;
     recordedResultRef.current = true;
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
+    records.recordRound({
+      practice: mode !== 'normal',
+      result: mode !== 'normal' ? 'completed' : game.summary.outcome === 'WIN' ? 'win' : game.summary.outcome === 'LOSS' ? 'loss' : 'draw',
+      primary: mode !== 'normal' ? (game.summary.scored ? 1 : 0) : game.summary.playerScore,
+      secondary: {},
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
   useEffect(() => {

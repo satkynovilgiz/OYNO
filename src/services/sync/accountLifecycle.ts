@@ -9,6 +9,7 @@ import { type ChallengeResult, useChallengeStore } from '@/store/useChallengeSto
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { type DailyCompletions, useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
+import { useGameRecordsStore } from '@/store/useGameRecordsStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
@@ -157,6 +158,10 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     resetAccountStores();
   } else if (owner === 'guest') {
     await seedGuestFavorites();
+    // Device-local game records: the guest's rounds join this account
+    // (never shown to a different account - records are kept per owner).
+    await useGameRecordsStore.getState().load();
+    useGameRecordsStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

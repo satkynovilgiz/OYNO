@@ -82,7 +82,7 @@ describe('question bank', () => {
 
   it('every "Learn more" link opens an existing screen', () => {
     const appDir = join(__dirname, '../../app');
-    const routeFiles: Record<string, string> = { explore: 'explore/[id].tsx', material: 'culture/material/[materialId].tsx', item: 'culture/item/[itemId].tsx' };
+    const routeFiles: Record<string, string> = { explore: 'explore/[id].tsx', material: 'culture/material/[materialId].tsx', item: 'culture/item/[itemId]/index.tsx' };
     for (const question of QUESTION_BANK) {
       const route = routeForSource(question);
       const kind = route.startsWith('/explore/') ? 'explore' : route.startsWith('/culture/material/') ? 'material' : 'item';

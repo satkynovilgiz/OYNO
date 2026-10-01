@@ -2746,6 +2746,10 @@
       },
       "region": {
         "intro": "Давай откроем этот край вместе - начни отсюда."
+      },
+      "recap": {
+        "busy": "Вы немало успели в OYNO.",
+        "start": "Любая история с чего-то начинается. Начнём вашу?"
       }
     }
   },
@@ -2840,6 +2844,142 @@
         "culture_material": "История"
       },
       "noVoice": "На этом устройстве пока нет голоса для этого языка - откройте страницу, чтобы прочитать эту остановку."
+    }
+  },
+  "gameRecords": {
+    "title": "Игровые рекорды",
+    "yourRecords": "Ваши рекорды",
+    "personalBest": "Личный рекорд",
+    "newPersonalBest": "Новый личный рекорд",
+    "previousBest": "Прошлый рекорд: {{value}}",
+    "lastResult": "Последний результат",
+    "gamesPlayed": "Сыграно игр",
+    "recentGames": "Последние игры",
+    "practice": "Тренировка",
+    "playAgain": "Сыграть ещё",
+    "noRecords": "Рекордов пока нет",
+    "browseGames": "К играм",
+    "bestLine": "Рекорд: {{value}}",
+    "playedTimes_one": "Сыграно {{count}} раз",
+    "playedTimes_few": "Сыграно {{count}} раза",
+    "playedTimes_many": "Сыграно {{count}} раз",
+    "playedTimes_other": "Сыграно {{count}} раза",
+    "profileMeta": "Ваши рекорды и последние игры",
+    "deviceNote": "Личные рекорды и последние игры сохраняются на этом устройстве. «Сыграно игр» - итог вашего аккаунта.",
+    "sharePersonalBest": "Поделиться рекордом",
+    "shareMessage": "Мой личный рекорд в игре {{game}} в OYNO: {{value}}",
+    "result": {
+      "win": "Победа",
+      "loss": "Поражение",
+      "draw": "Ничья",
+      "completed": "Завершено"
+    },
+    "unit": {
+      "points_one": "{{count}} очко",
+      "points_few": "{{count}} очка",
+      "points_many": "{{count}} очков",
+      "points_other": "{{count}} очка",
+      "goals_one": "{{count}} гол",
+      "goals_few": "{{count}} гола",
+      "goals_many": "{{count}} голов",
+      "goals_other": "{{count}} гола",
+      "count_one": "{{count}}",
+      "count_few": "{{count}}",
+      "count_many": "{{count}}",
+      "count_other": "{{count}}",
+      "speed_one": "{{count}} м/с",
+      "speed_few": "{{count}} м/с",
+      "speed_many": "{{count}} м/с",
+      "speed_other": "{{count}} м/с",
+      "time": "{{time}}",
+      "percent": "{{value}}%"
+    },
+    "metric": {
+      "captures": "Сбито",
+      "topSpeed": "Макс. скорость"
+    }
+  },
+  "thenNow": {
+    "title": "Тогда и сейчас",
+    "then": {
+      "simple": "Давным-давно",
+      "standard": "Тогда"
+    },
+    "now": {
+      "simple": "Сегодня",
+      "standard": "Сейчас"
+    },
+    "seeComparison": "Посмотреть сравнение",
+    "share": "Поделиться «Тогда и сейчас»",
+    "shareMessage": "{{title}} - тогда и сейчас, в OYNO",
+    "unavailable": "У этой статьи пока нет одновременно исторического и современного описания."
+  },
+  "recap": {
+    "title": "Мой итог в OYNO",
+    "storyTitle": "Моя история в OYNO",
+    "allTime": "За всё время",
+    "scopeDevice": "По вашей активности на этом устройстве.",
+    "scopeAccount": "Из вашего аккаунта. Личные рекорды - с этого устройства.",
+    "onThisDevice": "На этом устройстве",
+    "mostPlayed": "Чаще всего",
+    "plays_one": "{{count}} игра",
+    "plays_few": "{{count}} игры",
+    "plays_many": "{{count}} игр",
+    "plays_other": "{{count}} игры",
+    "personalBestsTitle": "Личные рекорды",
+    "personalBestsValue_one": "В {{count}} игре",
+    "personalBestsValue_few": "В {{count}} играх",
+    "personalBestsValue_many": "В {{count}} играх",
+    "personalBestsValue_other": "В {{count}} играх",
+    "dailyTitle": "Открытия дня",
+    "share": "Поделиться итогом",
+    "shareMessage": "Моя история в OYNO",
+    "privateNote": "Ваш итог виден только вам. Им можно поделиться, только если вы сами захотите.",
+    "emptyBody": "Сыграйте, откройте открытие дня или посетите место - здесь начнёт складываться ваша история.",
+    "startStory": "Начать свою историю в OYNO",
+    "label": {
+      "games": "Сыграно игр",
+      "challenges": "Пройдено испытаний",
+      "achievements": "Достижения",
+      "journal": "Записи в журнале",
+      "saved": "Сохранено",
+      "daily": "Открытия дня",
+      "places": "Посещено мест",
+      "personalBests": "Личные рекорды"
+    },
+    "metric": {
+      "games_one": "{{count}} игра",
+      "games_few": "{{count}} игры",
+      "games_many": "{{count}} игр",
+      "games_other": "{{count}} игры",
+      "challenges_one": "{{count}} испытание",
+      "challenges_few": "{{count}} испытания",
+      "challenges_many": "{{count}} испытаний",
+      "challenges_other": "{{count}} испытания",
+      "achievements_one": "{{count}} достижение",
+      "achievements_few": "{{count}} достижения",
+      "achievements_many": "{{count}} достижений",
+      "achievements_other": "{{count}} достижения",
+      "places_one": "{{count}} место",
+      "places_few": "{{count}} места",
+      "places_many": "{{count}} мест",
+      "places_other": "{{count}} места",
+      "daily_one": "{{count}} день",
+      "daily_few": "{{count}} дня",
+      "daily_many": "{{count}} дней",
+      "daily_other": "{{count}} дня",
+      "journal_one": "{{count}} запись",
+      "journal_few": "{{count}} записи",
+      "journal_many": "{{count}} записей",
+      "journal_other": "{{count}} записи",
+      "saved_one": "{{count}} сохранено",
+      "saved_few": "{{count}} сохранено",
+      "saved_many": "{{count}} сохранено",
+      "saved_other": "{{count}} сохранено",
+      "personalBests_one": "{{count}} личный рекорд",
+      "personalBests_few": "{{count}} личных рекорда",
+      "personalBests_many": "{{count}} личных рекордов",
+      "personalBests_other": "{{count}} личного рекорда"
     }
   }
 }

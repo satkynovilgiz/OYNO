@@ -2746,6 +2746,10 @@
       },
       "region": {
         "intro": "Бул аймакты чогуу ачалы - мындан башта."
+      },
+      "recap": {
+        "busy": "Сиз бул жерде көп нерсени изилдеп үлгүрдүңүз.",
+        "start": "Ар бир окуя бир жерден башталат. Сиздикин баштайлыбы?"
       }
     }
   },
@@ -2841,5 +2845,141 @@
       "stops_many": "{{count}} аялдама",
       "noVoice": "Бул түзмөктө бул тил үчүн үн азырынча жок - бул аялдаманы окуу үчүн баракты ачыңыз."
     }
+  },
+  "gameRecords": {
+    "title": "Оюн рекорддору",
+    "yourRecords": "Сиздин рекорддоруңуз",
+    "personalBest": "Жеке рекорд",
+    "newPersonalBest": "Жаңы жеке рекорд",
+    "previousBest": "Мурунку рекорд: {{value}}",
+    "lastResult": "Акыркы жыйынтык",
+    "gamesPlayed": "Ойнолгон оюндар",
+    "recentGames": "Акыркы оюндар",
+    "practice": "Машыгуу",
+    "playAgain": "Кайра ойноо",
+    "noRecords": "Азырынча рекорд жок",
+    "browseGames": "Оюндарга",
+    "bestLine": "Рекорд: {{value}}",
+    "playedTimes_one": "{{count}} жолу ойнолду",
+    "playedTimes_other": "{{count}} жолу ойнолду",
+    "profileMeta": "Рекорддоруңуз жана акыркы оюндар",
+    "deviceNote": "Жеке рекорддор жана акыркы оюндар ушул түзмөктө сакталат. «Ойнолгон оюндар» - аккаунтуңуздун жалпы саны.",
+    "sharePersonalBest": "Рекорд менен бөлүшүү",
+    "shareMessage": "OYNOдогу {{game}} оюнундагы жеке рекордум: {{value}}",
+    "result": {
+      "win": "Жеңиш",
+      "loss": "Утулуу",
+      "draw": "Тең",
+      "completed": "Бүттү"
+    },
+    "unit": {
+      "points_one": "{{count}} упай",
+      "points_other": "{{count}} упай",
+      "goals_one": "{{count}} гол",
+      "goals_other": "{{count}} гол",
+      "count_one": "{{count}}",
+      "count_other": "{{count}}",
+      "speed_one": "{{count}} м/с",
+      "speed_other": "{{count}} м/с",
+      "time": "{{time}}",
+      "percent": "{{value}}%",
+      "points_few": "{{count}} упай",
+      "points_many": "{{count}} упай",
+      "goals_few": "{{count}} гол",
+      "goals_many": "{{count}} гол",
+      "count_few": "{{count}}",
+      "count_many": "{{count}}",
+      "speed_few": "{{count}} м/с",
+      "speed_many": "{{count}} м/с"
+    },
+    "metric": {
+      "captures": "Урулган",
+      "topSpeed": "Эң жогорку ылдамдык"
+    },
+    "playedTimes_few": "{{count}} жолу ойнолду",
+    "playedTimes_many": "{{count}} жолу ойнолду"
+  },
+  "thenNow": {
+    "title": "Мурун жана азыр",
+    "then": {
+      "simple": "Илгери",
+      "standard": "Мурун"
+    },
+    "now": {
+      "simple": "Бүгүн",
+      "standard": "Азыр"
+    },
+    "seeComparison": "Салыштырууну көрүү",
+    "share": "«Мурун жана азыр» менен бөлүшүү",
+    "shareMessage": "{{title}} - мурун жана азыр, OYNOдо",
+    "unavailable": "Бул макалада азырынча тарыхый да, азыркы да сүрөттөмө жок."
+  },
+  "recap": {
+    "title": "Менин OYNO жыйынтыгым",
+    "storyTitle": "Менин OYNO окуям",
+    "allTime": "Бардык убакыт",
+    "scopeDevice": "Ушул түзмөктөгү аракеттериңиз боюнча.",
+    "scopeAccount": "Аккаунтуңуздан. Жеке рекорддор - ушул түзмөктөн.",
+    "onThisDevice": "Ушул түзмөктө",
+    "mostPlayed": "Эң көп ойнолгон",
+    "plays_one": "{{count}} жолу",
+    "plays_other": "{{count}} жолу",
+    "personalBestsTitle": "Жеке рекорддор",
+    "personalBestsValue_one": "{{count}} оюнда",
+    "personalBestsValue_other": "{{count}} оюнда",
+    "dailyTitle": "Күндүн ачылыштары",
+    "share": "Жыйынтык менен бөлүшүү",
+    "shareMessage": "Менин OYNO окуям",
+    "privateNote": "Жыйынтыгыңыз жеке. Аны өзүңүз кааласаңыз гана бөлүшөсүз.",
+    "emptyBody": "Оюн ойноңуз, күндүн ачылышын ачыңыз же бир жерге барыңыз - окуяңыз ушул жерде толо баштайт.",
+    "startStory": "OYNO окуяңызды баштаңыз",
+    "label": {
+      "games": "Ойнолгон оюндар",
+      "challenges": "Өтүлгөн сынактар",
+      "achievements": "Жетишкендиктер",
+      "journal": "Журналдагы эскерүүлөр",
+      "saved": "Сакталгандар",
+      "daily": "Күндүн ачылыштары",
+      "places": "Барылган жерлер",
+      "personalBests": "Жеке рекорддор"
+    },
+    "metric": {
+      "games_one": "{{count}} оюн",
+      "games_other": "{{count}} оюн",
+      "challenges_one": "{{count}} сынак",
+      "challenges_other": "{{count}} сынак",
+      "achievements_one": "{{count}} жетишкендик",
+      "achievements_other": "{{count}} жетишкендик",
+      "places_one": "{{count}} жер",
+      "places_other": "{{count}} жер",
+      "daily_one": "{{count}} күн",
+      "daily_other": "{{count}} күн",
+      "journal_one": "{{count}} эскерүү",
+      "journal_other": "{{count}} эскерүү",
+      "saved_one": "{{count}} сакталды",
+      "saved_other": "{{count}} сакталды",
+      "personalBests_one": "{{count}} жеке рекорд",
+      "personalBests_other": "{{count}} жеке рекорд",
+      "games_few": "{{count}} оюн",
+      "games_many": "{{count}} оюн",
+      "challenges_few": "{{count}} сынак",
+      "challenges_many": "{{count}} сынак",
+      "achievements_few": "{{count}} жетишкендик",
+      "achievements_many": "{{count}} жетишкендик",
+      "places_few": "{{count}} жер",
+      "places_many": "{{count}} жер",
+      "daily_few": "{{count}} күн",
+      "daily_many": "{{count}} күн",
+      "journal_few": "{{count}} эскерүү",
+      "journal_many": "{{count}} эскерүү",
+      "saved_few": "{{count}} сакталды",
+      "saved_many": "{{count}} сакталды",
+      "personalBests_few": "{{count}} жеке рекорд",
+      "personalBests_many": "{{count}} жеке рекорд"
+    },
+    "plays_few": "{{count}} жолу",
+    "plays_many": "{{count}} жолу",
+    "personalBestsValue_few": "{{count}} оюнда",
+    "personalBestsValue_many": "{{count}} оюнда"
   }
 }

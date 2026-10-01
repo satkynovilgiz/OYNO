@@ -24,6 +24,7 @@ import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
+import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
 import { formatGameUnit } from '../../ui/gameUnits';
@@ -74,6 +75,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
+  const records = useRoundRecords(GAME_ID);
 
   const audioRef = useRef(createKyzKuumaiAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
@@ -144,19 +146,25 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
     audioRef.current.play('checkpoint', 0.55);
   }, [game.checkpointEvent]);
 
-  // No single "higher is better" score exists for a time-based chase (a
-  // faster catch is *better* despite a *lower* number) - tracked here as
-  // games played only; not force-fit into the higher-is-better
-  // gameBestScore helper used by the scored games (Section: honest scoping,
-  // don't fake a metric that doesn't fit).
+  // A time-based chase: a faster CATCH is better (lower seconds), and only
+  // catches compete for the best - see GAME_RECORD_RULES.kyz_kuumai.
+  // Practice is a solo course: recorded as practice, never the best.
   useEffect(() => {
     if (game.phase !== 'RESULT') {
       recordedResultRef.current = false;
+      records.clear();
       return;
     }
     if (recordedResultRef.current) return;
     recordedResultRef.current = true;
     void useProgressStore.getState().recordGamePlayed(GAME_ID);
+    records.recordRound({
+      practice: mode !== 'normal',
+      result: mode !== 'normal' ? 'completed' : game.summary.caught ? 'win' : 'loss',
+      primary: game.summary.elapsedSeconds,
+      secondary: { topSpeed: game.summary.topSpeed },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
   const handleExit = useCallback(() => {
@@ -300,6 +308,8 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
         title={resultTitle}
         outcome={mode === 'practice' ? 'completed' : game.summary.caught ? 'win' : 'tryAgain'}
         stats={resultStats}
+        personalBest={records.personalBest}
+        overlay={records.shareHost}
         onReplay={game.restart}
         onExit={handleExit}
       />

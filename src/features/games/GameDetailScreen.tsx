@@ -1,7 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Gamepad2, Heart, Play } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -10,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CharacterAvatar } from '@/components/character';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, Button, FadeSlideIn, HeroEntrance, IconButton } from '@/components/ui';
-import { getBestScore } from '@/games3d/core/gameBestScore';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useCultureItem } from '@/services/content/cultureItemsService';
@@ -20,6 +18,7 @@ import { colors, fontFamily, radii, shadows, spacing, typography } from '@/theme
 import { getGameHostConfig } from '@games/gameHostCharacters';
 
 import { gameArt, listGameForProgressId } from './gamesCatalog';
+import { GameRecordsSection } from './records/GameRecordsSection';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -38,9 +37,6 @@ type GameDetailScreenProps = {
   difficultyOptions?: GameDetailDifficulty[];
   difficulty?: GameDetailDifficulty;
   onChangeDifficulty?: (difficulty: GameDetailDifficulty) => void;
-  /** Omit for games with no single higher-is-better score (Kyz Kuumai, Kok
-   * Boru - see their `*Game.tsx` comments on why that metric doesn't fit). */
-  showBestScore?: boolean;
   /** id of an already-researched, verified `culture_items` row whose
    * history/cultural_meaning should be surfaced as this game's cultural
    * origin/context (spec "history/traditional significance where
@@ -80,7 +76,6 @@ export function GameDetailScreen({
   difficultyOptions,
   difficulty = 'normal',
   onChangeDifficulty,
-  showBestScore = false,
   culturalContextItemId,
   cultureRoute,
   isFavorite,
@@ -98,7 +93,6 @@ export function GameDetailScreen({
   // where it exists, plus real players/duration/difficulty facts.
   const listGame = listGameForProgressId(gameId);
   const heroArt = (listGame ? gameArt(listGame, 'large') : null) ?? imageSource ?? null;
-  const [bestScore, setBestScore] = useState<number | null>(null);
   const { data: culturalContextItem } = useCultureItem(culturalContextItemId ?? '');
 
   const isChild = config.textComplexity === 'minimal';
@@ -121,17 +115,6 @@ export function GameDetailScreen({
         t(`games.difficulty.${listGame.difficulty}`),
       ]
     : [];
-
-  useEffect(() => {
-    if (!showBestScore) return;
-    let cancelled = false;
-    getBestScore(gameId).then((score) => {
-      if (!cancelled) setBestScore(score);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [gameId, showBestScore]);
 
   return (
     <View style={styles.root}>
@@ -263,24 +246,11 @@ export function GameDetailScreen({
           </FadeSlideIn>
         ) : null}
 
-        {showStatsRow ? (
-          <FadeSlideIn style={styles.statsRow} index={5}>
-            {showBestScore ? (
-              <View style={styles.statCard}>
-                <Text style={styles.statValue}>{bestScore ?? '—'}</Text>
-                <Text style={styles.statLabel}>{t('gameDetail.bestScore')}</Text>
-              </View>
-            ) : null}
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{gamesPlayed}</Text>
-              <Text style={styles.statLabel}>{t('gameDetail.gamesPlayed')}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{gamesWon}</Text>
-              <Text style={styles.statLabel}>{t('gameDetail.wins')}</Text>
-            </View>
-          </FadeSlideIn>
-        ) : null}
+        {/* Your records: best by the game's own rule, last result, plays,
+            recent rounds (features/games/records). Children: headline only. */}
+        <FadeSlideIn index={5}>
+          <GameRecordsSection gameId={gameId} compact={!showStatsRow} onPressPlay={onPressPlay} />
+        </FadeSlideIn>
 
         <AnimatedPressable
           style={styles.cultureLink}
