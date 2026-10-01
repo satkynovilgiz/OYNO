@@ -17,6 +17,7 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { colors, fontFamily, radii, shadows, spacing, typography } from '@/theme';
 import { getGameHostConfig } from '@games/gameHostCharacters';
 
+import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { gameArt, listGameForProgressId } from './gamesCatalog';
 import { GameRecordsSection } from './records/GameRecordsSection';
 
@@ -142,13 +143,16 @@ export function GameDetailScreen({
                   accessibilityLabel={t('common.back')}
                   onPress={() => (router.canGoBack() ? router.back() : router.replace('/games'))}
                 />
-                <IconButton
-                  icon={Heart}
-                  shape="roundedSquare"
-                  variant={isFavorite ? 'primary' : 'surface'}
-                  accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                  onPress={onToggleFavorite}
-                />
+                <View style={styles.heroButtons}>
+                  <IconButton
+                    icon={Heart}
+                    shape="roundedSquare"
+                    variant={isFavorite ? 'primary' : 'surface'}
+                    accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                    onPress={onToggleFavorite}
+                  />
+                  {listGame ? <AddToCollectionButton contentType="game" contentId={listGame.id} title={title} /> : null}
+                </View>
               </View>
               <View style={styles.heroText}>
                 {listGame ? <Text style={styles.heroEyebrow}>{t(`games.categories.${listGame.category}`)}</Text> : null}
@@ -279,6 +283,7 @@ export function GameDetailScreen({
 }
 
 const styles = StyleSheet.create({
+  heroButtons: { flexDirection: 'row', gap: spacing.xs },
   root: {
     flex: 1,
     backgroundColor: colors.background,

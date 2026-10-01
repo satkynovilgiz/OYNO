@@ -13,7 +13,6 @@ function isToday(dateISO: string | null): boolean {
   if (!dateISO) return false;
   return dateISO === new Date().toISOString().slice(0, 10);
 }
-
 export default function CultureQuizRoute() {
   const { t } = useTranslation();
   const { data: questions, isLoading, error } = useQuizQuestions();
@@ -34,7 +33,6 @@ export default function CultureQuizRoute() {
       </View>
     );
   }
-
   return (
     <QuizScreen
       questions={questions}

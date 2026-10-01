@@ -10,6 +10,7 @@ import { ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
+import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { DownloadButton } from '@/components/offline/DownloadButton';
@@ -195,6 +196,7 @@ export function LocationDetailScreen({
                 onPress={onToggleFavorite}
                 variant={isFavorite ? 'primary' : 'surface'}
               />
+              <AddToCollectionButton contentType={location.kind === 'nature' ? 'nature' : 'region'} contentId={location.id} title={locationName} />
               <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" accessibilityLabel={t('explore.locationDetail.shareNamedLabel', { name: locationName })} onPress={handleShare} />
             </View>
           </View>

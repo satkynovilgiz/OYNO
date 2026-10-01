@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { Badge, HeroEntrance, IconButton } from '@/components/ui';
+import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { track } from '@/services/analytics/analytics';
 import type { SupportedLanguage } from '@/i18n';
 import { materialNarration } from '@/services/audioGuide/contentNarration';
@@ -53,13 +54,16 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
               <View style={styles.heroOverlay} pointerEvents="box-none">
                 <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
                   <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-                  <IconButton
-                    icon={Heart}
-                    shape="roundedSquare"
-                    variant={isFavorite ? 'primary' : 'surface'}
-                    accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                    onPress={onToggleFavorite}
-                  />
+                  <View style={styles.headerButtons}>
+                    <IconButton
+                      icon={Heart}
+                      shape="roundedSquare"
+                      variant={isFavorite ? 'primary' : 'surface'}
+                      accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                      onPress={onToggleFavorite}
+                    />
+                    <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+                  </View>
                 </View>
                 <Text style={styles.heroTitle} numberOfLines={2}>
                   {material.title}
@@ -80,6 +84,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
               accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
               onPress={onToggleFavorite}
             />
+            <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
           </View>
         )}
 
@@ -112,6 +117,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
 }
 
 const styles = StyleSheet.create({
+  headerButtons: { flexDirection: 'row', gap: spacing.xs },
   root: {
     flex: 1,
     backgroundColor: colors.background,

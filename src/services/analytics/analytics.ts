@@ -55,7 +55,10 @@ export type AnalyticsEventName =
   | 'map_region_progress_opened'
   | 'culture_then_now_opened'
   | 'recap_opened'
-  | 'recap_shared';
+  | 'recap_shared'
+  | 'collection_created'
+  | 'collection_item_added'
+  | 'collection_item_removed';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

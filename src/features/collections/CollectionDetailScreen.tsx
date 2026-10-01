@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { DownloadButton } from '@/components/offline/DownloadButton';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
@@ -113,6 +114,7 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
 
         <View style={[styles.horizontalPad, styles.actions]}>
           <DownloadButton kind="collection" contentId={collection.id} title={resolveLocalized(collection.title, language)} />
+          <AddToCollectionButton contentType="collection" contentId={collection.id} title={resolveLocalized(collection.title, language)} />
           <AddToJournalButton type="collection" id={collection.id} title={resolveLocalized(collection.title, language)} />
         </View>
 

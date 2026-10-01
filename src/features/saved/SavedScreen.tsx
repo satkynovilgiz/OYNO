@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { MyCollectionsSavedSection } from '@/features/myCollections/MyCollectionsSavedSection';
 import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { LibraryEmptyState, LibraryFilterChips, LibraryHeader } from '@/components/library/LibraryChrome';
 import { offlineKindFor } from '@/components/library/contentTypeMeta';
@@ -112,6 +113,8 @@ export function SavedScreen({ onPressBack, onPressItem }: SavedScreenProps) {
       </LibraryHeader>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        {/* The user's own private collections (separate from Saved). */}
+        <MyCollectionsSavedSection />
         {view.total === 0 ? <StoryCompanion surface="emptySaved" moment="empty" /> : null}
         {view.total === 0 ? (
           <LibraryEmptyState icon={Heart} tone={colors.accentTerracotta} title={t('saved.emptyTitle')} description={t('saved.v2.emptyBody')}>

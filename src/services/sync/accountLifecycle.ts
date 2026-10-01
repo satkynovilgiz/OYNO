@@ -10,6 +10,7 @@ import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { type DailyCompletions, useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useGameRecordsStore } from '@/store/useGameRecordsStore';
+import { useMyCollectionsStore } from '@/store/useMyCollectionsStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
@@ -162,6 +163,9 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     // (never shown to a different account - records are kept per owner).
     await useGameRecordsStore.getState().load();
     useGameRecordsStore.getState().adoptGuest(userId);
+    // My Collections: same rule - the guest's collections join this account.
+    await useMyCollectionsStore.getState().load();
+    useMyCollectionsStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

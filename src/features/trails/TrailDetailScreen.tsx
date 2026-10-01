@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
@@ -121,6 +122,9 @@ export function TrailDetailScreen({ trail, onPressBack }: TrailDetailScreenProps
               children at the bottom, next to the title). */}
           <View style={[styles.back, { top: insets.top + spacing.xs }]}>
             <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" variant="surface" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+          </View>
+          <View style={[styles.addTo, { top: insets.top + spacing.xs }]}>
+            <AddToCollectionButton contentType="trail" contentId={trail.id} title={title} />
           </View>
         </View>
 
@@ -328,6 +332,7 @@ function TrailStepRow({
 }
 
 const styles = StyleSheet.create({
+  addTo: { position: 'absolute', right: spacing.md },
   back: { position: 'absolute', left: spacing.md },
   root: { flex: 1, backgroundColor: colors.background },
   pad: { paddingHorizontal: spacing.md },

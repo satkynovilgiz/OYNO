@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
+import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
@@ -107,6 +108,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
         onPress={onToggleFavorite}
       />
+      <AddToCollectionButton contentType="culture_item" contentId={item.id} title={item.title} elevated={!!heroSource} />
     </View>
   );
 
