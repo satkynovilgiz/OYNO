@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 
 import { discoveryImages, LOCATION_TONES, natureSiteImages } from '@/features/explore/data';
+import type { RegionIntroRow, RegionLinkRow, RegionLinkType } from '@/services/content/regionLinksService';
 
 /**
  * Region Hubs - one reusable screen (/explore/region/[id]) driven by these
@@ -119,9 +120,50 @@ export function regionTone(id: string): string {
 
 /** The one region a destination belongs to, or null when it has no hub or
  * (defensively) is claimed by more than one region. */
-export function regionForDestination(destinationId: string): RegionExperienceConfig | null {
-  const owners = listRegionExperiences().filter((config) => config.destinationIds.includes(destinationId));
+export function regionForDestination(destinationId: string, configs: readonly RegionExperienceConfig[] = listRegionExperiences()): RegionExperienceConfig | null {
+  const owners = configs.filter((config) => config.destinationIds.includes(destinationId));
   return owners.length === 1 ? owners[0] : null;
+}
+
+const LINK_FIELD: Record<RegionLinkType, keyof Pick<RegionExperienceConfig, 'destinationIds' | 'discoveryIds' | 'cultureItemIds' | 'materialIds' | 'trailIds' | 'questIds'>> = {
+  destination: 'destinationIds',
+  discovery: 'discoveryIds',
+  culture_item: 'cultureItemIds',
+  culture_material: 'materialIds',
+  trail: 'trailIds',
+  quest: 'questIds',
+};
+
+/**
+ * The ONE resolved region model: the built-in configs, with a region's
+ * relationships replaced by the editor-curated rows (region_content_links)
+ * when that region has any. Product rules - supported ids, order, tone,
+ * hero, challenge pack - always come from the code. The region's own place
+ * is always kept first. Screens never know which source was used.
+ */
+export function resolveRegionExperiences(links: readonly RegionLinkRow[] | undefined, base: readonly RegionExperienceConfig[] = listRegionExperiences()): RegionExperienceConfig[] {
+  if (!links || links.length === 0) return [...base];
+  return base.map((config) => {
+    const rows = links.filter((row) => row.region_id === config.id && row.content_type in LINK_FIELD);
+    if (rows.length === 0) return config;
+    const byType = (type: RegionLinkType) =>
+      [...new Set(rows.filter((row) => row.content_type === type).sort((a, b) => a.sort_order - b.sort_order || a.content_id.localeCompare(b.content_id)).map((row) => row.content_id))];
+    const destinations = byType('destination').filter((id) => id !== config.id);
+    return {
+      ...config,
+      destinationIds: [config.id, ...destinations],
+      discoveryIds: byType('discovery'),
+      cultureItemIds: byType('culture_item'),
+      materialIds: byType('culture_material'),
+      trailIds: byType('trail'),
+      questIds: byType('quest'),
+    };
+  });
+}
+
+/** A saved editorial intro for this language, if any (else the app string). */
+export function regionIntroOverride(intros: readonly RegionIntroRow[] | undefined, regionId: string, language: string): string | null {
+  return intros?.find((row) => row.region_id === regionId && row.language === language)?.intro?.trim() || null;
 }
 
 /** A photo that is genuinely of the region itself (its discovery's photo),

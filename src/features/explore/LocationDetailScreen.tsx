@@ -17,7 +17,7 @@ import { AnimatedPressable, FadeSlideIn, IconButton, MediaCard, MediaImage, Prog
 import type { SupportedLanguage } from '@/i18n';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
-import { joinNarration } from '@/services/audioGuide/narration';
+import { placeNarration } from '@/services/audioGuide/contentNarration';
 import { useExploreRegion } from '@/services/content/exploreService';
 import { isTaglineLocalized } from '@/services/content/regionTaglines';
 import { mapExploreRegionName } from '@/services/content/types';
@@ -25,6 +25,7 @@ import { useShareCard } from '@/services/share/useShareCard';
 import { cardRadii, colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
 import { buildPlaceShareCard } from './placeShareCard';
+import { useRegionExperiences } from './regions/useRegionExperiences';
 import { regionForDestination, regionHubRoute } from './regions/regionExperiences';
 import { DiscoveriesRow, formatVisitDate } from './components';
 import { LOCATION_TONES } from './data';
@@ -105,7 +106,6 @@ export function LocationDetailScreen({
   const { config } = useAgeExperience();
   const tone = TONES[toneIndex % TONES.length];
   const locationName = location.name[i18n.language as SupportedLanguage] ?? location.name.kg;
-  const factsLanguage: SupportedLanguage = location.factsTranslation === 'available' ? (i18n.language as SupportedLanguage) : 'kg';
   const heroAspectRatio = resolveByCardScale(config.cardScale, HERO_ASPECT_RATIO_BY_CARD_SCALE);
   const isChild = config.textComplexity === 'minimal';
   const isAdult = config.characterProminence === 'subtle';
@@ -115,7 +115,7 @@ export function LocationDetailScreen({
 
   const { share, shareHost } = useShareCard();
   // The Region Hub this place belongs to (the region itself or a member).
-  const homeRegion = regionForDestination(location.id);
+  const homeRegion = regionForDestination(location.id, useRegionExperiences());
   const { data: homeRegionRow } = useExploreRegion(homeRegion && homeRegion.id !== location.id ? homeRegion.id : undefined);
   const regionName = !homeRegion ? null : homeRegion.id === location.id ? locationName : homeRegionRow ? (mapExploreRegionName(homeRegionRow)[i18n.language as SupportedLanguage] ?? homeRegionRow.name_kg) : null;
   const passportLabel = passport
@@ -232,10 +232,7 @@ export function LocationDetailScreen({
             <AudioGuidePlayer
               contentKey={`region:${location.id}`}
               title={locationName}
-              narration={{
-                lang: factsLanguage,
-                text: joinNarration([location.name[factsLanguage] ?? location.name.kg, ...(factsLanguage === i18n.language ? [location.tagline] : []), ...(isChild ? location.facts.slice(0, 2) : location.facts)]),
-              }}
+              narration={placeNarration(location, i18n.language as SupportedLanguage, isChild)}
             />
             {(isChild ? location.facts.slice(0, 2) : location.facts).map((fact, index) => (
               <View key={index} style={styles.factRow}>

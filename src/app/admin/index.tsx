@@ -11,6 +11,7 @@ export default function AdminRoute() {
         onPressSection={(sectionId) => router.push(`/admin/${sectionId}` as never)}
         onPressPush={() => router.push('/admin/push' as never)}
         onPressFeedback={() => router.push('/admin/feedback' as never)}
+        onPressRegions={() => router.push('/admin/regions' as never)}
       />
     </AdminGate>
   );

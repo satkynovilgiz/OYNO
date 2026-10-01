@@ -49,7 +49,10 @@ export type AnalyticsEventName =
   | 'sync_failed'
   | 'sync_conflict_merged'
   | 'sources_opened'
-  | 'companion_moment_shown';
+  | 'companion_moment_shown'
+  | 'home_continue_region_opened'
+  | 'region_audio_journey_opened'
+  | 'map_region_progress_opened';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

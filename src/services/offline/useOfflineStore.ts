@@ -13,7 +13,9 @@ import {
   needsRefresh,
   OFFLINE_CACHE_VERSION,
   removeEntry,
+  requestersOf,
   upsertEntry,
+  USER_REQUESTER,
   type OfflineKind,
   type OfflineManifest,
 } from './offlineManifest';
@@ -45,7 +47,14 @@ type OfflineState = {
   inFlight: string[];
   failed: string[];
   load: () => Promise<void>;
-  download: (kind: OfflineKind, contentId: string) => Promise<boolean>;
+  /** `requester` (default 'user') is recorded on the entry; an existing
+   * entry keeps its other requesters. */
+  download: (kind: OfflineKind, contentId: string, requester?: string) => Promise<boolean>;
+  /** Adds a requester to an entry that is already downloaded (no refetch). */
+  claim: (id: string, requester: string) => Promise<void>;
+  /** Drops one requester; the entry (and data no other entry uses) is
+   * removed only when no requester is left. */
+  release: (id: string, requester: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
   removeAll: () => Promise<void>;
   /** Re-downloads every entry when online (fresh data, older cache
@@ -71,7 +80,7 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
     set({ manifest, isLoaded: true });
   },
 
-  download: async (kind, contentId) => {
+  download: async (kind, contentId, requester = USER_REQUESTER) => {
     const id = downloadId(kind, contentId);
     if (get().inFlight.includes(id)) return false;
     set({ inFlight: [...get().inFlight, id], failed: get().failed.filter((entry) => entry !== id) });
@@ -106,6 +115,7 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
         remoteImageUrls: uniqueUrls,
         downloadedAt: new Date().toISOString(),
         version: OFFLINE_CACHE_VERSION,
+        requestedBy: Array.from(new Set([...(get().manifest.entries[id] ? requestersOf(get().manifest.entries[id]) : []), requester])),
       });
       await writeManifest(manifest);
       set({ manifest, inFlight: get().inFlight.filter((entry) => entry !== id) });
@@ -114,6 +124,28 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
       set({ inFlight: get().inFlight.filter((entry) => entry !== id), failed: [...get().failed.filter((entry) => entry !== id), id] });
       return false;
     }
+  },
+
+  claim: async (id, requester) => {
+    const entry = get().manifest.entries[id];
+    if (!entry || requestersOf(entry).includes(requester)) return;
+    const manifest = upsertEntry(get().manifest, { ...entry, requestedBy: [...requestersOf(entry), requester] });
+    await writeManifest(manifest);
+    set({ manifest });
+  },
+
+  release: async (id, requester) => {
+    const entry = get().manifest.entries[id];
+    if (!entry) return;
+    const remaining = requestersOf(entry).filter((value) => value !== requester);
+    if (remaining.length > 0) {
+      if (remaining.length === requestersOf(entry).length) return;
+      const manifest = upsertEntry(get().manifest, { ...entry, requestedBy: remaining });
+      await writeManifest(manifest);
+      set({ manifest });
+      return;
+    }
+    await get().remove(id);
   },
 
   remove: async (id) => {
@@ -138,7 +170,7 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
     if (!onlineManager.isOnline()) return;
     for (const entry of Object.values(get().manifest.entries)) {
       if (onlyOutdated && !needsRefresh(entry)) continue;
-      await get().download(entry.kind, entry.contentId);
+      await get().download(entry.kind, entry.contentId, requestersOf(entry)[0]);
       // A failed refresh leaves the previous entry (and its data) in place.
       set({ failed: get().failed.filter((id) => id !== entry.id) });
     }

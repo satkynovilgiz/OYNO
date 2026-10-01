@@ -13,7 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { Badge, HeroEntrance, IconButton } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
-import { joinNarration } from '@/services/audioGuide/narration';
+import type { SupportedLanguage } from '@/i18n';
+import { materialNarration } from '@/services/audioGuide/contentNarration';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -31,7 +32,6 @@ type MaterialDetailScreenProps = {
 export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailScreenProps) {
   const { t, i18n } = useTranslation();
   // Body is in the app language only when fully translated; else Kyrgyz.
-  const bodyLanguage = i18n.language !== 'kg' && material.translation?.status === 'available' ? (i18n.language as 'ru' | 'en') : 'kg';
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_material', material.id)));
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_material', material.id);
@@ -93,7 +93,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
             <AudioGuidePlayer
               contentKey={`culture_material:${material.id}`}
               title={material.title}
-              narration={{ lang: bodyLanguage, text: joinNarration([bodyLanguage === 'kg' ? (material.translation?.titles.kg ?? material.title) : material.title, material.body]) }}
+              narration={materialNarration(material, i18n.language as SupportedLanguage)}
             />
           ) : null}
 

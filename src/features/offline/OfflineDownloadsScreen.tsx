@@ -6,11 +6,13 @@ import { type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LibraryEmptyState, LibraryHeader } from '@/components/library/LibraryChrome';
-import { Button, ConfirmationModal, SectionHeader } from '@/components/ui';
+import { AnimatedPressable, Button, ConfirmationModal, SectionHeader } from '@/components/ui';
 import { showToast } from '@/components/ui/Toast';
 import { getCollection } from '@/features/collections/collectionsData';
 import { cultureItemImages } from '@/features/culture/data';
 import { natureSiteImages } from '@/features/explore/data';
+import { regionHubRoute } from '@/features/explore/regions/regionExperiences';
+import { useRegionExperiences } from '@/features/explore/regions/useRegionExperiences';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
@@ -20,6 +22,7 @@ import { formatShortDate } from '@/services/i18n/formatDate';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import type { OfflineKind } from '@/services/offline/offlineManifest';
 import { buildOfflineView, formatBytes, type OfflineRow } from '@/services/offline/offlineModel';
+import { buildRegionOfflineManifest, regionPackState, requestedRegionIds } from '@/services/offline/regionPacks';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { cardRadii, colors, spacing, textStyles } from '@/theme';
@@ -55,7 +58,16 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
   const [confirmAll, setConfirmAll] = useState(false);
   const [confirmOne, setConfirmOne] = useState<{ id: string; title: string } | null>(null);
 
+  const regionConfigs = useRegionExperiences();
   const view = useMemo(() => buildOfflineView(manifest, inFlight, failed, removing), [manifest, inFlight, failed, removing]);
+  const regionPacks = requestedRegionIds(manifest).flatMap((regionId) => {
+    const config = regionConfigs.find((candidate) => candidate.id === regionId);
+    if (!config) return [];
+    const state = regionPackState(buildRegionOfflineManifest(config), regionId, manifest, inFlight, failed);
+    const row = regions?.find((candidate) => candidate.id === regionId);
+    const label = state.status === 'available' ? t('regionHub.offline.available') : state.status === 'downloading' ? t('regionHub.offline.downloading') : state.status === 'attention' ? t('regionHub.offline.attention') : t('regionHub.offline.partial');
+    return [{ id: regionId, name: row ? (mapExploreRegionName(row)[i18n.language as SupportedLanguage] ?? row.name_kg) : regionId, label, downloaded: state.downloaded, total: state.total }];
+  });
   const isChild = experience === 'child';
   const isAdult = experience === 'adult';
 
@@ -172,6 +184,27 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
               </View>
             ) : null}
 
+            {/* Region packs - derived from the same downloads (tags only). */}
+            {regionPacks.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title={t('offline.library.regions')} count={regionPacks.length} size="sm" inset={0} />
+                {regionPacks.map((pack) => (
+                  <AnimatedPressable
+                    key={pack.id}
+                    style={styles.regionRow}
+                    onPress={() => router.push(regionHubRoute(pack.id) as never)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${pack.name}. ${pack.label}. ${t('regionHub.offline.items', { downloaded: pack.downloaded, total: pack.total })}`}
+                  >
+                    <Text style={styles.regionName}>{pack.name}</Text>
+                    <Text style={styles.regionMeta}>
+                      {t('regionHub.offline.items', { downloaded: pack.downloaded, total: pack.total })} · {pack.label}
+                    </Text>
+                  </AnimatedPressable>
+                ))}
+              </View>
+            ) : null}
+
             {view.groups.map((group) => (
               <View key={group.id} style={styles.section}>
                 <SectionHeader title={t(`offline.library.${group.id}`)} count={group.rows.length} size="sm" inset={0} />
@@ -232,6 +265,9 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
 }
 
 const styles = StyleSheet.create({
+  regionRow: { gap: 2, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated },
+  regionName: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
+  regionMeta: { ...textStyles.caption, color: colors.textSecondary },
   root: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.md, gap: spacing.lg, paddingTop: spacing.xs },
   offlineNote: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, padding: spacing.sm, borderRadius: cardRadii.chip, backgroundColor: colors.surfaceMuted },

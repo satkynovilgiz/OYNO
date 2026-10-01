@@ -1,12 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ArrowRight, Check, ChevronLeft, GraduationCap, Map as MapIcon, Share2 } from 'lucide-react-native';
+import { ArrowRight, Check, ChevronLeft, ChevronRight, GraduationCap, Headphones, Map as MapIcon, Share2 } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StoryCompanion } from '@/components/companion/CompanionMoment';
+import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
 import { NotFoundState } from '@/components/system/NotFoundState';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, Button, CompactContentCard, IconButton, ProgressBar, Rail, SectionHeader, Skeleton } from '@/components/ui';
@@ -17,9 +18,7 @@ import { discoveryImages, natureSiteImages } from '@/features/explore/data';
 import type { ExploreDiscovery } from '@/features/explore/types';
 import { regionalChallengeId, regionalChallengeQuestionIds, regionalResultKey } from '@/features/challenges/regionalChallenges';
 import { QuestCard } from '@/features/quests/QuestCard';
-import { getGuidedQuest } from '@/features/quests/questsData';
 import { useQuestProgress } from '@/features/quests/useQuests';
-import { getTrail } from '@/features/trails/trailsData';
 import { TrailsRow } from '@/features/trails/TrailsRow';
 import type { SupportedLanguage } from '@/i18n';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
@@ -29,13 +28,20 @@ import { useDiscoveries } from '@/services/content/discoveriesService';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { regionTagline } from '@/services/content/regionTaglines';
 import { mapDiscoveryTitle, mapExploreRegionName } from '@/services/content/types';
+import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, editorial, radii, spacing, textStyles } from '@/theme';
 
-import { getRegionExperience, regionOwnImage, regionTone, type RegionExperienceConfig } from './regionExperiences';
+import { regionIntroOverride, regionOwnImage, regionTone, type RegionExperienceConfig } from './regionExperiences';
+import { useRegionExperience } from './useRegionExperiences';
+import { regionAudioRoute } from './regionAudioJourney';
+import { useRegionAudioJourney } from './useRegionAudioJourney';
+import { useRegionIntros } from '@/services/content/regionLinksService';
 import { buildRegionShareCard, computeRegionProgress, pickStartHere } from './regionModel';
+import { startHereLabel, startHereName } from './startHereLabel';
+import { RegionOfflineRow } from './RegionOfflineRow';
 import { useRegionSignals } from './useRegionSignals';
 
 /**
@@ -46,7 +52,7 @@ import { useRegionSignals } from './useRegionSignals';
  * content don't render.
  */
 export function RegionHubScreen({ regionId, onPressBack }: { regionId: string; onPressBack: () => void }) {
-  const config = getRegionExperience(regionId);
+  const config = useRegionExperience(regionId);
   if (!config) return <NotFoundState onPressBack={onPressBack} />;
   return <RegionHub config={config} onPressBack={onPressBack} />;
 }
@@ -60,12 +66,17 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
   const isAdult = experience === 'adult';
   const { share, shareHost } = useShareCard();
 
-  const { data: regions, isLoading: regionsLoading } = useExploreRegions();
+  const regionsQuery = useExploreRegions();
+  const { data: regions, isLoading: regionsLoading } = regionsQuery;
   const { data: discoveryRows } = useDiscoveries();
   const visitedRegionIds = useProgressStore((state) => state.visitedRegionIds);
   const discoveredIds = useProgressStore((state) => state.discoveredExploreIds);
   const questProgress = useQuestProgress();
   const signals = useRegionSignals();
+  const { journey: audioJourney } = useRegionAudioJourney(config);
+  // An editor's intro for this language, else the built-in translation.
+  const { data: intros } = useRegionIntros();
+  const introOverride = regionIntroOverride(intros, config.id, language);
 
   const regionRow = regions?.find((row) => row.id === config.id) ?? null;
   const name = regionRow ? (mapExploreRegionName(regionRow)[language] ?? regionRow.name_kg) : '';
@@ -111,17 +122,7 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
   }
 
   function startLabel(): string {
-    if (next.kind === 'destination') return t('regionHub.start.destination', { name: places.find((place) => place.id === next.id)?.name ?? name });
-    if (next.kind === 'discovery') return t('regionHub.start.discovery', { name: discoveries.find((discovery) => discovery.id === next.id)?.title ?? '' });
-    if (next.kind === 'trail') {
-      const trail = getTrail(next.id);
-      return t('regionHub.start.trail', { name: trail ? (trail.title[language] ?? trail.title.kg) : '' });
-    }
-    if (next.kind === 'quest') {
-      const quest = getGuidedQuest(next.id);
-      return t('regionHub.start.quest', { name: quest ? (quest.title[language] ?? quest.title.kg) : '' });
-    }
-    return t('regionHub.start.done');
+    return startHereLabel(next, startHereName(next, { regions, discoveries: discoveryRows, language }), t);
   }
 
   function handleShare() {
@@ -132,6 +133,10 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
   }
 
   const loading = regionsLoading && !regionRow;
+
+  // Offline with nothing saved for this region: say so instead of loading
+  // forever (a downloaded Region pack opens normally from the device).
+  if (isWaitingForNetwork(regionsQuery)) return <OfflineUnavailable onRetry={() => void regionsQuery.refetch()} />;
 
   return (
     <View style={styles.root}>
@@ -155,7 +160,7 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
               </Text>
             )}
             <Text style={styles.intro} numberOfLines={isChild ? 2 : 3}>
-              {t(`regionHub.regions.${config.id}.intro`)}
+              {introOverride ?? t(`regionHub.regions.${config.id}.intro`)}
             </Text>
             <View style={styles.progress} accessible accessibilityRole="progressbar" accessibilityLabel={t('regionHub.progressLabel')} accessibilityValue={{ min: 0, max: progress.total, now: progress.completed, text: progressText }}>
               <Text style={styles.progressText}>{progressText}</Text>
@@ -249,6 +254,30 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
           </View>
         ) : null}
 
+        {audioJourney ? (
+          <View style={styles.pad}>
+            <AnimatedPressable
+              style={styles.audioRow}
+              onPress={() => router.push(regionAudioRoute(config.id) as never)}
+              accessibilityRole="button"
+              accessibilityLabel={`${t('regionHub.audio.title')}. ${t('regionHub.audio.stops', { count: audioJourney.stops.length })}`}
+            >
+              <Headphones size={18} color={colors.primary} strokeWidth={2.25} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.audioTitle}>{t('regionHub.audio.title')}</Text>
+                <Text style={styles.audioMeta}>{t('regionHub.audio.stops', { count: audioJourney.stops.length })}</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+            </AnimatedPressable>
+          </View>
+        ) : null}
+
+        {name ? (
+          <View style={styles.pad}>
+            <RegionOfflineRow config={config} regionName={name} />
+          </View>
+        ) : null}
+
         <View style={styles.pad}>
           <Button label={t('regionHub.showOnMap')} variant="secondary" icon={<MapIcon size={16} color={colors.primary} strokeWidth={2.25} />} onPress={() => router.push(`/explore/map?region=${config.id}` as never)} />
         </View>
@@ -287,6 +316,9 @@ const styles = StyleSheet.create({
   kicker: { ...textStyles.overline, color: colors.accentGold },
   title: { ...textStyles.display, color: colors.textOnDark },
   titleEditorial: { ...editorial(textStyles.display) },
+  audioRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.md, borderRadius: radii.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
+  audioTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
+  audioMeta: { ...textStyles.small, color: colors.textSecondary },
   intro: { ...textStyles.body, color: 'rgba(251,243,227,0.88)' },
   progress: { gap: 6, marginTop: spacing.xs, maxWidth: 260 },
   progressText: { ...textStyles.caption, fontWeight: '700', color: colors.textOnDark },

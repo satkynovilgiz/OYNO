@@ -408,6 +408,14 @@
       "progress": "Your progress",
       "play": "Play",
       "today": "Today"
+    },
+    "continueRegion": {
+      "continue": "Continue exploring",
+      "start": "Start exploring Kyrgyzstan",
+      "next": "Next",
+      "cta": "Continue",
+      "allDone": "Kyrgyzstan explored",
+      "viewPassport": "View passport"
     }
   },
   "games": {
@@ -1055,7 +1063,13 @@
       "pinNotDiscovered": "not discovered",
       "trailFilter": "Trail: {{title}}",
       "zoomIn": "Zoom in",
-      "zoomOut": "Zoom out"
+      "zoomOut": "Zoom out",
+      "modeLabel": "Map view",
+      "mode": {
+        "places": "Places",
+        "progress": "My progress"
+      },
+      "openRegion": "Open region"
     },
     "progress": {
       "title": "Kyrgyzstan exploration progress",
@@ -1870,6 +1884,19 @@
       "startTrail": "Start a trail",
       "continueLearning": "Continue learning",
       "bestResult": "Best: {{correct}}/{{total}}"
+    },
+    "regions": {
+      "title": "Regions",
+      "started": "Started {{count}} / {{total}}",
+      "completedCount": "Completed {{count}} / {{total}}",
+      "a11yName": "{{name}} Region",
+      "share": "Share {{name}}",
+      "explored": "{{name}} explored",
+      "state": {
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "completed": "Completed"
+      }
     }
   },
   "share": {
@@ -1918,7 +1945,8 @@
       "storage": "{{size}} stored",
       "storageNote": "Photos built into the app aren't copied, so they aren't counted.",
       "emptyTitle": "No downloads yet",
-      "emptyDescription": "Open a place or collection and tap \"Download for offline\"."
+      "emptyDescription": "Open a place or collection and tap \"Download for offline\".",
+      "regions": "Regions"
     },
     "a11y": {
       "download": "Download {{title}} for offline use",
@@ -2772,6 +2800,46 @@
       "start": "Start",
       "retry": "Retry",
       "best": "best {{correct}} / {{total}}"
+    },
+    "offline": {
+      "download": "Download region",
+      "downloadShort": "Download",
+      "downloadRegion": "Download the {{name}} region",
+      "downloading": "Downloading",
+      "available": "Available offline",
+      "partial": "Partially downloaded",
+      "attention": "Needs attention",
+      "items": "{{downloaded}} of {{total}} items",
+      "includes": "Includes {{count}} items",
+      "retry": "Retry",
+      "remove": "Remove download",
+      "removeTitle": "Remove the {{name}} download?",
+      "removeMessage": "Only this region’s offline copy is removed. Places you saved on their own stay, and your progress is not affected.",
+      "needsInternet": "Connect to the internet to download."
+    },
+    "audio": {
+      "title": "Audio journey",
+      "stops_one": "{{count}} stop",
+      "stops_other": "{{count}} stops",
+      "stopOf": "Stop {{current}} of {{total}}",
+      "listened": "Listened {{count}} of {{total}}",
+      "heard": "Listened",
+      "previous": "Previous",
+      "next": "Next stop",
+      "readyForNext": "Finished - go to the next stop when you're ready.",
+      "allDone": "That was the last stop.",
+      "openPage": "Open the page for {{name}}",
+      "openPageShort": "Open page",
+      "none": "This region doesn't have an audio journey in your language yet.",
+      "backToRegion": "Back to the region",
+      "kind": {
+        "destination": "Place",
+        "culture_item": "Culture",
+        "culture_material": "Story"
+      },
+      "stops_few": "{{count}} stops",
+      "stops_many": "{{count}} stops",
+      "noVoice": "This device has no voice for this language yet - open the page to read this stop."
     }
   }
 }

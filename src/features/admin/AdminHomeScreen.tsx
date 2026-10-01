@@ -15,13 +15,14 @@ type AdminHomeScreenProps = {
   onPressSection: (sectionId: string) => void;
   onPressPush: () => void;
   onPressFeedback: () => void;
+  onPressRegions: () => void;
 };
 
 /** Internal tooling, not part of the app's localized surface - kept in
  * English deliberately (same reasoning as the rest of this file: it's for
  * whoever has an admin_roles row, not end users) rather than adding a
  * fourth i18n surface nobody but an admin will ever see. */
-export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback }: AdminHomeScreenProps) {
+export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback, onPressRegions }: AdminHomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { data: role, isLoading } = useAdminRole();
 
@@ -62,6 +63,16 @@ export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPr
               </View>
             );
           })}
+
+          <View style={styles.group}>
+            <Text style={styles.groupTitle} accessibilityRole="header">
+              Region Hubs
+            </Text>
+            <AnimatedPressable style={styles.row} onPress={onPressRegions} accessibilityRole="button" accessibilityLabel="Regions - curate Region Hub content">
+              <Text style={styles.rowLabel}>Regions</Text>
+              <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+            </AnimatedPressable>
+          </View>
 
           <View style={styles.group}>
             <Text style={styles.groupTitle} accessibilityRole="header">

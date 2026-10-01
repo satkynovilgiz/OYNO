@@ -25,6 +25,7 @@ import { SilentErrorBoundary } from '@/components/system/SilentErrorBoundary';
 import { ToastHost } from '@/components/ui/Toast';
 import { ActivityRecorder } from '@/components/system/ActivityRecorder';
 import { WidgetSync } from '@/components/system/WidgetSync';
+import { RegionCompletionWatcher } from '@/features/explore/regions/RegionCompletionWatcher';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
 import { useAppStore } from '@/store/useAppStore';
@@ -271,6 +272,9 @@ export default function RootLayout() {
               achievement={lastUnlockedAchievementId ? (getAchievement(lastUnlockedAchievementId) ?? null) : null}
               onDismiss={() => useProgressStore.getState().acknowledgeAchievement()}
             />
+            <SilentErrorBoundary name="region-completion">
+              <RegionCompletionWatcher />
+            </SilentErrorBoundary>
             <SilentErrorBoundary name="audio-mini-player">
               <AudioMiniPlayer />
             </SilentErrorBoundary>

@@ -9,6 +9,7 @@ import type { ExploreRegionRow } from '@/services/content/types';
 import { spacing } from '@/theme';
 
 import { buildRegionRailItems } from './regionRailItems';
+import { useRegionExperiences } from './useRegionExperiences';
 import { useRegionSignals } from './useRegionSignals';
 
 const CARD_WIDTH: Record<AgeExperience, number> = { child: 176, preteen: 168, teen: 160, adult: 150 };
@@ -19,7 +20,8 @@ const CARD_WIDTH: Record<AgeExperience, number> = { child: 176, preteen: 168, te
 export function RegionRail({ regions, experience }: { regions: readonly ExploreRegionRow[]; experience: AgeExperience }) {
   const { t, i18n } = useTranslation();
   const signals = useRegionSignals();
-  const items = buildRegionRailItems(regions, i18n.language as SupportedLanguage, signals);
+  const configs = useRegionExperiences();
+  const items = buildRegionRailItems(regions, i18n.language as SupportedLanguage, signals, configs);
   if (items.length === 0) return null;
   const width = CARD_WIDTH[experience];
 

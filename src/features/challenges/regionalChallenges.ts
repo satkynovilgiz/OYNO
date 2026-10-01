@@ -40,8 +40,9 @@ export function regionalChallengeQuestionIds(config: RegionExperienceConfig | nu
 }
 
 /** The region a `region-<id>` challenge id belongs to, when it has a pack. */
-export function regionForChallengeId(challengeId: string): RegionExperienceConfig | null {
+export function regionForChallengeId(challengeId: string, configs?: readonly RegionExperienceConfig[]): RegionExperienceConfig | null {
   if (!challengeId.startsWith(PREFIX)) return null;
-  const config = getRegionExperience(challengeId.slice(PREFIX.length));
+  const regionId = challengeId.slice(PREFIX.length);
+  const config = configs ? (configs.find((candidate) => candidate.id === regionId) ?? null) : getRegionExperience(regionId);
   return regionalChallengeQuestionIds(config).length > 0 ? config : null;
 }

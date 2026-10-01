@@ -122,7 +122,7 @@ describe('quests x routes', () => {
 
   it('an unknown quest id or challenge id renders Not Found, not a crash', () => {
     expect(fs.readFileSync(path.join(ROOT, 'src/features/quests/QuestDetailScreen.tsx'), 'utf8')).toMatch(/if \(!quest \|\| !progress\) return <NotFoundState/);
-    expect(fs.readFileSync(path.join(ROOT, 'src/app/challenges/[challengeId].tsx'), 'utf8')).toMatch(/if \(!isKnownChallenge\(challengeId\)\) return <NotFoundState/);
+    expect(fs.readFileSync(path.join(ROOT, 'src/app/challenges/[challengeId].tsx'), 'utf8')).toMatch(/if \(!isKnownChallenge\(challengeId, regions\)\) return <NotFoundState/);
   });
 });
 

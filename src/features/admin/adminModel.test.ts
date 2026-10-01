@@ -12,7 +12,10 @@ const item = { id: 'boz-uy', title: 'Боз үй', history: 'Тарых', cultur
 
 describe('admin gate', () => {
   it('every admin route renders inside AdminGate (deep links included); the gate shows Not Found to non-admins', () => {
-    for (const file of fs.readdirSync(path.join(ROOT, 'src/app/admin'))) {
+    // Nested admin routes (admin/regions/...) included.
+    const routes = (fs.readdirSync(path.join(ROOT, 'src/app/admin'), { recursive: true }) as string[]).filter((file) => file.endsWith('.tsx'));
+    expect(routes).toEqual(expect.arrayContaining(['regions/index.tsx', 'regions/[regionId].tsx']));
+    for (const file of routes) {
       expect(fs.readFileSync(path.join(ROOT, 'src/app/admin', file), 'utf8')).toMatch(/<AdminGate>/);
     }
     const gate = fs.readFileSync(path.join(__dirname, 'AdminGate.tsx'), 'utf8');

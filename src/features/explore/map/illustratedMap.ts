@@ -57,3 +57,20 @@ export function panLimits(contentW: number, contentH: number, frameW: number, fr
   'worklet';
   return { maxX: Math.max(0, (contentW * scale - frameW) / 2), maxY: Math.max(0, (contentH * scale - frameH) / 2) };
 }
+
+/**
+ * "My progress" region markers: one presentation anchor per Region Hub on
+ * the painting - the region's painted city dot (Talas, Jalal-Abad, Naryn,
+ * Osh), the lake for Ysyk-Kol, the Chuy valley and Batken's south-western
+ * arm. A marker stands for the whole region; nothing here draws or implies
+ * a border. Separate from the place pins so the two layers never mix.
+ */
+export const REGION_MAP_ANCHORS: Record<string, IllustratedMapCoordinate> = {
+  chuy: ILLUSTRATED_MAP_COORDINATES.chuy,
+  talas: ILLUSTRATED_MAP_COORDINATES.talas,
+  'ysyk-kol': ILLUSTRATED_MAP_COORDINATES['ysyk-kol'],
+  naryn: ILLUSTRATED_MAP_COORDINATES.naryn,
+  'jalal-abad': ILLUSTRATED_MAP_COORDINATES['jalal-abad'],
+  osh: ILLUSTRATED_MAP_COORDINATES.osh,
+  batken: ILLUSTRATED_MAP_COORDINATES.batken,
+};

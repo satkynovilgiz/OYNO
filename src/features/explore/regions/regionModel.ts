@@ -122,3 +122,36 @@ export function validateRegionExperience(
   for (const id of config.questIds) if (!catalog.questIds.has(id)) problems.push(`quest ${id} missing`);
   return problems;
 }
+
+export type RegionStatus = 'not_started' | 'in_progress' | 'completed';
+
+/** The one region state rule, used by the Passport, the map and Home:
+ * completed only when every counted action is done AND there is something
+ * to count; opening a region page never completes it. */
+export function regionStatus(progress: Pick<RegionProgress, 'completed' | 'total'>): RegionStatus {
+  if (progress.total > 0 && progress.completed === progress.total) return 'completed';
+  return progress.completed > 0 ? 'in_progress' : 'not_started';
+}
+
+/** "Regions started X / 7, completed Y / 7" - two honest counts, never one
+ * blended percentage. Started includes completed. */
+export function regionSummary(configs: readonly RegionExperienceConfig[], signals: RegionSignals): { started: number; completed: number; total: number } {
+  let started = 0;
+  let completed = 0;
+  for (const config of configs) {
+    const status = regionStatus(computeRegionProgress(config, signals));
+    if (status !== 'not_started') started += 1;
+    if (status === 'completed') completed += 1;
+  }
+  return { started, completed, total: configs.length };
+}
+
+/**
+ * Regions that changed to completed since the last look. `previous` null =
+ * first look (app start / account change): nothing is announced, so an old
+ * completion - or another account's - is never celebrated.
+ */
+export function newlyCompletedRegions(previous: Readonly<Record<string, RegionStatus>> | null, next: Readonly<Record<string, RegionStatus>>): string[] {
+  if (!previous) return [];
+  return Object.keys(next).filter((id) => next[id] === 'completed' && previous[id] !== 'completed');
+}

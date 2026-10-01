@@ -26,7 +26,19 @@ export type OfflineManifestEntry = {
   remoteImageUrls: string[];
   downloadedAt: string;
   version: number;
+  /** Who asked for this download: 'user' (saved from its own screen) and/or
+   * 'region:<id>' (part of a Region pack). Removing a Region pack only
+   * releases its own claim; the entry goes when nobody needs it. Entries
+   * saved before this field existed count as 'user'. */
+  requestedBy?: string[];
 };
+
+export const USER_REQUESTER = 'user';
+
+export function requestersOf(entry: OfflineManifestEntry | undefined): string[] {
+  if (!entry) return [];
+  return entry.requestedBy && entry.requestedBy.length > 0 ? entry.requestedBy : [USER_REQUESTER];
+}
 
 export type OfflineManifest = { entries: Record<string, OfflineManifestEntry> };
 
@@ -50,7 +62,12 @@ export function parseManifest(value: unknown): OfflineManifest {
   const valid: Record<string, OfflineManifestEntry> = {};
   for (const [id, entry] of Object.entries(entries as Record<string, OfflineManifestEntry>)) {
     if (entry && typeof entry.kind === 'string' && Array.isArray(entry.queryHashes)) {
-      valid[id] = { ...entry, remoteImageUrls: Array.isArray(entry.remoteImageUrls) ? entry.remoteImageUrls : [], version: entry.version ?? 0 };
+      valid[id] = {
+        ...entry,
+        remoteImageUrls: Array.isArray(entry.remoteImageUrls) ? entry.remoteImageUrls : [],
+        version: entry.version ?? 0,
+        requestedBy: Array.isArray(entry.requestedBy) ? entry.requestedBy.filter((value) => typeof value === 'string') : undefined,
+      };
     }
   }
   return { entries: valid };

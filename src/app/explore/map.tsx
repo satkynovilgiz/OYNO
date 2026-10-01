@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { natureSiteCoordinates } from '@/features/explore/data';
 import { InteractiveMapScreen } from '@/features/explore/map/InteractiveMapScreen';
-import { getRegionExperience } from '@/features/explore/regions/regionExperiences';
+import { useRegionExperiences } from '@/features/explore/regions/useRegionExperiences';
 import { regionMapHighlightIds } from '@/features/explore/regions/regionModel';
 import { getTrail } from '@/features/trails/trailsData';
 import type { SupportedLanguage } from '@/i18n';
@@ -20,7 +20,8 @@ export default function ExploreMapRoute() {
   // with no pinned place opens the map unfiltered.
   const { trail: trailId, region: regionId } = useLocalSearchParams<{ trail?: string; region?: string }>();
   const trail = trailId ? getTrail(trailId) : undefined;
-  const region = !trail ? getRegionExperience(regionId) : null;
+  const regions = useRegionExperiences();
+  const region = !trail ? (regions.find((config) => config.id === regionId) ?? null) : null;
   const regionHighlights = region ? regionMapHighlightIds(region, Object.keys(natureSiteCoordinates)) : [];
   const { data: regionRow } = useExploreRegion(regionHighlights.length > 0 ? region?.id : undefined);
 

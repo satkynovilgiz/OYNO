@@ -408,6 +408,14 @@
       "progress": "Сенин жетишкендигиң",
       "play": "Ойно",
       "today": "Бүгүн"
+    },
+    "continueRegion": {
+      "continue": "Саякатты улант",
+      "start": "Кыргызстанды ачып башта",
+      "next": "Кийинки",
+      "cta": "Улантуу",
+      "allDone": "Кыргызстан ачылды",
+      "viewPassport": "Паспортту ачуу"
     }
   },
   "games": {
@@ -1055,7 +1063,13 @@
       "pinNotDiscovered": "ачыла элек",
       "trailFilter": "Саякат: {{title}}",
       "zoomIn": "Чоңойтуу",
-      "zoomOut": "Кичирейтүү"
+      "zoomOut": "Кичирейтүү",
+      "modeLabel": "Картанын көрүнүшү",
+      "mode": {
+        "places": "Жерлер",
+        "progress": "Менин жолум"
+      },
+      "openRegion": "Аймакты ачуу"
     },
     "progress": {
       "title": "Кыргызстанды изилдөө прогресси",
@@ -1870,6 +1884,19 @@
       "startTrail": "Саякатты башта",
       "continueLearning": "Окууну улантуу",
       "bestResult": "Эң мыкты: {{correct}}/{{total}}"
+    },
+    "regions": {
+      "title": "Аймактар",
+      "started": "Башталды {{count}} / {{total}}",
+      "completedCount": "Бүттү {{count}} / {{total}}",
+      "a11yName": "{{name}} аймагы",
+      "share": "Бөлүшүү: {{name}}",
+      "explored": "{{name}}: баары ачылды",
+      "state": {
+        "not_started": "Башталган жок",
+        "in_progress": "Жүрүп жатат",
+        "completed": "Бүттү"
+      }
     }
   },
   "share": {
@@ -1918,7 +1945,8 @@
       "storage": "{{size}} сакталды",
       "storageNote": "Колдонмодо бар сүрөттөр кайра көчүрүлбөйт, ошондуктан эсептелбейт.",
       "emptyTitle": "Азырынча жүктөө жок",
-      "emptyDescription": "Жерди же коллекцияны ачып, «Оффлайн үчүн жүктөө» бас."
+      "emptyDescription": "Жерди же коллекцияны ачып, «Оффлайн үчүн жүктөө» бас.",
+      "regions": "Аймактар"
     },
     "a11y": {
       "download": "{{title}} оффлайн колдонуу үчүн жүктөө",
@@ -2772,6 +2800,46 @@
       "start": "Баштоо",
       "retry": "Кайра",
       "best": "мыкты жыйынтык {{correct}} / {{total}}"
+    },
+    "offline": {
+      "download": "Аймакты жүктөө",
+      "downloadShort": "Жүктөө",
+      "downloadRegion": "Аймакты жүктөө: {{name}}",
+      "downloading": "Жүктөлүүдө",
+      "available": "Офлайн жеткиликтүү",
+      "partial": "Жарым-жартылай жүктөлдү",
+      "attention": "Көңүл буруу керек",
+      "items": "{{total}} ичинен {{downloaded}}",
+      "includes": "{{count}} материал",
+      "retry": "Кайталоо",
+      "remove": "Жүктөөнү өчүрүү",
+      "removeTitle": "«{{name}}» жүктөөсүн өчүрөсүзбү?",
+      "removeMessage": "Бул аймактын офлайн көчүрмөсү гана өчөт. Өзүнчө жүктөлгөн жерлер калат, прогресс өзгөрбөйт.",
+      "needsInternet": "Жүктөө үчүн интернет керек."
+    },
+    "audio": {
+      "title": "Аудио саякат",
+      "stops_one": "{{count}} аялдама",
+      "stops_other": "{{count}} аялдама",
+      "stopOf": "{{total}} аялдаманын {{current}}-си",
+      "listened": "{{total}} ичинен {{count}} угулду",
+      "heard": "Угулду",
+      "previous": "Мурунку",
+      "next": "Кийинки аялдама",
+      "readyForNext": "Бүттү - даяр болгондо кийинки аялдамага өтүңүз.",
+      "allDone": "Бул акыркы аялдама эле.",
+      "openPage": "{{name}} барагын ачуу",
+      "openPageShort": "Баракты ачуу",
+      "none": "Бул аймактын сиздин тилиңизде аудио саякаты азырынча жок.",
+      "backToRegion": "Аймакка кайтуу",
+      "kind": {
+        "destination": "Жер",
+        "culture_item": "Маданият",
+        "culture_material": "Окуя"
+      },
+      "stops_few": "{{count}} аялдама",
+      "stops_many": "{{count}} аялдама",
+      "noVoice": "Бул түзмөктө бул тил үчүн үн азырынча жок - бул аялдаманы окуу үчүн баракты ачыңыз."
     }
   }
 }

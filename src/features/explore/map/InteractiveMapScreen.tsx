@@ -10,10 +10,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, Button, IconButton, MediaImage, PhotoBadge, Skeleton } from '@/components/ui';
 import { LOCATION_TONES, natureSiteImages } from '@/features/explore/data';
+import { regionHubRoute, regionTone } from '@/features/explore/regions/regionExperiences';
+import { regionSummary, type RegionStatus } from '@/features/explore/regions/regionModel';
+import { useRegionExperiences } from '@/features/explore/regions/useRegionExperiences';
+import { useRegionSignals } from '@/features/explore/regions/useRegionSignals';
 import { buildPassport, type PassportStamp } from '@/features/journey/passport';
 import type { SupportedLanguage } from '@/i18n';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { track } from '@/services/analytics/analytics';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
@@ -22,6 +27,7 @@ import { cardRadii, colors, elevation, fontFamily, motion, radii, spacing, textS
 
 import { ILLUSTRATED_MAP_ASPECT, ILLUSTRATED_MAP_COORDINATES, ILLUSTRATED_MAP_IMAGE, panLimits } from './illustratedMap';
 import { pinNudge, spreadPins, type PinSpread } from './pinSpread';
+import { buildRegionMapMarkers, canShowProgressMode, type MapMode, type RegionMapMarker } from './regionMapProgress';
 
 const MIN_SCALE = 1;
 /** The atlas is 1448 px wide and fills ~1.25x the frame width at rest, so
@@ -131,6 +137,30 @@ export function InteractiveMapScreen({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = places.find((place) => place.id === selectedId) ?? null;
+
+  // "My progress": one marker per Region Hub with the same derived state
+  // as the Passport and Home. Places stays the default; a trail/region
+  // filter keeps its own focused view (no switch offered).
+  const regionConfigs = useRegionExperiences();
+  const regionSignals = useRegionSignals();
+  const showModeSwitch = canShowProgressMode(highlightIds);
+  const [mode, setMode] = useState<MapMode>('places');
+  const progressMode = showModeSwitch && mode === 'progress';
+  const regionMarkers = useMemo(() => buildRegionMapMarkers(regionConfigs, regions ?? [], regionSignals, language), [regionConfigs, regions, regionSignals, language]);
+  const regionTotals = regionSummary(regionConfigs, regionSignals);
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
+  const selectedRegion = progressMode ? (regionMarkers.find((marker) => marker.id === selectedRegionId) ?? null) : null;
+  const regionStateLabel = (status: RegionStatus) => t(`journey.regions.state.${status}`);
+  const regionMarkerLabel = (marker: RegionMapMarker) =>
+    `${t('journey.regions.a11yName', { name: marker.name })}. ${regionStateLabel(marker.status)}.${marker.status === 'in_progress' ? ` ${t('regionHub.progress', { completed: marker.progress.completed, total: marker.progress.total })}.` : ''}`;
+
+  function switchMode(next: MapMode) {
+    if (next === mode) return;
+    setMode(next);
+    setSelectedId(null);
+    setSelectedRegionId(null);
+    if (next === 'progress') track('map_region_progress_opened', { started: regionTotals.started, completed: regionTotals.completed });
+  }
 
   // Frame + map geometry. The map table is as tall as the space allows,
   // from the atlas's own full-width height up to MAX_REST_COVER of it; the
@@ -260,11 +290,13 @@ export function InteractiveMapScreen({
                 <OymoOrnament size={10} color={colors.textPrimary} strokeWidth={2} />
               </View>
             ) : null}
-            <Text style={styles.summary}>
-              {t('explore.map.summary', {
-                unlocked: passport.unlocked,
-                total: passport.total,
-              })}
+            <Text style={styles.summary} accessibilityLiveRegion="polite">
+              {progressMode
+                ? `${t('journey.regions.started', { count: regionTotals.started, total: regionTotals.total })} · ${t('journey.regions.completedCount', { count: regionTotals.completed, total: regionTotals.total })}`
+                : t('explore.map.summary', {
+                    unlocked: passport.unlocked,
+                    total: passport.total,
+                  })}
             </Text>
           </View>
           {highlightTitle ? (
@@ -275,7 +307,38 @@ export function InteractiveMapScreen({
         </View>
       </View>
 
-      {/* Legend - state is carried by shape + icon + text, not colour alone. */}
+      {showModeSwitch ? (
+        <View style={styles.modeSwitch} accessibilityRole="radiogroup" accessibilityLabel={t('explore.map.modeLabel')}>
+          {(['places', 'progress'] as const).map((option) => (
+            <AnimatedPressable
+              key={option}
+              style={[styles.modeOption, mode === option && styles.modeOptionActive]}
+              onPress={() => switchMode(option)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: mode === option }}
+              accessibilityLabel={t(`explore.map.mode.${option}`)}
+            >
+              <Text style={[styles.modeText, mode === option && styles.modeTextActive]}>{t(`explore.map.mode.${option}`)}</Text>
+            </AnimatedPressable>
+          ))}
+        </View>
+      ) : null}
+
+      {progressMode ? (
+        <View
+          style={styles.legend}
+          accessible
+          accessibilityLabel={`${regionStateLabel('not_started')}; ${regionStateLabel('in_progress')}; ${regionStateLabel('completed')}`}
+        >
+          {(['not_started', 'in_progress', 'completed'] as const).map((status) => (
+            <View key={status} style={styles.legendItem}>
+              <RegionBadge status={status} tone={colors.primary} size={14} />
+              <Text style={styles.legendText}>{regionStateLabel(status)}</Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+      /* Legend - state is carried by shape + icon + text, not colour alone. */
       <View style={styles.legend} accessible accessibilityLabel={`${t('explore.v2.visited')}; ${t('explore.map.pinNotDiscovered')}`}>
         <View style={styles.legendItem}>
           <View style={[styles.legendPin, styles.pinVisited]}>
@@ -290,6 +353,7 @@ export function InteractiveMapScreen({
           <Text style={styles.legendText}>{t('explore.map.pinNotDiscovered')}</Text>
         </View>
       </View>
+      )}
 
       <View
         style={styles.frameWrap}
@@ -305,7 +369,22 @@ export function InteractiveMapScreen({
               <Animated.View style={[{ width: mapWidth, height: mapHeight }, mapStyle]}>
                 <Image source={ILLUSTRATED_MAP_IMAGE} style={{ width: mapWidth, height: mapHeight }} resizeMode="cover" accessibilityIgnoresInvertColors />
 
-                {places.map((place, index) => (
+                {progressMode
+                  ? regionMarkers.map((marker) => (
+                      <RegionMarkerPin
+                        key={marker.id}
+                        marker={marker}
+                        left={marker.x * mapWidth}
+                        top={marker.y * mapHeight}
+                        scale={scale}
+                        hit={pin.hit}
+                        labelSize={pin.label}
+                        selected={marker.id === selectedRegionId}
+                        accessibilityLabel={regionMarkerLabel(marker)}
+                        onPress={() => setSelectedRegionId(marker.id)}
+                      />
+                    ))
+                  : places.map((place, index) => (
                   <MapPin
                     key={place.id}
                     place={place}
@@ -343,7 +422,24 @@ export function InteractiveMapScreen({
         {/* Every place as a readable chip - an easy, screen-reader-friendly
             alternative to small pins; tapping one opens the same sheet. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.places} style={styles.placesBleed}>
-          {places.map((place) => (
+          {progressMode
+            ? regionMarkers.map((marker) => (
+                <AnimatedPressable
+                  key={marker.id}
+                  style={[styles.placeChip, marker.id === selectedRegionId && styles.placeChipSelected]}
+                  onPress={() => setSelectedRegionId(marker.id)}
+                  press="strong"
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: marker.id === selectedRegionId }}
+                  accessibilityLabel={regionMarkerLabel(marker)}
+                >
+                  <RegionBadge status={marker.status} tone={regionTone(marker.id)} size={22} />
+                  <Text style={styles.placeName} numberOfLines={1}>
+                    {marker.name}
+                  </Text>
+                </AnimatedPressable>
+              ))
+            : places.map((place) => (
             <AnimatedPressable
               key={place.id}
               style={[styles.placeChip, place.id === selectedId && styles.placeChipSelected]}
@@ -369,7 +465,31 @@ export function InteractiveMapScreen({
         </ScrollView>
       </View>
 
-      {selected ? (
+      {selectedRegion ? (
+        <Animated.View
+          key={`region-${selectedRegion.id}`}
+          entering={reducedMotion ? undefined : FadeInDown.duration(motion.sheetEnter.durationMs)}
+          style={[styles.preview, { bottom: insets.bottom + spacing.sm }]}
+        >
+          <View style={styles.handle} />
+          <View style={styles.previewRow}>
+            <RegionBadge status={selectedRegion.status} tone={regionTone(selectedRegion.id)} size={44} />
+            <View style={styles.previewText}>
+              <Text style={styles.previewState}>{regionStateLabel(selectedRegion.status)}</Text>
+              <Text style={[styles.previewName, isAdult && styles.titleEditorial]} numberOfLines={2} accessibilityRole="header">
+                {selectedRegion.name}
+              </Text>
+              <Text style={styles.previewTagline} numberOfLines={1}>
+                {t('regionHub.progress', { completed: selectedRegion.progress.completed, total: selectedRegion.progress.total })}
+              </Text>
+            </View>
+            <IconButton icon={X} size={32} iconSize={16} elevated={false} accessibilityLabel={t('explore.map.closePreview')} onPress={() => setSelectedRegionId(null)} />
+          </View>
+          <Button label={t('explore.map.openRegion')} variant="accent" block onPress={() => router.push(regionHubRoute(selectedRegion.id) as never)} accessibilityHint={selectedRegion.name} />
+        </Animated.View>
+      ) : null}
+
+      {selected && !progressMode ? (
         <Animated.View
           key={selected.id}
           entering={reducedMotion ? undefined : FadeInDown.duration(motion.sheetEnter.durationMs)}
@@ -482,6 +602,68 @@ function MapPin({ place, left, top, scale, spread, size, hit, labelSize, labelSi
           </Text>
         </View>
       ) : null}
+    </Animated.View>
+  );
+}
+
+/** Region state by shape + icon, never colour alone: dashed ring = not
+ * started, filled ornament = in progress, gold check = completed. */
+function RegionBadge({ status, tone, size }: { status: RegionStatus; tone: string; size: number }) {
+  return (
+    <View
+      style={[
+        styles.regionBadge,
+        { width: size, height: size, borderRadius: size / 2 },
+        status === 'completed' ? styles.regionBadgeDone : status === 'in_progress' ? { backgroundColor: tone, borderColor: colors.surface } : styles.regionBadgeIdle,
+      ]}
+    >
+      {status === 'completed' ? (
+        <Check size={size * 0.55} color={colors.textPrimary} strokeWidth={3} />
+      ) : status === 'in_progress' ? (
+        <OymoOrnament size={size * 0.55} color={colors.textOnDark} strokeWidth={1.75} />
+      ) : null}
+    </View>
+  );
+}
+
+/** One region marker: counter-scaled like the place pins, name + count
+ * below. Stands for the whole region - no outline is drawn. */
+function RegionMarkerPin({
+  marker,
+  left,
+  top,
+  scale,
+  hit,
+  labelSize,
+  selected,
+  accessibilityLabel,
+  onPress,
+}: {
+  marker: RegionMapMarker;
+  left: number;
+  top: number;
+  scale: SharedValue<number>;
+  hit: number;
+  labelSize: number;
+  selected: boolean;
+  accessibilityLabel: string;
+  onPress: () => void;
+}) {
+  const counterScale = useAnimatedStyle(() => ({ transform: [{ scale: 1 / scale.value }] }));
+  const size = Math.round(hit * 0.62);
+  return (
+    <Animated.View style={[styles.pinAnchor, { left: left - hit / 2, top: top - hit / 2, width: hit, height: hit }, counterScale]}>
+      <AnimatedPressable style={[styles.pinHit, { width: hit, height: hit }]} onPress={onPress} pressScale={0.9} haptic="light" accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={accessibilityLabel}>
+        <View style={selected ? styles.regionSelected : undefined}>
+          <RegionBadge status={marker.status} tone={regionTone(marker.id)} size={size} />
+        </View>
+      </AnimatedPressable>
+      <View style={[styles.pinLabelBox, labelPosition('bottom', hit, size), { alignItems: 'center' }]} pointerEvents="none">
+        <Text style={[styles.pinLabel, { fontSize: labelSize, textAlign: 'center' }, marker.status === 'not_started' && styles.pinLabelMuted]} numberOfLines={1} importantForAccessibility="no" accessibilityElementsHidden>
+          {marker.name}
+          {marker.progress.total > 0 ? ` ${marker.progress.completed}/${marker.progress.total}` : ''}
+        </Text>
+      </View>
     </Animated.View>
   );
 }
@@ -761,6 +943,52 @@ const styles = StyleSheet.create({
   previewName: {
     ...textStyles.h3,
     color: colors.textPrimary,
+  },
+  modeSwitch: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+    padding: 3,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceMuted,
+  },
+  modeOption: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+  },
+  modeOptionActive: {
+    backgroundColor: colors.surfaceElevated,
+  },
+  modeText: {
+    ...textStyles.small,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  modeTextActive: {
+    color: colors.textPrimary,
+  },
+  regionBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  regionBadgeIdle: {
+    borderStyle: 'dashed',
+    borderColor: colors.textMuted,
+    backgroundColor: 'rgba(251,243,227,0.85)',
+  },
+  regionBadgeDone: {
+    backgroundColor: colors.accentGold,
+    borderColor: colors.surface,
+  },
+  regionSelected: {
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    padding: 2,
   },
   previewTagline: {
     ...typography.caption,

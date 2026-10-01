@@ -28,6 +28,8 @@ const ALLOWED_CLIENT_WRITE_TABLES = new Set(['user_settings', 'analytics_events'
 // Tables where a client write policy would be a real security hole -
 // every mutation must go through a SECURITY DEFINER function instead.
 const MUST_NOT_HAVE_CLIENT_WRITE_POLICY = [
+  'region_content_links',
+  'region_intros',
   'user_progress',
   'user_game_stats',
   'user_achievements',

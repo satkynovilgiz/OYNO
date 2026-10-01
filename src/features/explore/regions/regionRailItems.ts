@@ -3,7 +3,7 @@ import type { ImageSourcePropType } from 'react-native';
 import type { SupportedLanguage } from '@/i18n';
 import { mapExploreRegionName, type ExploreRegionRow } from '@/services/content/types';
 
-import { listRegionExperiences, regionHubRoute, regionTone } from './regionExperiences';
+import { listRegionExperiences, regionHubRoute, regionTone, type RegionExperienceConfig } from './regionExperiences';
 import { computeRegionProgress, type RegionProgress, type RegionSignals } from './regionModel';
 
 export type RegionRailItem = {
@@ -22,8 +22,8 @@ export type RegionRailItem = {
  * region whose explore_regions row isn't loaded is left out rather than
  * shown nameless.
  */
-export function buildRegionRailItems(rows: readonly ExploreRegionRow[], language: SupportedLanguage, signals: RegionSignals): RegionRailItem[] {
-  return listRegionExperiences().flatMap((config) => {
+export function buildRegionRailItems(rows: readonly ExploreRegionRow[], language: SupportedLanguage, signals: RegionSignals, configs: readonly RegionExperienceConfig[] = listRegionExperiences()): RegionRailItem[] {
+  return configs.flatMap((config) => {
     const row = rows.find((candidate) => candidate.id === config.id);
     if (!row) return [];
     const progress = computeRegionProgress(config, signals);

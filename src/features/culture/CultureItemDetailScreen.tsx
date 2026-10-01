@@ -15,7 +15,8 @@ import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
-import { joinNarration, type Narration } from '@/services/audioGuide/narration';
+import { cultureItemNarration, localizedSimpleSummary } from '@/services/audioGuide/contentNarration';
+import type { Narration } from '@/services/audioGuide/narration';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
@@ -23,16 +24,6 @@ import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
-
-/** Picks the simple-depth summary matching the app's current language -
- * `_ru`/`_en` stay null until a real translation is authored (spec "Do not
- * fake translations if verified/localized text does not exist"), so most
- * rows only ever resolve a value here for `kg`. */
-function localizedSimpleSummary(item: CultureItemRow, language: SupportedLanguage): string | null {
-  if (language === 'ru') return item.simple_summary_ru;
-  if (language === 'en') return item.simple_summary_en;
-  return item.simple_summary_kg;
-}
 
 type CultureItemDetailScreenProps = {
   item: CultureItemRow;
@@ -75,15 +66,10 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
   );
   const filledFields = DETAIL_FIELDS.filter((field) => !!item[field.key]);
 
-  // Listen reads exactly what this screen shows below: the simple summary
-  // (authored in the app language) or the Kyrgyz-authored field texts.
-  // Field text is in the app language only when the resolver found a full
-  // reviewed translation; otherwise it is the Kyrgyz source (read with the
-  // Kyrgyz title, so one narration never mixes languages).
-  const bodyLanguage: SupportedLanguage = item.translation?.status === 'available' ? (i18n.language as SupportedLanguage) : 'kg';
-  const narration: Narration = simpleSummary
-    ? { lang: i18n.language as SupportedLanguage, text: joinNarration([item.title, simpleSummary]) }
-    : { lang: bodyLanguage, text: joinNarration([bodyLanguage === 'kg' ? (item.translation?.titles.kg ?? item.title) : item.title, ...filledFields.map((field) => item[field.key] as string)]) };
+  // Listen reads exactly what this screen shows below (shared with the
+  // Regional Audio Journeys): the simple summary (authored in the app
+  // language) or the field texts in the language they're actually in.
+  const narration: Narration = cultureItemNarration(item, i18n.language as SupportedLanguage, config.learningDepth);
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
   // The primary photo (admin-uploaded image_url, falling back to the first

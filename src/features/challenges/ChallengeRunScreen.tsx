@@ -27,6 +27,7 @@ import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, editorial, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
+import { useRegionExperiences } from '@/features/explore/regions/useRegionExperiences';
 import { regionHubRoute } from '@/features/explore/regions/regionExperiences';
 import { regionalChallengeQuestionIds, regionalResultKey, regionForChallengeId } from './regionalChallenges';
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds, pickDailyQuestionIds, scoreAnswers, type AnswerRecord } from './challengeLogic';
@@ -83,7 +84,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
 
   const today = localDateKey();
   const collection: Collection | undefined = challengeId.startsWith('collection-') ? getCollection(challengeId.slice('collection-'.length)) : undefined;
-  const region = regionForChallengeId(challengeId);
+  const region = regionForChallengeId(challengeId, useRegionExperiences());
   const resultKey = challengeId === 'daily' ? `daily:${today}` : collection ? `collection:${collection.id}` : region ? regionalResultKey(region.id) : 'journey';
 
   const questions = useMemo<ChallengeQuestion[]>(() => {

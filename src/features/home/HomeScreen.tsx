@@ -28,6 +28,7 @@ import {
   RecentlyExploredRow,
   TodayDiscoveryEntryCard,
 } from './components';
+import { ContinueRegionCard } from './components/ContinueRegionCard';
 import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
 import { cultureTileAssets } from './mockData';
 import { mockGamesList } from '@/features/games/mockData';
@@ -156,6 +157,12 @@ export function HomeScreen() {
         return (
           <View key={id} style={styles.horizontalPad}>
             <TodayDiscoveryEntryCard discovery={todayDiscovery} isLoading={todayLoading} experience={experience} onPress={() => router.push('/daily' as never)} />
+          </View>
+        );
+      case 'continue':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <ContinueRegionCard experience={experience} />
           </View>
         );
       case 'recent':

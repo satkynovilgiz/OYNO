@@ -42,7 +42,7 @@ describe('Region Hub - Issyk-Kul pilot', () => {
     expect(issykKul.id).toBe('ysyk-kol');
     for (const bad of ['', 'bishkek', 'atlantis', undefined, null]) expect(getRegionExperience(bad)).toBeNull();
     expect(regionHubRoute('ysyk-kol')).toBe('/explore/region/ysyk-kol');
-    expect(fs.existsSync(path.join(ROOT, 'src/app/explore/region/[id].tsx'))).toBe(true);
+    expect(fs.existsSync(path.join(ROOT, 'src/app/explore/region/[id]/index.tsx'))).toBe(true);
     expect(fs.readFileSync(path.join(__dirname, 'RegionHubScreen.tsx'), 'utf8')).toMatch(/if \(!config\) return <NotFoundState/);
   });
 

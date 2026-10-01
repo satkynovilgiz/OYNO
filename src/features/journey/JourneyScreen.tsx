@@ -39,6 +39,7 @@ import { LearningJourneySection } from './components/LearningJourneySection';
 import { TrailsJourneySection } from './components/TrailsJourneySection';
 import { JourneyStamp } from './components/JourneyStamp';
 import { JourneySummaryCard } from './components/JourneySummaryCard';
+import { RegionsJourneySection } from './components/RegionsJourneySection';
 import { PassportSection } from './components/PassportSection';
 import { visibleEntries } from '@/features/journal/journalModel';
 import { useChallengeStore } from '@/store/useChallengeStore';
@@ -135,7 +136,7 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
   // Passport and Collections are their own kinds of page, not numbered
   // chapters - numerals stay I-IV on the four stamp chapters.
   const chapterPages: JourneySectionId[] = getJourneySectionOrder(experience).filter(
-    (id) => id !== 'next' && id !== 'passport' && id !== 'collections' && id !== 'trails' && id !== 'learning',
+    (id) => id !== 'next' && id !== 'passport' && id !== 'regions' && id !== 'collections' && id !== 'trails' && id !== 'learning',
   );
   const chapterOf = (id: JourneySectionId) => CHAPTER_NUMERALS[chapterPages.indexOf(id)] ?? '';
 
@@ -170,6 +171,8 @@ export function JourneyScreen({ onPressBack }: JourneyScreenProps) {
         return <NextDiscoveryCard key={id} next={next} />;
       case 'passport':
         return <PassportSection key={id} passport={passport} experience={experience} />;
+      case 'regions':
+        return <RegionsJourneySection key={id} experience={experience} />;
       case 'trails':
         return <TrailsJourneySection key={id} entries={trailEntries} editorial={isAdult} />;
       case 'learning':

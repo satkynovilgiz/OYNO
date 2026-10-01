@@ -79,7 +79,7 @@ describe('Regional Challenges 1.0', () => {
     expect(regionForChallengeId('region-naryn')?.id).toBe('naryn');
     expect(regionForChallengeId('region-chuy')).toBeNull();
     expect(regionForChallengeId('region-atlantis')).toBeNull();
-    expect(fs.readFileSync(path.join(ROOT, 'src/app/challenges/[challengeId].tsx'), 'utf8')).toMatch(/if \(challengeId\.startsWith\('region-'\)\) return !!regionForChallengeId\(challengeId\);/);
+    expect(fs.readFileSync(path.join(ROOT, 'src/app/challenges/[challengeId].tsx'), 'utf8')).toMatch(/if \(challengeId\.startsWith\('region-'\)\) return !!regionForChallengeId\(challengeId, regions\);/);
     expect(fs.readFileSync(path.join(__dirname, 'ChallengeRunScreen.tsx'), 'utf8')).toMatch(/router\.canGoBack\(\) \? router\.back\(\) : router\.replace\(regionHubRoute\(region\.id\)/);
   });
 
