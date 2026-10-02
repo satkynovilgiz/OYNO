@@ -3102,5 +3102,21 @@
     "minutes_many": "{{count}} мүнөт",
     "seconds_few": "{{count}} секунд",
     "seconds_many": "{{count}} секунд"
+  },
+  "glossary": {
+    "title": "Кыргыз маданиятынын сөздүгү",
+    "intro": "Негизги кыргыз терминдери - ар бирин OYNO макаласы түшүндүрөт.",
+    "searchPlaceholder": "Терминдерди издөө",
+    "searchLabel": "Сөздүктөн издөө",
+    "noResults": "Дал келген термин жок",
+    "termA11y": "Маданият сөздүгүнүн термини",
+    "from": "Макаладан: {{title}}",
+    "alsoKnownAs": "Башка аталыштары: {{names}}",
+    "learnMore": "Кененирээк: {{title}}",
+    "keyTerms": "Негизги терминдер",
+    "entryMeta_one": "OYNO макалаларынан {{count}} термин",
+    "entryMeta_other": "OYNO макалаларынан {{count}} термин",
+    "entryMeta_few": "OYNO макалаларынан {{count}} термин",
+    "entryMeta_many": "OYNO макалаларынан {{count}} термин"
   }
 }

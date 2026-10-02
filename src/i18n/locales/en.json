@@ -3102,5 +3102,21 @@
     "minutes_many": "{{count}} minutes",
     "seconds_few": "{{count}} seconds",
     "seconds_many": "{{count}} seconds"
+  },
+  "glossary": {
+    "title": "Kyrgyz Culture Glossary",
+    "intro": "Key Kyrgyz terms, each explained by an OYNO article. Terms stay in Kyrgyz.",
+    "searchPlaceholder": "Search terms",
+    "searchLabel": "Search the glossary",
+    "noResults": "No matching terms",
+    "termA11y": "Cultural glossary term",
+    "from": "From: {{title}}",
+    "alsoKnownAs": "Also known as: {{names}}",
+    "learnMore": "Learn more: {{title}}",
+    "keyTerms": "Key terms",
+    "entryMeta_one": "{{count}} term from OYNO articles",
+    "entryMeta_other": "{{count}} terms from OYNO articles",
+    "entryMeta_few": "{{count}} terms from OYNO articles",
+    "entryMeta_many": "{{count}} terms from OYNO articles"
   }
 }

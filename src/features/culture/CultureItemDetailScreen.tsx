@@ -17,6 +17,7 @@ import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
+import { KeyTermsSection } from '@/features/culture/glossary/KeyTermsSection';
 import { ThenAndNowSection } from '@/features/culture/thenNow/ThenAndNowSection';
 import { thenNowRoute } from '@/features/culture/thenNow/thenAndNow';
 import { cultureItemNarration, localizedSimpleSummary } from '@/services/audioGuide/contentNarration';
@@ -190,6 +191,9 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           {/* 4b. Then & Now - only when the item has real authored
               historical AND modern fields (derived, never stored). */}
           <ThenAndNowSection item={item} experience={experience} language={i18n.language} onPressOpen={() => router.push(thenNowRoute(item.id) as never)} />
+
+          {/* Key terms: explicit glossary links for this article (no auto-linking). */}
+          <KeyTermsSection itemId={item.id} />
 
           {/* 5. Relevant images. */}
           {hasRemainingGallery ? (

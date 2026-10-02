@@ -3102,5 +3102,21 @@
     "seconds_few": "{{count}} секунды",
     "seconds_many": "{{count}} секунд",
     "seconds_other": "{{count}} секунды"
+  },
+  "glossary": {
+    "title": "Глоссарий кыргызской культуры",
+    "intro": "Ключевые кыргызские термины - каждый объясняется статьёй OYNO. Сами термины остаются на кыргызском.",
+    "searchPlaceholder": "Поиск терминов",
+    "searchLabel": "Поиск по глоссарию",
+    "noResults": "Подходящих терминов нет",
+    "termA11y": "Термин глоссария культуры",
+    "from": "Из статьи: {{title}}",
+    "alsoKnownAs": "Также называют: {{names}}",
+    "learnMore": "Подробнее: {{title}}",
+    "keyTerms": "Ключевые термины",
+    "entryMeta_one": "{{count}} термин из статей OYNO",
+    "entryMeta_few": "{{count}} термина из статей OYNO",
+    "entryMeta_many": "{{count}} терминов из статей OYNO",
+    "entryMeta_other": "{{count}} термина из статей OYNO"
   }
 }
