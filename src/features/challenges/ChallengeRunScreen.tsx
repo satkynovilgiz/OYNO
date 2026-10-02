@@ -31,6 +31,11 @@ import { useRegionExperiences } from '@/features/explore/regions/useRegionExperi
 import { regionHubRoute } from '@/features/explore/regions/regionExperiences';
 import { regionalChallengeQuestionIds, regionalResultKey, regionForChallengeId } from './regionalChallenges';
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds, pickDailyQuestionIds, scoreAnswers, type AnswerRecord } from './challengeLogic';
+import { useRecordsOwner } from '@/features/games/records/useGameRecords';
+import { track } from '@/services/analytics/analytics';
+import { ownerMistakes, useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
+import { reviewQueue, wrongIdsOf } from './mistakes/mistakesModel';
+import { questionExists } from './mistakes/questionExists';
 import { getQuestion, questionReviewLevel, routeForSource, type ChallengeOption, type ChallengeQuestion, type OptionImageRef } from './questionBank';
 
 function imageFor(ref: OptionImageRef | undefined): ImageSourcePropType | null {
@@ -55,7 +60,12 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   const isAdult = experience === 'adult';
   const visitedRegionIds = useProgressStore((state) => state.visitedRegionIds);
   const dailyCompletions = useDailyDiscoveryStore((state) => state.completions);
-  const storeLoaded = useChallengeStore((state) => state.isLoaded);
+  // Review mode (/challenges/review): the same screen and question UI,
+  // fed by the private mistakes queue, and kept apart from challenge scores.
+  const isReview = challengeId === 'review';
+  const owner = useRecordsOwner();
+  const mistakesLoaded = useChallengeMistakesStore((state) => state.isLoaded);
+  const storeLoaded = useChallengeStore((state) => state.isLoaded) && mistakesLoaded;
   const { data: cultureItems } = useAllCultureItems();
   const { data: materials } = useCultureMaterials();
   const { data: regions } = useExploreRegions();
@@ -80,6 +90,9 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
 
   useEffect(() => {
     if (!useChallengeStore.getState().isLoaded) void useChallengeStore.getState().load();
+    void useChallengeMistakesStore.getState().load();
+    if (isReview) track('challenge_review_opened');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const today = localDateKey();
@@ -90,7 +103,8 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   const questions = useMemo<ChallengeQuestion[]>(() => {
     if (!storeLoaded) return [];
     let ids: string[] = [];
-    if (challengeId === 'daily') {
+    if (isReview) ids = reviewQueue(ownerMistakes(useChallengeMistakesStore.getState().saved, owner), questionExists).map((record) => record.questionId);
+    else if (challengeId === 'daily') {
       const count = experience === 'child' ? CHILD_DAILY_QUESTION_COUNT : DAILY_QUESTION_COUNT;
       // Pure during render; today's identity is persisted in the effect below.
       ids = useChallengeStore.getState().storedDailyIds(today) ?? pickDailyQuestionIds(today, count);
@@ -108,7 +122,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   const [finished, setFinished] = useState(false);
 
   useEffect(() => {
-    if (questions.length === 0) return;
+    if (questions.length === 0 || isReview) return;
     if (challengeId === 'daily') useChallengeStore.getState().dailyQuestionIds(today, () => questions.map((question) => question.id));
     useChallengeStore.getState().start(resultKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,8 +130,9 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
 
   const regionRow = region ? regions?.find((row) => row.id === region.id) : undefined;
   const regionName = regionRow ? (mapExploreRegionName(regionRow)[language] ?? regionRow.name_kg) : '';
-  const title =
-    challengeId === 'daily'
+  const title = isReview
+    ? t('challenges.review.title')
+    : challengeId === 'daily'
       ? t('challenges.daily.title')
       : collection
         ? (collection.title[language] ?? collection.title.kg)
@@ -146,18 +161,34 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
         <View style={styles.header}>
           <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
         </View>
-        {storeLoaded ? <Text style={styles.emptyText}>{t('challenges.journey.locked')}</Text> : null}
+        {storeLoaded && isReview ? (
+          <View style={styles.reviewEmpty}>
+            <OymoOrnament size={22} color={colors.accentGold} strokeWidth={1.5} />
+            <Text style={styles.reviewEmptyTitle} accessibilityRole="header">
+              {t('challenges.review.emptyTitle')}
+            </Text>
+            <Text style={styles.emptyText}>{t('challenges.review.emptyBody')}</Text>
+            <Button label={t('challenges.review.browse')} variant="secondary" onPress={() => router.replace('/challenges' as never)} />
+          </View>
+        ) : storeLoaded ? (
+          <Text style={styles.emptyText}>{t('challenges.journey.locked')}</Text>
+        ) : null}
       </View>
     );
   }
 
   const { correct, total } = scoreAnswers(answers);
+  const reviewRemaining = isReview ? reviewQueue(ownerMistakes(useChallengeMistakesStore.getState().saved, owner), questionExists).length : 0;
 
   if (finished) {
     const wrongSources = Array.from(new Map(questions.filter((question) => !answers.some((a) => a.questionId === question.id && a.optionId === question.correctOptionId)).map((q) => [`${q.sourceType}:${q.sourceId}`, q])).values());
     const allSources = Array.from(new Map(questions.map((q) => [`${q.sourceType}:${q.sourceId}`, q])).values());
     const perfect = total > 0 && correct === total;
-    const resultMessage = perfect ? t('challenges.v2.perfectBody') : correct / Math.max(1, total) >= 0.6 ? t('challenges.v2.goodBody') : t('challenges.v2.lowerBody');
+    const resultMessage = isReview
+      ? reviewRemaining > 0
+        ? t('challenges.review.resultRemaining', { count: reviewRemaining })
+        : t('challenges.review.resultClear')
+      : perfect ? t('challenges.v2.perfectBody') : correct / Math.max(1, total) >= 0.6 ? t('challenges.v2.goodBody') : t('challenges.v2.lowerBody');
     const shareImage = collection?.heroImage ?? imageFor(questions[0].sourceType === 'destination' ? { type: 'destination', id: questions[0].sourceId } : { type: 'culture_item', id: questions[0].sourceId }) ?? null;
     return (
       <View style={styles.root}>
@@ -178,8 +209,9 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
               {correct}
               <Text style={styles.resultScoreTotal}> / {total}</Text>
             </Text>
-            {perfect ? <Text style={styles.resultPerfect}>{t('challenges.v2.perfectTitle')}</Text> : null}
+            {perfect && !isReview ? <Text style={styles.resultPerfect}>{t('challenges.v2.perfectTitle')}</Text> : null}
             <Text style={styles.resultBody}>{resultMessage}</Text>
+            {isReview ? null : (
             <View style={styles.resultActions}>
               <Button
                 label={t('share.action')}
@@ -190,11 +222,12 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
                 }
               />
             </View>
+            )}
           </View>
 
           {/* A strong round gets "well done", any other an invitation to try
               again - never a comment on the player, never shaming. */}
-          <StoryCompanion surface="challenge" moment={correct / Math.max(1, total) >= 0.6 ? 'completion' : 'encouragement'} />
+          {isReview ? null : <StoryCompanion surface="challenge" moment={correct / Math.max(1, total) >= 0.6 ? 'completion' : 'encouragement'} />}
 
           <Text style={styles.sectionTitle} accessibilityRole="header">
             {t('challenges.v2.reviewTitle')}
@@ -259,7 +292,12 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
           ) : null}
 
           <View style={styles.primary}>
-            {region ? (
+            {isReview ? (
+              <>
+                {reviewRemaining > 0 ? <Button label={t('challenges.review.again')} size="lg" block onPress={() => router.replace('/challenges/review' as never)} /> : null}
+                <Button label={t('challenges.backToChallenges')} variant="secondary" size="lg" block onPress={() => router.replace('/challenges' as never)} />
+              </>
+            ) : region ? (
               // Launched from a Region Hub: go back to it (the hub is below
               // this screen) - no new copy of the hub, no loop.
               <Button
@@ -288,6 +326,11 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
     if (answered) return;
     setSelected(optionId);
     setAnswers([...answers, { questionId: question.id, optionId }]);
+    if (isReview) {
+      // Study only: right -> leaves the queue ("Reviewed"); wrong -> stays.
+      useChallengeMistakesStore.getState().recordReview(owner, question.id, optionId === question.correctOptionId);
+      track('challenge_review_answered', { question_id: question.id, correct: optionId === question.correctOptionId });
+    }
     const message =
       optionId === question.correctOptionId
         ? t('challenges.correct')
@@ -302,7 +345,12 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   function next() {
     if (index + 1 >= questions.length) {
       const score = scoreAnswers(answers);
-      useChallengeStore.getState().complete(resultKey, score.correct, score.total);
+      if (!isReview) {
+        useChallengeStore.getState().complete(resultKey, score.correct, score.total);
+        // Only a FINISHED normal run records mistakes - an abandoned one
+        // never reaches this line.
+        useChallengeMistakesStore.getState().recordAttempt(owner, wrongIdsOf(questions, answers));
+      }
       if (score.total > 0 && score.correct === score.total && Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setFinished(true);
       return;
@@ -480,6 +528,8 @@ function SourceLink({ label, route }: { label: string; route: string }) {
 }
 
 const styles = StyleSheet.create({
+  reviewEmpty: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.xl },
+  reviewEmptyTitle: { ...textStyles.title, color: colors.textPrimary, textAlign: 'center' },
   reviewNote: { ...textStyles.small, color: colors.textMuted },
   root: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.md, gap: spacing.md },

@@ -147,7 +147,7 @@ export function CultureScreen() {
       case 'continue':
         return <ContinueLearning key={id} rows={continueRows} onPress={(route) => router.push(route as never)} />;
       case 'listen':
-        return <ListenCard key={id} trackCount={komuzTracks.length} image={cultureCategoryImages.komuz} onPress={() => router.push('/culture/komuz/learn' as never)} />;
+        return <ListenCard key={id} trackCount={komuzTracks.length} image={cultureCategoryImages.komuz} onPress={() => router.push('/culture/komuz/listen' as never)} />;
       case 'interactive':
         return <InteractiveExperiencesRow key={id} experiences={INTERACTIVE_EXPERIENCES} onPressExperience={handlePressExperience} />;
       case 'bozUy':

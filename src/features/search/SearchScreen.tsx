@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LibraryEmptyState } from '@/components/library/LibraryChrome';
 import { offlineKindFor } from '@/components/library/contentTypeMeta';
-import { AnimatedPressable, FadeSlideIn, SectionHeader } from '@/components/ui';
+import { AnimatedPressable, Button, FadeSlideIn, SectionHeader } from '@/components/ui';
 import { collections } from '@/features/collections/collectionsData';
 import { mockGamesList } from '@/features/games/mockData';
 import { buildRecentlyExplored } from '@/features/home/homeRecommendation';
@@ -32,13 +32,14 @@ import { useCultureCategories, useCultureMaterials } from '@/services/content/cu
 import { useExploreRegions } from '@/services/content/exploreService';
 import { downloadId } from '@/services/offline/offlineManifest';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
-import { groupRankedResults, rankSearchResults } from '@/services/search/globalSearch';
+import { applySearchFilters, applyStateFilters, emptyReason, groupCounts, groupRankedResults, NO_FILTERS, rankSearchResults, type SearchFilters } from '@/services/search/globalSearch';
 import { addRecentSearch, clearRecentSearches, getRecentSearches, saveRecentSearches } from '@/services/search/recentSearches';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, elevation, spacing, textStyles } from '@/theme';
 
+import { SearchFilterBar } from './SearchFilterBar';
 import { SearchResultRow } from './SearchResultRow';
 
 type SearchScreenProps = {
@@ -79,6 +80,7 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
   const deferredQuery = useDeferredValue(query);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
+  const [filters, setFilters] = useState<SearchFilters>(NO_FILTERS);
 
   useEffect(() => {
     void getRecentSearches().then(setRecentSearches);
@@ -126,15 +128,22 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
       .filter((item): item is CatalogItem => !!item && !!item.route);
   }, [regionVisitDates, dailyCompletions, catalog]);
 
-  const results = useMemo(() => rankSearchResults(catalog, deferredQuery), [catalog, deferredQuery]);
-  const groups = useMemo(() => groupRankedResults(results), [results]);
-  const isTyping = deferredQuery.trim().length > 0;
-
   const isSaved = (item: CatalogItem) => favoriteIds.includes(`${item.contentType}:${item.id}`);
+  // "Available offline" = an explicit download in the offline manifest only.
   const isOffline = (item: CatalogItem) => {
     const kind = offlineKindFor(item.contentType);
     return !!kind && !!offlineEntries[downloadId(kind, item.id)];
   };
+
+  // Filters narrow the CURRENT ranked results (same ranking, same groups).
+  const results = useMemo(() => rankSearchResults(catalog, deferredQuery), [catalog, deferredQuery]);
+  const stateFiltered = useMemo(() => applyStateFilters(results, filters, isSaved, isOffline), [results, filters, favoriteIds, offlineEntries]); // eslint-disable-line react-hooks/exhaustive-deps
+  const counts = useMemo(() => groupCounts(stateFiltered), [stateFiltered]);
+  const activeGroup = filters.group !== 'all' && counts.some((entry) => entry.id === filters.group) ? filters.group : 'all';
+  const filtered = useMemo(() => applySearchFilters(results, { ...filters, group: activeGroup }, isSaved, isOffline), [results, filters, activeGroup, favoriteIds, offlineEntries]); // eslint-disable-line react-hooks/exhaustive-deps
+  const groups = useMemo(() => groupRankedResults(filtered), [filtered]);
+  const isTyping = deferredQuery.trim().length > 0;
+  const reason = emptyReason(results.length, filtered.length, filters);
 
   const remember = (value: string) => {
     const next = addRecentSearch(recentSearches, value);
@@ -190,7 +199,12 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
             accessibilityHint={t('search.v2.fieldHint')}
           />
           {query.length > 0 ? (
-            <AnimatedPressable style={styles.clear} onPress={() => setQuery('')} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('search.clearLabel')}>
+            <AnimatedPressable
+              style={styles.clear}
+              onPress={() => {
+                setQuery('');
+                setFilters(NO_FILTERS);
+              }} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('search.clearLabel')}>
               <X size={14} color={colors.textOnDark} strokeWidth={3} />
             </AnimatedPressable>
           ) : null}
@@ -246,13 +260,31 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
               {categoryGrid}
             </FadeSlideIn>
           </>
-        ) : groups.length > 0 ? (
+        ) : results.length > 0 ? (
           <>
-            <Text style={styles.resultCount} accessibilityLiveRegion="polite">
-              {t('search.v2.resultCount', { count: results.length })}
-            </Text>
+            <SearchFilterBar
+              counts={counts}
+              total={stateFiltered.length}
+              filters={{ ...filters, group: activeGroup }}
+              compact={experience === 'adult'}
+              large={large}
+              showStateFilters={!large}
+              onChange={setFilters}
+            />
+            {reason !== 'none' ? (
+              <View style={styles.filteredEmpty}>
+                <Text style={styles.filteredEmptyText} accessibilityLiveRegion="polite">
+                  {t(`search.filters.empty.${reason}`)}
+                </Text>
+                <Button label={t('search.filters.clear')} variant="secondary" size="sm" onPress={() => setFilters(NO_FILTERS)} />
+              </View>
+            ) : (
+              <Text style={styles.resultCount} accessibilityLiveRegion="polite">
+                {t('search.v2.resultCount', { count: filtered.length })}
+              </Text>
+            )}
             {groups.map((group) => {
-              const open = expanded.includes(group.id);
+              const open = expanded.includes(group.id) || activeGroup !== 'all';
               const shown = open ? group.items : group.items.slice(0, preview);
               const more = group.items.length - preview;
               return (
@@ -293,6 +325,8 @@ const styles = StyleSheet.create({
   cancelText: { ...textStyles.bodyMedium, fontWeight: '600', color: colors.primary },
   content: { paddingHorizontal: spacing.md, gap: spacing.lg, paddingTop: spacing.xs },
   section: { gap: spacing.xs },
+  filteredEmpty: { alignItems: 'flex-start', gap: spacing.sm, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
+  filteredEmptyText: { ...textStyles.bodyMedium, color: colors.textSecondary },
   resultCount: { ...textStyles.caption, color: colors.textMuted, marginBottom: -spacing.sm },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   recentChip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, maxWidth: '100%', paddingHorizontal: spacing.sm, borderRadius: cardRadii.chip, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },

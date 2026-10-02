@@ -1722,6 +1722,27 @@
       "showAll": "Show all",
       "showLess": "Show less",
       "noResultsHint": "Try another spelling, or open a section:"
+    },
+    "filters": {
+      "all": "All",
+      "groups": {
+        "places": "Places",
+        "culture": "Culture",
+        "games": "Games",
+        "trails": "Trails",
+        "collections": "Collections"
+      },
+      "savedOnly": "Saved only",
+      "offlineOnly": "Available offline",
+      "clear": "Clear filters",
+      "groupLabel": "Result type",
+      "chipLabel": "{{name}} filter, {{count}} results",
+      "empty": {
+        "noSaved": "No matching saved items",
+        "noOffline": "No matching offline items",
+        "noInGroup": "No matches of this type",
+        "noMatches": "No matches"
+      }
     }
   },
   "collections": {
@@ -2444,6 +2465,27 @@
     "regional": {
       "title": "{{name}}: regional challenge",
       "backToRegion": "Back to {{name}}"
+    },
+    "review": {
+      "title": "Review mistakes",
+      "toRevisitLabel": "Questions to revisit",
+      "toRevisit_one": "{{count}} question to revisit",
+      "toRevisit_other": "{{count}} questions to revisit",
+      "emptyTitle": "Nothing to review",
+      "emptyBody": "Questions you miss in challenges will wait here for another look.",
+      "browse": "Browse challenges",
+      "again": "Review again",
+      "reviewed": "Reviewed",
+      "learnMore": "Learn more",
+      "onThisDevice": "On this device",
+      "resultRemaining_one": "{{count}} question is still waiting for another look.",
+      "resultRemaining_other": "{{count}} questions are still waiting for another look.",
+      "resultClear": "Nothing left to review for now.",
+      "deviceNote": "Your review list is saved on this device.",
+      "toRevisit_few": "{{count}} questions to revisit",
+      "toRevisit_many": "{{count}} questions to revisit",
+      "resultRemaining_few": "{{count}} questions are still waiting for another look.",
+      "resultRemaining_many": "{{count}} questions are still waiting for another look."
     }
   },
   "feedback": {
@@ -3033,5 +3075,32 @@
     "deviceNote": "My Collections are saved on this device and aren't synced to other devices yet.",
     "itemCount_few": "{{count}} items",
     "itemCount_many": "{{count}} items"
+  },
+  "komuzRoom": {
+    "title": "Komuz Listening Room",
+    "listen": "Listen",
+    "nowPlaying": "Now playing",
+    "allTracks": "All tracks",
+    "all": "All",
+    "favorites": "Favorites",
+    "recentlyListened": "Recently listened",
+    "previous": "Previous track",
+    "next": "Next track",
+    "play": "Play",
+    "pause": "Pause",
+    "favorite": "Favorite",
+    "removeFavorite": "Remove favorite",
+    "titleUnconfirmed": "Title unconfirmed",
+    "availableOffline": "Available offline - part of the app",
+    "position": "Playback position",
+    "timeOf": "{{elapsed}} of {{duration}}",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "seconds_one": "{{count}} second",
+    "seconds_other": "{{count}} seconds",
+    "minutes_few": "{{count}} minutes",
+    "minutes_many": "{{count}} minutes",
+    "seconds_few": "{{count}} seconds",
+    "seconds_many": "{{count}} seconds"
   }
 }

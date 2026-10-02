@@ -11,6 +11,8 @@ import { type DailyCompletions, useDailyDiscoveryStore } from '@/store/useDailyD
 import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useGameRecordsStore } from '@/store/useGameRecordsStore';
 import { useMyCollectionsStore } from '@/store/useMyCollectionsStore';
+import { useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
+import { useKomuzLibraryStore } from '@/store/useKomuzLibraryStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
@@ -166,6 +168,11 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     // My Collections: same rule - the guest's collections join this account.
     await useMyCollectionsStore.getState().load();
     useMyCollectionsStore.getState().adoptGuest(userId);
+    // Challenge mistakes (private study data): same rule.
+    await useChallengeMistakesStore.getState().load();
+    useChallengeMistakesStore.getState().adoptGuest(userId);
+    await useKomuzLibraryStore.getState().load();
+    useKomuzLibraryStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

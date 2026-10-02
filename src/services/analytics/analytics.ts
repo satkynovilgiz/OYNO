@@ -58,7 +58,11 @@ export type AnalyticsEventName =
   | 'recap_shared'
   | 'collection_created'
   | 'collection_item_added'
-  | 'collection_item_removed';
+  | 'collection_item_removed'
+  | 'challenge_review_opened'
+  | 'challenge_review_answered'
+  | 'komuz_listening_room_opened'
+  | 'komuz_track_started';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

@@ -81,6 +81,11 @@ export const MATCH_SCORE = {
   altExact: 250,
   altPrefix: 220,
   altContains: 180,
+  /** Latin-typed Kyrgyz ("kok boru" -> Көк бөрү): below every real title
+   * and alternate name, so an exact native title always wins. */
+  translitExact: 160,
+  translitPrefix: 140,
+  translitContains: 120,
   metadata: 50,
 } as const;
 
@@ -113,8 +118,90 @@ export function scoreMatch(item: CatalogItem, query: string): number {
   }
   if (best) return best;
 
+  // Search-only transliteration (never shown, never a "spelling"): a query
+  // with Latin letters is also compared as Cyrillic, on a coarse skeleton.
+  if (hasLatin(q)) {
+    const key = searchSkeleton(transliterateLatin(q));
+    if (key.length >= 2) {
+      for (const text of [item.title, ...item.searchText]) {
+        const tier = tierFor(searchSkeleton(text), key);
+        if (tier === 'exact') best = Math.max(best, MATCH_SCORE.translitExact);
+        else if (tier === 'prefix' || tier === 'wordPrefix') best = Math.max(best, MATCH_SCORE.translitPrefix);
+        else if (tier === 'contains' && key.length >= 3) best = Math.max(best, MATCH_SCORE.translitContains);
+      }
+      if (best) return best;
+    }
+  }
+
   if (q.length >= 3 && item.metadata && METADATA_MATCH_TYPES.includes(item.contentType) && foldSearchText(item.metadata).includes(q)) return MATCH_SCORE.metadata;
   return 0;
+}
+
+const LATIN = /[a-z]/;
+
+function hasLatin(text: string): boolean {
+  return LATIN.test(text);
+}
+
+/** Multi-letter patterns first (longest wins), then single letters. Only
+ * Latin letters change - Cyrillic in a mixed query ("kok бөрү") passes
+ * through untouched. Deterministic; not a linguistic library. */
+const MULTI: [string, string][] = [
+  ['shch', 'щ'],
+  ['sh', 'ш'],
+  ['ch', 'ч'],
+  ['zh', 'ж'],
+  ['kh', 'х'],
+  ['ts', 'ц'],
+  ['yu', 'ю'],
+  ['ya', 'я'],
+  ['yo', 'е'],
+  ['ng', 'н'],
+];
+const SINGLE: Record<string, string> = {
+  a: 'а', b: 'б', c: 'к', d: 'д', e: 'е', f: 'ф', g: 'г', h: 'х', i: 'и', j: 'ж', k: 'к', l: 'л', m: 'м',
+  n: 'н', o: 'о', p: 'п', q: 'к', r: 'р', s: 'с', t: 'т', u: 'у', v: 'в', w: 'в', x: 'кс', y: 'ы', z: 'з',
+};
+
+/** Latin -> Cyrillic for MATCHING only ("komuz" -> "комуз"). */
+export function transliterateLatin(text: string): string {
+  const lower = text.toLowerCase();
+  let out = '';
+  for (let i = 0; i < lower.length; ) {
+    const multi = MULTI.find(([latin]) => lower.startsWith(latin, i));
+    if (multi) {
+      out += multi[1];
+      i += multi[0].length;
+      continue;
+    }
+    out += SINGLE[lower[i]] ?? lower[i];
+    i += 1;
+  }
+  return out;
+}
+
+const skeletonCache = new Map<string, string>();
+
+/**
+ * A coarse matching key shared by both sides of a transliteration match:
+ * the normal fold, then ы/й/і -> и, э -> е, ь/ъ dropped, punctuation to
+ * spaces and doubled letters collapsed - so "issyk kol" meets "Ысык-Көл"
+ * and "boorsok" meets "Боорсок". Used ONLY for Latin queries.
+ */
+export function searchSkeleton(text: string): string {
+  const cached = skeletonCache.get(text);
+  if (cached !== undefined) return cached;
+  const key = foldSearchText(text)
+    .replace(/[ыйі]/g, 'и')
+    .replace(/э/g, 'е')
+    .replace(/[ьъ]/g, '')
+    .replace(/["«»“”'()(),.:;/!?]/g, ' ')
+    .replace(/(.)\1+/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (skeletonCache.size > 5000) skeletonCache.clear();
+  skeletonCache.set(text, key);
+  return key;
 }
 
 export function matchesQuery(item: CatalogItem, query: string): boolean {
@@ -176,4 +263,40 @@ export function highlightRange(title: string, query: string): [number, number] |
   if (folded.length !== display.length) return null;
   const start = folded.indexOf(q);
   return start < 0 ? null : [start, start + q.length];
+}
+
+export type SearchFilters = {
+  /** 'all' or one of the EXISTING result groups (no second category model). */
+  group: 'all' | SearchResultGroup;
+  savedOnly: boolean;
+  offlineOnly: boolean;
+};
+
+export const NO_FILTERS: SearchFilters = { group: 'all', savedOnly: false, offlineOnly: false };
+
+/** Saved / offline narrowing of the CURRENT ranked results (rank kept). */
+export function applyStateFilters(results: RankedResult[], filters: Pick<SearchFilters, 'savedOnly' | 'offlineOnly'>, isSaved: (item: CatalogItem) => boolean, isOffline: (item: CatalogItem) => boolean): RankedResult[] {
+  return results.filter(({ item }) => (!filters.savedOnly || isSaved(item)) && (!filters.offlineOnly || isOffline(item)));
+}
+
+/** Per-group counts of the current (state-filtered) results, in display
+ * order - computed from the result set every time, never stored. */
+export function groupCounts(results: RankedResult[]): { id: SearchResultGroup; count: number }[] {
+  return SEARCH_GROUP_ORDER.map((id) => ({ id, count: results.filter(({ item }) => groupForContentType(item.contentType) === id).length })).filter((entry) => entry.count > 0);
+}
+
+/** All filters combined, predictably: saved/offline first, then the group. */
+export function applySearchFilters(results: RankedResult[], filters: SearchFilters, isSaved: (item: CatalogItem) => boolean, isOffline: (item: CatalogItem) => boolean): RankedResult[] {
+  const narrowed = applyStateFilters(results, filters, isSaved, isOffline);
+  return filters.group === 'all' ? narrowed : narrowed.filter(({ item }) => groupForContentType(item.contentType) === filters.group);
+}
+
+/** Which empty state is honest: the query matched nothing, or the filters
+ * removed every match (never "no results" when there were some). */
+export function emptyReason(unfiltered: number, filtered: number, filters: SearchFilters): 'none' | 'noMatches' | 'noSaved' | 'noOffline' | 'noInGroup' {
+  if (filtered > 0) return 'none';
+  if (unfiltered === 0) return 'noMatches';
+  if (filters.savedOnly) return 'noSaved';
+  if (filters.offlineOnly) return 'noOffline';
+  return 'noInGroup';
 }

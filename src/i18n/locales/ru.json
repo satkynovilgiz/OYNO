@@ -1722,6 +1722,27 @@
       "showAll": "Показать все",
       "showLess": "Свернуть",
       "noResultsHint": "Попробуйте другое написание или откройте раздел:"
+    },
+    "filters": {
+      "all": "Все",
+      "groups": {
+        "places": "Места",
+        "culture": "Культура",
+        "games": "Игры",
+        "trails": "Маршруты",
+        "collections": "Подборки"
+      },
+      "savedOnly": "Только сохранённое",
+      "offlineOnly": "Доступно офлайн",
+      "clear": "Сбросить фильтры",
+      "groupLabel": "Тип результата",
+      "chipLabel": "Фильтр «{{name}}», результатов: {{count}}",
+      "empty": {
+        "noSaved": "Среди сохранённого совпадений нет",
+        "noOffline": "Среди скачанного совпадений нет",
+        "noInGroup": "Совпадений этого типа нет",
+        "noMatches": "Совпадений нет"
+      }
     }
   },
   "collections": {
@@ -2444,6 +2465,27 @@
     "regional": {
       "title": "{{name}}: испытание региона",
       "backToRegion": "Назад: {{name}}"
+    },
+    "review": {
+      "title": "Работа над ошибками",
+      "toRevisitLabel": "Вопросы для повторения",
+      "toRevisit_one": "{{count}} вопрос для повторения",
+      "toRevisit_few": "{{count}} вопроса для повторения",
+      "toRevisit_many": "{{count}} вопросов для повторения",
+      "toRevisit_other": "{{count}} вопроса для повторения",
+      "emptyTitle": "Повторять нечего",
+      "emptyBody": "Вопросы, в которых вы ошиблись, будут ждать здесь, чтобы вы вернулись к ним ещё раз.",
+      "browse": "К испытаниям",
+      "again": "Повторить ещё раз",
+      "reviewed": "Повторено",
+      "learnMore": "Подробнее",
+      "onThisDevice": "На этом устройстве",
+      "resultRemaining_one": "Ещё {{count}} вопрос ждёт повторения.",
+      "resultRemaining_few": "Ещё {{count}} вопроса ждут повторения.",
+      "resultRemaining_many": "Ещё {{count}} вопросов ждут повторения.",
+      "resultRemaining_other": "Ещё {{count}} вопроса ждут повторения.",
+      "resultClear": "Пока повторять больше нечего.",
+      "deviceNote": "Список для повторения хранится на этом устройстве."
     }
   },
   "feedback": {
@@ -3033,5 +3075,32 @@
     "profileMeta": "Ваши личные подборки",
     "privateNote": "Личное - подборки видите только вы.",
     "deviceNote": "Мои подборки хранятся на этом устройстве и пока не синхронизируются с другими устройствами."
+  },
+  "komuzRoom": {
+    "title": "Комната комуза",
+    "listen": "Слушать",
+    "nowPlaying": "Сейчас играет",
+    "allTracks": "Все треки",
+    "all": "Все",
+    "favorites": "Избранное",
+    "recentlyListened": "Недавно слушали",
+    "previous": "Предыдущий трек",
+    "next": "Следующий трек",
+    "play": "Играть",
+    "pause": "Пауза",
+    "favorite": "В избранное",
+    "removeFavorite": "Убрать из избранного",
+    "titleUnconfirmed": "Название не подтверждено",
+    "availableOffline": "Доступно офлайн - входит в приложение",
+    "position": "Позиция воспроизведения",
+    "timeOf": "{{elapsed}} из {{duration}}",
+    "minutes_one": "{{count}} минута",
+    "minutes_few": "{{count}} минуты",
+    "minutes_many": "{{count}} минут",
+    "minutes_other": "{{count}} минуты",
+    "seconds_one": "{{count}} секунда",
+    "seconds_few": "{{count}} секунды",
+    "seconds_many": "{{count}} секунд",
+    "seconds_other": "{{count}} секунды"
   }
 }

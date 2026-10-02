@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Check, ChevronLeft, ChevronRight, Lock, Sparkles } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, Lock, RotateCcw, Sparkles } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -18,6 +18,7 @@ import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, editorial, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
+import { useMistakeQueue } from './mistakes/useMistakes';
 import { CHILD_DAILY_QUESTION_COUNT, collectionQuestionIds, DAILY_QUESTION_COUNT, journeyQuestionIds } from './challengeLogic';
 
 /** Knowledge Challenges hub (/challenges): today's Daily Challenge, one
@@ -32,6 +33,7 @@ export function ChallengesHubScreen({ onPressBack }: { onPressBack: () => void }
   const results = useChallengeStore((state) => state.results);
   const visitedRegionIds = useProgressStore((state) => state.visitedRegionIds);
   const dailyCompletions = useDailyDiscoveryStore((state) => state.completions);
+  const { queue: mistakeQueue } = useMistakeQueue();
 
   useEffect(() => {
     if (!useChallengeStore.getState().isLoaded) void useChallengeStore.getState().load();
@@ -84,6 +86,26 @@ export function ChallengesHubScreen({ onPressBack }: { onPressBack: () => void }
             <CtaPill label={todayResult?.completedAt ? t('challenges.retry') : t('challenges.start')} size="md" />
           </View>
         </AnimatedPressable>
+
+        {/* Review mistakes: only when something is waiting - never a nag. */}
+        {mistakeQueue.length > 0 ? (
+          <AnimatedPressable
+            style={styles.row}
+            onPress={() => router.push('/challenges/review' as never)}
+            hoverEffect
+            accessibilityRole="button"
+            accessibilityLabel={`${t('challenges.review.title')}. ${t('challenges.review.toRevisit', { count: mistakeQueue.length })}.`}
+          >
+            <View style={[styles.thumb, styles.thumbIcon]}>
+              <RotateCcw size={22} color={colors.accentGold} strokeWidth={1.75} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={[styles.rowTitle, experience === 'adult' && styles.editorial]}>{t('challenges.review.title')}</Text>
+              <Text style={styles.rowMeta}>{t('challenges.review.toRevisit', { count: mistakeQueue.length })}</Text>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
+          </AnimatedPressable>
+        ) : null}
 
         <Text style={styles.sectionTitle}>{t('challenges.culture.title')}</Text>
         {collections.map((collection) => {

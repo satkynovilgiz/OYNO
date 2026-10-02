@@ -1722,6 +1722,27 @@
       "showAll": "Баарын көрүү",
       "showLess": "Азыраак",
       "noResultsHint": "Башкача жазып көр же бөлүмдү ач:"
+    },
+    "filters": {
+      "all": "Баары",
+      "groups": {
+        "places": "Жерлер",
+        "culture": "Маданият",
+        "games": "Оюндар",
+        "trails": "Маршруттар",
+        "collections": "Топтомдор"
+      },
+      "savedOnly": "Сакталгандар гана",
+      "offlineOnly": "Интернетсиз жеткиликтүү",
+      "clear": "Чыпкаларды тазалоо",
+      "groupLabel": "Жыйынтыктын түрү",
+      "chipLabel": "«{{name}}» чыпкасы, жыйынтык: {{count}}",
+      "empty": {
+        "noSaved": "Сакталгандардан дал келген жок",
+        "noOffline": "Жүктөлгөндөрдөн дал келген жок",
+        "noInGroup": "Бул түрдөн дал келген жок",
+        "noMatches": "Дал келген жок"
+      }
     }
   },
   "collections": {
@@ -2444,6 +2465,27 @@
     "regional": {
       "title": "{{name}}: аймак сынагы",
       "backToRegion": "Артка: {{name}}"
+    },
+    "review": {
+      "title": "Каталарды кайталоо",
+      "toRevisitLabel": "Кайра карай турган суроолор",
+      "toRevisit_one": "Кайра карай турган {{count}} суроо",
+      "toRevisit_other": "Кайра карай турган {{count}} суроо",
+      "emptyTitle": "Кайталай турган эч нерсе жок",
+      "emptyBody": "Сынактарда жаңылган суроолоруңуз кайра кароо үчүн ушул жерде күтөт.",
+      "browse": "Сынактарга",
+      "again": "Дагы кайталоо",
+      "reviewed": "Кайталанды",
+      "learnMore": "Кененирээк",
+      "onThisDevice": "Ушул түзмөктө",
+      "resultRemaining_one": "Дагы {{count}} суроо кайра кароону күтүп турат.",
+      "resultRemaining_other": "Дагы {{count}} суроо кайра кароону күтүп турат.",
+      "resultClear": "Азырынча кайталай турган эч нерсе калган жок.",
+      "deviceNote": "Кайталоо тизмеңиз ушул түзмөктө сакталат.",
+      "toRevisit_few": "Кайра карай турган {{count}} суроо",
+      "toRevisit_many": "Кайра карай турган {{count}} суроо",
+      "resultRemaining_few": "Дагы {{count}} суроо кайра кароону күтүп турат.",
+      "resultRemaining_many": "Дагы {{count}} суроо кайра кароону күтүп турат."
     }
   },
   "feedback": {
@@ -3033,5 +3075,32 @@
     "deviceNote": "Менин топтомдорум ушул түзмөктө сакталат жана азырынча башка түзмөктөр менен шайкештелбейт.",
     "itemCount_few": "{{count}} элемент",
     "itemCount_many": "{{count}} элемент"
+  },
+  "komuzRoom": {
+    "title": "Комуз угуу бөлмөсү",
+    "listen": "Угуу",
+    "nowPlaying": "Азыр ойноп жатат",
+    "allTracks": "Бардык күүлөр",
+    "all": "Баары",
+    "favorites": "Тандалгандар",
+    "recentlyListened": "Жакында угулган",
+    "previous": "Мурунку күү",
+    "next": "Кийинки күү",
+    "play": "Ойнотуу",
+    "pause": "Тыныгуу",
+    "favorite": "Тандалгандарга кошуу",
+    "removeFavorite": "Тандалгандардан алып салуу",
+    "titleUnconfirmed": "Аты тастыктала элек",
+    "availableOffline": "Интернетсиз жеткиликтүү - тиркемеде бар",
+    "position": "Ойнотуу орду",
+    "timeOf": "{{duration}} ичинен {{elapsed}}",
+    "minutes_one": "{{count}} мүнөт",
+    "minutes_other": "{{count}} мүнөт",
+    "seconds_one": "{{count}} секунд",
+    "seconds_other": "{{count}} секунд",
+    "minutes_few": "{{count}} мүнөт",
+    "minutes_many": "{{count}} мүнөт",
+    "seconds_few": "{{count}} секунд",
+    "seconds_many": "{{count}} секунд"
   }
 }
