@@ -3118,5 +3118,19 @@
     "entryMeta_other": "{{count}} terms from OYNO articles",
     "entryMeta_few": "{{count}} terms from OYNO articles",
     "entryMeta_many": "{{count}} terms from OYNO articles"
+  },
+  "reading": {
+    "continueReading": "Continue reading",
+    "recentlyRead": "Recently read",
+    "resumeQuestion": "Continue where you left off?",
+    "resumeChild": "Keep reading from where you stopped?",
+    "continue": "Continue",
+    "fromBeginning": "Start from beginning",
+    "progress": "Reading progress",
+    "completed": "Completed",
+    "markRead": "Mark as read",
+    "startOver": "Start over",
+    "percentRead": "{{percent}}% read",
+    "onThisDevice": "Your reading history is saved on this device only."
   }
 }

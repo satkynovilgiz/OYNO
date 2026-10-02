@@ -3118,5 +3118,19 @@
     "entryMeta_few": "{{count}} термина из статей OYNO",
     "entryMeta_many": "{{count}} терминов из статей OYNO",
     "entryMeta_other": "{{count}} термина из статей OYNO"
+  },
+  "reading": {
+    "continueReading": "Продолжить чтение",
+    "recentlyRead": "Недавно прочитано",
+    "resumeQuestion": "Продолжить с того места, где вы остановились?",
+    "resumeChild": "Читать дальше с того места, где ты остановился?",
+    "continue": "Продолжить",
+    "fromBeginning": "Начать сначала",
+    "progress": "Прогресс чтения",
+    "completed": "Прочитано",
+    "markRead": "Отметить как прочитанное",
+    "startOver": "Начать заново",
+    "percentRead": "Прочитано {{percent}}%",
+    "onThisDevice": "История чтения хранится только на этом устройстве."
   }
 }

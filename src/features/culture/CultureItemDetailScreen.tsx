@@ -17,6 +17,8 @@ import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
+import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
+import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import { KeyTermsSection } from '@/features/culture/glossary/KeyTermsSection';
 import { ThenAndNowSection } from '@/features/culture/thenNow/ThenAndNowSection';
 import { thenNowRoute } from '@/features/culture/thenNow/thenAndNow';
@@ -54,6 +56,8 @@ const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
 export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack }: CultureItemDetailScreenProps) {
   const { t, i18n } = useTranslation();
   const { config, experience } = useAgeExperience();
+  // Private reading progress (real scroll measurement; resume is offered).
+  const reading = useReadingTracker('culture_item', item.id);
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_item', item.id)));
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_item', item.id);
@@ -115,7 +119,15 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={reading.scrollRef}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={reading.onScroll}
+        scrollEventThrottle={64}
+        onContentSizeChange={reading.onContentSizeChange}
+        onLayout={reading.onLayout}
+      >
         {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
         {heroSource ? (
           <HeroEntrance>
@@ -217,6 +229,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           <View style={styles.actionsRow}>
             <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
           </View>
+          <ReadingActions tracker={reading} />
 
           {challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
@@ -227,6 +240,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         {/* 7. Related real items from the same category. */}
         <RelatedItemsRail item={item} />
       </ScrollView>
+      <ReadingOverlay tracker={reading} experience={experience} />
       {shareHost}
     </View>
   );

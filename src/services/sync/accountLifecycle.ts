@@ -13,6 +13,7 @@ import { useGameRecordsStore } from '@/store/useGameRecordsStore';
 import { useMyCollectionsStore } from '@/store/useMyCollectionsStore';
 import { useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
 import { useKomuzLibraryStore } from '@/store/useKomuzLibraryStore';
+import { useReadingStore } from '@/store/useReadingStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
@@ -173,6 +174,8 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     useChallengeMistakesStore.getState().adoptGuest(userId);
     await useKomuzLibraryStore.getState().load();
     useKomuzLibraryStore.getState().adoptGuest(userId);
+    await useReadingStore.getState().load();
+    useReadingStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

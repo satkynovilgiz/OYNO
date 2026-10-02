@@ -16,6 +16,9 @@ import { AddToCollectionButton } from '@/features/myCollections/AddToCollection'
 import { track } from '@/services/analytics/analytics';
 import type { SupportedLanguage } from '@/i18n';
 import { materialNarration } from '@/services/audioGuide/contentNarration';
+import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
+import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -36,6 +39,9 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_material', material.id)));
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_material', material.id);
+  const { experience } = useAgeExperience();
+  // Private reading progress (real scroll measurement; resume is offered).
+  const reading = useReadingTracker('culture_material', material.id);
 
   useEffect(() => {
     track('culture_material_open', { materialId: material.id });
@@ -44,7 +50,15 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={reading.scrollRef}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={reading.onScroll}
+        scrollEventThrottle={64}
+        onContentSizeChange={reading.onContentSizeChange}
+        onLayout={reading.onLayout}
+      >
         {material.image_url ? (
           <HeroEntrance>
             <View style={styles.hero}>
@@ -108,10 +122,12 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
             <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
           )}
 
+          {material.body ? <ReadingActions tracker={reading} /> : null}
           <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} />
           <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
         </View>
       </ScrollView>
+      <ReadingOverlay tracker={reading} experience={experience} />
     </View>
   );
 }

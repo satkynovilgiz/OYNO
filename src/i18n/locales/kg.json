@@ -3118,5 +3118,19 @@
     "entryMeta_other": "OYNO макалаларынан {{count}} термин",
     "entryMeta_few": "OYNO макалаларынан {{count}} термин",
     "entryMeta_many": "OYNO макалаларынан {{count}} термин"
+  },
+  "reading": {
+    "continueReading": "Окууну улантуу",
+    "recentlyRead": "Жакында окулган",
+    "resumeQuestion": "Токтогон жериңизден улантасызбы?",
+    "resumeChild": "Токтогон жериңден окуп кетесиңби?",
+    "continue": "Улантуу",
+    "fromBeginning": "Башынан баштоо",
+    "progress": "Окуу прогресси",
+    "completed": "Окулду",
+    "markRead": "Окулду деп белгилөө",
+    "startOver": "Кайра баштоо",
+    "percentRead": "{{percent}}% окулду",
+    "onThisDevice": "Окуу тарыхыңыз ушул түзмөктө гана сакталат."
   }
 }

@@ -12,6 +12,7 @@ import { computeCollectionProgress } from '@/features/collections/collectionProg
 import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
 import { komuzTracks } from './audioData';
 import { GlossaryEntryRow } from './glossary/GlossaryEntryRow';
+import { ContinueReadingSection } from './reading/ContinueReadingSection';
 import type { SupportedLanguage } from '@/i18n';
 import { dayNumber, localDateKey } from '@/services/daily/dailyDiscovery';
 import { cultureCategoryTitle } from '@/services/content/cultureCategoryTitles';
@@ -146,7 +147,12 @@ export function CultureScreen() {
       case 'collections':
         return <CollectionsRail key={id} items={collectionCards} experience={experience} onPress={(collectionId) => router.push(`/collections/${collectionId}` as never)} />;
       case 'continue':
-        return <ContinueLearning key={id} rows={continueRows} onPress={(route) => router.push(route as never)} />;
+        return (
+          <View key={id} style={styles.stack}>
+            <ContinueReadingSection experience={experience} />
+            <ContinueLearning rows={continueRows} onPress={(route) => router.push(route as never)} />
+          </View>
+        );
       case 'listen':
         return <ListenCard key={id} trackCount={komuzTracks.length} image={cultureCategoryImages.komuz} onPress={() => router.push('/culture/komuz/listen' as never)} />;
       case 'interactive':
