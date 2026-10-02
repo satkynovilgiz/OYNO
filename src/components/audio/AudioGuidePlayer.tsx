@@ -1,4 +1,4 @@
-import { usePathname } from 'expo-router';
+import { useGlobalSearchParams, usePathname } from 'expo-router';
 import { CloudOff, Headphones, Pause, Play, RotateCcw, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,10 @@ import type { SupportedLanguage } from '@/i18n';
 import { recordedAudioFor } from '@/services/audioGuide/contentAudio';
 import { estimateListenMinutes, formatAudioTime, isPlayableNow, offlineAvailabilityFor, resolveAudioPlan, type Narration, type VoiceInfo } from '@/services/audioGuide/narration';
 import { isSpeechEngineAvailable, loadVoices, PLAYBACK_RATES, useAudioGuideStore } from '@/services/audioGuide/useAudioGuideStore';
+import { currentRecordsOwner } from '@/features/games/records/useGameRecords';
+import { parseResumeParam } from '@/features/listening/listeningModel';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
+import { useListeningStore } from '@/store/useListeningStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type AudioGuidePlayerProps = {
@@ -67,6 +70,10 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
   const duration = useAudioGuideStore((state) => state.duration);
   const rate = useAudioGuideStore((state) => state.rate);
   const canSeek = useAudioGuideStore((state) => state.canSeek);
+  const chunk = useAudioGuideStore((state) => state.chunk);
+  const [bookmarked, setBookmarked] = useState(false);
+  const resume = parseResumeParam(useGlobalSearchParams<{ resumeAudio?: string }>().resumeAudio);
+  const spokenAt = (seconds: number) => t('listening.at', { minutes: Math.floor(seconds / 60), seconds: seconds % 60 });
 
   // While this screen shows the full player, the mini player stays hidden.
   useEffect(() => useAudioGuideStore.getState().registerHost(sessionKey), [sessionKey]);
@@ -88,6 +95,32 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
   if (!active) {
     const minutes = narration && plan.kind === 'tts' ? estimateListenMinutes(narration.text) : null;
     const label = minutes ? t('audioGuide.listenWithTime', { count: minutes }) : t('audioGuide.listen');
+    // Opened from a saved point (history/bookmark): offer to resume there -
+    // the audio still only starts on this tap.
+    const canResume = resume && resume.contentKey === contentKey && ((resume.type === 'seconds' && plan.kind === 'recorded') || (resume.type === 'chunk' && plan.kind === 'tts'));
+    if (canResume) {
+      const where = resume.type === 'seconds' ? spokenAt(resume.value) : t('listening.section', { number: resume.value + 1 });
+      return (
+        <View style={styles.resumeRow}>
+          <AnimatedPressable
+            style={styles.listen}
+            onPress={() => store.start(sessionKey, plan, { title, route }, { type: resume.type, value: resume.value })}
+            press="strong"
+            haptic="light"
+            accessibilityRole="button"
+            accessibilityLabel={`${t('listening.resume')}: ${where}`}
+          >
+            <Headphones size={16} color={colors.primary} strokeWidth={2.25} />
+            <Text style={styles.listenText}>
+              {t('listening.resume')} · {resume.type === 'seconds' ? formatAudioTime(resume.value) : t('listening.section', { number: resume.value + 1 })}
+            </Text>
+          </AnimatedPressable>
+          <AnimatedPressable style={styles.fromStart} onPress={() => store.start(sessionKey, plan, { title, route })} accessibilityRole="button" accessibilityLabel={`${t('audioGuide.title')}: ${label}`}>
+            <Text style={styles.fromStartText}>{label}</Text>
+          </AnimatedPressable>
+        </View>
+      );
+    }
     return (
       <AnimatedPressable
         style={styles.listen}
@@ -143,6 +176,28 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
         </AnimatedPressable>
       </View>
 
+      {/* Bookmark: a real position for recordings, the section for device speech. */}
+      {(canSeek ? elapsed !== null && elapsed > 0 : chunk !== null) && route ? (
+        <AnimatedPressable
+          style={styles.bookmark}
+          onPress={() => {
+            useListeningStore.getState().addBookmark(currentRecordsOwner(), {
+              sourceType: 'guide',
+              sourceId: contentKey,
+              title,
+              route,
+              positionType: canSeek ? 'seconds' : 'chunk',
+              position: canSeek ? (elapsed ?? 0) : (chunk ?? 0),
+            });
+            setBookmarked(true);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={bookmarked ? t('listening.saved') : canSeek ? t('listening.savePoint') : t('listening.saveSection')}
+        >
+          <Text style={styles.bookmarkText}>{bookmarked ? `✓ ${t('listening.saved')}` : canSeek ? t('listening.savePoint') : t('listening.saveSection')}</Text>
+        </AnimatedPressable>
+      ) : null}
+
       <View style={styles.rates} accessibilityRole="radiogroup" accessibilityLabel={t('audioGuide.playbackSpeed')}>
         {PLAYBACK_RATES.map((option) => (
           <AnimatedPressable
@@ -186,6 +241,11 @@ function SeekBar({ progress, valueText, onSeek }: { progress: number; valueText:
 }
 
 const styles = StyleSheet.create({
+  resumeRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+  fromStart: { minHeight: 40, justifyContent: 'center' },
+  fromStartText: { ...typography.small, color: colors.textSecondary, fontWeight: '600' },
+  bookmark: { alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' },
+  bookmarkText: { ...typography.small, color: colors.primary, fontWeight: '700' },
   listen: {
     flexDirection: 'row',
     alignItems: 'center',

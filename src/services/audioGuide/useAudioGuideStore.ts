@@ -73,10 +73,14 @@ type AudioGuideState = {
   rate: PlaybackRate;
   /** Only recorded audio can seek; device speech reads sentence by sentence. */
   canSeek: boolean;
+  /** Device speech: the sentence-sized chunk being read (null for recordings). */
+  chunk: number | null;
   /** Sessions whose full player is on screen right now (the mini player
    * stays hidden for those). */
   hosts: Record<string, number>;
-  start: (sessionKey: string, plan: AudioPlan, meta: AudioSessionMeta) => void;
+  /** `startAt`: resume a saved point - seconds for a recording, a chunk
+   * (section) index for device speech. Only ever called from a user tap. */
+  start: (sessionKey: string, plan: AudioPlan, meta: AudioSessionMeta, startAt?: { type: 'seconds' | 'chunk'; value: number }) => void;
   toggle: () => void;
   /** Pauses only if playing - used for interruptions (app backgrounded). */
   pause: () => void;
@@ -127,7 +131,7 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
     }
     chunkIndex = index;
     const token = ++ttsToken;
-    set({ status: 'playing', progress: index / plan.chunks.length });
+    set({ status: 'playing', progress: index / plan.chunks.length, chunk: index });
     speech.speak(plan.chunks[index], {
       language: plan.bcp47,
       voice: plan.voiceId ?? undefined,
@@ -141,7 +145,7 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
     });
   }
 
-  function startRecorded(source: Extract<AudioPlan, { kind: 'recorded' }>['source']) {
+  function startRecorded(source: Extract<AudioPlan, { kind: 'recorded' }>['source'], startSeconds = 0) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { createAudioPlayer } = require('expo-audio') as typeof import('expo-audio');
@@ -175,6 +179,7 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
         });
       });
       player.setPlaybackRate(get().rate);
+      if (startSeconds > 0) void player.seekTo(startSeconds);
       player.play();
       set({ status: 'playing' });
     } catch {
@@ -205,16 +210,20 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
     duration: null,
     rate: 1,
     canSeek: false,
+    chunk: null,
     hosts: {},
 
-    start: (sessionKey, plan, meta) => {
+    start: (sessionKey, plan, meta, startAt) => {
       installGlobalListeners();
       // One narration at a time: whatever was playing is released first.
       releaseEngine();
       activePlan = plan;
-      set({ sessionKey, meta, status: 'idle', progress: 0, elapsed: null, duration: null, canSeek: plan.kind === 'recorded' });
-      if (plan.kind === 'tts') speakFrom(0);
-      else if (plan.kind === 'recorded') startRecorded(plan.source);
+      set({ sessionKey, meta, status: 'idle', progress: 0, elapsed: null, duration: null, canSeek: plan.kind === 'recorded', chunk: null });
+      if (plan.kind === 'tts') {
+        // A saved section that no longer exists (text changed) starts at 0.
+        const from = startAt?.type === 'chunk' && startAt.value > 0 && startAt.value < plan.chunks.length ? Math.floor(startAt.value) : 0;
+        speakFrom(from);
+      } else if (plan.kind === 'recorded') startRecorded(plan.source, startAt?.type === 'seconds' ? Math.max(0, startAt.value) : 0);
     },
 
     pause: () => {
@@ -289,7 +298,7 @@ export const useAudioGuideStore = create<AudioGuideState>((set, get) => {
       if (sessionKey && get().sessionKey !== sessionKey) return;
       releaseEngine();
       activePlan = null;
-      set({ sessionKey: null, meta: null, status: 'idle', progress: 0, elapsed: null, duration: null, canSeek: false });
+      set({ sessionKey: null, meta: null, status: 'idle', progress: 0, elapsed: null, duration: null, canSeek: false, chunk: null });
     },
   };
 });

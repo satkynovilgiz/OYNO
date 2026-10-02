@@ -29,6 +29,8 @@ import {
   TodayDiscoveryEntryCard,
 } from './components';
 import { ContinueRegionCard } from './components/ContinueRegionCard';
+import { ForYouSection } from './forYou/ForYouCard';
+import { HomeLearningPathCard } from '@/features/learn/LearningPathCard';
 import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
 import { cultureTileAssets } from './mockData';
 import { mockGamesList } from '@/features/games/mockData';
@@ -157,6 +159,18 @@ export function HomeScreen() {
         return (
           <View key={id} style={styles.horizontalPad}>
             <TodayDiscoveryEntryCard discovery={todayDiscovery} isLoading={todayLoading} experience={experience} onPress={() => router.push('/daily' as never)} />
+          </View>
+        );
+      case 'forYou':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <ForYouSection experience={experience} heroRoute={recommendation.route} />
+          </View>
+        );
+      case 'paths':
+        return (
+          <View key={id} style={styles.horizontalPad}>
+            <HomeLearningPathCard experience={experience} />
           </View>
         );
       case 'continue':

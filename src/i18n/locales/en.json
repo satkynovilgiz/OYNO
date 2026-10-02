@@ -3244,5 +3244,142 @@
     "emptyCategory": "No images in this category",
     "openPreview": "Open gallery preview",
     "fullscreen": "View full screen"
+  },
+  "learningPaths": {
+    "title": "Learning Paths",
+    "continue": "Continue path",
+    "start": "Start path",
+    "step": "Step {{index}}",
+    "completed": "Path completed",
+    "backToPath": "Back to Learning Path",
+    "progress": "{{completed}} of {{total}} completed",
+    "markComplete": "Mark step complete",
+    "state": {
+      "not_started": "Not started",
+      "in_progress": "In progress",
+      "completed": "Completed"
+    },
+    "verb": {
+      "culture_item": "Read",
+      "glossary": "Learn the term",
+      "challenge": "Test your knowledge",
+      "game": "Play",
+      "interactive_lab": "Try it yourself"
+    },
+    "paths": {
+      "boz-uy": {
+        "title": "Discover the Boz Üy",
+        "description": "Read about the yurt and its frame, learn the word \"tunduk\", build one yourself, then test what you know."
+      },
+      "felt-oymo": {
+        "title": "Felt & Oymo",
+        "description": "Ornament and felt: read the stories, learn a term, draw an oymo and make a shyrdak, then take the challenge."
+      },
+      "horse-games": {
+        "title": "Traditional Horse Games",
+        "description": "Read about Kok Boru and Kyz Kuumai, play both games, then test your knowledge of horse culture."
+      }
+    }
+  },
+  "forYou": {
+    "title": "For you today",
+    "open": "Open",
+    "notNow": "Not now",
+    "reason": {
+      "beginner": {
+        "heading": "Start here",
+        "detail": "A short learning path to begin with"
+      },
+      "continue_reading": {
+        "heading": "Continue reading"
+      },
+      "continue_learning_path": {
+        "heading": "Continue your path"
+      },
+      "review_mistakes": {
+        "heading_one": "Review {{count}} question",
+        "heading_other": "Review {{count}} questions",
+        "detail": "Your mistake review is ready",
+        "heading_few": "Review {{count}} questions",
+        "heading_many": "Review {{count}} questions"
+      },
+      "review_glossary": {
+        "heading_one": "Review {{count}} term",
+        "heading_other": "Review {{count}} terms",
+        "detail": "Your glossary review is ready",
+        "heading_few": "Review {{count}} terms",
+        "heading_many": "Review {{count}} terms"
+      },
+      "daily_challenge": {
+        "heading": "Try today's challenge",
+        "detail": "A few questions from OYNO's stories"
+      },
+      "start_path": {
+        "heading": "Start a learning path",
+        "detail": "A few connected steps through OYNO"
+      },
+      "discover": {
+        "heading": "Discover something new",
+        "detail": "Explore culture through its images"
+      }
+    }
+  },
+  "weeklyGoal": {
+    "title": "Weekly goal",
+    "intro": "A gentle plan for the week. Nothing is lost if you don't reach it - each week simply starts fresh.",
+    "thisWeek": "Activities this week",
+    "set": "Set weekly goal",
+    "change": "Change goal",
+    "none": "No weekly goal",
+    "option_one": "{{count}} activity",
+    "option_other": "{{count}} activities",
+    "complete": "Weekly goal complete",
+    "progress": "{{done}} / {{goal}} activities",
+    "progressA11y": "{{done}} of {{goal}} activities completed",
+    "counts": "Counts: finished readings, challenges, glossary study sessions, learning-path steps and normal game rounds.",
+    "deviceNote": "Based on activity on this device. Weeks run Monday to Sunday.",
+    "profileMeta": "A gentle plan for your week",
+    "option_few": "{{count}} activities",
+    "option_many": "{{count}} activities"
+  },
+  "listening": {
+    "title": "Listening history",
+    "continue": "Continue listening",
+    "bookmarks": "Audio bookmarks",
+    "recent": "Recently listened",
+    "savePoint": "Save this point",
+    "saveSection": "Save this section",
+    "saved": "Saved",
+    "resume": "Resume listening",
+    "unavailable": "Source unavailable",
+    "narration": "Narration",
+    "komuzTrack": "Komuz track",
+    "finished": "Finished",
+    "section": "Section {{number}}",
+    "at": "at {{minutes}} min {{seconds}} s",
+    "noBookmarks": "No bookmarks yet - tap “Save this point” while listening.",
+    "noHistory": "Nothing listened to yet.",
+    "removeBookmark": "Remove bookmark: {{title}}",
+    "deviceNote": "Your listening history is private and saved on this device.",
+    "profileMeta": "Recently listened and audio bookmarks"
+  },
+  "rhythm": {
+    "title": "Rhythm practice",
+    "practice": "Practice rhythm",
+    "intro": "Listen and tap with the beat. Timing is shown in broad steps - this is practice, not a test.",
+    "noCharts": "Rhythm practice isn't ready yet: no beat chart has been authored and checked for these tracks.",
+    "tapWithBeat": "Tap with the beat",
+    "tap": "Tap",
+    "ready": "Ready",
+    "perfect": "Perfect",
+    "good": "Good",
+    "miss": "Miss",
+    "beatsHit": "Beats hit",
+    "goodTiming": "Good timing",
+    "missed": "Missed beats",
+    "missedSoFar": "Missed: {{count}}",
+    "tryAgain": "Try again",
+    "chooseTrack": "Choose track",
+    "paused": "Practice stopped when the app left the screen."
   }
 }

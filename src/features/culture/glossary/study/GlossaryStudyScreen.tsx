@@ -128,7 +128,10 @@ export function GlossaryStudyScreen({ mode, onPressBack }: { mode: SessionMode; 
       setAnswers(nextAnswers);
       setRevealed(false);
       setIndex(index + 1);
-      if (index + 1 >= cards.length) track('glossary_study_completed', { cards: cards.length });
+      if (index + 1 >= cards.length) {
+        track('glossary_study_completed', { cards: cards.length });
+        useGlossaryStudyStore.getState().completeSession(owner);
+      }
     });
   };
 

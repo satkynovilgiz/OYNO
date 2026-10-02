@@ -1,3 +1,4 @@
+import { router, useLocalSearchParams } from 'expo-router';
 import { ChevronLeft, Heart, Pause, Play, SkipBack, SkipForward } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5,16 +6,19 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View, type GestureRespo
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { AnimatedPressable, IconButton, ProgressBar } from '@/components/ui';
+import { AnimatedPressable, Button, IconButton, ProgressBar } from '@/components/ui';
 import { komuzTracks, type KomuzTrack } from '@/features/culture/audioData';
 import { cultureCategoryImages } from '@/features/culture/data';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { track } from '@/services/analytics/analytics';
 import { ownerLibrary, useKomuzLibraryStore } from '@/store/useKomuzLibraryStore';
+import { useListeningStore } from '@/store/useListeningStore';
 import { colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
 import { clockTime, filterTracks, nextIndex, previousIndex, realDuration, showFavoritesFilter, spokenTime, type TrackFilter } from './komuzQueue';
+import { RHYTHM_CHARTS } from '../rhythm/rhythmCharts';
+import { supportedCharts } from '../rhythm/rhythmModel';
 import { registerKomuzHost, useKomuzPlayerStore } from './useKomuzPlayerStore';
 
 /**
@@ -32,6 +36,10 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
   const owner = useRecordsOwner();
   const library = ownerLibrary(useKomuzLibraryStore((state) => state.saved), owner);
   const [filter, setFilter] = useState<TrackFilter>('all');
+  const [savedPoint, setSavedPoint] = useState<string | null>(null);
+  const params = useLocalSearchParams<{ resumeTrack?: string; at?: string }>();
+  const resumeTrack = komuzTracks.find((entry) => entry.id === params.resumeTrack) ?? null;
+  const resumeAt = Number.isFinite(Number(params.at)) && Number(params.at) > 0 ? Math.min(3600, Math.floor(Number(params.at))) : 0;
 
   const currentTrackId = useKomuzPlayerStore((state) => state.currentTrackId);
   const playing = useKomuzPlayerStore((state) => state.playing);
@@ -53,6 +61,7 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
   }, [owner]);
 
   const trackIds = komuzTracks.map((entry) => entry.id);
+  const rhythmAvailable = supportedCharts(RHYTHM_CHARTS, trackIds).length > 0;
   const favoritesAvailable = showFavoritesFilter(library.favorites, trackIds);
   const activeFilter: TrackFilter = favoritesAvailable ? filter : 'all';
   const visible = filterTracks(komuzTracks, activeFilter, library.favorites);
@@ -80,6 +89,22 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
+        {/* Opened from listening history / a bookmark: resume ONLY on tap. */}
+        {resumeTrack && !current ? (
+          <AnimatedPressable
+            style={styles.resume}
+            onPress={() => (resumeAt > 0 ? useKomuzPlayerStore.getState().playFrom(resumeTrack.id, resumeAt) : useKomuzPlayerStore.getState().play(resumeTrack.id))}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('listening.resume')}: ${resumeTrack.title}${resumeAt > 0 ? `. ${t('listening.at', { minutes: Math.floor(resumeAt / 60), seconds: resumeAt % 60 })}` : ''}`}
+          >
+            <Play size={16} color={colors.primary} strokeWidth={2.5} />
+            <Text style={styles.resumeText} numberOfLines={1}>
+              {t('listening.resume')} · {resumeTrack.title}
+              {resumeAt > 0 ? ` · ${clockTime(resumeAt)}` : ''}
+            </Text>
+          </AnimatedPressable>
+        ) : null}
+
         {/* Now playing - existing komuz art, never an invented cover. */}
         <View style={styles.nowPlaying}>
           <View style={[styles.art, isChild && styles.artChild]}>
@@ -120,9 +145,25 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
             </AnimatedPressable>
             <IconButton icon={SkipForward} size={isChild ? 56 : 48} iconSize={isChild ? 24 : 20} disabled={!hasNext} accessibilityLabel={t('komuzRoom.next')} onPress={() => useKomuzPlayerStore.getState().next()} />
           </View>
+          {current && position > 0 ? (
+            <AnimatedPressable
+              style={styles.savePoint}
+              onPress={() => {
+                useListeningStore.getState().addBookmark(owner, { sourceType: 'komuz', sourceId: current.id, title: current.title, route: '/culture/komuz/listen', positionType: 'seconds', position });
+                setSavedPoint(current.id);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={savedPoint === current.id ? t('listening.saved') : t('listening.savePoint')}
+            >
+              <Text style={styles.savePointText}>{savedPoint === current.id ? `✓ ${t('listening.saved')}` : t('listening.savePoint')}</Text>
+            </AnimatedPressable>
+          ) : null}
           {/* Bundled with the app - plays without a connection. Not "downloaded". */}
           <Text style={styles.offline}>{t('komuzRoom.availableOffline')}</Text>
         </View>
+
+        {/* Rhythm practice only exists for tracks with an authored, reviewed chart. */}
+        {rhythmAvailable ? <Button label={t('rhythm.practice')} variant="secondary" onPress={() => router.push('/culture/komuz/rhythm' as never)} /> : null}
 
         {recent.length > 0 && !isChild ? (
           <View style={styles.section}>
@@ -229,6 +270,10 @@ function Scrubber({ position, duration, label, onSeek }: { position: number; dur
 }
 
 const styles = StyleSheet.create({
+  resume: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radii.lg, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.accentGold },
+  resumeText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary, flex: 1 },
+  savePoint: { minHeight: 32, justifyContent: 'center' },
+  savePointText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, color: colors.textPrimary, flex: 1 },

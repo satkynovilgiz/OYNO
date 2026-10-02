@@ -21,7 +21,12 @@ type KomuzPlayerState = {
   duration: number | null;
   /** Called once per started track after meaningful playback (recents). */
   onListened: ((trackId: string) => void) | null;
+  /** The last track that really played to its end (player's own signal). */
+  lastFinished: { trackId: string; at: number } | null;
   play: (trackId: string, queue?: string[]) => void;
+  /** Resume a saved point: plays the track, then seeks once the player
+   * reports a real duration. Only from a user tap. */
+  playFrom: (trackId: string, seconds: number) => void;
   toggle: () => void;
   pause: () => void;
   next: () => void;
@@ -37,6 +42,7 @@ let player: AudioPlayer | null = null;
 let subscription: { remove: () => void } | null = null;
 let listenedReported = false;
 let listenersInstalled = false;
+let pendingSeek: number | null = null;
 
 function trackById(id: string): KomuzTrack | undefined {
   return komuzTracks.find((entry) => entry.id === id);
@@ -101,12 +107,20 @@ export const useKomuzPlayerStore = create<KomuzPlayerState>((set, get) => {
         if (get().currentTrackId !== entry.id) return;
         const position = status.currentTime ?? 0;
         set({ position, duration: realDuration(status.duration), playing: !!status.playing && !status.didJustFinish });
+        const duration = realDuration(status.duration);
+        if (pendingSeek !== null && duration !== null) {
+          const target = Math.min(pendingSeek, Math.max(0, duration - 1));
+          pendingSeek = null;
+          void player?.seekTo(target);
+          set({ position: target });
+        }
         if (!listenedReported && position >= MEANINGFUL_SECONDS) {
           listenedReported = true;
           get().onListened?.(entry.id);
         }
         // Auto-advance ONLY on the player's own "finished" signal - never a timer.
         if (status.didJustFinish) {
+          set({ lastFinished: { trackId: entry.id, at: Date.now() } });
           const following = nextIndex(get().queue.length, get().queueIndex);
           if (following === null) set({ playing: false });
           else load(following, get().queue);
@@ -128,6 +142,12 @@ export const useKomuzPlayerStore = create<KomuzPlayerState>((set, get) => {
     position: 0,
     duration: null,
     onListened: null,
+    lastFinished: null,
+
+    playFrom: (trackId, seconds) => {
+      get().play(trackId);
+      pendingSeek = seconds > 0 ? seconds : null;
+    },
 
     play: (trackId, queue) => {
       const order = queue && queue.includes(trackId) ? queue : komuzTracks.map((entry) => entry.id);

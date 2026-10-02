@@ -74,7 +74,10 @@ export type AnalyticsEventName =
   | 'glossary_card_reviewed'
   | 'glossary_study_completed'
   | 'culture_gallery_opened'
-  | 'culture_gallery_item_opened';
+  | 'culture_gallery_item_opened'
+  | 'home_recommendation_dismissed'
+  | 'weekly_goal_set'
+  | 'weekly_goal_completed';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase
