@@ -11,6 +11,7 @@ import { collections } from '@/features/collections/collectionsData';
 import { computeCollectionProgress } from '@/features/collections/collectionProgress';
 import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
 import { komuzTracks } from './audioData';
+import { GalleryEntryRow } from './gallery/GalleryEntryRow';
 import { GlossaryEntryRow } from './glossary/GlossaryEntryRow';
 import { ContinueReadingSection } from './reading/ContinueReadingSection';
 import type { SupportedLanguage } from '@/i18n';
@@ -177,6 +178,7 @@ export function CultureScreen() {
               <QuizTeaserCard onPress={() => router.push('/culture/quiz' as never)} />
               <ChallengesEntryCard />
               <GlossaryEntryRow />
+              <GalleryEntryRow />
             </View>
           </View>
         );

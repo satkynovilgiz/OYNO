@@ -69,7 +69,12 @@ export type AnalyticsEventName =
   | 'highlight_removed'
   | 'friend_challenge_shared'
   | 'friend_challenge_opened'
-  | 'friend_challenge_completed';
+  | 'friend_challenge_completed'
+  | 'glossary_study_started'
+  | 'glossary_card_reviewed'
+  | 'glossary_study_completed'
+  | 'culture_gallery_opened'
+  | 'culture_gallery_item_opened';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

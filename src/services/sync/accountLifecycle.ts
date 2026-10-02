@@ -15,6 +15,7 @@ import { useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
 import { useKomuzLibraryStore } from '@/store/useKomuzLibraryStore';
 import { useReadingStore } from '@/store/useReadingStore';
 import { useHighlightsStore } from '@/store/useHighlightsStore';
+import { useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
@@ -179,6 +180,8 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     useReadingStore.getState().adoptGuest(userId);
     await useHighlightsStore.getState().load();
     useHighlightsStore.getState().adoptGuest(userId);
+    await useGlossaryStudyStore.getState().load();
+    useGlossaryStudyStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

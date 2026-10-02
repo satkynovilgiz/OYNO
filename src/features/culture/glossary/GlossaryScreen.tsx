@@ -1,17 +1,20 @@
 import { router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Search as SearchIcon } from 'lucide-react-native';
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OfflineUnavailable } from '@/components/offline/OfflineUnavailable';
-import { AnimatedPressable, IconButton } from '@/components/ui';
+import { AnimatedPressable, Button, IconButton } from '@/components/ui';
+import { useRecordsOwner } from '@/features/games/records/useGameRecords';
+import { ownerStudy, useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 
 import { glossaryRoute } from './glossaryData';
 import { previewOf, searchGlossary } from './glossaryModel';
+import { reviewQueue } from './study/glossaryStudy';
 import { useGlossary } from './useGlossary';
 
 /** /culture/glossary - a small curated glossary of Kyrgyz cultural terms,
@@ -26,6 +29,12 @@ export function GlossaryScreen({ onPressBack }: { onPressBack: () => void }) {
   const [query, setQuery] = useState('');
   const deferred = useDeferredValue(query);
   const shown = searchGlossary(entries, deferred);
+  const owner = useRecordsOwner();
+  const study = ownerStudy(useGlossaryStudyStore((state) => state.saved), owner);
+  useEffect(() => {
+    void useGlossaryStudyStore.getState().load();
+  }, []);
+  const waiting = reviewQueue(study, entries.map(({ entry }) => entry.id)).length;
 
   if (waitingForNetwork) return <OfflineUnavailable onRetry={retry} />;
 
@@ -39,6 +48,16 @@ export function GlossaryScreen({ onPressBack }: { onPressBack: () => void }) {
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} keyboardShouldPersistTaps="handled">
         <Text style={styles.intro}>{t('glossary.intro')}</Text>
+        {/* Study terms: flashcards over these same entries (a calm review queue). */}
+        {entries.length > 0 ? (
+          <View style={styles.study}>
+            <Button label={t('glossaryStudy.study5')} size="sm" onPress={() => router.push('/culture/glossary/study' as never)} />
+            <Button label={t('glossaryStudy.studyAll')} size="sm" variant="secondary" onPress={() => router.push('/culture/glossary/study?mode=all' as never)} />
+            {waiting > 0 ? (
+              <Button label={`${t('glossaryStudy.reviewTerms')} · ${t('glossaryStudy.waiting', { count: waiting })}`} size="sm" variant="secondary" onPress={() => router.push('/culture/glossary/study?mode=review' as never)} />
+            ) : null}
+          </View>
+        ) : null}
         <View style={styles.field}>
           <SearchIcon size={16} color={colors.textSecondary} strokeWidth={2.25} />
           <TextInput
@@ -79,6 +98,7 @@ export function GlossaryScreen({ onPressBack }: { onPressBack: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  study: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, color: colors.textPrimary, flex: 1 },
