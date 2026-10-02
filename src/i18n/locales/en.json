@@ -3132,5 +3132,76 @@
     "startOver": "Start over",
     "percentRead": "{{percent}}% read",
     "onThisDevice": "Your reading history is saved on this device only."
+  },
+  "highlights": {
+    "title": "Highlights & Notes",
+    "intro": "Passages you saved from OYNO articles, with your own private notes. Only you can see them.",
+    "savePassage": "Save passage",
+    "saveNamed": "Save passage: {{section}}",
+    "saved": "Saved",
+    "addNote": "Add note",
+    "editNote": "Edit note",
+    "removeNote": "Remove note",
+    "saveNote": "Save note",
+    "cancel": "Cancel",
+    "noteLabel": "Private note",
+    "notePlaceholder": "e.g. Ask my dad about this tradition",
+    "notePrivate": "Your note is private and stays on this device.",
+    "yourNote": "Your note",
+    "removeHighlight": "Remove highlight",
+    "removeTitle": "Remove this highlight?",
+    "removeBody": "Only this saved passage and its note go. The article, Saved and your reading progress stay.",
+    "openSource": "Open source",
+    "sharePassage": "Share passage",
+    "savedIn": "Saved in {{language}}",
+    "sourceUnavailable": "Source unavailable",
+    "sourceUpdated": "Source updated",
+    "empty": "No highlights yet",
+    "emptyBody": "Tap “Save passage” under any section of a Culture article.",
+    "browse": "Browse Culture",
+    "search": "Search highlights and notes",
+    "noMatches": "No matching highlights",
+    "profileMeta": "Saved passages and your private notes",
+    "deviceNote": "Highlights and notes are saved on this device and aren't synced yet.",
+    "section": {
+      "body": "Text"
+    }
+  },
+  "friendChallenge": {
+    "challengeFriend": "Challenge a friend",
+    "canYouBeat": "Can you beat {{target}}?",
+    "title": "Friend challenge",
+    "target": "Target",
+    "targetValue": "Target: {{target}}",
+    "play": "Play challenge",
+    "beaten": "Target beaten",
+    "almost": "Almost",
+    "youScored": "You scored {{score}}",
+    "beatScore": "Beat {{target}}",
+    "beatTime": "Catch her faster than {{target}}",
+    "share": "Share challenge",
+    "invalid": "This challenge link isn't valid - you can still play normally.",
+    "shareMessage": "{{game}} on OYNO - can you beat {{target}}? {{link}}"
+  },
+  "readerSettings": {
+    "title": "Reading settings",
+    "size": {
+      "label": "Text size",
+      "small": "Small",
+      "default": "Default",
+      "large": "Large",
+      "xl": "Extra Large"
+    },
+    "spacing": {
+      "label": "Line spacing",
+      "compact": "Compact",
+      "comfortable": "Comfortable",
+      "spacious": "Spacious"
+    },
+    "focus": "Focus mode",
+    "focusHint": "Hides the gallery and related stories. Sources and verification always stay.",
+    "reset": "Reset reading settings",
+    "done": "Done",
+    "preview": "The boz üy is a home you can carry - wood, felt and care."
   }
 }

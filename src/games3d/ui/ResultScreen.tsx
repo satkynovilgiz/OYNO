@@ -28,6 +28,9 @@ type ResultScreenProps = {
   /** Rendered inside the sheet (e.g. the share preview host, so it opens
    * on top of this sheet rather than beside it). */
   overlay?: ReactNode;
+  /** Friend challenge: the target result (neutral wording) and/or the
+   * "Challenge a friend" share action. */
+  friendChallenge?: { outcome: { beaten: boolean; scoreText: string; targetText: string } | null; onChallengeFriend: (() => void) | null } | null;
   onReplay: () => void;
   onExit: () => void;
 };
@@ -41,7 +44,7 @@ type ResultScreenProps = {
  * Restrained: one short seal animation (skipped under Reduce Motion), no
  * confetti or casino effects. Actions: Play again / Back to games.
  */
-export function ResultScreen({ visible, title, outcome = 'completed', banner, stats, personalBest, overlay, onReplay, onExit }: ResultScreenProps) {
+export function ResultScreen({ visible, title, outcome = 'completed', banner, stats, personalBest, overlay, friendChallenge, onReplay, onExit }: ResultScreenProps) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const sealScale = useSharedValue(1);
@@ -90,6 +93,19 @@ export function ResultScreen({ visible, title, outcome = 'completed', banner, st
         ) : null}
         {personalBest?.onShare ? <Button label={t('gameRecords.sharePersonalBest')} variant="secondary" onPress={personalBest.onShare} /> : null}
 
+        {friendChallenge?.outcome ? (
+          <View
+            style={styles.challenge}
+            accessible
+            accessibilityLabel={`${t('friendChallenge.title')}. ${friendChallenge.outcome.beaten ? t('friendChallenge.beaten') : t('friendChallenge.youScored', { score: friendChallenge.outcome.scoreText })}. ${t('friendChallenge.targetValue', { target: friendChallenge.outcome.targetText })}`}
+          >
+            <Text style={styles.challengeKicker}>{t('friendChallenge.title')}</Text>
+            <Text style={styles.challengeTitle}>{friendChallenge.outcome.beaten ? `✓ ${t('friendChallenge.beaten')}` : t('friendChallenge.youScored', { score: friendChallenge.outcome.scoreText })}</Text>
+            <Text style={styles.challengeMeta}>{t('friendChallenge.targetValue', { target: friendChallenge.outcome.targetText })}</Text>
+          </View>
+        ) : null}
+        {friendChallenge?.onChallengeFriend ? <Button label={t('friendChallenge.challengeFriend')} variant="secondary" onPress={friendChallenge.onChallengeFriend} /> : null}
+
         {stats.length > 0 ? (
           <View style={styles.statsGrid}>
             {stats.map((stat) => (
@@ -128,5 +144,9 @@ const styles = StyleSheet.create({
   pbKicker: { ...typography.overline, color: colors.accentGoldPressed },
   pbValue: { ...typography.h1, color: colors.textPrimary, fontVariant: ['tabular-nums'] },
   pbPrevious: { ...typography.small, color: colors.textSecondary },
+  challenge: { alignItems: 'center', gap: 2, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, borderRadius: radii.lg, backgroundColor: colors.surfaceAlt },
+  challengeKicker: { ...typography.overline, color: colors.accentTerracotta },
+  challengeTitle: { ...typography.bodyBold, color: colors.textPrimary },
+  challengeMeta: { ...typography.small, color: colors.textSecondary },
   actions: { gap: spacing.sm, width: '100%', marginTop: spacing.xs },
 });

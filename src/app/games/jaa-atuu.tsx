@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import jaaAtuuThumbnail from '@assets/img/games/zhaaAtuu/thumbnail.png';
 
+import { useFriendChallengeParam } from '@/features/games/friendChallenge/useFriendChallengeParam';
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { JaaAtuuGame } from '@/games3d/games/jaa-atuu/JaaAtuuGame';
 import type { JaaAtuuMode } from '@/games3d/games/jaa-atuu/JaaAtuuTypes';
@@ -21,6 +22,9 @@ const FAVORITE_GAME_ID = 'zhaa-atuu';
 export default function JaaAtuuRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<JaaAtuuMode | null>(null);
+  // A friend's challenge from a link (validated; anonymous; normal mode only).
+  const { challenge, invalid } = useFriendChallengeParam('jaa_atuu');
+  const [withChallenge, setWithChallenge] = useState(false);
   const [difficulty, setDifficulty] = useState<GameDetailDifficulty>('normal');
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('game', FAVORITE_GAME_ID)));
 
@@ -40,10 +44,19 @@ export default function JaaAtuuRoute() {
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', FAVORITE_GAME_ID)}
         onPressPractice={() => setMode('practice')}
-        onPressPlay={() => setMode('normal')}
+        onPressPlay={() => {
+          setWithChallenge(false);
+          setMode('normal');
+        }}
+        friendChallenge={challenge}
+        invalidChallenge={invalid}
+        onPressPlayChallenge={() => {
+          setWithChallenge(true);
+          setMode('normal');
+        }}
       />
     );
   }
 
-  return <JaaAtuuGame mode={mode} difficulty={difficulty} />;
+  return <JaaAtuuGame mode={mode} difficulty={difficulty} challenge={withChallenge ? challenge : null} />;
 }

@@ -19,6 +19,8 @@ import { getGameHostConfig } from '@games/gameHostCharacters';
 
 import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { gameArt, listGameForProgressId } from './gamesCatalog';
+import { FriendChallengeCard } from './friendChallenge/FriendChallengeCard';
+import type { FriendChallenge } from './friendChallenge/friendChallenge';
 import { GameRecordsSection } from './records/GameRecordsSection';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
@@ -50,6 +52,11 @@ type GameDetailScreenProps = {
   onToggleFavorite: () => void;
   onPressPractice: () => void;
   onPressPlay: () => void;
+  /** Opened from a friend's challenge link (already validated). */
+  friendChallenge?: FriendChallenge | null;
+  /** The link carried challenge params that failed validation. */
+  invalidChallenge?: boolean;
+  onPressPlayChallenge?: () => void;
 };
 
 /** Pre-entry screen for every 3D game (Section: "Games should feel like one
@@ -83,6 +90,9 @@ export function GameDetailScreen({
   onToggleFavorite,
   onPressPractice,
   onPressPlay,
+  friendChallenge,
+  invalidChallenge,
+  onPressPlayChallenge,
 }: GameDetailScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -250,6 +260,14 @@ export function GameDetailScreen({
           </FadeSlideIn>
         ) : null}
 
+        {friendChallenge && onPressPlayChallenge ? (
+          <FadeSlideIn index={1}>
+            <FriendChallengeCard challenge={friendChallenge} onPlay={onPressPlayChallenge} />
+          </FadeSlideIn>
+        ) : invalidChallenge ? (
+          <Text style={styles.invalidChallenge}>{t('friendChallenge.invalid')}</Text>
+        ) : null}
+
         {/* Your records: best by the game's own rule, last result, plays,
             recent rounds (features/games/records). Children: headline only. */}
         <FadeSlideIn index={5}>
@@ -283,6 +301,7 @@ export function GameDetailScreen({
 }
 
 const styles = StyleSheet.create({
+  invalidChallenge: { ...typography.small, color: colors.textMuted, paddingHorizontal: spacing.md },
   heroButtons: { flexDirection: 'row', gap: spacing.xs },
   root: {
     flex: 1,

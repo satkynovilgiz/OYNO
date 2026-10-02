@@ -22,6 +22,8 @@ type GameHUDProps = {
   /** Right stat, e.g. arrows remaining or the opponent's score - rendered
    * with `primaryStat` as one two-up scoreboard ("you vs. them"). */
   secondaryStat?: { label: string; value: string };
+  /** Friend challenge target, shown as one small quiet line. */
+  targetLabel?: string;
   /** A match/round clock - its own small chip with a clock glyph. */
   timerValue?: string;
   /** Small "Practice" tag next to the title. */
@@ -39,7 +41,7 @@ type GameHUDProps = {
  * (games pass primitive strings), never per 3D frame. Numbers use tabular
  * digits so a ticking timer doesn't jitter the layout.
  */
-export const GameHUD = memo(function GameHUD({ title, onPause, primaryStat, secondaryStat, timerValue, practice }: GameHUDProps) {
+export const GameHUD = memo(function GameHUD({ title, onPause, primaryStat, secondaryStat, timerValue, practice, targetLabel }: GameHUDProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const scale = useHudScale();
@@ -108,6 +110,13 @@ export const GameHUD = memo(function GameHUD({ title, onPause, primaryStat, seco
           </View>
         ) : null}
       </View>
+      {targetLabel ? (
+        <View style={styles.targetRow} pointerEvents="none">
+          <Text style={styles.targetText} accessibilityRole="text">
+            {targetLabel}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 });
@@ -128,6 +137,8 @@ function StatColumn({ label, value, size, emphasis = true }: { label: string; va
 }
 
 const styles = StyleSheet.create({
+  targetRow: { alignItems: 'flex-end', marginTop: 4 },
+  targetText: { fontSize: 12, fontWeight: '700', color: HUD.gold, backgroundColor: 'rgba(0,0,0,0.35)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
   root: { position: 'absolute', top: 0, left: 0, right: 0 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: GAME_HUD_HEIGHT },
   pauseButton: { backgroundColor: HUD.surface, borderWidth: 1, borderColor: HUD.border, alignItems: 'center', justifyContent: 'center' },

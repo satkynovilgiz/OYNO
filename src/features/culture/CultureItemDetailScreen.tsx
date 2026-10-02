@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
@@ -19,6 +20,9 @@ import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, T
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
+import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
+import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
+import { PassageActions } from '@/features/culture/highlights/PassageActions';
 import { KeyTermsSection } from '@/features/culture/glossary/KeyTermsSection';
 import { ThenAndNowSection } from '@/features/culture/thenNow/ThenAndNowSection';
 import { thenNowRoute } from '@/features/culture/thenNow/thenAndNow';
@@ -36,8 +40,16 @@ type CultureItemDetailScreenProps = {
   item: CultureItemRow;
   images?: ImageSourcePropType[];
   audioTracks?: KomuzTrack[];
+  /** Opened from Highlights: the section key to scroll near. */
+  initialSection?: string;
   onPressBack: () => void;
 };
+
+/** The language the article's body text is actually in (Kyrgyz unless a
+ * full reviewed translation is shown) - what a saved passage records. */
+function bodyLanguageFor(item: CultureItemRow, appLanguage: string): string {
+  return item.translation?.status === 'available' ? appLanguage : 'kg';
+}
 
 const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
   { key: 'origin', labelKey: 'culture.item.originLabel' },
@@ -53,11 +65,36 @@ const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
   { key: 'fun_facts', labelKey: 'culture.item.funFactsLabel' },
 ];
 
-export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack }: CultureItemDetailScreenProps) {
+export function CultureItemDetailScreen({ item, images, audioTracks, initialSection, onPressBack }: CultureItemDetailScreenProps) {
   const { t, i18n } = useTranslation();
   const { config, experience } = useAgeExperience();
   // Private reading progress (real scroll measurement; resume is offered).
   const reading = useReadingTracker('culture_item', item.id);
+  // Reader controls (presentation only): body size/spacing + focus mode.
+  // A change relays the text, so the reading RATIO is kept, not the pixels.
+  const reader = useReaderSettings();
+  const bodyStyle = readerBodyStyle(experience === 'child' ? 17 : 16, reader, experience === 'child');
+  const readerChanged = useRef(false);
+  useEffect(() => {
+    if (!readerChanged.current) {
+      readerChanged.current = true;
+      return;
+    }
+    reading.keepPosition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reader.textSize, reader.lineSpacing, reader.focusMode]);
+  // Opened from a saved highlight: scroll near that section once laid out
+  // (anchored by section KEY, never by a stored pixel position).
+  const sectionOffsets = useRef<Record<string, number>>({});
+  const scrolledToSection = useRef(false);
+  const scrollToInitialSection = () => {
+    if (!initialSection || scrolledToSection.current) return;
+    const { body, fields } = sectionOffsets.current;
+    const field = sectionOffsets.current[initialSection];
+    if (body === undefined || fields === undefined || field === undefined) return;
+    scrolledToSection.current = true;
+    reading.scrollRef.current?.scrollTo({ y: Math.max(0, body + fields + field - 24), animated: false });
+  };
   const insets = useSafeAreaInsets();
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('culture_item', item.id)));
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_item', item.id);
@@ -102,6 +139,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
 
   const actions = (
     <View style={styles.headerActions}>
+      <ReaderButton isChild={isChild} elevated={!!heroSource} />
       <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" elevated={!!heroSource} accessibilityLabel={t('share.action')} onPress={handleShare} />
       <IconButton
         icon={Heart}
@@ -131,7 +169,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
         {heroSource ? (
           <HeroEntrance>
-            <View style={[styles.hero, isChild && styles.heroChild]}>
+            <View style={[styles.hero, isChild && styles.heroChild, reader.focusMode && styles.heroFocus]}>
               {item.image_url ? (
                 // Storage-backed (admin-uploaded, see admin_set_culture_item_image).
                 <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={200} />
@@ -167,7 +205,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           </View>
         )}
 
-        <View style={styles.contentBody}>
+        <View style={styles.contentBody} onLayout={(event) => (sectionOffsets.current.body = event.nativeEvent.layout.y)}>
           {/* 2. Short context: alternative names. (Review state and sources
               live in the quiet "Sources & notes" row at the end.) */}
           {item.alt_names ? (
@@ -183,18 +221,36 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
 
           {/* 4. Content blocks - text straight on the page, no boxes. */}
           {simpleSummary ? (
-            <Text style={[styles.paragraph, isChild && styles.paragraphChild]}>{simpleSummary}</Text>
+            <Text style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]}>{simpleSummary}</Text>
           ) : filledFields.length === 0 ? (
             hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
           ) : (
-            <View style={styles.fields}>
+            <View style={styles.fields} onLayout={(event) => (sectionOffsets.current.fields = event.nativeEvent.layout.y)}>
               {filledFields.map((field, index) => (
-                <View key={field.key} style={styles.field}>
-                  {index > 0 ? <OymoDivider /> : null}
+                <View
+                  key={field.key}
+                  style={styles.field}
+                  onLayout={(event) => {
+                    sectionOffsets.current[field.key] = event.nativeEvent.layout.y;
+                    scrollToInitialSection();
+                  }}
+                >
+                  {index > 0 && !reader.focusMode ? <OymoDivider /> : null}
                   <Text style={styles.fieldLabel} accessibilityRole="header">
                     {t(field.labelKey)}
                   </Text>
-                  <Text style={[styles.paragraph, isChild && styles.paragraphChild]}>{item[field.key] as string}</Text>
+                  <Text style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]}>{item[field.key] as string}</Text>
+                  {/* Save the WHOLE authored section (no fragile text selection). */}
+                  <PassageActions
+                    contentType="culture_item"
+                    contentId={item.id}
+                    sectionKey={field.key}
+                    sectionLabel={t(field.labelKey)}
+                    title={item.title}
+                    text={item[field.key] as string}
+                    language={bodyLanguageFor(item, i18n.language)}
+                    simple={isChild}
+                  />
                 </View>
               ))}
             </View>
@@ -208,7 +264,9 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
           <KeyTermsSection itemId={item.id} />
 
           {/* 5. Relevant images. */}
-          {hasRemainingGallery ? (
+          {/* Focus mode: the decorative gallery and related rail step back;
+              body, sources, verification and Report stay. */}
+          {hasRemainingGallery && !reader.focusMode ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery} style={styles.galleryBleed}>
               {remainingImages!.map((source, index) => (
                 <View key={index} style={styles.galleryImage}>
@@ -238,7 +296,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, onPressBack
         </View>
 
         {/* 7. Related real items from the same category. */}
-        <RelatedItemsRail item={item} />
+        {reader.focusMode ? null : <RelatedItemsRail item={item} />}
       </ScrollView>
       <ReadingOverlay tracker={reading} experience={experience} />
       {shareHost}
@@ -251,6 +309,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: spacing.xxl, gap: spacing.lg },
   hero: { width: '100%', aspectRatio: 1.25, borderBottomLeftRadius: cardRadii.hero, borderBottomRightRadius: cardRadii.hero, overflow: 'hidden', backgroundColor: colors.surfaceFeature },
   heroChild: { aspectRatio: 1.05 },
+  heroFocus: { aspectRatio: 2 },
   heroImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
   heroOverlay: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.lg },
   headerActions: { flexDirection: 'row', gap: spacing.xs },

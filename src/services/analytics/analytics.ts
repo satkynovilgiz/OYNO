@@ -64,7 +64,12 @@ export type AnalyticsEventName =
   | 'komuz_listening_room_opened'
   | 'komuz_track_started'
   | 'reading_opened'
-  | 'reading_resumed';
+  | 'reading_resumed'
+  | 'highlight_saved'
+  | 'highlight_removed'
+  | 'friend_challenge_shared'
+  | 'friend_challenge_opened'
+  | 'friend_challenge_completed';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

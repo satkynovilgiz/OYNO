@@ -22,6 +22,9 @@ export type ReadingTracker = {
   startFromTop: () => void;
   markRead: () => void;
   startOver: () => void;
+  /** Layout is about to change (text size, spacing, focus mode): keep the
+   * same RATIO once the new layout is measured - never jump to the top. */
+  keepPosition: () => void;
 };
 
 /**
@@ -43,6 +46,7 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
   const decided = useRef(false);
   const [promptVisible, setPromptVisible] = useState(false);
   const [ratio, setRatio] = useState<number | null>(null);
+  const lastRatio = useRef<number | null>(null);
 
   useEffect(() => {
     void useReadingStore.getState().load();
@@ -62,7 +66,11 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
     const offset = resumeOffset(pendingResume.current, contentHeight.current, viewportHeight.current);
     if (offset === null) return;
     pendingResume.current = null;
-    scrollRef.current?.scrollTo({ y: offset, animated: true });
+    // The scroll this causes is recorded straight away (not throttled away).
+    lastRecordAt.current = 0;
+    // Not animated: an animation would report (and record) every in-between
+    // position, and the throttle could drop the final one.
+    scrollRef.current?.scrollTo({ y: offset, animated: false });
   }, []);
 
   const onScroll = useCallback(
@@ -72,7 +80,11 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
       viewportHeight.current = layoutMeasurement.height;
       const next = scrollRatio(contentOffset.y, contentSize.height, layoutMeasurement.height);
       setRatio(next);
+      lastRatio.current = next;
       if (next === null) return;
+      // Mid-relayout (text size change / resume pending): the offset still
+      // belongs to the old layout - never record it.
+      if (pendingResume.current !== null) return;
       // While the resume question is open, the top-of-page position must not
       // overwrite the saved place; scrolling on past it is an answer.
       if (promptVisible) {
@@ -113,6 +125,10 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     },
     markRead: () => useReadingStore.getState().markRead(owner, contentType, contentId),
+    keepPosition: () => {
+      // Applied on the next content-size change (the new layout).
+      if (lastRatio.current !== null && lastRatio.current > 0) pendingResume.current = lastRatio.current;
+    },
     startOver: () => {
       useReadingStore.getState().reset(owner, contentType, contentId);
       scrollRef.current?.scrollTo({ y: 0, animated: true });

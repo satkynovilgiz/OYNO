@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
@@ -19,6 +19,9 @@ import { materialNarration } from '@/services/audioGuide/contentNarration';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
+import { PassageActions } from '@/features/culture/highlights/PassageActions';
+import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
+import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -42,6 +45,18 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
   const { experience } = useAgeExperience();
   // Private reading progress (real scroll measurement; resume is offered).
   const reading = useReadingTracker('culture_material', material.id);
+  // Reader controls (presentation only); a change keeps the reading RATIO.
+  const reader = useReaderSettings();
+  const bodyStyle = readerBodyStyle(typography.body.fontSize, reader, experience === 'child');
+  const readerChanged = useRef(false);
+  useEffect(() => {
+    if (!readerChanged.current) {
+      readerChanged.current = true;
+      return;
+    }
+    reading.keepPosition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reader.textSize, reader.lineSpacing, reader.focusMode]);
 
   useEffect(() => {
     track('culture_material_open', { materialId: material.id });
@@ -61,7 +76,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
       >
         {material.image_url ? (
           <HeroEntrance>
-            <View style={styles.hero}>
+            <View style={[styles.hero, reader.focusMode && styles.heroFocus]}>
               <ExpoImage source={{ uri: material.image_url }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
               <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
 
@@ -77,6 +92,8 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
                       onPress={onToggleFavorite}
                     />
                     <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+            <ReaderButton isChild={experience === 'child'} />
+                    <ReaderButton isChild={experience === 'child'} elevated />
                   </View>
                 </View>
                 <Text style={styles.heroTitle} numberOfLines={2}>
@@ -117,7 +134,19 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
           ) : null}
 
           {material.body ? (
-            <Text style={styles.body}>{material.body}</Text>
+            <View style={{ gap: spacing.xs }}>
+              <Text style={[styles.body, bodyStyle]}>{material.body}</Text>
+              <PassageActions
+                contentType="culture_material"
+                contentId={material.id}
+                sectionKey="body"
+                sectionLabel={t('highlights.section.body')}
+                title={material.title}
+                text={material.body}
+                language={i18n.language !== 'kg' && material.translation?.status === 'available' ? i18n.language : 'kg'}
+                simple={experience === 'child'}
+              />
+            </View>
           ) : (
             <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
           )}
@@ -133,6 +162,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
 }
 
 const styles = StyleSheet.create({
+  heroFocus: { aspectRatio: 2.4 },
   headerButtons: { flexDirection: 'row', gap: spacing.xs },
   root: {
     flex: 1,

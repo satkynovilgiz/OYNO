@@ -23,6 +23,8 @@ import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
+import type { FriendChallenge } from '@/features/games/friendChallenge/friendChallenge';
+import { formatMetric, GAME_RECORD_RULES } from '@/features/games/records/gameRecords';
 import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { ShotFeedback, type ShotFeedbackEvent } from '../../ui/ShotFeedback';
@@ -46,9 +48,11 @@ function hapticForScore(score: number) {
 type JaaAtuuGameProps = {
   mode?: JaaAtuuMode;
   difficulty?: JaaAtuuDifficulty;
+  /** A friend's target (from a challenge link) - normal play only. */
+  challenge?: FriendChallenge | null;
 };
 
-export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuGameProps) {
+export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge = null }: JaaAtuuGameProps) {
   useTrackScreenView('games3d_jaa_atuu');
   const { t } = useTranslation();
   const game = useJaaAtuuGame(difficulty, mode);
@@ -67,7 +71,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
   const { active: modelsLoading, progress: modelsProgress } = useProgress();
   const config = JAA_ATUU_DIFFICULTY[game.difficulty];
 
-  const records = useRoundRecords(GAME_ID);
+  const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
   const recordedResultRef = useRef(false);
 
   const audioRef = useRef(createJaaAtuuAudio());
@@ -251,6 +255,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
 
       {hudVisible ? (
         <GameHUD
+          targetLabel={mode === 'normal' && challenge ? t('friendChallenge.targetValue', { target: formatMetric(GAME_RECORD_RULES[GAME_ID].primary.unit, challenge.target, t) }) : undefined}
           title={t('games3d.titles.jaaAtuu')}
           onPause={game.pause}
           practice={mode === 'practice'}
@@ -295,6 +300,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal' }: JaaAtuuG
         stats={resultStats}
         personalBest={records.personalBest}
         overlay={records.shareHost}
+        friendChallenge={records.friendChallenge}
         onReplay={handleRestart}
         onExit={handleExit}
       />

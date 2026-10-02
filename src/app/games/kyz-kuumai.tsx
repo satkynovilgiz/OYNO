@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import kyzKuumaiThumbnail from '@assets/img/games/kyzKuumay/thumbnail.png';
 
+import { useFriendChallengeParam } from '@/features/games/friendChallenge/useFriendChallengeParam';
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { KyzKuumaiGame } from '@/games3d/games/kyz-kuumai/KyzKuumaiGame';
 import type { KyzKuumaiMode } from '@/games3d/games/kyz-kuumai/KyzKuumaiTypes';
@@ -20,6 +21,9 @@ const FAVORITE_GAME_ID = 'kyz-kuumay';
 export default function KyzKuumaiRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<KyzKuumaiMode | null>(null);
+  // A friend's challenge from a link (validated; anonymous; normal mode only).
+  const { challenge, invalid } = useFriendChallengeParam('kyz_kuumai');
+  const [withChallenge, setWithChallenge] = useState(false);
   const [difficulty, setDifficulty] = useState<GameDetailDifficulty>('normal');
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('game', FAVORITE_GAME_ID)));
 
@@ -44,10 +48,19 @@ export default function KyzKuumaiRoute() {
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', FAVORITE_GAME_ID)}
         onPressPractice={() => setMode('practice')}
-        onPressPlay={() => setMode('normal')}
+        onPressPlay={() => {
+          setWithChallenge(false);
+          setMode('normal');
+        }}
+        friendChallenge={challenge}
+        invalidChallenge={invalid}
+        onPressPlayChallenge={() => {
+          setWithChallenge(true);
+          setMode('normal');
+        }}
       />
     );
   }
 
-  return <KyzKuumaiGame difficulty={difficulty} mode={mode} />;
+  return <KyzKuumaiGame difficulty={difficulty} mode={mode} challenge={withChallenge ? challenge : null} />;
 }

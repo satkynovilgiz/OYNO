@@ -17,7 +17,7 @@ export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteEr
 
 export default function CultureItemRoute() {
   const { t } = useTranslation();
-  const { itemId } = useLocalSearchParams<{ itemId: string }>();
+  const { itemId, section } = useLocalSearchParams<{ itemId: string; section?: string }>();
   const itemQuery = useCultureItem(itemId ?? '');
   const { data: item, isLoading, error } = itemQuery;
 
@@ -53,6 +53,7 @@ export default function CultureItemRoute() {
       item={item}
       images={cultureItemImages[item.id]}
       audioTracks={cultureItemAudio[item.id]}
+      initialSection={typeof section === 'string' ? section : undefined}
       onPressBack={() => (router.canGoBack() ? router.back() : router.replace(`/culture/${item.category_id}`))}
     />
   );

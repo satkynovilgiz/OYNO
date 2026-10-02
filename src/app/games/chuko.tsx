@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import chukoThumbnail from '@assets/img/games/chuko/thumbnail.png';
 
+import { useFriendChallengeParam } from '@/features/games/friendChallenge/useFriendChallengeParam';
 import { GameDetailScreen, type GameDetailDifficulty } from '@/features/games/GameDetailScreen';
 import { ChukoGame } from '@/games3d/games/chuko/ChukoGame';
 import type { ChukoMode } from '@/games3d/games/chuko/ChukoTypes';
@@ -16,6 +17,9 @@ const TUTORIAL_STEPS = ['games3d.chuko.tutorial1', 'games3d.chuko.tutorial2', 'g
 export default function ChukoRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ChukoMode | null>(null);
+  // A friend's challenge from a link (validated; anonymous; normal mode only).
+  const { challenge, invalid } = useFriendChallengeParam('chuko');
+  const [withChallenge, setWithChallenge] = useState(false);
   const [difficulty, setDifficulty] = useState<GameDetailDifficulty>('normal');
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('game', 'chuko')));
 
@@ -35,10 +39,19 @@ export default function ChukoRoute() {
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', 'chuko')}
         onPressPractice={() => setMode('practice')}
-        onPressPlay={() => setMode('normal')}
+        onPressPlay={() => {
+          setWithChallenge(false);
+          setMode('normal');
+        }}
+        friendChallenge={challenge}
+        invalidChallenge={invalid}
+        onPressPlayChallenge={() => {
+          setWithChallenge(true);
+          setMode('normal');
+        }}
       />
     );
   }
 
-  return <ChukoGame difficulty={difficulty} mode={mode} />;
+  return <ChukoGame difficulty={difficulty} mode={mode} challenge={withChallenge ? challenge : null} />;
 }

@@ -19,6 +19,8 @@ import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { PauseMenu } from '../../ui/PauseMenu';
 import { PracticeBar } from '../../ui/PracticeBar';
+import type { FriendChallenge } from '@/features/games/friendChallenge/friendChallenge';
+import { formatMetric, GAME_RECORD_RULES } from '@/features/games/records/gameRecords';
 import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
@@ -43,16 +45,18 @@ function hapticFor(scoreDelta: number, khan: boolean) {
 type OrdoGameProps = {
   difficulty?: OrdoDifficulty;
   mode?: OrdoMode;
+  /** A friend's target (from a challenge link) - normal play only. */
+  challenge?: FriendChallenge | null;
 };
 
-export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGameProps) {
+export function OrdoGame({ difficulty = 'normal', mode = 'normal', challenge = null }: OrdoGameProps) {
   useTrackScreenView('games3d_ordo');
   const { t } = useTranslation();
   const game = useOrdoGame(difficulty, mode);
   useGameLifecycle('landscape', game.pause);
   const lastOutcomeKeyRef = useRef(0);
   const recordedResultRef = useRef(false);
-  const records = useRoundRecords(GAME_ID);
+  const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
   const [hasThrown, setHasThrown] = useState(false);
 
   const audioRef = useRef(createOrdoAudio());
@@ -260,6 +264,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
 
       {hudVisible ? (
         <GameHUD
+          targetLabel={mode === 'normal' && challenge ? t('friendChallenge.targetValue', { target: formatMetric(GAME_RECORD_RULES[GAME_ID].primary.unit, challenge.target, t) }) : undefined}
           title={t('games3d.titles.ordo')}
           onPause={game.pause}
           practice={mode === 'practice'}
@@ -320,6 +325,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal' }: OrdoGamePro
           stats={resultStats}
           personalBest={records.personalBest}
           overlay={records.shareHost}
+        friendChallenge={records.friendChallenge}
           onReplay={handleRestart}
           onExit={handleExit}
         />

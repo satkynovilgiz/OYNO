@@ -24,6 +24,8 @@ import { GameHUD } from '../../ui/GameHUD';
 import { GameIntroCard } from '../../ui/GameIntroCard';
 import { LoadingOverlay } from '../../ui/LoadingOverlay';
 import { PauseMenu } from '../../ui/PauseMenu';
+import type { FriendChallenge } from '@/features/games/friendChallenge/friendChallenge';
+import { formatMetric, GAME_RECORD_RULES } from '@/features/games/records/gameRecords';
 import { useRoundRecords } from '@/features/games/records/useRoundRecords';
 import { ResultScreen } from '../../ui/ResultScreen';
 import { StartCountdown } from '../../ui/StartCountdown';
@@ -54,9 +56,11 @@ const COACHING_KEYS = [
 type KyzKuumaiGameProps = {
   difficulty?: KyzKuumaiDifficulty;
   mode?: KyzKuumaiMode;
+  /** A friend's target (from a challenge link) - normal play only. */
+  challenge?: FriendChallenge | null;
 };
 
-export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuumaiGameProps) {
+export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challenge = null }: KyzKuumaiGameProps) {
   useTrackScreenView('games3d_kyz_kuumai');
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -75,7 +79,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
   const joystick = useVirtualJoystick();
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
-  const records = useRoundRecords(GAME_ID);
+  const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
 
   const audioRef = useRef(createKyzKuumaiAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
@@ -255,6 +259,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
 
       {hudVisible ? (
         <GameHUD
+          targetLabel={mode === 'normal' && challenge ? t('friendChallenge.targetValue', { target: formatMetric(GAME_RECORD_RULES[GAME_ID].primary.unit, challenge.target, t) }) : undefined}
           title={t('games3d.titles.kyzKuumai')}
           onPause={game.pause}
           practice={mode === 'practice'}
@@ -310,6 +315,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal' }: KyzKuu
         stats={resultStats}
         personalBest={records.personalBest}
         overlay={records.shareHost}
+        friendChallenge={records.friendChallenge}
         onReplay={game.restart}
         onExit={handleExit}
       />
