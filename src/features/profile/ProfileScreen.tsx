@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy } from 'lucide-react-native';
+import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -144,6 +144,7 @@ export function ProfileScreen() {
               { route: '/profile/game-records', icon: Trophy, title: t('gameRecords.title'), meta: t('gameRecords.profileMeta') },
               { route: '/profile/my-collections', icon: FolderOpen, title: t('myCollections.title'), meta: t('myCollections.profileMeta') },
               { route: '/profile/highlights', icon: Highlighter, title: t('highlights.title'), meta: t('highlights.profileMeta') },
+              { route: '/study', icon: Zap, title: t('study.title'), meta: t('study.entryMeta') },
               { route: '/profile/weekly-goal', icon: Target, title: t('weeklyGoal.title'), meta: t('weeklyGoal.profileMeta') },
               { route: '/profile/listening', icon: Headphones, title: t('listening.title'), meta: t('listening.profileMeta') },
               { route: '/profile/recap', icon: Sparkles, title: t('recap.title'), meta: t('recap.allTime') },

@@ -1,8 +1,11 @@
 import { router } from 'expo-router';
-import { AlarmClock, Cloud, Image as ImageIcon, NotebookPen, type LucideIcon } from 'lucide-react-native';
+import { AlarmClock, Cloud, Image as ImageIcon, NotebookPen, RefreshCw, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { syncAccountState } from '@/services/sync/syncEngine';
+import { usePrivateSyncStatus } from '@/services/sync/privateSync/privateSync';
+import { useAuthStore } from '@/store/useAuthStore';
 import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
 import { SettingsRow, SettingsSection } from './components/SettingsRow';
@@ -16,6 +19,8 @@ import { SettingsScreenLayout } from './components/SettingsScreenLayout';
  */
 export function PrivacySettingsScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const signedIn = useAuthStore((state) => state.status === 'authenticated' && !!state.user);
+  const syncState = usePrivateSyncStatus((state) => state.state);
   const facts: { icon: LucideIcon; title: string; body: string }[] = [
     { icon: NotebookPen, title: t('settings.v2.privacy.journalTitle'), body: t('settings.v2.privacy.journalBody') },
     { icon: Cloud, title: t('settings.v2.privacy.progressTitle'), body: t('settings.v2.privacy.progressBody') },
@@ -40,6 +45,11 @@ export function PrivacySettingsScreen({ onPressBack }: { onPressBack: () => void
             </View>
           ))}
         </View>
+        {signedIn ? (
+          <SettingsSection footer={t('settings.v2.sync.footer')}>
+            <SettingsRow icon={RefreshCw} label={t('settings.v2.sync.title')} value={t(`settings.v2.sync.${syncState}`)} showChevron={false} onPress={() => void syncAccountState('foreground')} />
+          </SettingsSection>
+        ) : null}
         <SettingsSection footer={t('settings.v2.privacy.deleteNote')}>
           <SettingsRow icon={AlarmClock} label={t('settings.v2.privacy.manageReminders')} onPress={() => router.push('/settings/reminders' as never)} />
         </SettingsSection>

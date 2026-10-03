@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, Gamepad2, Heart, Play } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Gamepad2, Heart, Play, Link2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -22,6 +22,8 @@ import { gameArt, listGameForProgressId } from './gamesCatalog';
 import { FriendChallengeCard } from './friendChallenge/FriendChallengeCard';
 import type { FriendChallenge } from './friendChallenge/friendChallenge';
 import { GameRecordsSection } from './records/GameRecordsSection';
+import { shareContentLink } from '@/services/links/shareContentLink';
+import { LINKABLE_GAMES } from '@/services/links/contentLinks';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -103,6 +105,9 @@ export function GameDetailScreen({
   // The same catalog entry the Games tab shows: sharper large-format art
   // where it exists, plus real players/duration/difficulty facts.
   const listGame = listGameForProgressId(gameId);
+  // Normal share link -> Game Detail (Friend Challenge links stay separate).
+  const routeSlug = listGame?.route?.replace(/^\/games\//, '') ?? null;
+  const linkSlug = routeSlug && (LINKABLE_GAMES as readonly string[]).includes(routeSlug) ? routeSlug : null;
   const heroArt = (listGame ? gameArt(listGame, 'large') : null) ?? imageSource ?? null;
   const { data: culturalContextItem } = useCultureItem(culturalContextItemId ?? '');
 
@@ -162,6 +167,9 @@ export function GameDetailScreen({
                     onPress={onToggleFavorite}
                   />
                   {listGame ? <AddToCollectionButton contentType="game" contentId={listGame.id} title={title} /> : null}
+                  {linkSlug ? (
+                    <IconButton icon={Link2} shape="roundedSquare" variant="surface" accessibilityLabel={t('contentLinks.shareGame')} onPress={() => void shareContentLink({ type: 'game', id: linkSlug, title })} />
+                  ) : null}
                 </View>
               </View>
               <View style={styles.heroText}>

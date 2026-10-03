@@ -51,7 +51,17 @@ function imageFor(ref: OptionImageRef | undefined): ImageSourcePropType | null {
  * real score, the questions reviewed, their sources and where to explore
  * next. No XP is taken away; nothing is marked discovered.
  */
-export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: string; onPressBack: () => void }) {
+export function ChallengeRunScreen({
+  challengeId,
+  onPressBack,
+  quick,
+}: {
+  challengeId: string;
+  onPressBack: () => void;
+  /** Study Queue "Quick review": review mode capped to the first `limit`
+   * mistakes (the queue's own order), then a single "next" action. */
+  quick?: { limit: number; nextLabel: string; onNext: () => void };
+}) {
   useTrackScreenView('challenge_run');
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
@@ -103,7 +113,7 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
   const questions = useMemo<ChallengeQuestion[]>(() => {
     if (!storeLoaded) return [];
     let ids: string[] = [];
-    if (isReview) ids = reviewQueue(ownerMistakes(useChallengeMistakesStore.getState().saved, owner), questionExists).map((record) => record.questionId);
+    if (isReview) ids = reviewQueue(ownerMistakes(useChallengeMistakesStore.getState().saved, owner), questionExists).map((record) => record.questionId).slice(0, quick?.limit ?? Number.MAX_SAFE_INTEGER);
     else if (challengeId === 'daily') {
       const count = experience === 'child' ? CHILD_DAILY_QUESTION_COUNT : DAILY_QUESTION_COUNT;
       // Pure during render; today's identity is persisted in the effect below.
@@ -292,7 +302,9 @@ export function ChallengeRunScreen({ challengeId, onPressBack }: { challengeId: 
           ) : null}
 
           <View style={styles.primary}>
-            {isReview ? (
+            {isReview && quick ? (
+              <Button label={quick.nextLabel} size="lg" block onPress={quick.onNext} />
+            ) : isReview ? (
               <>
                 {reviewRemaining > 0 ? <Button label={t('challenges.review.again')} size="lg" block onPress={() => router.replace('/challenges/review' as never)} /> : null}
                 <Button label={t('challenges.backToChallenges')} variant="secondary" size="lg" block onPress={() => router.replace('/challenges' as never)} />

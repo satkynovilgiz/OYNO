@@ -17,6 +17,8 @@ export function isRouteAvailableOffline(route: string, queryClient: QueryClient)
   }
   if (section === 'culture' && id === 'item' && sub) return has(['culture_item', sub]);
   if (section === 'culture' && id === 'material' && sub) return has(['culture_material', sub]);
+  // Glossary terms are read from the culture list (useGlossary).
+  if (section === 'culture' && id === 'glossary' && sub && sub !== 'study') return has(['culture_items', 'all']);
   if (section === 'collections') return has(['culture_items', 'all']) && has(['culture_materials']);
   return true;
 }

@@ -27,7 +27,19 @@ import { buildSession, sessionSummary, type SessionMode, type StudyAction } from
  * unchanged verification on the back. "Review again" / "Got it" only - no
  * score, no rewards, nothing outside this feature changes.
  */
-export function GlossaryStudyScreen({ mode, onPressBack }: { mode: SessionMode; onPressBack: () => void }) {
+export function GlossaryStudyScreen({
+  mode,
+  onPressBack,
+  limit,
+  onDone,
+}: {
+  mode: SessionMode;
+  onPressBack: () => void;
+  /** Study Queue "Quick review": only the first `limit` cards of the session. */
+  limit?: number;
+  /** Replaces the result actions (e.g. "Back to Study Queue"). */
+  onDone?: { label: string; run: () => void };
+}) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
@@ -56,10 +68,10 @@ export function GlossaryStudyScreen({ mode, onPressBack }: { mode: SessionMode; 
     if (sessionCards || !studyLoaded || isLoading || validIds.length === 0) return;
     // Stale records (removed/invalid entries) never become cards.
     useGlossaryStudyStore.getState().prune(owner, validIds);
-    const session = buildSession(validIds, ownerStudy(useGlossaryStudyStore.getState().saved, owner), mode, seed);
+    const session = buildSession(validIds, ownerStudy(useGlossaryStudyStore.getState().saved, owner), mode, seed).slice(0, limit ?? Number.MAX_SAFE_INTEGER);
     setCards(session);
     track('glossary_study_started', { mode, cards: session.length });
-  }, [sessionCards, studyLoaded, isLoading, validIds, owner, mode, seed]);
+  }, [sessionCards, studyLoaded, isLoading, validIds, owner, mode, seed, limit]);
 
   if (waitingForNetwork) return <OfflineUnavailable onRetry={retry} />;
 
@@ -97,8 +109,14 @@ export function GlossaryStudyScreen({ mode, onPressBack }: { mode: SessionMode; 
               {t('glossaryStudy.gotIt')}: {summary.gotIt} · {t('glossaryStudy.reviewAgain')}: {summary.reviewAgain}
             </Text>
           ) : null}
-          {summary.reviewAgain > 0 ? <Button label={t('glossaryStudy.reviewTerms')} onPress={() => router.replace('/culture/glossary/study?mode=review' as never)} /> : null}
-          <Button label={t('glossaryStudy.backToGlossary')} variant="secondary" onPress={() => router.replace('/culture/glossary' as never)} />
+          {onDone ? (
+            <Button label={onDone.label} onPress={onDone.run} />
+          ) : (
+            <>
+              {summary.reviewAgain > 0 ? <Button label={t('glossaryStudy.reviewTerms')} onPress={() => router.replace('/culture/glossary/study?mode=review' as never)} /> : null}
+              <Button label={t('glossaryStudy.backToGlossary')} variant="secondary" onPress={() => router.replace('/culture/glossary' as never)} />
+            </>
+          )}
         </View>
       </View>
     );

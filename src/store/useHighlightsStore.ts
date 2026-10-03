@@ -20,6 +20,8 @@ type State = {
   save: (owner: string, input: { contentType: HighlightContentType; contentId: string; sectionKey: string; language: string; title: string; text: string }) => { highlight: ContentHighlight; created: boolean };
   setNote: (owner: string, id: string, note: string) => void;
   remove: (owner: string, id: string) => void;
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: HighlightsData | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -48,6 +50,13 @@ export const useHighlightsStore = create<State>((set, get) => {
     },
     setNote: (owner, id, note) => update(owner, setNote(ownerHighlights(get().saved, owner), id, note)),
     remove: (owner, id) => update(owner, removeHighlight(ownerHighlights(get().saved, owner), id)),
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

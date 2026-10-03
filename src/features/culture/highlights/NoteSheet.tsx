@@ -8,10 +8,12 @@ import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, radii, spacing, textStyles, typography } from '@/theme';
 
 import { NOTE_MAX, validateNote } from './highlightsModel';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 /** Private note editor (max 500). Empty + Save removes the note only. */
 export function NoteSheet({ initial, onSave, onClose }: { initial: string | null; onSave: (note: string) => void; onClose: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
   const [note, setNote] = useState(initial ?? '');
@@ -34,7 +36,7 @@ export function NoteSheet({ initial, onSave, onClose }: { initial: string | null
           accessibilityLabel={t('highlights.noteLabel')}
         />
         <Text style={[styles.counter, problem && styles.error]}>{note.trim().length}/{NOTE_MAX}</Text>
-        <Text style={styles.private}>{t('highlights.notePrivate')}</Text>
+        <Text style={styles.private}>{t(syncScope === 'account' ? 'highlights.notePrivateAccount' : 'highlights.notePrivate')}</Text>
         <Button label={t('highlights.saveNote')} onPress={() => onSave(note)} disabled={!!problem} />
         {initial ? <Button label={t('highlights.removeNote')} variant="secondary" onPress={() => onSave('')} /> : null}
         <Button label={t('highlights.cancel')} variant="secondary" onPress={onClose} />

@@ -20,12 +20,15 @@ export type OfflineRow = {
 
 export type OfflineGroupId = 'places' | 'collections' | 'culture';
 
-const GROUP_BY_KIND: Record<OfflineKind, OfflineGroupId> = { nature: 'places', collection: 'collections', culture_item: 'culture' };
+const GROUP_BY_KIND: Record<OfflineKind, OfflineGroupId> = { nature: 'places', collection: 'collections', culture_item: 'culture', culture_index: 'culture' };
+/** Support downloads (shared dependencies of packs) - not rows of their own. */
+const SUPPORT_KINDS: readonly OfflineKind[] = ['culture_index'];
 const GROUP_ORDER: OfflineGroupId[] = ['places', 'collections', 'culture'];
 
 export function offlineRoute(kind: OfflineKind, contentId: string): string {
   if (kind === 'nature') return `/explore/${contentId}`;
   if (kind === 'collection') return `/collections/${contentId}`;
+  if (kind === 'culture_index') return '/culture';
   return `/culture/item/${contentId}`;
 }
 
@@ -33,7 +36,7 @@ function parseId(id: string): { kind: OfflineKind; contentId: string } | null {
   const index = id.indexOf(':');
   if (index <= 0) return null;
   const kind = id.slice(0, index) as OfflineKind;
-  if (!(kind in GROUP_BY_KIND)) return null;
+  if (!(kind in GROUP_BY_KIND) || SUPPORT_KINDS.includes(kind)) return null;
   return { kind, contentId: id.slice(index + 1) };
 }
 
@@ -62,6 +65,7 @@ export function buildOfflineView(manifest: OfflineManifest, inFlight: string[], 
     if (parsed) needsAttention.push({ id, ...parsed, state: 'failed', downloadedAt: null, route: offlineRoute(parsed.kind, parsed.contentId) });
   }
   const available: OfflineRow[] = Object.values(manifest.entries)
+    .filter((entry) => !SUPPORT_KINDS.includes(entry.kind))
     .map((entry) => ({
       id: entry.id,
       kind: entry.kind,

@@ -7,6 +7,8 @@ import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH, ShareCard, type ShareCardContent }
 import { SharePreviewSheet, type ShareImageChoice } from '@/components/share/SharePreviewSheet';
 import { showToast } from '@/components/ui/Toast';
 import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
+import { buildOYNODeepLink } from '@/services/links/contentLinks';
+import { shareContentLink, type ShareableLink } from '@/services/links/shareContentLink';
 
 /** Target export size - a 4:5 social post. */
 export const SHARE_IMAGE_WIDTH = 1080;
@@ -47,7 +49,7 @@ async function shareText(message: string) {
   await Share.share({ message }).catch(() => {});
 }
 
-type PreviewState = { content: ShareCardContent; fallbackMessage: string; choices: ShareImageChoice[] | null };
+type PreviewState = { content: ShareCardContent; fallbackMessage: string; choices: ShareImageChoice[] | null; link: ShareableLink | null };
 
 /**
  * Sharing is always explicit and previewed:
@@ -64,7 +66,7 @@ type PreviewState = { content: ShareCardContent; fallbackMessage: string; choice
  * Mount `shareHost` anywhere in the calling screen.
  */
 export function useShareCard(): {
-  share: (content: ShareCardContent, fallbackMessage: string, options?: { imageChoices?: ShareImageChoice[] }) => Promise<void>;
+  share: (content: ShareCardContent, fallbackMessage: string, options?: { imageChoices?: ShareImageChoice[]; link?: ShareableLink }) => Promise<void>;
   shareHost: ReactNode;
   isSharing: boolean;
 } {
@@ -75,9 +77,12 @@ export function useShareCard(): {
   const cardRef = useRef<View>(null);
   const readyRef = useRef<(() => void) | null>(null);
 
-  async function share(content: ShareCardContent, fallbackMessage: string, options: { imageChoices?: ShareImageChoice[] } = {}) {
+  async function share(content: ShareCardContent, fallbackMessage: string, options: { imageChoices?: ShareImageChoice[]; link?: ShareableLink } = {}) {
     if (preview || capturing) return;
-    setPreview({ content, fallbackMessage, choices: options.imageChoices ?? null });
+    // A public content link rides along in the text fallback (an image
+    // share can't carry text) and as its own "Share link" action.
+    const url = options.link ? buildOYNODeepLink(options.link) : null;
+    setPreview({ content, fallbackMessage: url ? `${fallbackMessage}\n${url}` : fallbackMessage, choices: options.imageChoices ?? null, link: url ? options.link! : null });
   }
 
   /** Renders the card off-screen, waits for its picture, captures a JPEG. */
@@ -159,6 +164,15 @@ export function useShareCard(): {
           onShare={(content) => void confirmShare(content)}
           onSave={(content) => void confirmSave(content)}
           onCancel={() => !busy && setPreview(null)}
+          onShareLink={
+            preview.link
+              ? () => {
+                  const link = preview.link!;
+                  setPreview(null);
+                  void shareContentLink(link);
+                }
+              : undefined
+          }
         />
       ) : null}
       {capturing ? (

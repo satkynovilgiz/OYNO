@@ -20,6 +20,8 @@ type State = {
   recordAttempt: (owner: string, wrongQuestionIds: readonly string[]) => void;
   recordReview: (owner: string, questionId: string, correct: boolean) => void;
   prune: (owner: string, exists: (questionId: string) => boolean) => void;
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: MistakesData | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -49,6 +51,13 @@ export const useChallengeMistakesStore = create<State>((set, get) => {
     recordAttempt: (owner, ids) => update(owner, (data) => recordFinishedAttempt(data, ids)),
     recordReview: (owner, questionId, correct) => update(owner, (data) => recordReviewAnswer(data, questionId, correct)),
     prune: (owner, exists) => update(owner, (data) => pruneStale(data, exists)),
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

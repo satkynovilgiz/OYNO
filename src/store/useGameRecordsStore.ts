@@ -72,6 +72,8 @@ type State = {
   load: () => Promise<void>;
   record: (owner: string, session: GameSessionRecord) => RecordOutcome;
   /** Guest -> signed in: the guest's rounds join the account. */
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: OwnerRecords | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -116,6 +118,13 @@ export const useGameRecordsStore = create<State>((set, get) => {
       return outcome;
     },
 
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

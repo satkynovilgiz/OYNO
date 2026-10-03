@@ -12,7 +12,10 @@ import type { QueryKey } from '@tanstack/react-query';
  * deleted. */
 export const OFFLINE_CACHE_VERSION = 1;
 
-export type OfflineKind = 'nature' | 'collection' | 'culture_item';
+/** 'culture_index' (contentId 'all') is a SUPPORT download: the culture
+ * list that glossary terms and Learning Path step titles read. It is shared
+ * by every path pack and never listed as an item of its own. */
+export type OfflineKind = 'nature' | 'collection' | 'culture_item' | 'culture_index';
 
 export type OfflineDownloadId = `${OfflineKind}:${string}`;
 

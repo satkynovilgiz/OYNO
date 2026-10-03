@@ -8,9 +8,15 @@ export const WEEKLY_GOAL_KEY = 'oyno.weeklyGoal.v1';
 
 /** goal: null = "No weekly goal". celebratedWeek: the week whose
  * completion was already shown (so the small moment appears once). */
-export type GoalSettings = { goal: GoalSize | null; celebratedWeek: string | null; dismissedForYouOn: string | null };
+export type GoalSettings = {
+  goal: GoalSize | null;
+  /** When the goal was last chosen explicitly (null = never). Cloud sync: the newest choice wins. */
+  goalSetAt: string | null;
+  celebratedWeek: string | null;
+  dismissedForYouOn: string | null;
+};
 type Saved = Record<string, GoalSettings>;
-const EMPTY: GoalSettings = { goal: null, celebratedWeek: null, dismissedForYouOn: null };
+const EMPTY: GoalSettings = { goal: null, goalSetAt: null, celebratedWeek: null, dismissedForYouOn: null };
 
 export function ownerGoal(saved: Saved, owner: string): GoalSettings {
   return saved[owner] ?? EMPTY;
@@ -21,6 +27,8 @@ type State = {
   saved: Saved;
   load: () => Promise<void>;
   setGoal: (owner: string, goal: GoalSize | null) => void;
+  /** Private Cloud Sync: the account's goal choice (null = forget this owner on this device). */
+  applySyncedGoal: (owner: string, record: { goal: GoalSize | null; setAt: string } | null) => void;
   markCelebrated: (owner: string, week: string) => void;
   /** Home "For You Today" -> Not now (this local day only). */
   dismissForYou: (owner: string, day: string) => void;
@@ -46,12 +54,19 @@ export const useWeeklyGoalStore = create<State>((set, get) => {
       const saved: Saved = {};
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         for (const [owner, value] of Object.entries(parsed)) {
-          saved[owner] = { goal: isGoalSize(value?.goal) ? value.goal : null, celebratedWeek: typeof value?.celebratedWeek === 'string' ? value.celebratedWeek : null, dismissedForYouOn: typeof value?.dismissedForYouOn === 'string' ? value.dismissedForYouOn : null };
+          saved[owner] = { goal: isGoalSize(value?.goal) ? value.goal : null, goalSetAt: typeof value?.goalSetAt === 'string' ? value.goalSetAt : null, celebratedWeek: typeof value?.celebratedWeek === 'string' ? value.celebratedWeek : null, dismissedForYouOn: typeof value?.dismissedForYouOn === 'string' ? value.dismissedForYouOn : null };
         }
       }
       set({ saved, isLoaded: true });
     },
-    setGoal: (owner, goal) => update(owner, { goal }),
+    setGoal: (owner, goal) => update(owner, { goal, goalSetAt: new Date().toISOString() }),
+    applySyncedGoal: (owner, record) => {
+      const saved = { ...get().saved };
+      if (record) saved[owner] = { ...ownerGoal(saved, owner), goal: record.goal, goalSetAt: record.setAt };
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
     markCelebrated: (owner, week) => update(owner, { celebratedWeek: week }),
     dismissForYou: (owner, day) => update(owner, { dismissedForYouOn: day }),
     adoptGuest: (userId) => {
@@ -59,7 +74,7 @@ export const useWeeklyGoalStore = create<State>((set, get) => {
       if (!guest || userId === 'guest') return;
       const mine = get().saved[userId];
       // The account's own choice wins; a guest's goal only fills an unset one.
-      const merged: GoalSettings = mine ? { ...mine, goal: mine.goal ?? guest.goal } : guest;
+      const merged: GoalSettings = mine ? { ...mine, ...(mine.goal === null && guest.goal !== null ? { goal: guest.goal, goalSetAt: guest.goalSetAt } : {}) } : guest;
       const saved = { ...get().saved, [userId]: merged };
       delete saved.guest;
       set({ saved });

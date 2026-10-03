@@ -15,6 +15,7 @@ import { ownerListening, useListeningStore } from '@/store/useListeningStore';
 import { colors, radii, spacing, textStyles, typography } from '@/theme';
 
 import { continueListening, recentListening, resumeRoute, sortedBookmarks, type ListeningSource, type PositionType } from './listeningModel';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 /**
  * /profile/listening - private listening history and audio bookmarks over
@@ -23,6 +24,7 @@ import { continueListening, recentListening, resumeRoute, sortedBookmarks, type 
  */
 export function ListeningScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const owner = useRecordsOwner();
   const data = ownerListening(useListeningStore((state) => state.saved), owner);
@@ -130,7 +132,7 @@ export function ListeningScreen({ onPressBack }: { onPressBack: () => void }) {
             </AnimatedPressable>
           );
         })}
-        <Text style={styles.note}>{t('listening.deviceNote')}</Text>
+        <Text style={styles.note}>{t(syncScope === 'account' ? 'listening.accountNote' : 'listening.deviceNote')}</Text>
       </ScrollView>
     </View>
   );

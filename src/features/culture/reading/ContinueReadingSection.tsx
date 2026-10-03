@@ -14,6 +14,7 @@ import { ownerReading, useReadingStore } from '@/store/useReadingStore';
 import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
 
 import { continueReading, percentRead, recentlyRead, type ReadingProgress } from './readingModel';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 const RECENT_SHOWN = 5;
 
@@ -26,6 +27,7 @@ type Resolved = { record: ReadingProgress; title: string; route: string; image: 
  */
 export function ContinueReadingSection({ experience }: { experience: AgeExperience }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const owner = useRecordsOwner();
   const data = ownerReading(useReadingStore((state) => state.saved), owner);
   const { data: items } = useAllCultureItems();
@@ -104,7 +106,7 @@ export function ContinueReadingSection({ experience }: { experience: AgeExperien
               </AnimatedPressable>
             );
           })}
-          <Text style={styles.note}>{t('reading.onThisDevice')}</Text>
+          <Text style={styles.note}>{t(syncScope === 'account' ? 'reading.accountNote' : 'reading.onThisDevice')}</Text>
         </View>
       ) : null}
     </View>

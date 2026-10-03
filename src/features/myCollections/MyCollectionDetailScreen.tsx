@@ -17,6 +17,7 @@ import { CollectionCover } from './CollectionCover';
 import { buildMyCollectionShareCard } from './myCollectionShare';
 import { coverFor, DESCRIPTION_MAX, filterEntries, NAME_MAX, resolveEntries, SEARCH_MIN_ITEMS, validateDescription, validateName, type CollectionEntry } from './myCollectionsModel';
 import { useCollectionActions, useContentResolver, useMyCollections } from './useMyCollections';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 /**
  * /profile/my-collections/[id] - one private collection: name, optional
@@ -27,6 +28,7 @@ import { useCollectionActions, useContentResolver, useMyCollections } from './us
  */
 export function MyCollectionDetailScreen({ collectionId, onPressBack }: { collectionId: string; onPressBack: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
   const { data, owner, isLoaded } = useMyCollections();
@@ -135,7 +137,7 @@ export function MyCollectionDetailScreen({ collectionId, onPressBack }: { collec
             })}
           </View>
         )}
-        <Text style={styles.footnote}>{t('myCollections.deviceNote')}</Text>
+        <Text style={styles.footnote}>{t(syncScope === 'account' ? 'myCollections.accountNote' : 'myCollections.deviceNote')}</Text>
       </ScrollView>
 
       <ConfirmationModal

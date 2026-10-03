@@ -13,6 +13,7 @@ import { gameArt } from '../gamesCatalog';
 import { gameTitleKey } from '../types';
 import { formatMetric, GAME_RECORD_RULES } from './gameRecords';
 import { useGameRecords } from './useGameRecords';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 /**
  * /profile/game-records - every game with records, each on its own terms
@@ -20,6 +21,7 @@ import { useGameRecords } from './useGameRecords';
  */
 export function GameRecordsOverviewScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const { records } = useGameRecords();
   const gameStats = useProgressStore((state) => state.gameStats);
@@ -64,7 +66,7 @@ export function GameRecordsOverviewScreen({ onPressBack }: { onPressBack: () => 
             );
           })
         )}
-        <Text style={styles.note}>{t('gameRecords.deviceNote')}</Text>
+        <Text style={styles.note}>{t(syncScope === 'account' ? 'gameRecords.accountNote' : 'gameRecords.deviceNote')}</Text>
       </ScrollView>
     </View>
   );

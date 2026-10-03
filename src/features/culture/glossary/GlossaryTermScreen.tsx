@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Link2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { colors, editorial, radii, spacing, textStyles, typography } from '@/the
 
 import type { GlossaryField } from './glossaryData';
 import { useGlossary } from './useGlossary';
+import { shareContentLink } from '@/services/links/shareContentLink';
 
 /** The existing article label for each source field. */
 const FIELD_LABEL: Record<GlossaryField, string> = {
@@ -55,7 +56,9 @@ export function GlossaryTermScreen({ termId, onPressBack }: { termId: string; on
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
-        <Text style={styles.kicker}>{t('glossary.title')}</Text>
+        <Text style={[styles.kicker, { flex: 1 }]}>{t('glossary.title')}</Text>
+        {/* Share term: the term + its link only - never the definition. */}
+        <IconButton icon={Link2} shape="roundedSquare" accessibilityLabel={t('contentLinks.shareTerm')} onPress={() => void shareContentLink({ type: 'glossary', id: entry.id, title: entry.term })} />
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={[styles.image, isChild && styles.imageChild]}>

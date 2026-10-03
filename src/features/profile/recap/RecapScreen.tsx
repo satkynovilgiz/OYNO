@@ -20,6 +20,7 @@ import { colors, editorial, radii, spacing, textStyles, typography } from '@/the
 import { presentMetrics, RECAP_PRESENTATION, type RecapHighlight, type RecapMetric } from './recapModel';
 import { buildRecapShareCard } from './recapShare';
 import { useOYNORecap } from './useOYNORecap';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 /**
  * /profile/recap - My OYNO Recap: private, all time, built from real
@@ -28,6 +29,7 @@ import { useOYNORecap } from './useOYNORecap';
  */
 export function RecapScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
   const presentation = RECAP_PRESENTATION[experience];
@@ -97,7 +99,7 @@ export function RecapScreen({ onPressBack }: { onPressBack: () => void }) {
           <UserAvatar avatarConfig={avatarConfig} size={presentation.avatar === 'large' ? 'large' : 'medium'} />
           <Text style={[styles.heroTitle, presentation.editorial && styles.heroTitleEditorial]}>{t('recap.storyTitle')}</Text>
           <Text style={styles.heroMeta}>{t('recap.allTime')}</Text>
-          <Text style={styles.scope}>{signedIn ? t('recap.scopeAccount') : t('recap.scopeDevice')}</Text>
+          <Text style={styles.scope}>{signedIn ? t(syncScope === 'account' ? 'recap.scopeAccountSynced' : 'recap.scopeAccount') : t('recap.scopeDevice')}</Text>
         </View>
 
         {recap.isEmpty ? (
@@ -118,11 +120,11 @@ export function RecapScreen({ onPressBack }: { onPressBack: () => void }) {
                     key={metric.id}
                     style={[styles.card, presentation.cardSize === 'large' && styles.cardLarge]}
                     accessible
-                    accessibilityLabel={`${label}: ${metric.value}.${metric.source === 'device' && signedIn ? ` ${t('recap.onThisDevice')}.` : ''}`}
+                    accessibilityLabel={`${label}: ${metric.value}.${metric.source === 'device' && signedIn && syncScope !== 'account' ? ` ${t('recap.onThisDevice')}.` : ''}`}
                   >
                     <Text style={[styles.cardValue, presentation.cardSize === 'large' && styles.cardValueLarge]}>{metric.value}</Text>
                     <Text style={styles.cardLabel}>{label}</Text>
-                    {metric.source === 'device' && signedIn ? <Text style={styles.cardNote}>{t('recap.onThisDevice')}</Text> : null}
+                    {metric.source === 'device' && signedIn && syncScope !== 'account' ? <Text style={styles.cardNote}>{t('recap.onThisDevice')}</Text> : null}
                   </View>
                 );
               })}

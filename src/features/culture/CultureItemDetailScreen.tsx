@@ -130,6 +130,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
     void share(
       { title: item.title, label: t('saved.contentTypes.culture_item'), imageSource: heroSource as ImageSourcePropType | null },
       t('share.message', { title: item.title }),
+      { link: { type: 'culture_item', id: item.id, title: item.title } },
     );
   }
 

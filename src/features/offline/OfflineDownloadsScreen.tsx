@@ -23,6 +23,8 @@ import { useNetworkStatus } from '@/services/offline/networkStatus';
 import type { OfflineKind } from '@/services/offline/offlineManifest';
 import { buildOfflineView, formatBytes, type OfflineRow } from '@/services/offline/offlineModel';
 import { buildRegionOfflineManifest, regionPackState, requestedRegionIds } from '@/services/offline/regionPacks';
+import { buildLearningPathOfflineManifest, learningPathPackState, requestedPathIds } from '@/services/offline/pathPacks';
+import { LEARNING_PATHS } from '@/features/learn/learningPaths';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { cardRadii, colors, spacing, textStyles } from '@/theme';
@@ -67,6 +69,19 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
     const row = regions?.find((candidate) => candidate.id === regionId);
     const label = state.status === 'available' ? t('regionHub.offline.available') : state.status === 'downloading' ? t('regionHub.offline.downloading') : state.status === 'attention' ? t('regionHub.offline.attention') : t('regionHub.offline.partial');
     return [{ id: regionId, name: row ? (mapExploreRegionName(row)[i18n.language as SupportedLanguage] ?? row.name_kg) : regionId, label, downloaded: state.downloaded, total: state.total }];
+  });
+  // Learning Path packs - also tags on the same downloads.
+  const pathPacks = requestedPathIds(manifest).flatMap((pathId) => {
+    const path = LEARNING_PATHS.find((candidate) => candidate.id === pathId);
+    if (!path) return [];
+    const state = learningPathPackState(buildLearningPathOfflineManifest(path), manifest, inFlight, failed);
+    const label =
+      state.status === 'available'
+        ? t('pathOffline.available')
+        : state.status === 'downloading'
+          ? t('pathOffline.downloading')
+          : t('pathOffline.partial', { available: state.offlineCapable, total: state.totalSteps });
+    return [{ id: pathId, name: t(path.titleKey), label }];
   });
   const isChild = experience === 'child';
   const isAdult = experience === 'adult';
@@ -200,6 +215,18 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
                     <Text style={styles.regionMeta}>
                       {t('regionHub.offline.items', { downloaded: pack.downloaded, total: pack.total })} · {pack.label}
                     </Text>
+                  </AnimatedPressable>
+                ))}
+              </View>
+            ) : null}
+
+            {pathPacks.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title={t('learningPaths.title')} count={pathPacks.length} size="sm" inset={0} />
+                {pathPacks.map((pack) => (
+                  <AnimatedPressable key={pack.id} style={styles.regionRow} onPress={() => router.push(`/learn/${pack.id}` as never)} accessibilityRole="button" accessibilityLabel={`${pack.name}. ${pack.label}`}>
+                    <Text style={styles.regionName}>{pack.name}</Text>
+                    <Text style={styles.regionMeta}>{pack.label}</Text>
                   </AnimatedPressable>
                 ))}
               </View>

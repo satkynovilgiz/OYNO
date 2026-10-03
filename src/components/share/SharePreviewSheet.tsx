@@ -25,6 +25,7 @@ export function SharePreviewSheet({
   onShare,
   onSave,
   onCancel,
+  onShareLink,
 }: {
   content: ShareCardContent;
   choices: ShareImageChoice[] | null;
@@ -33,6 +34,8 @@ export function SharePreviewSheet({
   onShare: (content: ShareCardContent) => void;
   onSave: (content: ShareCardContent) => void;
   onCancel: () => void;
+  /** Public content only: shares "Title - OYNO" + its oyno:// link as text. */
+  onShareLink?: () => void;
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -68,6 +71,11 @@ export function SharePreviewSheet({
             </View>
           ) : null}
         </ScrollView>
+        {onShareLink ? (
+          <View style={styles.linkRow}>
+            <Button label={t('contentLinks.shareLink')} variant="text" onPress={onShareLink} disabled={!!busy} />
+          </View>
+        ) : null}
         <View style={styles.actions}>
           <Button label={t('journal.cancel')} variant="text" onPress={onCancel} disabled={!!busy} />
           <View style={styles.actionsRight}>
@@ -81,6 +89,7 @@ export function SharePreviewSheet({
 }
 
 const styles = StyleSheet.create({
+  linkRow: { alignItems: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.5)' },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '92%', paddingTop: spacing.xs, paddingHorizontal: spacing.md, gap: spacing.sm, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle, marginBottom: spacing.xs },

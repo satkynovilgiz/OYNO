@@ -12,6 +12,7 @@ import { colors, radii, spacing, textStyles, typography } from '@/theme';
 import { CollectionCover } from './CollectionCover';
 import { coverFor, DESCRIPTION_MAX, NAME_MAX, resolveEntries, validateDescription, validateName } from './myCollectionsModel';
 import { useCollectionActions, useContentResolver, useMyCollections } from './useMyCollections';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 export function myCollectionRoute(id: string): string {
   return `/profile/my-collections/${id}`;
@@ -21,6 +22,7 @@ export function myCollectionRoute(id: string): string {
  * editorial Collections are separate and unchanged). */
 export function MyCollectionsScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
   const { data, owner } = useMyCollections();
@@ -98,7 +100,7 @@ export function MyCollectionsScreen({ onPressBack }: { onPressBack: () => void }
             </AnimatedPressable>
           );
         })}
-        <Text style={styles.footnote}>{t('myCollections.deviceNote')}</Text>
+        <Text style={styles.footnote}>{t(syncScope === 'account' ? 'myCollections.accountNote' : 'myCollections.deviceNote')}</Text>
       </ScrollView>
     </View>
   );

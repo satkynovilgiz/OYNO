@@ -25,6 +25,9 @@ type State = {
   load: () => Promise<void>;
   answer: (owner: string, glossaryEntryId: string, action: StudyAction) => void;
   prune: (owner: string, validIds: readonly string[]) => void;
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: StudyData | null) => void;
+  applySyncedSessions: (owner: string, sessions: string[] | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -55,6 +58,20 @@ export const useGlossaryStudyStore = create<State>((set, get) => {
     },
     answer: (owner, id, action) => update(owner, applyAnswer(ownerStudy(get().saved, owner), id, action)),
     prune: (owner, validIds) => update(owner, pruneStudy(ownerStudy(get().saved, owner), validIds)),
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
+    applySyncedSessions: (owner, list) => {
+      const sessions = { ...get().sessions };
+      if (list) sessions[owner] = [...list].sort().slice(-MAX_SESSIONS);
+      else delete sessions[owner];
+      set({ sessions });
+      void AsyncStorage.setItem(GLOSSARY_SESSIONS_KEY, JSON.stringify(sessions)).catch(() => undefined);
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

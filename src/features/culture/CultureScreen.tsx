@@ -12,6 +12,8 @@ import { computeCollectionProgress } from '@/features/collections/collectionProg
 import { useCollectionSignals } from '@/features/collections/useCollectionProgress';
 import { komuzTracks } from './audioData';
 import { CultureLearningPaths } from '@/features/learn/LearningPathCard';
+import { StudyQueueEntryRow } from '@/features/study/StudyQueueScreen';
+import { CompareEntryRow } from '@/features/culture/compare/CultureCompareScreen';
 import { GalleryEntryRow } from './gallery/GalleryEntryRow';
 import { GlossaryEntryRow } from './glossary/GlossaryEntryRow';
 import { ContinueReadingSection } from './reading/ContinueReadingSection';
@@ -180,6 +182,8 @@ export function CultureScreen() {
               <ChallengesEntryCard />
               <GlossaryEntryRow />
               <GalleryEntryRow />
+              <CompareEntryRow />
+              <StudyQueueEntryRow />
               <CultureLearningPaths experience={experience} />
             </View>
           </View>

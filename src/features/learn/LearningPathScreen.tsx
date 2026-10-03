@@ -1,5 +1,7 @@
 import { router } from 'expo-router';
-import { Check, ChevronLeft, ChevronRight, Circle, Share2 } from 'lucide-react-native';
+import { Check, ChevronLeft, ChevronRight, Circle, Share2, Link2 } from 'lucide-react-native';
+import { useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +19,13 @@ import { buildPathShareCard } from './learningPathShare';
 import { isManualStep, LEARNING_PATHS, pathProgress, type StepState } from './learningPaths';
 import { usePathSignals } from './usePathSignals';
 import { useStepDisplay } from './useStepDisplay';
+import { shareContentLink } from '@/services/links/shareContentLink';
+import { isRouteAvailableOffline } from '@/services/offline/offlineAvailability';
+import { useNetworkStatus } from '@/services/offline/networkStatus';
+import { buildLearningPathOfflineManifest, learningPathPackState, offlineContinue } from '@/services/offline/pathPacks';
+import { useOfflineStore } from '@/services/offline/useOfflineStore';
+
+import { PathOfflineRow } from './PathOfflineRow';
 
 /** Opens a step with `fromPath` so the app can offer "Back to Learning Path". */
 export function openStep(route: string, pathId: string) {
@@ -38,15 +47,30 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
   const { signals, owner } = usePathSignals();
   const display = useStepDisplay();
   const { share, shareHost } = useShareCard();
+  const { isOffline } = useNetworkStatus();
+  const queryClient = useQueryClient();
+  const manifest = useOfflineStore((state) => state.manifest);
+  const inFlight = useOfflineStore((state) => state.inFlight);
+  const failed = useOfflineStore((state) => state.failed);
   const path = LEARNING_PATHS.find((candidate) => candidate.id === pathId);
-  if (!path) return <NotFoundState onPressBack={onPressBack} />;
+  const pack = useMemo(() => (path ? buildLearningPathOfflineManifest(path) : null), [path]);
+  if (!path || !pack) return <NotFoundState onPressBack={onPressBack} />;
+  const packState = learningPathPackState(pack, manifest, inFlight, failed);
 
   const progress = pathProgress(path, signals);
   const hero = path.heroItemId ? (cultureItemImages[path.heroItemId]?.[0] ?? null) : null;
   const title = t(path.titleKey);
-  const next = progress.nextIndex !== null ? path.steps[progress.nextIndex] : null;
-  const nextRoute = next ? display(next).route : null;
+  // Offline: each step says whether it opens on this device (the existing
+  // offline check over the query cache - downloads, Region packs or simply
+  // read before); Continue picks the first unfinished step that does.
+  const routes = path.steps.map((step) => display(step).route);
+  const availableOffline = routes.map((route) => !!route && isRouteAvailableOffline(route, queryClient));
+  const offlineNext = isOffline ? offlineContinue(progress.nextIndex, progress.states.map((state) => state === 'completed'), availableOffline) : null;
+  const continueIndex = offlineNext ? offlineNext.index : progress.nextIndex;
+  const nextRoute = continueIndex !== null ? routes[continueIndex] : null;
+  const trueNext = progress.nextIndex !== null ? path.steps[progress.nextIndex] : null;
   const stateLabel = (state: StepState) => t(`learningPaths.state.${state}`);
+  const stepLabel = (step: (typeof path.steps)[number]) => `${display(step).verb}: ${display(step).title}`;
 
   return (
     <View style={styles.root}>
@@ -63,6 +87,10 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
             {title}
           </Text>
           {!isChild ? <Text style={styles.description}>{t(path.descriptionKey)}</Text> : null}
+          {/* The link opens /learn/<id> - it never carries anyone's progress. */}
+          <View style={{ alignSelf: 'flex-start' }}>
+            <Button label={t('contentLinks.sharePath')} variant="text" icon={<Link2 size={16} color={colors.primary} strokeWidth={2} />} onPress={() => void shareContentLink({ type: 'learning_path', id: path.id, title })} />
+          </View>
           <View accessible accessibilityLabel={t('learningPaths.progress', { completed: progress.completed, total: progress.total })}>
             <Text style={styles.progressText}>{t('learningPaths.progress', { completed: progress.completed, total: progress.total })}</Text>
             <ProgressBar progress={progress.completed / progress.total} height={isChild ? 8 : 4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
@@ -78,12 +106,21 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
                 iconSize={16}
                 shape="roundedSquare"
                 accessibilityLabel={t('share.action')}
-                onPress={() => void share(buildPathShareCard({ title, completedLabel: t('learningPaths.completed'), hero }), `${title} · ${t('learningPaths.completed')}`)}
+                onPress={() => void share(buildPathShareCard({ title, completedLabel: t('learningPaths.completed'), hero }), `${title} · ${t('learningPaths.completed')}`, { link: { type: 'learning_path', id: path.id, title } })}
               />
             </View>
           ) : nextRoute ? (
             <Button label={progress.started ? t('learningPaths.continue') : t('learningPaths.start')} size={isChild ? 'lg' : 'md'} onPress={() => openStep(nextRoute, path.id)} />
           ) : null}
+          {offlineNext?.trueNextUnavailable && trueNext ? (
+            <Text style={styles.offlineNote} accessibilityLiveRegion="polite">
+              {offlineNext.index !== null
+                ? t('pathOffline.nextUnavailable', { step: stepLabel(trueNext), other: stepLabel(path.steps[offlineNext.index]) })
+                : t('pathOffline.nextUnavailableNone', { step: stepLabel(trueNext) })}
+            </Text>
+          ) : null}
+
+          <PathOfflineRow pack={pack} state={packState} title={title} />
 
           <View style={{ gap: spacing.xs }}>
             {path.steps.map((step, index) => {
@@ -96,7 +133,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
                     style={styles.stepMain}
                     onPress={() => route && openStep(route, path.id)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${t('learningPaths.step', { index: index + 1 })}. ${verb}: ${stepTitle}. ${stateLabel(state)}.`}
+                    accessibilityLabel={`${t('learningPaths.step', { index: index + 1 })}. ${verb}: ${stepTitle}. ${stateLabel(state)}.${isOffline ? ` ${availableOffline[index] ? t('pathOffline.stepAvailable') : t('pathOffline.stepUnavailable')}.` : ''}`}
                   >
                     <View style={[styles.badge, state === 'completed' && styles.badgeDone]}>
                       {state === 'completed' ? <Check size={14} color={colors.textOnDark} strokeWidth={3} /> : state === 'in_progress' ? <Circle size={12} color={colors.accentGold} fill={colors.accentGold} /> : <Text style={styles.badgeText}>{index + 1}</Text>}
@@ -107,6 +144,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
                         {stepTitle}
                       </Text>
                       {!isChild ? <Text style={styles.stepState}>{stateLabel(state)}</Text> : null}
+                      {isOffline ? <Text style={[styles.stepOffline, !availableOffline[index] && styles.stepOfflineNo]}>{availableOffline[index] ? t('pathOffline.stepAvailable') : t('pathOffline.stepUnavailable')}</Text> : null}
                     </View>
                     <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
                   </AnimatedPressable>
@@ -159,4 +197,7 @@ const styles = StyleSheet.create({
   stepState: { ...textStyles.small, color: colors.textSecondary },
   mark: { alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: radii.pill, backgroundColor: colors.surfaceElevated },
   markText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
+  stepOffline: { ...textStyles.small, fontWeight: '600', color: colors.primary },
+  stepOfflineNo: { color: colors.textMuted },
+  offlineNote: { ...textStyles.small, color: colors.textSecondary },
 });

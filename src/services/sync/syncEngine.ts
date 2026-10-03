@@ -23,6 +23,7 @@ import {
   type ServerDailyRow,
 } from './mergeRules';
 import { readPendingFavorites, readPendingVisits, removeFavoriteOps, removePendingVisits } from './outbox';
+import { syncPrivateState, watchPrivateStores } from './privateSync/privateSync';
 import { registerSyncScheduler, type SyncReason } from './syncTrigger';
 
 /**
@@ -40,6 +41,10 @@ import { registerSyncScheduler, type SyncReason } from './syncTrigger';
  *   - Daily OYNO completions, Knowledge Challenge results
  *   - Private journal entries (20260923000003_journal.sql) + private,
  *     versioned photos (20260924000001_journal_photo_versions.sql)
+ *   - Private Cloud Sync (20261002000001_private_state_sync.sql): reading,
+ *     highlights + notes, My Collections, mistakes, glossary study, game
+ *     records, Komuz favorites, path steps, listening, weekly goal -
+ *     see privateSync/privateSync.ts
  *
  * Each domain syncs independently - one failing (offline mid-sync, a
  * migration not applied yet) never blocks or rolls back the others, and
@@ -54,7 +59,7 @@ import { registerSyncScheduler, type SyncReason } from './syncTrigger';
  * isn't cancelled - its result is ignored.)
  */
 
-export type SyncDomain = 'visits' | 'daily' | 'challenges' | 'favorites' | 'journal';
+export type SyncDomain = 'visits' | 'daily' | 'challenges' | 'favorites' | 'journal' | 'private';
 
 export type SyncReport = {
   ok: boolean;
@@ -321,6 +326,7 @@ const DOMAINS: [SyncDomain, (ctx: SyncContext) => Promise<DomainResult>][] = [
   ['challenges', syncChallenges],
   ['favorites', syncFavorites],
   ['journal', syncJournal],
+  ['private', async (ctx) => ({ conflicts: (await syncPrivateState({ userId: ctx.userId, generation: ctx.generation })).conflicts })],
 ];
 
 async function runSync(reason: SyncReason, token: ReturnType<typeof captureAccountGeneration>): Promise<SyncReport> {
@@ -417,6 +423,7 @@ export function scheduleAccountSync(reason: SyncReason): void {
 }
 
 registerSyncScheduler(scheduleAccountSync, signedInUserId);
+watchPrivateStores();
 
 /** Tests only. */
 export function __resetSyncEngineForTests(): void {

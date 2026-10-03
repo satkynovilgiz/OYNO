@@ -32,6 +32,8 @@ type State = {
   removeItem: (owner: string, collectionId: string, contentType: string, contentId: string) => void;
   move: (owner: string, collectionId: string, index: number, delta: -1 | 1) => void;
   /** Guest -> signed in: the guest's collections join the account. */
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: CollectionsData | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -69,6 +71,13 @@ export const useMyCollectionsStore = create<State>((set, get) => {
     add: (owner, collectionId, contentType, contentId) => update(owner, (data) => addItem(data, collectionId, contentType, contentId)),
     removeItem: (owner, collectionId, contentType, contentId) => update(owner, (data) => removeItem(data, collectionId, contentType, contentId)),
     move: (owner, collectionId, index, delta) => update(owner, (data) => moveItem(data, collectionId, index, delta)),
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

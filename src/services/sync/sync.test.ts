@@ -71,6 +71,8 @@ jest.mock('@/store/useAuthStore', () => ({
 jest.mock('@/services/analytics/analytics', () => ({ track: jest.fn() }));
 
 jest.mock('@/services/supabase/client', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mockState = (require('./privateSync/testing/fakeStateBackend') as typeof import('./privateSync/testing/fakeStateBackend')).createFakeStateBackend();
   const result = (data: unknown, error: unknown = null) => ({ data, error });
   const progressRow = {
     xp: 0, coins: 0, gems: 0, games_played: 0, games_won: 0, streak_days: 0, wins_today: 0, plays_today: 0,
@@ -100,14 +102,18 @@ jest.mock('@/services/supabase/client', () => {
   }
   return {
     supabase: {
-      from: (table: string) => ({
+      from: (table: string) =>
+        table === 'user_state_records'
+          ? mockState.query(mockAuth.user!.id)
+          : {
         select: () => {
           const response = rows(table);
           return { then: (resolve: (value: unknown) => unknown) => Promise.resolve(response).then(resolve), single: () => Promise.resolve(response) };
         },
         insert: () => Promise.resolve(result(null)),
-      }),
+          },
       rpc: (fn: string, args: Record<string, unknown>) => {
+        if (fn === 'push_user_state') return Promise.resolve(mockState.push(mockAuth.user!.id, args.p_domain as string, args.p_items as never));
         const account = mockCurrent();
         mockBackend.writes.push(fn);
         const now = new Date().toISOString();

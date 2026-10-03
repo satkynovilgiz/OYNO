@@ -20,6 +20,8 @@ type State = {
   record: (owner: string, contentType: ReadingContentType, contentId: string, ratio: number) => void;
   markRead: (owner: string, contentType: ReadingContentType, contentId: string) => void;
   reset: (owner: string, contentType: ReadingContentType, contentId: string) => void;
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: ReadingData | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -57,6 +59,13 @@ export const useReadingStore = create<State>((set, get) => {
     record: (owner, contentType, contentId, ratio) => update(owner, (data) => recordPosition(data, contentType, contentId, ratio)),
     markRead: (owner, contentType, contentId) => update(owner, (data) => markRead(data, contentType, contentId)),
     reset: (owner, contentType, contentId) => update(owner, (data) => resetReading(data, contentType, contentId)),
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persistSoon();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

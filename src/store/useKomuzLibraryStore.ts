@@ -29,6 +29,8 @@ type State = {
   load: () => Promise<void>;
   toggleFavorite: (owner: string, trackId: string) => void;
   markListened: (owner: string, trackId: string) => void;
+  /** Private Cloud Sync: synced favorites (recents stay on this device). null = forget this owner. */
+  applySyncedFavorites: (owner: string, favorites: string[] | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -51,6 +53,13 @@ export const useKomuzLibraryStore = create<State>((set, get) => {
     },
     toggleFavorite: (owner, trackId) => update(owner, (library) => ({ ...library, favorites: toggleId(library.favorites, trackId) })),
     markListened: (owner, trackId) => update(owner, (library) => ({ ...library, recent: addRecent(library.recent, trackId) })),
+    applySyncedFavorites: (owner, favorites) => {
+      const saved = { ...get().saved };
+      if (favorites) saved[owner] = { ...ownerLibrary(saved, owner), favorites };
+      else delete saved[owner];
+      set({ saved });
+      persist();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

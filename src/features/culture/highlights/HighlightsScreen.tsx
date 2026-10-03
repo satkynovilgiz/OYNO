@@ -16,6 +16,7 @@ import { colors, editorial, radii, spacing, textStyles, typography } from '@/the
 import { searchHighlights, sortedHighlights, sourceUpdated, type ContentHighlight } from './highlightsModel';
 import { NoteSheet } from './NoteSheet';
 import { useHighlightActions, useHighlights } from './useHighlights';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 const SECTION_LABEL: Record<string, string> = {
   origin: 'culture.item.originLabel',
@@ -40,6 +41,7 @@ const LANGUAGE_NAME: Record<string, string> = { kg: 'Кыргызча', ru: 'Р�
  */
 export function HighlightsScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t, i18n } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
   const isAdult = experience === 'adult';
@@ -140,7 +142,7 @@ export function HighlightsScreen({ onPressBack }: { onPressBack: () => void }) {
           );
         })}
         {all.length > 0 && shown.length === 0 ? <Text style={styles.emptyBody}>{t('highlights.noMatches')}</Text> : null}
-        <Text style={styles.footnote}>{t('highlights.deviceNote')}</Text>
+        <Text style={styles.footnote}>{t(syncScope === 'account' ? 'highlights.accountNote' : 'highlights.deviceNote')}</Text>
       </ScrollView>
 
       {editing ? (

@@ -20,6 +20,7 @@ import { clockTime, filterTracks, nextIndex, previousIndex, realDuration, showFa
 import { RHYTHM_CHARTS } from '../rhythm/rhythmCharts';
 import { supportedCharts } from '../rhythm/rhythmModel';
 import { registerKomuzHost, useKomuzPlayerStore } from './useKomuzPlayerStore';
+import { shareContentLink } from '@/services/links/shareContentLink';
 
 /**
  * /culture/komuz/listen - the Komuz Listening Room: the existing bundled
@@ -37,8 +38,10 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
   const library = ownerLibrary(useKomuzLibraryStore((state) => state.saved), owner);
   const [filter, setFilter] = useState<TrackFilter>('all');
   const [savedPoint, setSavedPoint] = useState<string | null>(null);
-  const params = useLocalSearchParams<{ resumeTrack?: string; at?: string }>();
-  const resumeTrack = komuzTracks.find((entry) => entry.id === params.resumeTrack) ?? null;
+  const params = useLocalSearchParams<{ resumeTrack?: string; at?: string; track?: string }>();
+  // A shared track link (?track=) selects the track - it never autoplays.
+  const sharedTrack = komuzTracks.find((entry) => entry.id === params.track) ?? null;
+  const resumeTrack = komuzTracks.find((entry) => entry.id === params.resumeTrack) ?? sharedTrack;
   const resumeAt = Number.isFinite(Number(params.at)) && Number(params.at) > 0 ? Math.min(3600, Math.floor(Number(params.at))) : 0;
 
   const currentTrackId = useKomuzPlayerStore((state) => state.currentTrackId);
@@ -66,7 +69,7 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
   const activeFilter: TrackFilter = favoritesAvailable ? filter : 'all';
   const visible = filterTracks(komuzTracks, activeFilter, library.favorites);
   const current = komuzTracks.find((entry) => entry.id === currentTrackId) ?? null;
-  const shown = current ?? visible[0] ?? komuzTracks[0];
+  const shown = current ?? resumeTrack ?? visible[0] ?? komuzTracks[0];
   const recent = library.recent.map((id) => komuzTracks.find((entry) => entry.id === id)).filter((entry): entry is KomuzTrack => !!entry);
 
   const playFrom = (id: string) => {
@@ -95,11 +98,11 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
             style={styles.resume}
             onPress={() => (resumeAt > 0 ? useKomuzPlayerStore.getState().playFrom(resumeTrack.id, resumeAt) : useKomuzPlayerStore.getState().play(resumeTrack.id))}
             accessibilityRole="button"
-            accessibilityLabel={`${t('listening.resume')}: ${resumeTrack.title}${resumeAt > 0 ? `. ${t('listening.at', { minutes: Math.floor(resumeAt / 60), seconds: resumeAt % 60 })}` : ''}`}
+            accessibilityLabel={`${resumeTrack === sharedTrack && !params.resumeTrack ? t('contentLinks.playTrack') : t('listening.resume')}: ${resumeTrack.title}${resumeAt > 0 ? `. ${t('listening.at', { minutes: Math.floor(resumeAt / 60), seconds: resumeAt % 60 })}` : ''}`}
           >
             <Play size={16} color={colors.primary} strokeWidth={2.5} />
             <Text style={styles.resumeText} numberOfLines={1}>
-              {t('listening.resume')} · {resumeTrack.title}
+              {resumeTrack === sharedTrack && !params.resumeTrack ? t('contentLinks.playTrack') : t('listening.resume')} · {resumeTrack.title}
               {resumeAt > 0 ? ` · ${clockTime(resumeAt)}` : ''}
             </Text>
           </AnimatedPressable>
@@ -156,6 +159,11 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
               accessibilityLabel={savedPoint === current.id ? t('listening.saved') : t('listening.savePoint')}
             >
               <Text style={styles.savePointText}>{savedPoint === current.id ? `✓ ${t('listening.saved')}` : t('listening.savePoint')}</Text>
+            </AnimatedPressable>
+          ) : null}
+          {shown ? (
+            <AnimatedPressable style={styles.savePoint} onPress={() => void shareContentLink({ type: 'komuz_track', id: shown.id, title: shown.title })} accessibilityRole="button" accessibilityLabel={t('contentLinks.shareTrack', { title: shown.title })}>
+              <Text style={styles.savePointText}>{t('contentLinks.shareTrackShort')}</Text>
             </AnimatedPressable>
           ) : null}
           {/* Bundled with the app - plays without a connection. Not "downloaded". */}

@@ -19,6 +19,8 @@ type State = {
   record: (owner: string, input: Omit<ListeningRecord, 'key' | 'lastListenedAt'> & { at: string }) => void;
   addBookmark: (owner: string, input: Omit<AudioBookmark, 'id' | 'createdAt'>) => AudioBookmark;
   removeBookmark: (owner: string, id: string) => void;
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: ListeningData | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -54,6 +56,13 @@ export const useListeningStore = create<State>((set, get) => {
       return result.bookmark;
     },
     removeBookmark: (owner, id) => update(owner, removeBookmark(ownerListening(get().saved, owner), id)),
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
+      persistSoon();
+    },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

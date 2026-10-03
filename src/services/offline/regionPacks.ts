@@ -92,7 +92,7 @@ export function requestedRegionIds(manifest: OfflineManifest): string[] {
   return [...ids];
 }
 
-type PackStore = {
+export type PackStore = {
   manifest: OfflineManifest;
   download: (kind: OfflineKind, contentId: string, requester?: string) => Promise<boolean>;
   claim: (id: string, requester: string) => Promise<void>;
@@ -106,17 +106,26 @@ type PackStore = {
  * pack's items are on the device afterwards.
  */
 export async function downloadRegionPack(regionId: string, pack: RegionPackManifest, store: () => PackStore): Promise<number> {
-  const requester = regionRequester(regionId);
-  for (const item of pack.items) {
+  return downloadPackItems(regionRequester(regionId), pack.items, store);
+}
+
+/** Shared by Region and Learning Path packs: claim what is already on the
+ * device (stored once), download only what is missing or failed. */
+export async function downloadPackItems(requester: string, items: readonly RegionPackItem[], store: () => PackStore): Promise<number> {
+  for (const item of items) {
     if (store().manifest.entries[item.id]) await store().claim(item.id, requester);
     else await store().download(item.kind, item.contentId, requester);
   }
-  return pack.items.filter((item) => !!store().manifest.entries[item.id]).length;
+  return items.filter((item) => !!store().manifest.entries[item.id]).length;
+}
+
+/** Releases only this requester's claim on each item. */
+export async function releasePackItems(requester: string, items: readonly RegionPackItem[], store: () => PackStore): Promise<void> {
+  for (const item of items) await store().release(item.id, requester);
 }
 
 /** Remove a pack: release its claim on each item. Items also saved on their
  * own or by another region stay on the device. */
 export async function removeRegionPack(regionId: string, pack: RegionPackManifest, store: () => PackStore): Promise<void> {
-  const requester = regionRequester(regionId);
-  for (const item of pack.items) await store().release(item.id, requester);
+  await releasePackItems(regionRequester(regionId), pack.items, store);
 }

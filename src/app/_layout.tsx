@@ -36,6 +36,7 @@ import { useAvatarStore } from '@/store/useAvatarStore';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { onConnectionRestored } from '@/services/offline/networkStatus';
+import { retryPartialPathPacks } from '@/services/offline/pathPacks';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { onAccountSignedIn, onGuestSession } from '@/services/sync/accountLifecycle';
 import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
@@ -218,7 +219,11 @@ export default function RootLayout() {
   useEffect(
     () =>
       onConnectionRestored(() => {
-        void useOfflineStore.getState().refreshAll();
+        void useOfflineStore
+          .getState()
+          .refreshAll()
+          // Partial Learning Path packs: fetch ONLY what is still missing.
+          .then(() => retryPartialPathPacks(useOfflineStore.getState));
         scheduleAccountSync('reconnect');
         // Beta reports written offline go out now (deduplicated server-side).
         void flushFeedbackQueue(useAuthStore.getState().user?.id ?? null);

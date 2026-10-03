@@ -307,13 +307,22 @@
         "journalTitle": "Your journal is private",
         "journalBody": "Your entries belong to your account only - other users can never see them. When you are signed in they sync between your devices over a secure connection. Their text never goes into analytics or feedback reports.",
         "progressTitle": "Progress and sync",
-        "progressBody": "Achievements, places and saved items are kept with your account. As a guest, only on this phone.",
+        "progressBody": "Achievements, places, saved items and your private study data (reading, highlights and notes, collections, study, listening) are kept with your account and visible only to you. As a guest, only on this phone.",
         "photosTitle": "Photos",
         "photosBody": "OYNO opens your photo library only when you choose a photo or save a wallpaper.",
         "notificationsTitle": "Reminders",
         "notificationsBody": "Reminders arrive only if you turned them on. No ads.",
         "manageReminders": "Manage reminders",
         "deleteNote": "You can delete your account in Account."
+      },
+      "sync": {
+        "title": "Sync",
+        "synced": "Synced",
+        "syncing": "Syncing…",
+        "offline": "Waiting for connection",
+        "error": "Sync issue - will retry",
+        "idle": "Not synced yet",
+        "footer": "Your private study data - reading, highlights and notes, collections, study, listening and your weekly goal - syncs between your signed-in devices. It always works offline first. Tap to sync now."
       }
     }
   },
@@ -2939,7 +2948,8 @@
       "topSpeed": "Top speed"
     },
     "playedTimes_few": "Played {{count}} times",
-    "playedTimes_many": "Played {{count}} times"
+    "playedTimes_many": "Played {{count}} times",
+    "accountNote": "Personal bests and recent games are synced with your account. Games played is your account total."
   },
   "thenNow": {
     "title": "Then & Now",
@@ -3022,7 +3032,8 @@
     "plays_few": "{{count}} plays",
     "plays_many": "{{count}} plays",
     "personalBestsValue_few": "Set in {{count}} games",
-    "personalBestsValue_many": "Set in {{count}} games"
+    "personalBestsValue_many": "Set in {{count}} games",
+    "scopeAccountSynced": "From your account."
   },
   "myCollections": {
     "title": "My Collections",
@@ -3074,7 +3085,8 @@
     "privateNote": "Private - only you can see your collections.",
     "deviceNote": "My Collections are saved on this device and aren't synced to other devices yet.",
     "itemCount_few": "{{count}} items",
-    "itemCount_many": "{{count}} items"
+    "itemCount_many": "{{count}} items",
+    "accountNote": "My Collections are private and synced with your account."
   },
   "komuzRoom": {
     "title": "Komuz Listening Room",
@@ -3131,7 +3143,8 @@
     "markRead": "Mark as read",
     "startOver": "Start over",
     "percentRead": "{{percent}}% read",
-    "onThisDevice": "Your reading history is saved on this device only."
+    "onThisDevice": "Your reading history is saved on this device only.",
+    "accountNote": "Your reading history is private and synced with your account."
   },
   "highlights": {
     "title": "Highlights & Notes",
@@ -3165,7 +3178,9 @@
     "deviceNote": "Highlights and notes are saved on this device and aren't synced yet.",
     "section": {
       "body": "Text"
-    }
+    },
+    "notePrivateAccount": "Your note is private - only you can see it, on your signed-in devices.",
+    "accountNote": "Highlights and notes are private and synced with your account."
   },
   "friendChallenge": {
     "challengeFriend": "Challenge a friend",
@@ -3321,6 +3336,13 @@
       "discover": {
         "heading": "Discover something new",
         "detail": "Explore culture through its images"
+      },
+      "study_queue": {
+        "heading_one": "{{count}} item to review",
+        "heading_other": "{{count}} items to review",
+        "heading_few": "{{count}} items to review",
+        "heading_many": "{{count}} items to review",
+        "detail": "Questions and terms are waiting in your Study Queue"
       }
     }
   },
@@ -3340,7 +3362,8 @@
     "deviceNote": "Based on activity on this device. Weeks run Monday to Sunday.",
     "profileMeta": "A gentle plan for your week",
     "option_few": "{{count}} activities",
-    "option_many": "{{count}} activities"
+    "option_many": "{{count}} activities",
+    "accountNote": "Based on your activity on your signed-in devices. Weeks run Monday to Sunday."
   },
   "listening": {
     "title": "Listening history",
@@ -3361,7 +3384,8 @@
     "noHistory": "Nothing listened to yet.",
     "removeBookmark": "Remove bookmark: {{title}}",
     "deviceNote": "Your listening history is private and saved on this device.",
-    "profileMeta": "Recently listened and audio bookmarks"
+    "profileMeta": "Recently listened and audio bookmarks",
+    "accountNote": "Your listening history is private and synced with your account."
   },
   "rhythm": {
     "title": "Rhythm practice",
@@ -3381,5 +3405,92 @@
     "tryAgain": "Try again",
     "chooseTrack": "Choose track",
     "paused": "Practice stopped when the app left the screen."
+  },
+  "study": {
+    "short": "Study",
+    "title": "My Study Queue",
+    "entryMeta": "Mistakes, terms, paths and reading in one place",
+    "quickReview": "Quick review",
+    "quickReviewMeta": "Up to 3 questions, then up to 3 terms",
+    "quickNextTerms": "Continue to terms",
+    "backToStudy": "Back to Study Queue",
+    "review": "Review",
+    "continueLearning": "Continue learning",
+    "continueReading": "Continue reading",
+    "caughtUp": "You're all caught up",
+    "caughtUpBody": "Nothing is waiting for you right now.",
+    "discover": "Discover something new",
+    "questionsToReview": "Questions to review",
+    "termsToReview": "Terms to review",
+    "questionsCount_one": "{{count}} question",
+    "questionsCount_other": "{{count}} questions",
+    "termsCount_one": "{{count}} term",
+    "termsCount_other": "{{count}} terms",
+    "nextStep": "Next: {{step}}",
+    "percentRead": "{{percent}}% read",
+    "nothingInFilter": "Nothing here right now.",
+    "filter": {
+      "all": "All",
+      "review": "Review",
+      "reading": "Reading",
+      "paths": "Paths"
+    },
+    "questionsCount_few": "{{count}} questions",
+    "questionsCount_many": "{{count}} questions",
+    "termsCount_few": "{{count}} terms",
+    "termsCount_many": "{{count}} terms"
+  },
+  "compare": {
+    "title": "Compare traditions",
+    "entry": "Compare traditions",
+    "entryMeta_one": "{{count}} curated pair",
+    "entryMeta_other": "{{count}} curated pairs",
+    "intro": "Two traditions side by side, each in its own authored words. Read both and compare for yourself.",
+    "pairLabel": "{{left}} and {{right}}",
+    "and": "and",
+    "openStory": "Open full story: {{title}}",
+    "share": "Share comparison",
+    "shareLabel": "Compare in OYNO",
+    "shareMessage": "{{left}} and {{right}} - compare them in OYNO",
+    "unavailable": "This comparison isn't available right now.",
+    "allPairs": "All comparisons",
+    "entryMeta_few": "{{count}} curated pairs",
+    "entryMeta_many": "{{count}} curated pairs"
+  },
+  "contentLinks": {
+    "shareLink": "Share link",
+    "sharePath": "Share path",
+    "shareGame": "Share game link",
+    "shareTerm": "Share term",
+    "shareTrack": "Share {{title}}",
+    "shareTrackShort": "Share track",
+    "playTrack": "Play",
+    "opening": "Opening…",
+    "invalidTitle": "This link can't be opened",
+    "invalidBody": "The content may have moved or the link is incomplete.",
+    "goHome": "Go to Home"
+  },
+  "pathOffline": {
+    "download": "Download for offline",
+    "downloadShort": "Download",
+    "downloadPath": "Download {{title}} for offline",
+    "downloading": "Downloading…",
+    "available": "Available offline",
+    "partial": "{{available}} of {{total}} available offline",
+    "retryTitle": "{{available}} of {{total}} available offline - retry",
+    "toDownload_one": "{{count}} item to download",
+    "toDownload_other": "{{count}} items to download",
+    "needsInternet": "Connect to the internet to download",
+    "retry": "Retry download",
+    "remove": "Remove download",
+    "removeTitle": "Remove {{title}} from offline?",
+    "removeMessage": "Only this path's download is removed. Articles also saved on their own or by a region stay on this device. Your progress isn't affected.",
+    "stepAvailable": "Available offline",
+    "stepUnavailable": "Unavailable offline",
+    "nextUnavailable": "The next step, {{step}}, needs a connection. You can continue with {{other}} for now.",
+    "nextUnavailableNone": "The next step, {{step}}, needs a connection.",
+    "toDownload_few": "{{count}} items to download",
+    "toDownload_many": "{{count}} items to download",
+    "availableDetail": "Games, labs and challenges are built into the app"
   }
 }

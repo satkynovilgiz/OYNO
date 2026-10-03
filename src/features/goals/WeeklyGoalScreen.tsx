@@ -8,12 +8,14 @@ import { colors, radii, spacing, textStyles, typography } from '@/theme';
 
 import { useWeeklyGoal } from './useWeeklyGoal';
 import { GOAL_OPTIONS, type GoalSize } from './weeklyGoal';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 /** /profile/weekly-goal - set, change or turn off a gentle weekly goal.
  * Changing it mid-week keeps this week's count; turning it off only hides
  * it (no history is deleted). Never a streak. */
 export function WeeklyGoalScreen({ onPressBack }: { onPressBack: () => void }) {
   const { t } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const insets = useSafeAreaInsets();
   const { goal, state, setGoal } = useWeeklyGoal();
   const options: (GoalSize | null)[] = [...GOAL_OPTIONS, null];
@@ -59,7 +61,7 @@ export function WeeklyGoalScreen({ onPressBack }: { onPressBack: () => void }) {
           })}
         </View>
         <Text style={styles.note}>{t('weeklyGoal.counts')}</Text>
-        <Text style={styles.note}>{t('weeklyGoal.deviceNote')}</Text>
+        <Text style={styles.note}>{t(syncScope === 'account' ? 'weeklyGoal.accountNote' : 'weeklyGoal.deviceNote')}</Text>
       </ScrollView>
     </View>
   );

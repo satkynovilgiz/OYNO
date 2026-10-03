@@ -31,7 +31,9 @@ describe('For You Today - priority', () => {
 
   it('then an active learning path, then mistakes, then glossary, then daily', () => {
     expect(pickForYou({ ...BASE, activePath: { title: 'P', completed: 1, total: 5, route: '/learn/x', image: null }, mistakesWaiting: 3 }).reason).toBe('continue_learning_path');
-    expect(pickForYou({ ...BASE, mistakesWaiting: 3, glossaryWaiting: 2 })).toMatchObject({ reason: 'review_mistakes', count: 3 });
+    expect(pickForYou({ ...BASE, mistakesWaiting: 3 })).toMatchObject({ reason: 'review_mistakes', count: 3 });
+    // Several kinds of review waiting -> one link to the Study Queue.
+    expect(pickForYou({ ...BASE, mistakesWaiting: 3, glossaryWaiting: 2 })).toMatchObject({ reason: 'study_queue', count: 5, route: '/study' });
     expect(pickForYou({ ...BASE, glossaryWaiting: 2, dailyChallengeDone: false })).toMatchObject({ reason: 'review_glossary', count: 2 });
     expect(pickForYou({ ...BASE, dailyChallengeDone: false }).reason).toBe('daily_challenge');
   });
@@ -70,7 +72,7 @@ describe('For You Today - priority', () => {
     for (const dict of [en, ru, kg]) {
       const block = (dict as unknown as { forYou: { title: string; notNow: string; reason: Record<string, Record<string, string>> } }).forYou;
       expect(block.title && block.notNow).toBeTruthy();
-      for (const reason of ['beginner', 'continue_reading', 'continue_learning_path', 'review_mistakes', 'review_glossary', 'daily_challenge', 'start_path', 'discover']) {
+      for (const reason of ['beginner', 'continue_reading', 'continue_learning_path', 'study_queue', 'review_mistakes', 'review_glossary', 'daily_challenge', 'start_path', 'discover']) {
         expect(block.reason[reason].heading ?? block.reason[reason].heading_other).toBeTruthy();
       }
     }

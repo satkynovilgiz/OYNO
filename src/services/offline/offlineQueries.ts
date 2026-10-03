@@ -28,6 +28,10 @@ function contentKeysForDownload(kind: OfflineKind, contentId: string, context: {
     if (context.questId) keys.push(['quest_steps', context.questId]);
     return keys;
   }
+  if (kind === 'culture_index') {
+    // Glossary terms + Learning Path step titles: useAllCultureItems.
+    return [['culture_items', 'all']];
+  }
   if (kind === 'culture_item') {
     // app/culture/item/[itemId]/index.tsx: useCultureItem
     return [['culture_item', contentId]];

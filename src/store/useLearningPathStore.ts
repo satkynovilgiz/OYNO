@@ -31,6 +31,8 @@ type State = {
   saved: Saved;
   load: () => Promise<void>;
   setManual: (owner: string, pathId: string, stepId: string, completed: boolean) => void;
+  /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
+  applySynced: (owner: string, data: ManualSteps | null) => void;
   adoptGuest: (userId: string) => void;
 };
 
@@ -52,6 +54,13 @@ export const useLearningPathStore = create<State>((set, get) => {
       if (completed) steps[stepId] = steps[stepId] ?? new Date().toISOString();
       else delete steps[stepId];
       set({ saved: { ...get().saved, [owner]: { ...mine, [pathId]: steps } } });
+      persist();
+    },
+    applySynced: (owner, data) => {
+      const saved = { ...get().saved };
+      if (data) saved[owner] = data;
+      else delete saved[owner];
+      set({ saved });
       persist();
     },
     adoptGuest: (userId) => {

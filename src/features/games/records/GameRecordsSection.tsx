@@ -10,6 +10,7 @@ import { colors, radii, spacing, textStyles, typography } from '@/theme';
 
 import { formatMetric, ruleFor, type GameRecordRule, type GameSessionRecord } from './gameRecords';
 import { useGameRecords } from './useGameRecords';
+import { usePrivateSyncScope } from '@/services/sync/privateSync/usePrivateSyncScope';
 
 const RECENT_SHOWN = 5;
 
@@ -36,6 +37,7 @@ export function sessionResultText(rule: GameRecordRule, session: GameSessionReco
  */
 export function GameRecordsSection({ gameId, compact, onPressPlay }: { gameId: string; compact: boolean; onPressPlay: () => void }) {
   const { t, i18n } = useTranslation();
+  const syncScope = usePrivateSyncScope();
   const rule = ruleFor(gameId);
   const { records } = useGameRecords();
   // Plays and wins: the synced account totals that existed before Game
@@ -102,7 +104,7 @@ export function GameRecordsSection({ gameId, compact, onPressPlay }: { gameId: s
             <Play size={14} color={colors.primary} strokeWidth={2.5} />
             <Text style={styles.playAgainText}>{t('gameRecords.playAgain')}</Text>
           </AnimatedPressable>
-          <Text style={styles.note}>{t('gameRecords.deviceNote')}</Text>
+          <Text style={styles.note}>{t(syncScope === 'account' ? 'gameRecords.accountNote' : 'gameRecords.deviceNote')}</Text>
         </View>
       ) : null}
     </View>

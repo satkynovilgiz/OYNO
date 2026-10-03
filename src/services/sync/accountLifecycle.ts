@@ -42,6 +42,7 @@ import {
   type PendingFavorites,
   type PendingVisits,
 } from './outbox';
+import { forgetPrivateState, hasUnsyncedPrivateState } from './privateSync/privateSync';
 import { invalidateActiveSync, syncAccountState, type SyncReport } from './syncEngine';
 // Registers recent search queries as account-bound (cleared with the rest
 // of an account's local state) - the Search screen may never have loaded.
@@ -242,13 +243,21 @@ export async function beforeSignOut(userId: string): Promise<void> {
     failedDomains: [],
     conflicts: 0,
   } as SyncReport);
+  // Private study data (notes, collections, history...) leaves this device
+  // only when the account confirmed every record; otherwise it stays here,
+  // per owner and never shown to anyone else, until this account syncs.
+  const privateSafe = report.ok && !(await hasUnsyncedPrivateState(userId).catch(() => true));
   await leaveAccount(userId, !report.ok);
+  if (privateSafe) await forgetPrivateState(userId).catch(() => undefined);
 }
 
 registerAccountHooks({
   beforeSignOut,
   // The account is gone - nothing to keep for it.
-  afterAccountDeleted: (userId) => leaveAccount(userId, false),
+  afterAccountDeleted: async (userId) => {
+    await leaveAccount(userId, false);
+    await forgetPrivateState(userId).catch(() => undefined);
+  },
   // No session left to sync with: keep unsynced state aside for this user.
   afterSessionLost: (userId) => leaveAccount(userId, true),
 });
