@@ -314,6 +314,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
         outcome={mode === 'practice' ? 'completed' : game.summary.caught ? 'win' : 'tryAgain'}
         stats={resultStats}
         personalBest={records.personalBest}
+          coachTip={records.coachTip}
         overlay={records.shareHost}
         friendChallenge={records.friendChallenge}
         onReplay={game.restart}

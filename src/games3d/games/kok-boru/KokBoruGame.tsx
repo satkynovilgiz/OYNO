@@ -333,6 +333,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
       />
 
       <ResultScreen
+        coachTip={records.coachTip}
         visible={game.phase === 'RESULT'}
         title={resultTitle}
         outcome={

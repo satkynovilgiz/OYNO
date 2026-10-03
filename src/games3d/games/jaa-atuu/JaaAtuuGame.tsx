@@ -299,6 +299,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
         title={t('games3d.result.title')}
         stats={resultStats}
         personalBest={records.personalBest}
+          coachTip={records.coachTip}
         overlay={records.shareHost}
         friendChallenge={records.friendChallenge}
         onReplay={handleRestart}

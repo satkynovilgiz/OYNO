@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart } from 'lucide-react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { KyrgyzOnlyNote } from '@/components/content/KyrgyzOnlyNote';
@@ -26,6 +26,8 @@ import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { colors, radii, spacing, typography } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
+import { materialNarrationParts } from './readListen/narrationSections';
+import { ReadListenControls, readListenStyles, useReadListen } from './readListen/ReadListen';
 
 type MaterialDetailScreenProps = {
   material: CultureMaterialRow;
@@ -57,6 +59,13 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
     reading.keepPosition();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reader.textSize, reader.lineSpacing, reader.focusMode]);
+
+  // Read & Listen (one authored section here: the body). No follow-scroll:
+  // a single section has nothing to move between.
+  const narrationParts = useMemo(() => materialNarrationParts(material, i18n.language as SupportedLanguage), [material, i18n.language]);
+  const listen = useReadListen(`culture_material:${material.id}`, narrationParts);
+  const [readListen, setReadListen] = useState(false);
+  const bodyNow = readListen && listen.keys.includes('body');
 
   useEffect(() => {
     track('culture_material_open', { materialId: material.id });
@@ -132,10 +141,15 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
               narration={materialNarration(material, i18n.language as SupportedLanguage)}
             />
           ) : null}
+          {material.body && materialNarration(material, i18n.language as SupportedLanguage)?.lang === i18n.language ? (
+            <ReadListenControls enabled={readListen} onToggle={setReadListen} follow={false} onToggleFollow={() => undefined} recorded={listen.recorded} showFollow={false} />
+          ) : null}
 
           {material.body ? (
             <View style={{ gap: spacing.xs }}>
-              <Text style={[styles.body, bodyStyle]}>{material.body}</Text>
+              <View style={bodyNow ? readListenStyles.current : undefined}>
+                <Text style={[styles.body, bodyStyle]}>{material.body}</Text>
+              </View>
               <PassageActions
                 contentType="culture_material"
                 contentId={material.id}

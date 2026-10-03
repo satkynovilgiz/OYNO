@@ -53,3 +53,32 @@ export function formatMonthYear(month: string, language: SupportedLanguage): str
     return month;
   }
 }
+
+/** Local YYYY-MM-DD of an ISO timestamp (null when it isn't a real time). */
+export function localDateKeyOf(iso: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Local clock time: "15:42" (KG/RU), "3:42 PM" (EN). */
+export function formatTime(iso: string, language: SupportedLanguage): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  if (language === 'en') {
+    try {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } catch {
+      // fall through to 24h
+    }
+  }
+  return `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+/** "21-сен. · 15:42" / "21 сент. · 15:42" / "Sep 21 · 3:42 PM". */
+export function formatDateTime(iso: string, language: string): string {
+  const lang = (language === 'ru' || language === 'en' ? language : 'kg') as SupportedLanguage;
+  const key = localDateKeyOf(iso);
+  return key ? `${formatShortDate(key, lang)} · ${formatTime(iso, lang)}` : '';
+}

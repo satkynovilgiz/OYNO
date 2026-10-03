@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Gamepad2, Heart, Play, Link2 } from 'lucide-react-native';
@@ -24,6 +25,8 @@ import type { FriendChallenge } from './friendChallenge/friendChallenge';
 import { GameRecordsSection } from './records/GameRecordsSection';
 import { shareContentLink } from '@/services/links/shareContentLink';
 import { LINKABLE_GAMES } from '@/services/links/contentLinks';
+import { TutorialOverlay } from '@/games3d/ui/TutorialOverlay';
+import { GameCoachCard } from './coach/GameCoachCard';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -98,7 +101,8 @@ export function GameDetailScreen({
 }: GameDetailScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { config } = useAgeExperience();
+  const { config, experience } = useAgeExperience();
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const gamesPlayed = useProgressStore((state) => state.gameStats[gameId]?.played ?? 0);
   const gamesWon = useProgressStore((state) => state.gameStats[gameId]?.won ?? 0);
   const { scrollHandler, heroStyle } = useHeroParallax();
@@ -240,7 +244,11 @@ export function GameDetailScreen({
               <Text style={styles.body}>{t(key)}</Text>
             </View>
           ))}
+          {/* The game's own tutorial steps, replayed as-is (same overlay, same copy). */}
+          <Button label={t('gameCoach.replayTutorial')} variant="text" size={isChild ? 'lg' : 'md'} onPress={() => setTutorialOpen(true)} />
         </FadeSlideIn>
+
+        <GameCoachCard gameId={gameId} tutorialStepKeys={tutorialStepKeys} age={experience} onPressPractice={onPressPractice} onReplayTutorial={() => setTutorialOpen(true)} />
 
         {showDifficultyPicker ? (
           <FadeSlideIn style={styles.card} index={4}>
@@ -304,6 +312,7 @@ export function GameDetailScreen({
           <Button label={t('games.play')} onPress={onPressPlay} icon={<Play size={16} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />} />
         </View>
       </View>
+      <TutorialOverlay key={tutorialOpen ? 'open' : 'closed'} visible={tutorialOpen} stepKeys={tutorialStepKeys} onDone={() => setTutorialOpen(false)} />
     </View>
   );
 }

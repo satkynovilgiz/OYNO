@@ -18,6 +18,7 @@ import { formatEntryDate, formatMonthHeading, linkArtwork } from './journalDispl
 import { groupByMonth, visibleEntries, type JournalEntry, type JournalFilter, type JournalLink } from './journalModel';
 import { LibraryEmptyState } from '@/components/library/LibraryChrome';
 import { Chip } from '@/components/ui/Chip';
+import { canOfferCollage } from './collage/collageModel';
 
 const FILTERS: JournalFilter[] = ['all', 'places', 'culture', 'trails'];
 
@@ -79,6 +80,10 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
           block
           onPress={() => router.push('/journal/new' as never)}
         />
+
+        {canOfferCollage(entries) ? (
+          <Button label={t('journalCollage.create')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/collage' as never)} />
+        ) : null}
 
         {!isChild && total > 0 ? (
           // Bleeds to the screen edges so the last chip scrolls fully into view.

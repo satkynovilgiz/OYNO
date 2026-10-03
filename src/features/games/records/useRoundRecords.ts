@@ -10,7 +10,9 @@ import { buildFriendChallengeCard, challengeLink } from '../friendChallenge/frie
 import { gameTitleKey } from '../types';
 import { formatMetric, ruleFor, type GameSessionRecord } from './gameRecords';
 import { buildPersonalBestShareCard } from './gameRecordsShare';
-import { recordGameSession } from './useGameRecords';
+import { coachAdvice } from '../coach/gameCoach';
+import { currentRecordsOwner, recordGameSession } from './useGameRecords';
+import { ownerRecords, useGameRecordsStore } from '@/store/useGameRecordsStore';
 
 /** For a game's RESULT phase: records the round once and exposes the
  * ResultScreen `personalBest` prop (with sharing). */
@@ -30,6 +32,8 @@ export function useRoundRecords(
   friendChallenge: ResultFriendChallenge;
   /** The best after this round (formatted), for a "Personal best" stat. */
   bestText: string | null;
+  /** Game Coach line for the result (translated), or null. */
+  coachTip: string | null;
   clear: () => void;
   shareHost: ReactNode;
 } {
@@ -38,6 +42,7 @@ export function useRoundRecords(
   const [newBest, setNewBest] = useState<{ value: number; previous: number } | null>(null);
   const [best, setBest] = useState<number | null>(null);
   const [lastRound, setLastRound] = useState<GameSessionRecord | null>(null);
+  const [coachTipKey, setCoachTipKey] = useState<string | null>(null);
   const rule = ruleFor(gameId);
 
   const recordRound = useCallback(
@@ -46,8 +51,14 @@ export function useRoundRecords(
       // never touches the personal best itself).
       setLastRound({ ...input, gameId, id: 'last', completedAt: '' });
       if (challenge && !input.practice) track('friend_challenge_completed', { game_id: gameId, metric_type: challenge.metric });
+      setCoachTipKey(null);
       void recordGameSession(gameId, input).then((outcome) => {
         setBest(outcome.best);
+        // Coach reads the stored rounds AFTER this one (never writes them).
+        if (!input.practice) {
+          const advice = coachAdvice(gameId, Object.values(ownerRecords(useGameRecordsStore.getState().saved, currentRecordsOwner()).recent).flat());
+          setCoachTipKey(advice.kind === 'tip' ? advice.tip.tipKey : null);
+        }
         setNewBest(outcome.isNewBest && outcome.previousBest !== null && outcome.best !== null ? { value: outcome.best, previous: outcome.previousBest } : null);
       });
     },
@@ -55,6 +66,7 @@ export function useRoundRecords(
   );
   const clear = useCallback(() => {
     setNewBest(null);
+    setCoachTipKey(null);
     setLastRound(null);
   }, []);
 
@@ -78,8 +90,9 @@ export function useRoundRecords(
         : null,
   };
 
+  const coachTip = coachTipKey ? t(coachTipKey) : null;
   const bestText = rule && best !== null ? formatMetric(rule.primary.unit, best, t) : null;
-  if (!rule || !newBest) return { recordRound, personalBest: null, friendChallenge, bestText, clear, shareHost };
+  if (!rule || !newBest) return { recordRound, personalBest: null, friendChallenge, bestText, coachTip, clear, shareHost };
   const value = formatMetric(rule.primary.unit, newBest.value, t);
   const gameName = t(gameTitleKey(rule.listId));
   return {
@@ -87,6 +100,7 @@ export function useRoundRecords(
     clear,
     shareHost,
     bestText,
+    coachTip,
     friendChallenge,
     personalBest: {
       value,

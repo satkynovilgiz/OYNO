@@ -6,7 +6,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, CompletionSheet } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
 export type ResultStat = { label: string; value: string };
 
@@ -25,6 +25,8 @@ type ResultScreenProps = {
   /** A NEW personal best this round (only when a previous best was
    * beaten - see features/games/records). */
   personalBest?: { value: string; previous: string; onShare?: () => void } | null;
+  /** Game Coach: ONE short "Next time, try…" line (never with a new best). */
+  coachTip?: string | null;
   /** Rendered inside the sheet (e.g. the share preview host, so it opens
    * on top of this sheet rather than beside it). */
   overlay?: ReactNode;
@@ -44,7 +46,7 @@ type ResultScreenProps = {
  * Restrained: one short seal animation (skipped under Reduce Motion), no
  * confetti or casino effects. Actions: Play again / Back to games.
  */
-export function ResultScreen({ visible, title, outcome = 'completed', banner, stats, personalBest, overlay, friendChallenge, onReplay, onExit }: ResultScreenProps) {
+export function ResultScreen({ visible, title, outcome = 'completed', banner, stats, personalBest, coachTip, overlay, friendChallenge, onReplay, onExit }: ResultScreenProps) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const sealScale = useSharedValue(1);
@@ -117,6 +119,13 @@ export function ResultScreen({ visible, title, outcome = 'completed', banner, st
           </View>
         ) : null}
 
+        {coachTip && !personalBest ? (
+          <View style={styles.coach} accessible accessibilityLabel={`${t('gameCoach.nextTime')} ${coachTip}`}>
+            <Text style={styles.coachKicker}>{t('gameCoach.nextTime')}</Text>
+            <Text style={styles.coachText}>{coachTip}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           <Button label={t('games3d.result.replay')} onPress={onReplay} />
           <Button label={t('games3d.result.exit')} variant="secondary" onPress={onExit} />
@@ -128,6 +137,9 @@ export function ResultScreen({ visible, title, outcome = 'completed', banner, st
 }
 
 const styles = StyleSheet.create({
+  coach: { alignSelf: 'stretch', gap: 2, padding: spacing.sm, borderRadius: 12, backgroundColor: colors.surfaceMuted },
+  coachKicker: { ...textStyles.small, fontWeight: '700', color: colors.accentTerracotta },
+  coachText: { ...textStyles.small, color: colors.textPrimary },
   scroll: { width: '100%' },
   content: { alignItems: 'center', gap: spacing.sm },
   seal: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.accentGold, backgroundColor: colors.surfaceAlt },

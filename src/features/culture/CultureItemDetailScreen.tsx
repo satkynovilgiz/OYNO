@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
@@ -35,6 +35,9 @@ import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
+import { cultureItemNarrationParts, shouldAutoScroll } from './readListen/narrationSections';
+import { ReadListenControls, readListenStyles, useReadListen } from './readListen/ReadListen';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 
 type CultureItemDetailScreenProps = {
   item: CultureItemRow;
@@ -116,6 +119,24 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
   // Regional Audio Journeys): the simple summary (authored in the app
   // language) or the field texts in the language they're actually in.
   const narration: Narration = cultureItemNarration(item, i18n.language as SupportedLanguage, config.learningDepth);
+  // Read & Listen: highlight the section device speech is reading (never for
+  // recordings, which have no authored timing), optionally following it.
+  const narrationParts = useMemo(() => cultureItemNarrationParts(item, i18n.language as SupportedLanguage, config.learningDepth), [item, i18n.language, config.learningDepth]);
+  const listen = useReadListen(`culture_item:${item.id}`, narrationParts);
+  const [readListen, setReadListen] = useState(false);
+  const [follow, setFollow] = useState(true);
+  const reducedMotion = useReducedMotion();
+  const lastManualScroll = useRef<number | null>(null);
+  const current = readListen ? listen.keys : [];
+  const currentKey = current[0] ?? null;
+  useEffect(() => {
+    if (!currentKey || !shouldAutoScroll(follow, lastManualScroll.current, Date.now())) return;
+    const { body, fields } = sectionOffsets.current;
+    const field = currentKey === 'simple_summary' ? 0 : sectionOffsets.current[currentKey];
+    if (body === undefined || field === undefined) return;
+    reading.scrollRef.current?.scrollTo({ y: Math.max(0, body + (currentKey === 'simple_summary' ? (sectionOffsets.current.summary ?? 0) : (fields ?? 0) + field) - 80), animated: !reducedMotion });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentKey, follow]);
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
   // The primary photo (admin-uploaded image_url, falling back to the first
@@ -166,6 +187,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
         scrollEventThrottle={64}
         onContentSizeChange={reading.onContentSizeChange}
         onLayout={reading.onLayout}
+        onScrollBeginDrag={() => (lastManualScroll.current = Date.now())}
       >
         {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
         {heroSource ? (
@@ -219,10 +241,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
           {/* 3. Compact audio guide, right where reading starts. */}
           <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} title={item.title} />
+          {narration.lang === i18n.language && narration.text ? <ReadListenControls enabled={readListen} onToggle={setReadListen} follow={follow} onToggleFollow={setFollow} recorded={listen.recorded} /> : null}
 
           {/* 4. Content blocks - text straight on the page, no boxes. */}
           {simpleSummary ? (
-            <Text style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]}>{simpleSummary}</Text>
+            <View style={current.includes('simple_summary') ? readListenStyles.current : undefined} onLayout={(event) => (sectionOffsets.current.summary = event.nativeEvent.layout.y)}>
+              <Text style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]}>{simpleSummary}</Text>
+            </View>
           ) : filledFields.length === 0 ? (
             hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
           ) : (
@@ -230,7 +255,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
               {filledFields.map((field, index) => (
                 <View
                   key={field.key}
-                  style={styles.field}
+                  style={[styles.field, current.includes(field.key as string) && readListenStyles.current]}
                   onLayout={(event) => {
                     sectionOffsets.current[field.key] = event.nativeEvent.layout.y;
                     scrollToInitialSection();

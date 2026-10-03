@@ -37,12 +37,28 @@ const PAGE = 1000;
 const LOCAL_CHANGE_DEBOUNCE_MS = 8000;
 
 type OwnerLedger = Partial<Record<PrivateDomain, Record<string, LedgerEntry>>>;
-type LedgerFile = { owners: Record<string, OwnerLedger>; syncedAt: Record<string, string> };
+type LedgerFile = {
+  owners: Record<string, OwnerLedger>;
+  syncedAt: Record<string, string>;
+  /** owner -> domain -> when the person cleared it. The next sync removes
+   * that domain's records from the account (tombstones) BEFORE merging, so
+   * the cleared data can't come straight back from the cloud. */
+  wipes: Record<string, Partial<Record<PrivateDomain, string>>>;
+};
 
 export type PrivateSyncState = 'idle' | 'syncing' | 'synced' | 'offline' | 'error';
 
 /** Tiny status for Settings (no permanent banner anywhere). */
-export const usePrivateSyncStatus = create<{ state: PrivateSyncState; owner: string | null; syncedOwners: Record<string, string> }>(() => ({ state: 'idle', owner: null, syncedOwners: {} }));
+/** Whether the account side (migration) is really deployed - known only
+ * after a sync attempt reached the server. */
+export type PrivateBackend = 'unknown' | 'available' | 'missing';
+
+export const usePrivateSyncStatus = create<{ state: PrivateSyncState; owner: string | null; syncedOwners: Record<string, string>; backend: PrivateBackend }>(() => ({
+  state: 'idle',
+  owner: null,
+  syncedOwners: {},
+  backend: 'unknown',
+}));
 
 export class PrivateSyncStale extends Error {}
 
@@ -64,6 +80,7 @@ async function readLedger(): Promise<LedgerFile> {
   ledgerCache = {
     owners: parsed && typeof parsed.owners === 'object' && parsed.owners && !Array.isArray(parsed.owners) ? parsed.owners : {},
     syncedAt: parsed && typeof parsed.syncedAt === 'object' && parsed.syncedAt && !Array.isArray(parsed.syncedAt) ? parsed.syncedAt : {},
+    wipes: parsed && typeof parsed.wipes === 'object' && parsed.wipes && !Array.isArray(parsed.wipes) ? parsed.wipes : {},
   };
   usePrivateSyncStatus.setState({ syncedOwners: { ...ledgerCache.syncedAt } });
   return ledgerCache;
@@ -137,6 +154,28 @@ async function syncDomain(adapter: StoreAdapter, owner: string, server: Record<s
   let serverRecords = { ...server };
   let conflicts = 0;
   for (let round = 0; round < MAX_ROUNDS; round += 1) {
+    // A domain the person cleared: remove its account records first.
+    if (file.wipes[owner]?.[adapter.domain]) {
+      const current = adapter.read(owner);
+      const tombstones: PushItem[] = Object.entries(serverRecords)
+        .filter(([key, record]) => !record.deleted && !Object.prototype.hasOwnProperty.call(current, key))
+        .map(([key, record]) => ({ key, baseRev: record.rev, payload: null }));
+      let wipedLedger: Record<string, LedgerEntry> = {};
+      if (tombstones.length > 0) {
+        check();
+        const response = await push(adapter.domain, tombstones);
+        check();
+        for (const row of [...response.accepted, ...response.conflicts]) serverRecords[row.key] = { rev: row.rev, deleted: row.deleted, payload: row.payload };
+        wipedLedger = applyPushResult({}, response.accepted);
+        // A record changed elsewhere meanwhile: wipe it on the next round.
+        if (response.conflicts.length > 0) continue;
+      }
+      const wipes = { ...(file.wipes[owner] ?? {}) };
+      delete wipes[adapter.domain];
+      file.wipes = { ...file.wipes, [owner]: wipes };
+      file.owners[owner] = { ...(file.owners[owner] ?? {}), [adapter.domain]: wipedLedger };
+      await writeLedger(file);
+    }
     const ownerLedger = file.owners[owner] ?? {};
     let ledger = ownerLedger[adapter.domain] ?? {};
     // Safety: if this device holds NOTHING for the owner (storage cleared,
@@ -203,6 +242,7 @@ export function syncPrivateState(token: Token): Promise<{ conflicts: number }> {
       check();
       const server = await pullAll();
       check();
+      usePrivateSyncStatus.setState({ backend: 'available' });
       let conflicts = 0;
       let pending = 0;
       for (const adapter of STORE_ADAPTERS) {
@@ -218,7 +258,7 @@ export function syncPrivateState(token: Token): Promise<{ conflicts: number }> {
       return { conflicts };
     } catch (error) {
       if (isBackendMissing(error)) {
-        usePrivateSyncStatus.setState({ state: 'idle', owner });
+        usePrivateSyncStatus.setState({ state: 'idle', owner, backend: 'missing' });
         return { conflicts: 0 };
       }
       if (!(error instanceof PrivateSyncStale)) usePrivateSyncStatus.setState({ state: onlineManager.isOnline() ? 'error' : 'offline', owner });
@@ -234,6 +274,7 @@ export function syncPrivateState(token: Token): Promise<{ conflicts: number }> {
 export async function hasUnsyncedPrivateState(owner: string): Promise<boolean> {
   const file = await readLedger();
   const ownerLedger = file.owners[owner] ?? {};
+  if (Object.keys(file.wipes[owner] ?? {}).length > 0) return true;
   for (const adapter of STORE_ADAPTERS) {
     await adapter.load();
     const ledger = ownerLedger[adapter.domain] ?? {};
@@ -250,6 +291,46 @@ export async function hasUnsyncedPrivateState(owner: string): Promise<boolean> {
   return false;
 }
 
+export type WipeOutcome = 'device_only' | 'account' | 'pending';
+
+/**
+ * Clears domains for the owner on this device and - for a signed-in
+ * account - in the account too. Honest outcome:
+ *   'device_only' - guest, or the account side isn't deployed (nothing
+ *                   of this was ever stored there)
+ *   'account'     - the account confirmed the removal
+ *   'pending'     - offline / server error: removed here, the account
+ *                   copy is removed on the next successful sync (it can't
+ *                   come back meanwhile - the wipe is remembered)
+ */
+export async function wipePrivateDomains(owner: string, domains: readonly PrivateDomain[]): Promise<WipeOutcome> {
+  await Promise.all(STORE_ADAPTERS.map((adapter) => adapter.load()));
+  applyQuietly(() => {
+    for (const adapter of STORE_ADAPTERS) if (domains.includes(adapter.domain)) adapter.write(owner, {});
+  });
+  if (owner === 'guest' || !owner) return 'device_only';
+  const file = await readLedger();
+  const marks = { ...(file.wipes[owner] ?? {}) };
+  for (const domain of domains) marks[domain] = new Date().toISOString();
+  await writeLedger({ ...file, wipes: { ...file.wipes, [owner]: marks } });
+  const token = captureAccountGeneration();
+  if (token.userId !== owner) return 'pending';
+  try {
+    await syncPrivateState(token);
+  } catch {
+    return 'pending';
+  }
+  if (usePrivateSyncStatus.getState().backend === 'missing') {
+    // Nothing was ever stored in the account: drop the markers too.
+    const latest = await readLedger();
+    const wipes = { ...latest.wipes };
+    delete wipes[owner];
+    await writeLedger({ ...latest, wipes });
+    return 'device_only';
+  }
+  return Object.keys((await readLedger()).wipes[owner] ?? {}).length === 0 ? 'account' : 'pending';
+}
+
 /**
  * Sign-out after a COMPLETE sync (or account deletion): this account's
  * private data leaves the device - it is in the account and comes back
@@ -263,7 +344,9 @@ export async function forgetPrivateState(owner: string): Promise<void> {
   delete owners[owner];
   const syncedAt = { ...file.syncedAt };
   delete syncedAt[owner];
-  await writeLedger({ owners, syncedAt });
+  const wipes = { ...file.wipes };
+  delete wipes[owner];
+  await writeLedger({ owners, syncedAt, wipes });
   usePrivateSyncStatus.setState({ syncedOwners: syncedAt, state: 'idle', owner: null });
   await Promise.all(STORE_ADAPTERS.map((adapter) => adapter.load()));
   applyQuietly(() => {
@@ -308,5 +391,5 @@ export function __resetPrivateSyncForTests(): void {
   if (debounce) clearTimeout(debounce);
   debounce = null;
   chain = Promise.resolve();
-  usePrivateSyncStatus.setState({ state: 'idle', owner: null, syncedOwners: {} });
+  usePrivateSyncStatus.setState({ state: 'idle', owner: null, syncedOwners: {}, backend: 'unknown' });
 }

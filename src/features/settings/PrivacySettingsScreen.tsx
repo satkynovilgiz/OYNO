@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { AlarmClock, Cloud, Image as ImageIcon, NotebookPen, RefreshCw, type LucideIcon } from 'lucide-react-native';
+import { AlarmClock, Cloud, Image as ImageIcon, NotebookPen, RefreshCw, Database, type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -45,6 +45,9 @@ export function PrivacySettingsScreen({ onPressBack }: { onPressBack: () => void
             </View>
           ))}
         </View>
+        <SettingsSection>
+          <SettingsRow icon={Database} label={t('dataPrivacy.title')} onPress={() => router.push('/settings/data-privacy' as never)} />
+        </SettingsSection>
         {signedIn ? (
           <SettingsSection footer={t('settings.v2.sync.footer')}>
             <SettingsRow icon={RefreshCw} label={t('settings.v2.sync.title')} value={t(`settings.v2.sync.${syncState}`)} showChevron={false} onPress={() => void syncAccountState('foreground')} />

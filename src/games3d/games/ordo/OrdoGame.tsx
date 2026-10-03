@@ -324,6 +324,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal', challenge = n
           outcome={game.summary.winner === 'player' ? 'win' : game.summary.winner === 'draw' ? 'completed' : 'tryAgain'}
           stats={resultStats}
           personalBest={records.personalBest}
+          coachTip={records.coachTip}
           overlay={records.shareHost}
         friendChallenge={records.friendChallenge}
           onReplay={handleRestart}
