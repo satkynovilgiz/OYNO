@@ -122,8 +122,12 @@ export type PathSignals = {
   manualCompleted: (pathId: string, stepId: string) => boolean;
 };
 
+/** A path's challenge step may point at a collection challenge or - only
+ * when explicitly configured - a Culture Topic Quiz (`topic-<id>`). */
 export function challengeResultKey(challengeId: string): string {
-  return challengeId.startsWith('collection-') ? `collection:${challengeId.slice('collection-'.length)}` : challengeId;
+  if (challengeId.startsWith('collection-')) return `collection:${challengeId.slice('collection-'.length)}`;
+  if (challengeId.startsWith('topic-')) return `topic:${challengeId.slice('topic-'.length)}`;
+  return challengeId;
 }
 
 export function stepState(path: LearningPath, step: LearningPathStep, signals: PathSignals): StepState {

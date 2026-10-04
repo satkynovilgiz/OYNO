@@ -16,7 +16,9 @@ import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
 import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
-import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink } from '@/features/culture/components';
+import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink, TopicQuizLink } from '@/features/culture/components';
+import { getQuestion } from '@/features/challenges/questionBank';
+import { topicsForContent } from '@/features/challenges/topics/topicQuizzes';
 import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
@@ -315,7 +317,8 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
           </View>
           <ReadingActions tracker={reading} />
 
-          {challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
+          {/* A Topic Quiz that really tests this article comes first; else the collection challenge. */}
+          {topicsForContent('culture_item', item.id, getQuestion).length > 0 ? <TopicQuizLink type="culture_item" id={item.id} /> : challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
           <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
           <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />

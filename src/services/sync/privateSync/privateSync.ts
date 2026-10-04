@@ -223,6 +223,20 @@ async function syncDomain(adapter: StoreAdapter, owner: string, server: Record<s
  * network/server failure (local state is untouched by a failed domain)
  * and PrivateSyncStale when the account changed mid-run.
  */
+/**
+ * Keys this device knows the account DELETED (tombstones in the ledger),
+ * per domain - a restore must not bring them back. Empty when the backend
+ * was never reached for this owner.
+ */
+export async function knownDeletedKeys(owner: string): Promise<Partial<Record<PrivateDomain, Set<string>>>> {
+  const file = await readLedger();
+  const out: Partial<Record<PrivateDomain, Set<string>>> = {};
+  for (const [domain, entries] of Object.entries(file.owners[owner] ?? {}) as [PrivateDomain, Record<string, LedgerEntry>][]) {
+    out[domain] = new Set(Object.entries(entries ?? {}).filter(([, entry]) => entry && entry.base === null).map(([key]) => key));
+  }
+  return out;
+}
+
 export function syncPrivateState(token: Token): Promise<{ conflicts: number }> {
   return exclusive(async () => {
     const owner = token.userId;

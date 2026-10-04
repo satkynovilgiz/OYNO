@@ -2459,6 +2459,100 @@
           "son-kol": "Son-Köl",
           "sary-chelek": "Sary-Chelek"
         }
+      },
+      "tq-komuz-parts": {
+        "question": "The komuz is made of a head, neck, body, kutucha, three strings and…?",
+        "explanation": "The komuz's parts are the head, neck, body, kutucha, tagoo and three strings.",
+        "options": {
+          "tunduk": "Tunduk",
+          "tagoo": "Tagoo",
+          "kerege": "Kerege"
+        }
+      },
+      "tq-komuz-kobuz": {
+        "question": "Instruments similar to the komuz among Turkic peoples are called…?",
+        "explanation": "Turkic peoples have similar instruments - the kobuz and the komyz - which shows how ancient the komuz is.",
+        "options": {
+          "kobuz": "Kobuz",
+          "chang": "Chang",
+          "surnai": "Surnai"
+        }
+      },
+      "tq-komuz-1935": {
+        "question": "Where were new kinds of komuz (prima, secunda, alto, tenor, bass) developed in 1935?",
+        "explanation": "In 1935 new kinds of komuz - prima, secunda, alto, tenor and bass - were developed in Moscow.",
+        "options": {
+          "moscow": "In Moscow",
+          "osh": "In Osh",
+          "naryn": "In Naryn"
+        }
+      },
+      "tq-shyrdak-shyryk": {
+        "question": "The name “shyrdak” comes from its stitching technique, called…?",
+        "explanation": "The stitching technique is called shyryk - that is where the name shyrdak comes from.",
+        "options": {
+          "sayma": "Saima",
+          "shyryk": "Shyryk",
+          "uzuk": "Üzük"
+        }
+      },
+      "tq-ala-kiyiz": {
+        "question": "How is the pattern made in an ala kiyiz?",
+        "explanation": "In ala kiyiz the pattern sinks into the felt as the wool is felted; in a shyrdak it is cut from finished felt and sewn.",
+        "options": {
+          "felted": "It sinks into the felt while the wool is being felted",
+          "cut": "It is cut out of finished felt and sewn back",
+          "painted": "It is painted onto the felt"
+        }
+      },
+      "tq-at-bashy": {
+        "question": "Which district is known as the homeland of the shyrdak craft?",
+        "explanation": "At-Bashy district in Naryn region is recognised as the homeland of the shyrdak craft.",
+        "options": {
+          "talas": "Talas",
+          "at-bashy": "At-Bashy",
+          "chuy": "Chüy"
+        }
+      },
+      "tq-tyiyn-enmei": {
+        "question": "In Tyiyn enmei, what does the rider pick up from the ground at a gallop?",
+        "explanation": "The rider must snatch a coin lying on the ground at a gallop, without dismounting or stopping the horse.",
+        "options": {
+          "coin": "A coin",
+          "whip": "A whip",
+          "cap": "A cap"
+        }
+      },
+      "tq-jorgo": {
+        "question": "In Jorgo salysh, a horse that breaks its jorgo gait is taken out of the race.",
+        "explanation": "True - the horse must keep its jorgo gait without breaking into a gallop; one that breaks it is removed from the race."
+      },
+      "tq-oodarysh": {
+        "question": "In Oodarysh, what does each rider try to do?",
+        "explanation": "Two riders wrestle on horseback, each trying to pull the other out of the saddle.",
+        "options": {
+          "finish": "Reach the finish line first",
+          "saddle": "Pull the opponent out of the saddle",
+          "coin": "Pick up a coin"
+        }
+      },
+      "tq-teke-muyuz": {
+        "question": "Which element does the teke müyüz pattern accompany?",
+        "explanation": "Teke müyüz is an extra element that accompanies the kochkor müyüz; on its own it looks plain.",
+        "options": {
+          "kochkor": "Kochkor müyüz",
+          "umai": "Umai Ene",
+          "kaz": "Kaz moyun"
+        }
+      },
+      "tq-kaz-moyun": {
+        "question": "What does the kaz moyun pattern resemble?",
+        "explanation": "Kaz moyun is a pattern that looks like a goose's neck.",
+        "options": {
+          "goose": "A goose's neck",
+          "ram": "A ram's horn",
+          "dog": "A dog's tail"
+        }
       }
     },
     "questionCount": "{{count}} questions",
@@ -4183,5 +4277,107 @@
     "ready_many": "{{count}} activities ready",
     "shorter_few": "Only {{count}} activities are ready right now - the session will be shorter.",
     "shorter_many": "Only {{count}} activities are ready right now - the session will be shorter."
+  },
+  "topicQuiz": {
+    "title": "Culture Quizzes",
+    "entryMeta": "Short quizzes, one topic each",
+    "intro": "Each quiz asks only about facts in OYNO's own culture stories. Wrong answers go to Mistake Review, so you can try them again later.",
+    "testWhatYouLearned": "Test what you learned",
+    "result": "{{correct}} of {{total}} correct",
+    "reviewMistakes": "Review mistakes",
+    "readAgain": "Read again",
+    "retake": "Take again",
+    "done": "Done",
+    "lastResult": "Last time: {{correct}} of {{total}}",
+    "topics": {
+      "boz-uy": {
+        "title": "Boz Üy Quiz",
+        "description": "The tunduk, the frame and the felt covers."
+      },
+      "komuz": {
+        "title": "Komuz Quiz",
+        "description": "Strings, parts and history of the komuz."
+      },
+      "shyrdak": {
+        "title": "Shyrdak Quiz",
+        "description": "Shyrdak, ala kiyiz and the meaning of colours."
+      },
+      "horse-games": {
+        "title": "Horse Games Quiz",
+        "description": "Kok Boru, Kyz kuumai and other horse games."
+      },
+      "ornament": {
+        "title": "Ornament Quiz",
+        "description": "Kochkor müyüz, Umai Ene and other oymo elements."
+      }
+    }
+  },
+  "dataImport": {
+    "title": "Import OYNO backup",
+    "intro": "Restore learning data from a file you exported with “Export my learning data”. It is merged with what is already here - nothing is deleted or replaced. Journal entries, photos and downloads are not part of a backup.",
+    "ownerGuest": "You are not signed in: the backup is added to this device's guest data.",
+    "ownerAccount": "The backup is added to the account you are signed in with now - never to an account named inside the file.",
+    "neverImported": "Sign-in details, passwords, tokens and account IDs are never imported, even if a file contains them.",
+    "choose": "Choose backup file",
+    "previewTitle": "This backup contains",
+    "exportedAt": "Exported on {{date}}",
+    "included": "Included",
+    "ignored": "Some entries in this file were ignored - sign-in or account details are never imported.",
+    "mergeMode": "Mode: merge with current data. Nothing you have now is removed.",
+    "privateNotes": "This backup contains private notes.",
+    "privateNotesConfirm": "Import my private highlight notes too",
+    "apply": "Import and merge",
+    "applying": "Importing…",
+    "doneTitle": "Backup imported",
+    "addedUpdated": "{{added}} added · {{updated}} updated",
+    "skippedDeleted_one": "{{count}} deleted earlier, not restored",
+    "skippedDeleted_other": "{{count}} deleted earlier, not restored",
+    "nothingNew": "Everything in this backup was already here.",
+    "unchanged": "Already up to date: {{list}}",
+    "done": "Done",
+    "cloud": {
+      "device_only_guest": "Saved on this device (guest data).",
+      "will_sync": "Saved on this device. Private Cloud Sync will add it to your account.",
+      "cloud_unavailable": "Saved on this device. Cloud sync isn't available yet, so it stays here for now."
+    },
+    "errors": {
+      "too_large": "This file is too large to be an OYNO backup.",
+      "malformed": "This file can't be read. It isn't valid JSON.",
+      "wrong_schema": "This isn't an OYNO learning-data backup.",
+      "newer_version": "This backup was created by a newer OYNO version. Update OYNO and try again.",
+      "invalid": "This backup has damaged or unexpected data, so nothing was imported.",
+      "empty": "This backup has no learning data to import.",
+      "unsupported": "Choosing a file isn't available in this version of the app.",
+      "failed": "The backup couldn't be imported. Nothing was changed."
+    },
+    "domains": {
+      "reading": "Reading progress",
+      "highlights": "Highlights",
+      "collections": "Collections",
+      "mistakes": "Challenge review",
+      "glossary": "Glossary study",
+      "games": "Game records",
+      "komuz": "Komuz favorites",
+      "pathSteps": "Learning path steps",
+      "listening": "Listening history",
+      "bookmarks": "Audio bookmarks",
+      "weeklyGoal": "Weekly goal"
+    },
+    "syncDomains": {
+      "reading": "Reading progress",
+      "highlights": "Highlights",
+      "collections": "Collections",
+      "mistakes": "Challenge review",
+      "glossary_study": "Glossary study",
+      "glossary_sessions": "Glossary sessions",
+      "game_records": "Game records",
+      "komuz_favorites": "Komuz favorites",
+      "path_steps": "Learning path steps",
+      "listening_history": "Listening history",
+      "audio_bookmarks": "Audio bookmarks",
+      "weekly_goal": "Weekly goal"
+    },
+    "skippedDeleted_few": "{{count}} deleted earlier, not restored",
+    "skippedDeleted_many": "{{count}} deleted earlier, not restored"
   }
 }

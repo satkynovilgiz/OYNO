@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { NotFoundState } from '@/components/system/NotFoundState';
 import { ChallengeRunScreen } from '@/features/challenges/ChallengeRunScreen';
 import { regionForChallengeId } from '@/features/challenges/regionalChallenges';
+import { topicFromChallengeId } from '@/features/challenges/topics/topicQuizzes';
 import type { RegionExperienceConfig } from '@/features/explore/regions/regionExperiences';
 import { useRegionExperiences } from '@/features/explore/regions/useRegionExperiences';
 import { getCollection } from '@/features/collections/collectionsData';
@@ -14,6 +15,7 @@ export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteEr
 function isKnownChallenge(challengeId: string, regions: readonly RegionExperienceConfig[]): boolean {
   if (challengeId === 'daily' || challengeId === 'journey') return true;
   if (challengeId.startsWith('region-')) return !!regionForChallengeId(challengeId, regions);
+  if (challengeId.startsWith('topic-')) return !!topicFromChallengeId(challengeId);
   return challengeId.startsWith('collection-') && !!getCollection(challengeId.slice('collection-'.length));
 }
 

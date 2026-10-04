@@ -19,6 +19,8 @@ import { CoverageBadges, VerificationBadge } from './components/StatusBadges';
 import { TranslationsPanel } from './components/TranslationsPanel';
 import { rowToFormValues, type AdminFieldConfig, type AdminRow, type AdminSectionConfig } from './sections';
 import { useAdminCatalog, useAdminReviewNotes, useAdminTranslations } from './useAdminData';
+import { REVISION_SECTIONS } from './revisions/revisionModel';
+import { RevisionScaffold } from './revisions/RevisionWorkflow';
 
 const IMAGE_UPLOAD_SECTIONS = {
   culture_items: pickAndUploadCultureItemImage,
@@ -237,6 +239,42 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
     const contentId = isNew ? '' : String(editingRow[section.idField] ?? '');
     const currentRow = valuesToRow(section, formValues);
     const canSave = (isDirty(initialValues, formValues) || isNew) && !saveMutation.isPending;
+    const revisionType = REVISION_SECTIONS[section.id];
+    const editorSections = (
+      <>
+        {section.id in IMAGE_UPLOAD_SECTIONS && !isNew ? (
+          <Section title="Photo">
+            {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.imagePreview} contentFit="cover" accessibilityLabel="Current photo" /> : <Text style={styles.muted}>No uploaded photo - the app shows the bundled photo for this id, if any.</Text>}
+            {imageError ? <Text style={styles.error}>{imageError}</Text> : null}
+            <Button label={imageUrl ? 'Replace photo' : 'Upload photo'} variant="secondary" onPress={handleUploadImage} loading={isUploadingImage} />
+          </Section>
+        ) : null}
+
+        <Section title={section.contentType ? 'Kyrgyz content (canonical)' : 'Fields'}>
+          {section.fields.map((field) => (
+            <FieldInput key={field.key} field={field} value={formValues[field.key] ?? ''} onChange={(v) => setFormValues((prev) => ({ ...prev, [field.key]: v }))} />
+          ))}
+        </Section>
+
+        {section.contentType && !isNew ? (
+          <Section title="Translations (RU / EN)">
+            <TranslationsPanel contentType={section.contentType} contentId={contentId} row={currentRow} translations={translations ?? []} fieldLabel={fieldLabel} onDirtyChange={setTranslationDirty} />
+          </Section>
+        ) : null}
+
+        {reviewNoteType && !isNew ? (
+          <Section title="Verification review">
+            <ReviewNotePanel contentType={reviewNoteType} contentId={contentId} notes={reviewNotes ?? []} onDirtyChange={setNoteDirty} />
+          </Section>
+        ) : null}
+
+        {section.contentType ? (
+          <Section title="Preview (as readers see it)">
+            <ContentPreviewPanel contentType={section.contentType} row={{ ...currentRow, id: contentId }} translations={translations ?? []} fieldLabel={fieldLabel} />
+          </Section>
+        ) : null}
+      </>
+    );
     return (
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -247,47 +285,42 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
           <View style={{ width: 44 }} />
         </View>
 
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 96 }]} keyboardShouldPersistTaps="handled">
-          {section.id in IMAGE_UPLOAD_SECTIONS && !isNew ? (
-            <Section title="Photo">
-              {imageUrl ? <Image source={{ uri: imageUrl }} style={styles.imagePreview} contentFit="cover" accessibilityLabel="Current photo" /> : <Text style={styles.muted}>No uploaded photo - the app shows the bundled photo for this id, if any.</Text>}
-              {imageError ? <Text style={styles.error}>{imageError}</Text> : null}
-              <Button label={imageUrl ? 'Replace photo' : 'Upload photo'} variant="secondary" onPress={handleUploadImage} loading={isUploadingImage} />
-            </Section>
-          ) : null}
-
-          <Section title={section.contentType ? 'Kyrgyz content (canonical)' : 'Fields'}>
-            {section.fields.map((field) => (
-              <FieldInput key={field.key} field={field} value={formValues[field.key] ?? ''} onChange={(v) => setFormValues((prev) => ({ ...prev, [field.key]: v }))} />
-            ))}
-          </Section>
-
-          {section.contentType && !isNew ? (
-            <Section title="Translations (RU / EN)">
-              <TranslationsPanel contentType={section.contentType} contentId={contentId} row={currentRow} translations={translations ?? []} fieldLabel={fieldLabel} onDirtyChange={setTranslationDirty} />
-            </Section>
-          ) : null}
-
-          {reviewNoteType && !isNew ? (
-            <Section title="Verification review">
-              <ReviewNotePanel contentType={reviewNoteType} contentId={contentId} notes={reviewNotes ?? []} onDirtyChange={setNoteDirty} />
-            </Section>
-          ) : null}
-
-          {section.contentType ? (
-            <Section title="Preview (as readers see it)">
-              <ContentPreviewPanel contentType={section.contentType} row={{ ...currentRow, id: contentId }} translations={translations ?? []} fieldLabel={fieldLabel} />
-            </Section>
-          ) : null}
-        </ScrollView>
-
-        {/* Save bar stays reachable above the keyboard. */}
-        <View style={[styles.saveBar, { paddingBottom: insets.bottom + spacing.sm }]}>
-          <Text style={[styles.saveState, saveState.kind === 'error' && styles.error]} numberOfLines={3} accessibilityLiveRegion="polite">
-            {saveMutation.isPending ? 'Saving…' : saveState.kind === 'saved' && !isDirty(initialValues, formValues) ? 'Saved.' : saveState.kind === 'error' ? saveState.message : isDirty(initialValues, formValues) ? 'Unsaved changes' : ''}
-          </Text>
-          <Button label={isNew ? 'Create' : 'Save'} onPress={handleSave} loading={saveMutation.isPending} disabled={!canSave} />
-        </View>
+        {revisionType ? (
+          <RevisionScaffold
+            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 160 }]}
+            section={section}
+            type={revisionType}
+            contentId={contentId}
+            isNew={isNew}
+            values={formValues}
+            liveValues={initialValues}
+            translations={translations ?? []}
+            fieldLabel={fieldLabel}
+            onPublished={(values) => {
+              setInitialValues(values);
+              if (isNew) setEditingRow({ ...valuesToRow(section, values) });
+            }}
+            onReplaceValues={(values, asLive) => {
+              setFormValues(values);
+              if (asLive) setInitialValues(values);
+            }}
+          >
+            {editorSections}
+          </RevisionScaffold>
+        ) : (
+          <>
+            <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 96 }]} keyboardShouldPersistTaps="handled">
+              {editorSections}
+            </ScrollView>
+            {/* Save bar stays reachable above the keyboard. */}
+            <View style={[styles.saveBar, { paddingBottom: insets.bottom + spacing.sm }]}>
+              <Text style={[styles.saveState, saveState.kind === 'error' && styles.error]} numberOfLines={3} accessibilityLiveRegion="polite">
+                {saveMutation.isPending ? 'Saving…' : saveState.kind === 'saved' && !isDirty(initialValues, formValues) ? 'Saved.' : saveState.kind === 'error' ? saveState.message : isDirty(initialValues, formValues) ? 'Unsaved changes' : ''}
+              </Text>
+              <Button label={isNew ? 'Create' : 'Save'} onPress={handleSave} loading={saveMutation.isPending} disabled={!canSave} />
+            </View>
+          </>
+        )}
         {leaveModal}
       </KeyboardAvoidingView>
     );

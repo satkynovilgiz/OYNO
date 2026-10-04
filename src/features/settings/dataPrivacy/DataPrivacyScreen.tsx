@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { BookOpenText, Download, HardDrive, Headphones, NotebookPen, RefreshCw, RotateCcw, Trash2, UserX } from 'lucide-react-native';
+import { BookOpenText, Download, FileUp, HardDrive, Headphones, NotebookPen, RefreshCw, RotateCcw, Trash2, UserX } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -172,6 +172,7 @@ export function DataPrivacyScreen({ onPressBack }: { onPressBack: () => void }) 
           <SettingsRow icon={Headphones} label={t('dataPrivacy.clearHistory')} subtitle={t('dataPrivacy.counts.history', { count: historyCount })} onPress={() => setConfirm('history')} />
           <SettingsRow icon={RotateCcw} label={t('dataPrivacy.resetLearning')} destructive onPress={() => setConfirm('reset')} />
           {learningExportSupported() ? <SettingsRow icon={Download} label={t('dataPrivacy.export')} onPress={() => setConfirm('export')} /> : null}
+          <SettingsRow icon={FileUp} label={t('dataImport.title')} onPress={() => router.push('/settings/data-privacy/import' as never)} />
         </SettingsSection>
         {!learningExportSupported() ? <Text style={styles.meta}>{t('dataPrivacy.exportUnsupported')}</Text> : null}
 

@@ -36,6 +36,7 @@ import { track } from '@/services/analytics/analytics';
 import { ownerMistakes, useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
 import { reviewQueue, wrongIdsOf } from './mistakes/mistakesModel';
 import { questionExists } from './mistakes/questionExists';
+import { topicFromChallengeId, topicQuestionIds, topicResultKey, type ValidationContext } from './topics/topicQuizzes';
 import { getQuestion, questionReviewLevel, routeForSource, type ChallengeOption, type ChallengeQuestion, type OptionImageRef } from './questionBank';
 
 function imageFor(ref: OptionImageRef | undefined): ImageSourcePropType | null {
@@ -109,8 +110,20 @@ export function ChallengeRunScreen({
   const today = localDateKey();
   const collection: Collection | undefined = challengeId.startsWith('collection-') ? getCollection(challengeId.slice('collection-'.length)) : undefined;
   const region = regionForChallengeId(challengeId, useRegionExperiences());
-  const resultKey = challengeId === 'daily' ? `daily:${today}` : collection ? `collection:${collection.id}` : region ? regionalResultKey(region.id) : 'journey';
+  // Culture Topic Quiz (/challenges/topic-<id>): same engine, its own result
+  // key - never the Daily Challenge or a collection's score.
+  const topic = topicFromChallengeId(challengeId);
+  const resultKey = topic
+    ? topicResultKey(topic.id)
+    : challengeId === 'daily'
+      ? `daily:${today}`
+      : collection
+        ? `collection:${collection.id}`
+        : region
+          ? regionalResultKey(region.id)
+          : 'journey';
 
+  const [round, setRound] = useState(0);
   const questions = useMemo<ChallengeQuestion[]>(() => {
     if (!storeLoaded) return [];
     let ids: string[] = [];
@@ -119,7 +132,23 @@ export function ChallengeRunScreen({
         .map((record) => record.questionId)
         .filter((id) => !quick?.only || quick.only.includes(id))
         .slice(0, quick?.limit ?? Number.MAX_SAFE_INTEGER);
-    else if (challengeId === 'daily') {
+    else if (topic) {
+      // Only validated questions are playable; a source known to be missing
+      // (content loaded, field empty) is dropped, an unknown one (offline)
+      // keeps the bundled question.
+      const ctx: ValidationContext = {
+        getQuestion,
+        hasKey: (key) => i18n.exists(key),
+        contentField: (type, id, field) => {
+          const rows = type === 'culture_material' ? materials : type === 'culture_item' ? cultureItems : undefined;
+          if (!rows) return undefined;
+          const row = (rows as { id: string }[]).find((candidate) => candidate.id === id) as Record<string, unknown> | undefined;
+          if (!row) return null;
+          return typeof row[field] === 'string' ? (row[field] as string) : null;
+        },
+      };
+      ids = topicQuestionIds(topic, ctx, useChallengeStore.getState().results[resultKey]?.attempts ?? 0, experience);
+    } else if (challengeId === 'daily') {
       const count = experience === 'child' ? CHILD_DAILY_QUESTION_COUNT : DAILY_QUESTION_COUNT;
       // Pure during render; today's identity is persisted in the effect below.
       ids = useChallengeStore.getState().storedDailyIds(today) ?? pickDailyQuestionIds(today, count);
@@ -127,26 +156,36 @@ export function ChallengeRunScreen({
     else if (region) ids = regionalChallengeQuestionIds(region);
     else if (challengeId === 'journey') ids = journeyQuestionIds(visitedRegionIds, Object.values(dailyCompletions));
     return ids.map(getQuestion).filter((question): question is ChallengeQuestion => !!question);
-    // Fixed for the session once chosen.
+    // Fixed for the session once chosen (a topic retake starts a new round).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeLoaded, challengeId]);
+  }, [storeLoaded, challengeId, round]);
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
+  function retake() {
+    setIndex(0);
+    setAnswers([]);
+    setSelected(null);
+    setFinished(false);
+    setRound(round + 1);
+  }
 
   useEffect(() => {
     if (questions.length === 0 || isReview) return;
     if (challengeId === 'daily') useChallengeStore.getState().dailyQuestionIds(today, () => questions.map((question) => question.id));
     useChallengeStore.getState().start(resultKey);
+    if (topic) track('topic_quiz_started', { topic_id: topic.id, question_count: questions.length });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions.length, resultKey]);
+  }, [questions, resultKey]);
 
   const regionRow = region ? regions?.find((row) => row.id === region.id) : undefined;
   const regionName = regionRow ? (mapExploreRegionName(regionRow)[language] ?? regionRow.name_kg) : '';
   const title = isReview
     ? t('challenges.review.title')
+    : topic
+      ? t(topic.titleKey)
     : challengeId === 'daily'
       ? t('challenges.daily.title')
       : collection
@@ -224,6 +263,7 @@ export function ChallengeRunScreen({
               {correct}
               <Text style={styles.resultScoreTotal}> / {total}</Text>
             </Text>
+            {topic ? <Text style={styles.resultBody}>{t('topicQuiz.result', { correct, total })}</Text> : null}
             {perfect && !isReview ? <Text style={styles.resultPerfect}>{t('challenges.v2.perfectTitle')}</Text> : null}
             <Text style={styles.resultBody}>{resultMessage}</Text>
             {isReview ? null : (
@@ -309,6 +349,13 @@ export function ChallengeRunScreen({
           <View style={styles.primary}>
             {isReview && quick ? (
               <Button label={quick.nextLabel} size="lg" block onPress={quick.onNext} />
+            ) : topic ? (
+              <>
+                {correct < total ? <Button label={t('topicQuiz.reviewMistakes')} size="lg" block onPress={() => router.push('/challenges/review' as never)} /> : null}
+                <Button label={t('topicQuiz.readAgain')} variant="secondary" size="lg" block onPress={() => router.push(topic.readAgainRoute as never)} />
+                <Button label={t('topicQuiz.retake')} variant="secondary" size="lg" block onPress={retake} />
+                <Button label={t('topicQuiz.done')} variant="secondary" size="lg" block onPress={() => (router.canGoBack() ? router.back() : router.replace('/culture/quizzes' as never))} />
+              </>
             ) : isReview ? (
               <>
                 {reviewRemaining > 0 ? <Button label={t('challenges.review.again')} size="lg" block onPress={() => router.replace('/challenges/review' as never)} /> : null}
@@ -367,6 +414,8 @@ export function ChallengeRunScreen({
         // Only a FINISHED normal run records mistakes - an abandoned one
         // never reaches this line.
         useChallengeMistakesStore.getState().recordAttempt(owner, wrongIdsOf(questions, answers));
+        // Completion = final submission only (opening a quiz is not completion).
+        if (topic) track('topic_quiz_completed', { topic_id: topic.id, question_count: score.total });
       }
       if (score.total > 0 && score.correct === score.total && Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
       setFinished(true);

@@ -7,6 +7,8 @@
  * wrong options are simply other answers, not asserted facts.
  * `questionBank.test.ts` checks every id, source and translation.
  */
+import { TOPIC_QUESTIONS } from './topics/topicQuizzes';
+
 export type QuestionSourceType = 'culture_item' | 'culture_material' | 'destination';
 export type QuestionKind = 'multiple' | 'image' | 'trueFalse';
 
@@ -104,8 +106,10 @@ export const QUESTION_BANK: ChallengeQuestion[] = [
   },
 ];
 
+/** Any question: the shared bank or a Culture Topic Quiz question (those
+ * stay out of QUESTION_BANK so Daily/collection challenges never change). */
 export function getQuestion(id: string): ChallengeQuestion | undefined {
-  return QUESTION_BANK.find((question) => question.id === id);
+  return QUESTION_BANK.find((question) => question.id === id) ?? TOPIC_QUESTIONS.find((question) => question.id === id);
 }
 
 /** The EXISTING screen for a question's source ("Learn more"). */

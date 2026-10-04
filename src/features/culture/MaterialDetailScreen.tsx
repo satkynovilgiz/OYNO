@@ -17,6 +17,7 @@ import { track } from '@/services/analytics/analytics';
 import type { SupportedLanguage } from '@/i18n';
 import { materialNarration } from '@/services/audioGuide/contentNarration';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
+import { TopicQuizLink } from '@/features/culture/components/ArticleParts';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
@@ -166,6 +167,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
           )}
 
           {material.body ? <ReadingActions tracker={reading} /> : null}
+          <TopicQuizLink type="culture_material" id={material.id} />
           <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} contentId={material.id} />
           <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
         </View>

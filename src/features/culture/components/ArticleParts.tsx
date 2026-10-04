@@ -6,6 +6,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, MediaCard, Rail, SectionHeader, useRailItemWidth } from '@/components/ui';
 import { collectionQuestionIds } from '@/features/challenges/challengeLogic';
+import { getQuestion } from '@/features/challenges/questionBank';
+import { topicRoute, topicsForContent } from '@/features/challenges/topics/topicQuizzes';
 import { collections, type Collection } from '@/features/collections/collectionsData';
 import type { SupportedLanguage } from '@/i18n';
 import { useCultureItems } from '@/services/content/cultureItemsService';
@@ -33,15 +35,16 @@ export function challengeCollectionFor(itemId: string): Collection | null {
 }
 
 /** Subtle "Test your knowledge" row - secondary to reading. */
-export function KnowledgeCheckLink({ meta, route }: { meta: string; route: string }) {
+export function KnowledgeCheckLink({ meta, route, title }: { meta: string; route: string; title?: string }) {
   const { t } = useTranslation();
+  const heading = title ?? t('culture.v2.testKnowledge');
   return (
-    <AnimatedPressable style={styles.test} onPress={() => router.push(route as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${t('culture.v2.testKnowledge')}. ${meta}`}>
+    <AnimatedPressable style={styles.test} onPress={() => router.push(route as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${heading}. ${meta}`}>
       <View style={styles.testIcon}>
         <GraduationCap size={18} color={colors.primary} strokeWidth={2.25} />
       </View>
       <View style={styles.testText}>
-        <Text style={styles.testTitle}>{t('culture.v2.testKnowledge')}</Text>
+        <Text style={styles.testTitle}>{heading}</Text>
         <Text style={styles.testMeta} numberOfLines={1}>
           {meta}
         </Text>
@@ -56,6 +59,14 @@ export function TestKnowledgeLink({ collection }: { collection: Collection }) {
   const title = collection.title[i18n.language as SupportedLanguage] ?? collection.title.kg;
   const count = collectionQuestionIds(collection).length;
   return <KnowledgeCheckLink meta={`${title} · ${t('challenges.questionCount', { count })}`} route={`/challenges/collection-${collection.id}`} />;
+}
+
+/** "Test what you learned" - only when a real Topic Quiz tests this content. */
+export function TopicQuizLink({ type, id }: { type: 'culture_item' | 'culture_material'; id: string }) {
+  const { t } = useTranslation();
+  const topic = topicsForContent(type, id, getQuestion)[0];
+  if (!topic) return null;
+  return <KnowledgeCheckLink title={t('topicQuiz.testWhatYouLearned')} meta={`${t(topic.titleKey)} · ${t('challenges.questionCount', { count: topic.questions.length })}`} route={topicRoute(topic.id)} />;
 }
 
 /** "Keep reading": other real items from the same category (the existing

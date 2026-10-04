@@ -29,11 +29,18 @@ export type LearningExportInput = {
 };
 
 export const EXPORT_FORMAT = 'oyno-learning-data/1';
+/** Explicit schema + version (read back by learningImport.ts). */
+export const EXPORT_SCHEMA = 'oyno-learning-export';
+export const LEARNING_EXPORT_VERSION = 1 as const;
+export const EXPORT_DOMAINS = ['readingProgress', 'highlights', 'collections', 'challengeReview', 'glossaryStudy', 'gameRecords', 'komuzFavorites', 'learningPathSteps', 'listening', 'weeklyGoal'] as const;
 
 export function buildLearningExport(input: LearningExportInput, now: Date): Record<string, unknown> {
   return {
     format: EXPORT_FORMAT,
+    schema: EXPORT_SCHEMA,
+    version: LEARNING_EXPORT_VERSION,
     exportedAt: now.toISOString(),
+    domains: EXPORT_DOMAINS,
     readingProgress: Object.values(input.reading).map(({ contentType, contentId, furthest, lastReadAt, completedAt }) => ({ contentType, contentId, furthest, lastReadAt, completedAt })),
     highlights: Object.values(input.highlights).map(({ contentType, contentId, sectionKey, language, titleSnapshot, excerptSnapshot, note, createdAt, updatedAt }) => ({ contentType, contentId, sectionKey, language, title: titleSnapshot, passage: excerptSnapshot, note, createdAt, updatedAt })),
     collections: input.collections.collections.map((collection) => ({

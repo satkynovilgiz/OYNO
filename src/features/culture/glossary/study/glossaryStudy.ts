@@ -35,7 +35,7 @@ function seeded(seed: number): () => number {
   };
 }
 
-function shuffled<T>(list: readonly T[], seed: number): T[] {
+export function shuffled<T>(list: readonly T[], seed: number): T[] {
   const random = seeded(seed);
   const copy = [...list];
   for (let i = copy.length - 1; i > 0; i--) {

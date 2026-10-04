@@ -1,7 +1,7 @@
 import type { Collection } from '@/features/collections/collectionsData';
 import { dayNumber } from '@/services/daily/dailyDiscovery';
 
-import { QUESTION_BANK, type ChallengeQuestion } from './questionBank';
+import { getQuestion, QUESTION_BANK, type ChallengeQuestion } from './questionBank';
 
 /**
  * Pure challenge assembly. Challenge progress is its own record (see
@@ -58,9 +58,10 @@ export function journeyQuestionIds(visitedRegionIds: string[], completedDailyIte
 
 export type AnswerRecord = { questionId: string; optionId: string };
 
-export function scoreAnswers(answers: AnswerRecord[], bank: ChallengeQuestion[] = QUESTION_BANK): { correct: number; total: number } {
-  const byId = new Map(bank.map((question) => [question.id, question]));
-  const correct = answers.filter((answer) => byId.get(answer.questionId)?.correctOptionId === answer.optionId).length;
+export function scoreAnswers(answers: AnswerRecord[], bank?: ChallengeQuestion[]): { correct: number; total: number } {
+  // Default: any known question - the shared bank AND Culture Topic Quiz questions.
+  const find = bank ? (id: string) => bank.find((question) => question.id === id) : getQuestion;
+  const correct = answers.filter((answer) => find(answer.questionId)?.correctOptionId === answer.optionId).length;
   return { correct, total: answers.length };
 }
 
