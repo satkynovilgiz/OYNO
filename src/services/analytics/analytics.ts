@@ -56,6 +56,8 @@ export type AnalyticsEventName =
   | 'culture_then_now_opened'
   | 'culture_compare_opened'
   | 'privacy_center_opened'
+  | 'source_explorer_opened'
+  | 'external_source_opened'
   | 'pronunciation_practice_opened'
   | 'pronunciation_record_started'
   | 'pronunciation_practice_completed'

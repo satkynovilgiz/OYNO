@@ -317,7 +317,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
           {challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
-          <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
+          <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
           <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />
         </View>
 

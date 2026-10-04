@@ -54,7 +54,7 @@ describe('Culture Then & Now', () => {
   });
 
   it('verification and sources are the item’s own, unchanged (same SourcesAndNotes)', () => {
-    expect(source('ThenAndNowScreen.tsx')).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} \/>/);
+    expect(source('ThenAndNowScreen.tsx')).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} contentId=\{item\.id\} \/>/);
   });
 
   it('localization fallback: Kyrgyz body under RU/EN headings always carries the existing note', () => {

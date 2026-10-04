@@ -72,7 +72,7 @@ describe('Culture Compare', () => {
 
   it('each side keeps its own verification and sources (never merged)', () => {
     const source = fs.readFileSync(path.join(__dirname, 'CultureCompareScreen.tsx'), 'utf8');
-    expect(source.match(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} \/>/g)).toHaveLength(1);
+    expect(source.match(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} contentId=\{item\.id\} \/>/g)).toHaveLength(1);
     expect(source).toMatch(/\[left, right\]\.map\(\(item\) => \(\s*<View key=\{`more-/);
     expect(source).toMatch(/verificationCopyKey\(normalizeVerification\(item\.accuracy_level\)\)/);
   });

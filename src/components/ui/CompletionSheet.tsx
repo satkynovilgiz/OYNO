@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotify } from '@/services/comfort/haptics';
 import { type ReactNode, useEffect } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -48,8 +48,8 @@ export function CompletionSheet({ visible, children, haptic = 'success' }: Compl
       scale.value = withTiming(1, { duration: 320 });
       opacity.value = withTiming(1, { duration: 260 });
     }
-    if (haptic === 'success') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    else if (haptic === 'light') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (haptic === 'success') void hapticNotify('success').catch(() => {});
+    else if (haptic === 'light') void hapticImpact('light').catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as Haptics from 'expo-haptics';
+import { hapticNotify } from '@/services/comfort/haptics';
 import { AccessibilityInfo, Image, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -38,7 +38,7 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
   useEffect(() => {
     if (!achievement) return;
     // One success tap per real unlock (the modal shows only for new ones).
-    if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    if (Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
     AccessibilityInfo.announceForAccessibility?.(`${t('profile.achievements.unlockedTitle')} ${t(achievement.titleKey)}`);
 
     // Reduce Motion: show the badge and a steady glow at once - no spring,

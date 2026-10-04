@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History } from 'lucide-react-native';
+import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, MessageSquareWarning } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -34,8 +34,10 @@ import { AchievementsPreviewCard, FavoriteGamesCard, ProfileCollectionRow, Profi
 import { achievementsTotal, getCollectionItems, profileAchievements } from './data';
 import { getProfileSectionOrder, type ProfileSectionId } from './profileSections';
 import type { FavoriteGame, ProfileSummary } from './types';
+import { useShowMyReports } from '@/features/reports/MyReportsScreen';
 
 export function ProfileScreen() {
+  const showMyReports = useShowMyReports();
   useTrackScreenView('profile');
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -149,6 +151,8 @@ export function ProfileScreen() {
               { route: '/profile/weekly-goal', icon: Target, title: t('weeklyGoal.title'), meta: t('weeklyGoal.profileMeta') },
               { route: '/profile/listening', icon: Headphones, title: t('listening.title'), meta: t('listening.profileMeta') },
               { route: '/profile/recap', icon: Sparkles, title: t('recap.title'), meta: t('recap.allTime') },
+              // Signed-in only: guest reports are anonymous.
+              ...(showMyReports ? [{ route: '/profile/reports', icon: MessageSquareWarning, title: t('myReports.title'), meta: t('myReports.profileMeta') }] : []),
             ].map((entry) => (
               <AnimatedPressable
                 key={entry.route}

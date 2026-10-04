@@ -3851,5 +3851,138 @@
     "unusedCount_many": "{{count}} unused files",
     "cleanupPreview_few": "{{count}} unused files will be removed. They aren't needed by any of your downloads.",
     "cleanupPreview_many": "{{count}} unused files will be removed. They aren't needed by any of your downloads."
+  },
+  "culturalCalendar": {
+    "title": "Cultural Calendar",
+    "entryMeta": "Dates from OYNO's sourced stories",
+    "intro": "Only dates stated in OYNO's authored, sourced stories. Each date shows the text it comes from and that story's review status.",
+    "today": "Today",
+    "soon": "Coming up",
+    "thisMonth": "This month",
+    "upcoming": "Upcoming",
+    "all": "All cultural dates",
+    "related": "Related stories",
+    "dateNotConfirmed": "Date not confirmed",
+    "remindMe": "Remind me",
+    "reminderOn": "Reminder on - tap to turn off",
+    "reminderOff": "Reminder turned off.",
+    "notFound": "This date isn't available.",
+    "remind": {
+      "scheduled": "We'll remind you on the morning of this date.",
+      "denied": "Notifications are off for OYNO. You can turn them on in your device settings.",
+      "unavailable": "Reminders aren't available here.",
+      "past": "This date has already passed this year."
+    },
+    "events": {
+      "world-kalpak-day": "World Kalpak Day",
+      "kok-boru-federation": "Kok Boru International Federation founded (2001)"
+    }
+  },
+  "comfort": {
+    "title": "Accessibility & Comfort",
+    "rowSubtitle": "Motion, haptics, control size, contrast",
+    "intro": "These settings work together with your device's accessibility settings. They stay on this device.",
+    "motionTitle": "Motion",
+    "reduceMotion": "Reduce motion",
+    "onBySystem": "On in your device settings",
+    "systemMotionOn": "Reduce Motion is on in your device settings, so OYNO keeps motion calm either way.",
+    "motionFooter": "Calmer transitions and no decorative animation. Game physics don't change.",
+    "hapticsTitle": "Haptics",
+    "haptics": {
+      "standard": "Standard",
+      "reduced": "Reduced",
+      "off": "Off"
+    },
+    "hapticsHint": {
+      "standard": "Taps and confirmations can vibrate.",
+      "reduced": "Only important confirmations vibrate (success, warning).",
+      "off": "No vibration anywhere in OYNO, games included."
+    },
+    "largerControls": "Larger controls",
+    "largerFooter": "Bigger touch areas for buttons, icon buttons and chips. Layouts keep their size.",
+    "largerChildNote": "Bigger touch areas - the child experience stays the same.",
+    "highContrast": "Higher contrast",
+    "contrastFooter": "Darker secondary text, clearer borders and chips - same OYNO colours.",
+    "restartNeeded": "Contrast changes apply after OYNO restarts.",
+    "restartNow": "Restart now",
+    "readingTitle": "Reading",
+    "readingSettings": "Reading settings",
+    "readingSubtitle": "Text size, line spacing, focus mode",
+    "reset": "Reset accessibility settings",
+    "resetFooter": "Resets the settings on this screen only. Age mode, language and Reading settings stay as they are."
+  },
+  "whatsNew": {
+    "title": "What's New",
+    "new": "New",
+    "recentlyUpdated": "Recently updated",
+    "newStory": "New story",
+    "updatedOn": "Updated on {{date}}",
+    "updated": "Updated",
+    "count_one": "{{count}} new update",
+    "count_other": "{{count}} new updates",
+    "upToDate": "You're up to date",
+    "upToDateBody": "New and updated stories will appear here with the date they really changed.",
+    "count_few": "{{count}} new updates",
+    "count_many": "{{count}} new updates"
+  },
+  "myReports": {
+    "title": "My Reports",
+    "profileMeta": "Status of the feedback you sent",
+    "submitted": "Submitted",
+    "content": "Content",
+    "contentUnavailable": "Content unavailable",
+    "status": {
+      "received": "Received",
+      "under_review": "Under review",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "category": {
+      "bug": "Bug",
+      "translation": "Translation",
+      "culture_correction": "Cultural correction",
+      "image": "Image",
+      "suggestion": "Suggestion",
+      "other": "Other",
+      "ui": "Design",
+      "content": "Content",
+      "performance": "Performance"
+    },
+    "contentType": {
+      "explore_region": "A place",
+      "discovery": "A discovery",
+      "collection": "A collection",
+      "trail": "A trail",
+      "game": "A game"
+    },
+    "empty": "No reports yet",
+    "needHelp": "Need help?",
+    "sendFeedback": "Send feedback",
+    "signedOut": "Sign in to see reports you sent from your account. Reports sent as a guest are anonymous.",
+    "unavailable": "Report status isn't available yet.",
+    "loadError": "Your reports couldn't be loaded. Try again later."
+  },
+  "sourceExplorer": {
+    "title": "Sources",
+    "whyThisStatus": "Why this status?",
+    "whyTitle": "Why this status?",
+    "sources": "Sources",
+    "level": {
+      "verified": "Verified",
+      "partially_verified": "Partially verified",
+      "unverified": "Review incomplete"
+    },
+    "why": {
+      "verified": "This story has been reviewed against the sources listed below.",
+      "partially_verified": "Some claims still need additional review. The sources below support parts of this story.",
+      "unverified": "Review is incomplete. Read this story as a starting point, not a checked fact."
+    },
+    "supports": "Supports",
+    "supportsWhole": "Supports: this story as a whole (no section-by-section record)",
+    "openSource": "Open source",
+    "externalWebsite": "External website",
+    "sourceUnavailable": "Source unavailable",
+    "offlineNote": "Opening a source needs an internet connection.",
+    "footnote": "A source being listed doesn't mean it proves every sentence. OYNO doesn't change a story's status automatically."
   }
 }

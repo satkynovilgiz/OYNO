@@ -166,7 +166,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
           )}
 
           {material.body ? <ReadingActions tracker={reading} /> : null}
-          <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} />
+          <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} contentId={material.id} />
           <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
         </View>
       </ScrollView>

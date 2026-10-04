@@ -45,7 +45,7 @@ describe('Reader controls', () => {
   });
 
   it('focus mode never hides Sources, verification or Report', () => {
-    expect(detail).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} \/>/);
+    expect(detail).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} contentId=\{item\.id\} \/>/);
     expect(detail).toMatch(/<ReportIssueLink contentType="culture_item"/);
     expect(detail).toMatch(/hasRemainingGallery && !reader\.focusMode/);
     expect(detail).toMatch(/reader\.focusMode \? null : <RelatedItemsRail/);

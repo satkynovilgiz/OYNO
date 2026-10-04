@@ -25,6 +25,13 @@ export type CultureMaterialRow = {
   accuracy_level: CultureAccuracyLevel;
   sources: string[] | null;
   image_url: string | null;
+  /** 20261003000001_content_publication_timestamps.sql - set by the
+   * database from that migration on; NULL/absent = unknown (never shown as
+   * new). content_updated_at changes only with authored text. */
+  published_at?: string | null;
+  content_updated_at?: string | null;
+  /** Optional admin-authored changelog line (never generated). */
+  update_note?: string | null;
   /** Set by the localized content hooks (localizedContent.ts) - which
    * language this row's text is actually in. Absent on raw DB rows. */
   translation?: TranslationMeta;
@@ -106,6 +113,13 @@ export type CultureItemRow = {
    * which case the bundled cultureItemImages lookup (data.ts) is still
    * used as the fallback. */
   image_url: string | null;
+  /** 20261003000001_content_publication_timestamps.sql - set by the
+   * database from that migration on; NULL/absent = unknown (never shown as
+   * new). content_updated_at changes only with authored text. */
+  published_at?: string | null;
+  content_updated_at?: string | null;
+  /** Optional admin-authored changelog line (never generated). */
+  update_note?: string | null;
   /** Set by the localized content hooks (localizedContent.ts) - which
    * language this row's text is actually in. Absent on raw DB rows. */
   translation?: TranslationMeta;

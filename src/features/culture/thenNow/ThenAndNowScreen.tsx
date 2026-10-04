@@ -73,7 +73,7 @@ export function ThenAndNowScreen({ item, image, onPressBack }: { item: CultureIt
               <OymoOrnament size={16} color={colors.accentGold} strokeWidth={1.5} />
             </View>
             <Block tone="now" heading={t(`thenNow.now.${headingKey}`)} parts={model.now} />
-            <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
+            <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
             <View style={styles.relatedBleed}>
               <RelatedItemsRail item={item} />
             </View>

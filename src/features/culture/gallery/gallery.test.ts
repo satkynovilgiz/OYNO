@@ -30,7 +30,7 @@ describe('Culture Gallery', () => {
     expect(new Set(entries.map((entry) => entry.key)).size).toBe(entries.length);
     for (const entry of entries) expect(entry.route).toBe(entry.contentType === 'culture_item' ? `/culture/item/${entry.contentId}` : `/culture/material/${entry.contentId}`);
     expect(fs.existsSync(path.join(ROOT, 'src/app/culture/item/[itemId]/index.tsx'))).toBe(true);
-    expect(fs.existsSync(path.join(ROOT, 'src/app/culture/material/[materialId].tsx'))).toBe(true);
+    expect(fs.existsSync(path.join(ROOT, 'src/app/culture/material/[materialId]/index.tsx'))).toBe(true);
   });
 
   it('category filters come from real categories, with current counts and stable order', () => {

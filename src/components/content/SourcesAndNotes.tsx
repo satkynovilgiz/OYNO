@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { BookOpen, ChevronRight, ExternalLink } from 'lucide-react-native';
 import { useState } from 'react';
@@ -9,12 +10,15 @@ import { AnimatedPressable } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
 import { describeSources, normalizeVerification, verificationCopyKey, type SourceInfo } from '@/services/content/verification';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
+import { sourceExplorerRoute } from '@/features/culture/sources/sourceExplorer';
 import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
 type Props = {
   contentType: 'culture_item' | 'culture_material' | 'explore_region';
   level: string | null | undefined;
   sources: readonly string[] | null | undefined;
+  /** When set (culture items/materials), the sheet links to that story's Source Explorer. */
+  contentId?: string;
 };
 
 /**
@@ -24,7 +28,7 @@ type Props = {
  * site shown - OYNO never presents an external page as its own. No review
  * date is shown because none is stored.
  */
-export function SourcesAndNotes({ contentType, level, sources }: Props) {
+export function SourcesAndNotes({ contentType, level, sources, contentId }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const status = normalizeVerification(level);
@@ -53,12 +57,18 @@ export function SourcesAndNotes({ contentType, level, sources }: Props) {
         </View>
         <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
       </AnimatedPressable>
-      <SourcesSheet visible={open} statusKey={verificationCopyKey(status)} sources={list} onClose={() => setOpen(false)} />
+      <SourcesSheet
+        visible={open}
+        statusKey={verificationCopyKey(status)}
+        sources={list}
+        onClose={() => setOpen(false)}
+        explorerRoute={contentId && contentType !== 'explore_region' ? sourceExplorerRoute(contentType, contentId) : null}
+      />
     </>
   );
 }
 
-function SourcesSheet({ visible, statusKey, sources, onClose }: { visible: boolean; statusKey: string; sources: SourceInfo[]; onClose: () => void }) {
+function SourcesSheet({ visible, statusKey, sources, onClose, explorerRoute }: { visible: boolean; statusKey: string; sources: SourceInfo[]; onClose: () => void; explorerRoute: string | null }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -71,6 +81,20 @@ function SourcesSheet({ visible, statusKey, sources, onClose }: { visible: boole
           {t('sources.title')}
         </Text>
         <Text style={styles.status}>{t(statusKey)}</Text>
+        {explorerRoute ? (
+          <AnimatedPressable
+            style={styles.why}
+            onPress={() => {
+              onClose();
+              router.push(explorerRoute as never);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('sourceExplorer.whyThisStatus')}
+          >
+            <Text style={styles.whyText}>{t('sourceExplorer.whyThisStatus')}</Text>
+            <ChevronRight size={16} color={colors.primary} strokeWidth={2} />
+          </AnimatedPressable>
+        ) : null}
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
           {sources.length === 0 ? <Text style={styles.empty}>{t('sources.noneLong')}</Text> : null}
           {sources.map((source) => (
@@ -101,6 +125,8 @@ function SourcesSheet({ visible, statusKey, sources, onClose }: { visible: boole
 }
 
 const styles = StyleSheet.create({
+  why: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, alignSelf: 'flex-start' },
+  whyText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },

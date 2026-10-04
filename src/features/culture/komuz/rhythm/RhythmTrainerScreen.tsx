@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticSelection } from '@/services/comfort/haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +76,7 @@ export function RhythmTrainerScreen({ onPressBack }: { onPressBack: () => void }
       setPhase('playing');
       return;
     }
-    if (!reducedMotion && Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
+    if (!reducedMotion && Platform.OS !== 'web') void hapticSelection().catch(() => {});
     const timer = setTimeout(() => setCount(count - 1), 1000);
     return () => clearTimeout(timer);
   }, [phase, count, chart, clock, reducedMotion]);
@@ -125,7 +125,7 @@ export function RhythmTrainerScreen({ onPressBack }: { onPressBack: () => void }
     const result = judgeTap(chart.beats, round, time);
     setRound(result.round);
     setLastGrade(result.grade ?? 'miss');
-    if (result.grade && !reducedMotion && Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (result.grade && !reducedMotion && Platform.OS !== 'web') void hapticImpact('light').catch(() => {});
   };
 
   const titleOf = (trackId: string) => komuzTracks.find((track) => track.id === trackId);

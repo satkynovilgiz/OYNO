@@ -47,6 +47,7 @@ import { useFavoritesStore } from '@/store/useFavoritesStore';
 import { useNotificationsStore } from '@/store/useNotificationsStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { useComfortStore } from '@/services/comfort/useComfortStore';
 
 // Must run before anything else in this module (route arrays, component
 // bodies) so a crash during boot is still reported, not just crashes that
@@ -86,6 +87,11 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
   const hasChosenLanguage = useAppStore((state) => state.hasChosenLanguage);
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
   const hasChosenAgeGroup = useAppStore((state) => state.hasChosenAgeGroup);
+
+  // Accessibility & Comfort (device-level): motion, haptics, control size.
+  useEffect(() => {
+    void useComfortStore.getState().load();
+  }, []);
 
   // Beta feedback diagnostic trail: which screen is open (sanitized path only).
   useEffect(() => {

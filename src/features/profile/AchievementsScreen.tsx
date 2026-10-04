@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticNotify } from '@/services/comfort/haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, Coins, Gift, Lock, Sparkles } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -74,7 +74,7 @@ export function AchievementsScreen({ unlockedIds, onPressBack }: AchievementsScr
     const ok = await useProgressStore.getState().claimDailyGift();
     setClaiming(false);
     if (ok) {
-      if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      if (Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
       showToast(t('profile.achievements.v2.giftToast', DAILY_GIFT_REWARD));
     }
   }

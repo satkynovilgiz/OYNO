@@ -12,6 +12,7 @@ export type SettingsRowId =
   | 'language'
   | 'appearance'
   | 'homeLayout'
+  | 'accessibility'
   | 'reminders'
   | 'offline'
   | 'game'
@@ -30,7 +31,7 @@ export type AccountState = 'guest' | 'signedIn';
 export function buildSettingsSections(account: AccountState, isAdmin: boolean): { id: SettingsSectionId; rows: SettingsRowId[] }[] {
   const sections: { id: SettingsSectionId; rows: SettingsRowId[] }[] = [
     { id: 'experience', rows: ['experience', 'language'] },
-    { id: 'personalization', rows: ['appearance', 'homeLayout'] },
+    { id: 'personalization', rows: ['appearance', 'homeLayout', 'accessibility'] },
     { id: 'content', rows: ['reminders', 'offline', 'game'] },
     // Security (password) only exists for a real account.
     { id: 'privacy', rows: account === 'signedIn' ? ['privacy', 'security', 'storage'] : ['privacy', 'storage'] },

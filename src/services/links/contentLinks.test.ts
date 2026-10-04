@@ -32,7 +32,7 @@ describe('Shareable Content Links', () => {
     expect(fs.existsSync(path.join(root, 'src/app/open/[type]/[id].tsx'))).toBe(true);
     const fileFor: Record<string, string> = {
       culture_item: 'src/app/culture/item/[itemId]/index.tsx',
-      culture_material: 'src/app/culture/material/[materialId].tsx',
+      culture_material: 'src/app/culture/material/[materialId]/index.tsx',
       glossary: 'src/app/culture/glossary/[id]/index.tsx',
       learning_path: 'src/app/learn/[id].tsx',
       komuz_track: 'src/app/culture/komuz/listen.tsx',

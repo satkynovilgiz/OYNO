@@ -74,7 +74,7 @@ describe('Glossary - runtime behaviour', () => {
   });
 
   it('verification is inherited from the source (same SourcesAndNotes, same level)', () => {
-    expect(source('GlossaryTermScreen.tsx')).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} \/>/);
+    expect(source('GlossaryTermScreen.tsx')).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} contentId=\{item\.id\} \/>/);
   });
 
   it('alternate names come only from authored alt_names (item-title terms)', () => {

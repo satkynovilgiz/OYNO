@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticNotify } from '@/services/comfort/haptics';
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -351,7 +351,7 @@ export function ChallengeRunScreen({
           : t('challenges.incorrect', { answer: optionLabel(question, correctOption, question.options.indexOf(correctOption)) });
     AccessibilityInfo.announceForAccessibility(message);
     // Success tap only for a correct answer - never an "error" buzz.
-    if (optionId === question.correctOptionId && Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    if (optionId === question.correctOptionId && Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
   }
 
   function next() {
@@ -363,7 +363,7 @@ export function ChallengeRunScreen({
         // never reaches this line.
         useChallengeMistakesStore.getState().recordAttempt(owner, wrongIdsOf(questions, answers));
       }
-      if (score.total > 0 && score.correct === score.total && Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      if (score.total > 0 && score.correct === score.total && Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
       setFinished(true);
       return;
     }

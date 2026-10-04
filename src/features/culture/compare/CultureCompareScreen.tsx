@@ -172,7 +172,7 @@ export function CultureCompareScreen({ id, onPressBack }: { id: string; onPressB
             <Text style={styles.sourcesTitle} accessibilityRole="header">
               {item.title}
             </Text>
-            <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
+            <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
             <Button label={t('compare.openStory', { title: item.title })} variant="secondary" block onPress={() => router.push(itemRoute(item.id) as never)} />
           </View>
         ))}

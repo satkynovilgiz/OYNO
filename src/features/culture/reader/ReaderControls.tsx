@@ -35,7 +35,7 @@ export function ReaderButton({ isChild, elevated }: { isChild: boolean; elevated
   );
 }
 
-function ReaderSettingsSheet({ isChild, onClose }: { isChild: boolean; onClose: () => void }) {
+export function ReaderSettingsSheet({ isChild, onClose }: { isChild: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();

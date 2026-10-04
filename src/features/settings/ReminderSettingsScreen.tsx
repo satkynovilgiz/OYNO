@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticSelection } from '@/services/comfort/haptics';
 import { BellOff, CalendarDays, ChevronRight, Clock, Moon, Route, Sparkles, type LucideIcon } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -63,7 +63,7 @@ export function ReminderSettingsScreen({ onPressBack }: { onPressBack: () => voi
 
   async function setEnabled(type: ReminderType, value: boolean) {
     const key = TOGGLE_KEY[type];
-    if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
+    if (Platform.OS !== 'web') void hapticSelection().catch(() => {});
     if (!value) {
       await useReminderSettingsStore.getState().update({ [key]: false });
       track('reminder_disabled', { type });

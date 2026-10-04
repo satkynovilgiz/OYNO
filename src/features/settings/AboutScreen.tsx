@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as Updates from 'expo-updates';
-import { FileText, ScrollText } from 'lucide-react-native';
+import { FileText, ScrollText, Sparkles } from 'lucide-react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -46,6 +46,9 @@ export function AboutScreen({ onPressBack }: AboutScreenProps) {
 
       {/* Real documents only - no dead "coming soon" rows. */}
       <View style={styles.group}>
+        <SettingsSection>
+          <SettingsRow icon={Sparkles} label={t('whatsNew.title')} onPress={() => router.push('/whats-new' as never)} />
+        </SettingsSection>
         <SettingsSection>
           <SettingsRow icon={FileText} label={t('settings.about.privacyPolicy')} onPress={() => router.push('/settings/privacy-policy' as never)} />
           <SettingsRow icon={ScrollText} label={t('settings.about.termsOfUse')} onPress={() => router.push('/settings/terms-of-use' as never)} />

@@ -32,6 +32,8 @@ import { ContinueRegionCard } from './components/ContinueRegionCard';
 import { ForYouSection } from './forYou/ForYouCard';
 import { HomeLearningPathCard } from '@/features/learn/LearningPathCard';
 import { visibleSections } from './homeLayout';
+import { CalendarHomeCard } from '@/features/culture/calendar/CulturalCalendarScreen';
+import { WhatsNewHomeEntry } from '@/features/whatsNew/WhatsNewScreen';
 import { type HomeSectionId } from './homeSections';
 import { useHomeLayoutStore } from '@/store/useHomeLayoutStore';
 import { cultureTileAssets } from './mockData';
@@ -156,6 +158,9 @@ export function HomeScreen() {
         return (
           <View key={id} style={styles.horizontalPad}>
             <HomeJourneyCard recommendation={recommendation} display={recommendationDisplay} onPress={openRecommendation} />
+            {/* Cultural Calendar: only on/just before a curated date. */}
+            <CalendarHomeCard />
+            <WhatsNewHomeEntry />
           </View>
         );
       case 'culture':

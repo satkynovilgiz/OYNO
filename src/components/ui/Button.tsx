@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing, textStyles } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
+import { useMinTarget } from '@/services/comfort/useComfortStore';
 
 export type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'text' | 'destructive' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -54,9 +55,13 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
   const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
   const v = VARIANT[variant === 'danger' ? 'destructive' : variant];
-  const s = SIZE[size];
-  // Small visual size, full 44 pt touch target.
-  const hitSlop = Math.max(0, Math.ceil((44 - s.minHeight) / 2));
+  const base = SIZE[size];
+  // Accessibility & Comfort "Larger controls": a taller button (never below
+  // 48) and a 56 pt touch target; layouts themselves aren't scaled.
+  const target = useMinTarget();
+  const s = target > 44 ? { ...base, minHeight: Math.max(base.minHeight, 48) } : base;
+  // Small visual size, full touch target.
+  const hitSlop = Math.max(0, Math.ceil((target - s.minHeight) / 2));
 
   return (
     <AnimatedPressable

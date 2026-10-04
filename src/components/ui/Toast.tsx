@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticNotify } from '@/services/comfort/haptics';
 import { Check, Info } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
@@ -25,7 +25,7 @@ const useToastStore = create<{ toast: ToastState; show: (message: string, tone: 
  */
 export function showToast(message: string, options: { tone?: ToastTone; haptic?: boolean } = {}) {
   useToastStore.getState().show(message, options.tone ?? 'success');
-  if (options.haptic && Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  if (options.haptic && Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
   AccessibilityInfo.announceForAccessibility?.(message);
 }
 

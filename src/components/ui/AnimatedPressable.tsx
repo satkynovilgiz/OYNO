@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticImpact } from '@/services/comfort/haptics';
 import { type ReactNode } from 'react';
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -8,10 +8,6 @@ import { motion, type PressPreset } from '@/theme/motion';
 
 const ReanimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const HAPTIC_STYLES = {
-  light: Haptics.ImpactFeedbackStyle.Light,
-  medium: Haptics.ImpactFeedbackStyle.Medium,
-} as const;
 
 type AnimatedPressableProps = Omit<PressableProps, 'style'> & {
   children: ReactNode;
@@ -20,7 +16,7 @@ type AnimatedPressableProps = Omit<PressableProps, 'style'> & {
   /** Fires expo-haptics on press-in. Omit (or `false`) for non-button
    * tappables (cards, tiles) that shouldn't buzz on every tap - only actual
    * buttons should set this. */
-  haptic?: keyof typeof HAPTIC_STYLES | false;
+  haptic?: 'light' | 'medium' | false;
   /** Adds a subtle scale-up on mouse hover (web only - onHoverIn/Out never
    * fire on native touch, so this is a no-op there). Use for cards/tiles
    * that want pointer feedback without a heavy press animation. */
@@ -78,7 +74,7 @@ export function AnimatedPressable({
       disabled={disabled}
       onPressIn={(event) => {
         if (!reducedMotion) scale.value = pressTo(preset ? preset.scale : pressScale, 'in');
-        if (haptic && !disabled) void Haptics.impactAsync(HAPTIC_STYLES[haptic]);
+        if (haptic && !disabled) void hapticImpact(haptic);
         onPressIn?.(event);
       }}
       onPressOut={(event) => {

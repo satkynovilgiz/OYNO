@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotify } from '@/services/comfort/haptics';
 
 import { useSettingsStore } from '@/store/useSettingsStore';
 
@@ -34,9 +34,11 @@ async function fire(trigger: () => Promise<void>): Promise<void> {
 }
 
 export const gameHaptics = {
-  light: () => fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)),
-  medium: () => fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)),
-  heavy: () => fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)),
-  success: () => fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)),
-  warning: () => fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)),
+  // Also honours Accessibility & Comfort (comfort/haptics): no game cue is
+  // treated as essential - Off means no vibration in games either.
+  light: () => fire(() => hapticImpact('light')),
+  medium: () => fire(() => hapticImpact('medium')),
+  heavy: () => fire(() => hapticImpact('heavy')),
+  success: () => fire(() => hapticNotify('success')),
+  warning: () => fire(() => hapticNotify('warning')),
 };

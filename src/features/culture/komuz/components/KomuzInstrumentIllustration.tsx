@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticImpact } from '@/services/comfort/haptics';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
@@ -56,7 +56,7 @@ function KomuzString({ x, label }: { x: number; label: string }) {
   }));
 
   function handlePress() {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void hapticImpact('light');
     wobble.value = withSequence(
       withTiming(-5, { duration: 60 }),
       withTiming(5, { duration: 90 }),

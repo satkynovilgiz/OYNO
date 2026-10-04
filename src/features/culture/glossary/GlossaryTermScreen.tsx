@@ -76,7 +76,7 @@ export function GlossaryTermScreen({ termId, onPressBack }: { termId: string; on
         </Text>
         {!isChild ? <Text style={styles.context}>{t('glossary.from', { title: item.title })}</Text> : null}
         <ListenRepeatEntry entryId={entry.id} term={entry.term} />
-        <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
+        <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
         <Button
           label={t('glossary.learnMore', { title: item.title })}
           variant="secondary"

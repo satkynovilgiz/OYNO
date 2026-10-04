@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { colors, radii, shadows } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
+import { useMinTarget } from '@/services/comfort/useComfortStore';
 
 type Variant = 'surface' | 'primary';
 type Shape = 'circle' | 'roundedSquare';
@@ -42,7 +43,8 @@ export function IconButton({
   // Visual size can be smaller than the 44pt accessibility minimum touch
   // target (e.g. the 32px card arrow) - hitSlop makes up the difference
   // rather than forcing every icon button to look 44px.
-  const hitSlopAmount = Math.max(0, Math.ceil((44 - size) / 2));
+  const target = useMinTarget();
+  const hitSlopAmount = Math.max(0, Math.ceil((target - size) / 2));
 
   return (
     <AnimatedPressable

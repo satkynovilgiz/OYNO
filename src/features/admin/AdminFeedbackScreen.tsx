@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, IconButton } from '@/components/ui';
-import { fetchViaRpc } from '@/services/admin/adminService';
+import { callAdminRpc, fetchViaRpc } from '@/services/admin/adminService';
 
 import { FEEDBACK_INBOX_LIMIT, feedbackInboxError } from './adminModel';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -27,6 +27,37 @@ export type AdminFeedbackRow = {
   has_contact_email: boolean;
 };
 
+type AdminFeedbackStatus = { id: string; status: string; status_updated_at: string | null; public_response: string | null };
+
+/** Status + optional reply FOR THE REPORTER (shown in their My Reports).
+ * There is no private-notes field: never write internal notes here. */
+function StatusControls({ id, current, onSaved }: { id: string; current: AdminFeedbackStatus | null; onSaved: () => void }) {
+  const [response, setResponse] = useState(current?.public_response ?? '');
+  const [saving, setSaving] = useState(false);
+  useEffect(() => setResponse(current?.public_response ?? ''), [current?.public_response]);
+  const save = async (status: string) => {
+    setSaving(true);
+    try {
+      await callAdminRpc('admin_set_feedback_status', { p_id: id, p_status: status, p_public_response: response.trim() || null });
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <View style={{ gap: 6 }}>
+      <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Report status">
+        {['received', 'under_review', 'resolved', 'closed'].map((status) => (
+          <AnimatedPressable key={status} style={[styles.chip, current?.status === status && styles.chipActive]} disabled={saving} onPress={() => void save(status)} accessibilityRole="radio" accessibilityState={{ checked: current?.status === status }} accessibilityLabel={status}>
+            <Text style={[styles.chipText, current?.status === status && styles.chipTextActive]}>{status.replace('_', ' ')}</Text>
+          </AnimatedPressable>
+        ))}
+      </View>
+      <TextInput value={response} onChangeText={setResponse} maxLength={1000} placeholder="Optional reply the reporter will see (public)" style={styles.replyInput} accessibilityLabel="Public reply to the reporter" />
+    </View>
+  );
+}
+
 const FILTERS: { id: string | null; label: string }[] = [
   { id: null, label: 'All' },
   { id: 'bug', label: 'Bug' },
@@ -45,6 +76,10 @@ export function AdminFeedbackScreen({ onPressBack }: { onPressBack: () => void }
   const [category, setCategory] = useState<string | null>(null);
   const { data, isLoading, error } = useQuery({ queryKey: ['admin_feedback'], queryFn: () => fetchViaRpc<AdminFeedbackRow>('admin_get_beta_feedback') });
   const rows = (data ?? []).filter((row) => !category || row.category === category);
+  // Status (20261003000002): same record the reporter sees in My Reports.
+  // If that migration isn't applied yet, the controls simply don't show.
+  const statuses = useQuery({ queryKey: ['admin_feedback_statuses'], queryFn: () => fetchViaRpc<AdminFeedbackStatus>('admin_get_feedback_statuses'), retry: false });
+  const statusOf = (id: string) => statuses.data?.find((entry) => entry.id === id) ?? null;
 
   return (
     <View style={styles.root}>
@@ -109,6 +144,7 @@ export function AdminFeedbackScreen({ onPressBack }: { onPressBack: () => void }
               {row.has_screenshot ? ' · has image' : ''}
               {row.has_contact_email ? ' · reporter shared an email (see dashboard)' : ''}
             </Text>
+            {statuses.data ? <StatusControls id={row.id} current={statusOf(row.id)} onSaved={() => void statuses.refetch()} /> : null}
           </View>
         ))}
       </ScrollView>
@@ -117,6 +153,7 @@ export function AdminFeedbackScreen({ onPressBack }: { onPressBack: () => void }
 }
 
 const styles = StyleSheet.create({
+  replyInput: { minHeight: 40, paddingHorizontal: spacing.sm, borderRadius: radii.md, borderWidth: 1, borderColor: colors.borderSubtle, color: colors.textPrimary, backgroundColor: colors.surface },
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingBottom: spacing.sm, gap: spacing.sm },
   title: { ...typography.bodyBold, fontSize: 17, color: colors.textPrimary, flex: 1, textAlign: 'center' },

@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticNotify } from '@/services/comfort/haptics';
 import { useEffect } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
@@ -45,7 +45,7 @@ export function PassportStamp({ stamp, size, dateLabel, editorial = false, celeb
       opacity.value = withDelay(250, withTiming(1, { duration: 200 }));
       scale.value = withDelay(250, withSpring(1, { damping: 11, stiffness: 180 }));
     }
-    const timer = setTimeout(() => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}), 300);
+    const timer = setTimeout(() => void hapticNotify('success').catch(() => {}), 300);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [celebrate]);

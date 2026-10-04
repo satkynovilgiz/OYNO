@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { hapticImpact, hapticNotify } from '@/services/comfort/haptics';
 import { Check, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,11 +42,11 @@ export function DailyImageChallenge({ title, options, imageOf, layout, onSolved 
     if (solvedId || wrongIds.includes(option.itemId)) return;
     if (option.correct) {
       setSolvedId(option.itemId);
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      void hapticNotify('success').catch(() => {});
       onSolved();
     } else {
       setWrongIds([...wrongIds, option.itemId]);
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      void hapticImpact('light').catch(() => {});
     }
   }
 
