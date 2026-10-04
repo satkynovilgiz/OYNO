@@ -1049,6 +1049,28 @@
       "shareDesign": "Share design",
       "myDesign": "My design",
       "shareMessage": "A design I made in OYNO"
+    },
+    "connections": {
+      "title": "Connections",
+      "exploreTitle": "Explore the connection",
+      "inOynoWords": "In OYNO's words",
+      "fromArticle": "From: {{title}} · {{section}}",
+      "openArticle": "Open {{title}}",
+      "checkSources": "Check the sources",
+      "why": "Why connected?",
+      "whyA11y": "Why this connects to {{title}}",
+      "cardA11y": "{{relation}}: {{title}}, {{type}}",
+      "relation": {
+        "part_of": "Part of",
+        "related_tradition": "Related tradition",
+        "uses": "Uses",
+        "made_with": "Made with",
+        "symbolic_connection": "Symbolic connection",
+        "learn_next": "Learn next",
+        "includes": "Includes",
+        "used_in": "Used in",
+        "material_for": "Material for"
+      }
     }
   },
   "explore": {
@@ -3224,7 +3246,10 @@
     "entryMeta_one": "{{count}} term from OYNO articles",
     "entryMeta_other": "{{count}} terms from OYNO articles",
     "entryMeta_few": "{{count}} terms from OYNO articles",
-    "entryMeta_many": "{{count}} terms from OYNO articles"
+    "entryMeta_many": "{{count}} terms from OYNO articles",
+    "inlineTermA11y": "glossary term",
+    "inlineTermHint": "Shows a short definition",
+    "openGlossary": "Open Glossary"
   },
   "reading": {
     "continueReading": "Continue reading",
@@ -4379,5 +4404,71 @@
     },
     "skippedDeleted_few": "{{count}} deleted earlier, not restored",
     "skippedDeleted_many": "{{count}} deleted earlier, not restored"
+  },
+  "readerNavigator": {
+    "contents": "Contents",
+    "sectionOf": "section {{position}} of {{total}}",
+    "youAreHere": "You are here"
+  },
+  "downloads": {
+    "downloadOn": "Download on",
+    "any": "Any connection",
+    "wifi_only": "Wi-Fi only",
+    "wifiUnsupported": "This device can't tell Wi-Fi from mobile data here, so downloads use any connection.",
+    "activeOnly": "Downloads run while OYNO is open.",
+    "queueTitle": "Download queue",
+    "cancel": "Cancel",
+    "cancelPack": "Cancel download: {{name}}",
+    "progress": "{{done}} of {{total}} items",
+    "status": {
+      "downloading": "Downloading",
+      "queued": "Queued",
+      "waiting_wifi": "Waiting for Wi-Fi",
+      "waiting_connection": "Waiting for connection",
+      "failed": "Needs attention"
+    }
+  },
+  "journalPrompts": {
+    "needIdea": "Need an idea?",
+    "title": "Writing prompts",
+    "all": "All",
+    "use": "Use this prompt",
+    "another": "Another prompt",
+    "anotherHint": "Shows a different writing prompt",
+    "without": "Write without a prompt",
+    "promptLabel": "Writing prompt",
+    "notSaved": "Just a suggestion - it isn't saved with your memory.",
+    "hide": "Hide prompt",
+    "writeToday": "Write today's memory",
+    "writeTodayHint": "Want an idea to start with? Pick a writing prompt.",
+    "categories": {
+      "memory": "Memory",
+      "culture": "Culture",
+      "family": "Family",
+      "place": "Place",
+      "learning": "Learning"
+    },
+    "items": {
+      "m-favorite-moment": "What was the best part of your day?",
+      "m-remember-tradition": "What tradition do you want to remember?",
+      "m-object-story": "Which object in your home has a story worth keeping?",
+      "m-sound-smell": "What sound or smell brings back a memory for you?",
+      "c-learned-today": "What did you learn about Kyrgyz culture today?",
+      "c-try-craft": "Which Kyrgyz craft would you like to try making?",
+      "c-word": "Which Kyrgyz word or saying stayed with you?",
+      "c-ask-elder": "What would you ask an elder about this tradition?",
+      "f-cook-together": "What food does your family make together?",
+      "f-family-story": "What story does your family like to tell?",
+      "f-celebration": "How does your family celebrate a special day?",
+      "f-learned-from-elder": "What have you learned from an older relative?",
+      "p-important-place": "Describe a place that feels important to you.",
+      "p-outside-today": "What did you see outside today?",
+      "p-want-to-visit": "Which place in Kyrgyzstan would you like to visit, and why?",
+      "p-small-detail": "What small detail of a familiar place do you want to remember?",
+      "l-new-thing": "What new thing did you learn today?",
+      "l-surprise": "What surprised you recently?",
+      "l-practicing": "What are you practising, and how is it going?",
+      "l-changed-mind": "What changed your mind about something?"
+    }
   }
 }

@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
-import { markRead, mergeReading, recordPosition, resetReading, type ReadingContentType, type ReadingData } from '@/features/culture/reading/readingModel';
+import { markRead, mergeReading, recordPosition, recordSection, resetReading, type ReadingContentType, type ReadingData } from '@/features/culture/reading/readingModel';
 import { safeJsonParse } from '@/services/storage/safeJson';
 
 export const READING_KEY = 'oyno.reading.v1';
@@ -18,6 +18,8 @@ type State = {
   saved: Saved;
   load: () => Promise<void>;
   record: (owner: string, contentType: ReadingContentType, contentId: string, ratio: number) => void;
+  /** Reader Navigator: the section last read (existing records only). */
+  recordSection: (owner: string, contentType: ReadingContentType, contentId: string, sectionKey: string | null) => void;
   markRead: (owner: string, contentType: ReadingContentType, contentId: string) => void;
   reset: (owner: string, contentType: ReadingContentType, contentId: string) => void;
   /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
@@ -57,6 +59,7 @@ export const useReadingStore = create<State>((set, get) => {
       set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
     },
     record: (owner, contentType, contentId, ratio) => update(owner, (data) => recordPosition(data, contentType, contentId, ratio)),
+    recordSection: (owner, contentType, contentId, sectionKey) => update(owner, (data) => recordSection(data, contentType, contentId, sectionKey)),
     markRead: (owner, contentType, contentId) => update(owner, (data) => markRead(data, contentType, contentId)),
     reset: (owner, contentType, contentId) => update(owner, (data) => resetReading(data, contentType, contentId)),
     applySynced: (owner, data) => {

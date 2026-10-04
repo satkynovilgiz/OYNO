@@ -368,7 +368,9 @@ export const ADMIN_SECTIONS: AdminSectionConfig[] = [
     upsertRpc: 'admin_upsert_content_translation',
     deleteRpc: 'admin_delete_content_translation_by_id',
     fields: [
-      { key: 'content_type', label: 'Content type', type: 'select', options: ['culture_item', 'culture_material', 'explore_region', 'quest'] },
+      // Culture items/materials: RU/EN are edited in their own editor and go live
+      // with Publish (revision history); the server refuses direct writes.
+      { key: 'content_type', label: 'Content type (Culture translations: use the Culture editor)', type: 'select', options: ['explore_region', 'quest'] },
       { key: 'content_id', label: 'Content ID (same id as the Kyrgyz row)', type: 'text', required: true },
       { key: 'language', label: 'Language', type: 'select', options: ['ru', 'en'] },
       {

@@ -30,6 +30,10 @@ export type GlossaryEntry = {
   /** True when the term IS the item (title) - its alt_names are then its
    * alternate names. Sub-terms named inside an item have none. */
   isItemTitle: boolean;
+  /** Explicit, authored alternative spellings per article language (used
+   * only for inline term matching). Each one is copied from the source
+   * item's own authored alt_names - never invented or inferred. */
+  aliases?: Partial<Record<'kg' | 'ru' | 'en', string[]>>;
 };
 
 export const GLOSSARY: GlossaryEntry[] = [
@@ -48,9 +52,9 @@ export const GLOSSARY: GlossaryEntry[] = [
   { id: 'tebetey', term: 'Тебетей', sourceContentType: 'culture_item', sourceContentId: 'clothing-tebetey', sourceField: 'cultural_meaning', isItemTitle: true },
   { id: 'chapan', term: 'Чапан', sourceContentType: 'culture_item', sourceContentId: 'clothing-chapan', sourceField: 'cultural_meaning', isItemTitle: true },
   { id: 'eer', term: 'Ээр', sourceContentType: 'culture_item', sourceContentId: 'horse-eer', sourceField: 'traditional_method', isItemTitle: false },
-  { id: 'kok-boru', term: 'Көк бөрү', sourceContentType: 'culture_item', sourceContentId: 'horse-kok-boru', sourceField: 'traditional_method', isItemTitle: true },
+  { id: 'kok-boru', term: 'Көк бөрү', sourceContentType: 'culture_item', sourceContentId: 'horse-kok-boru', sourceField: 'traditional_method', isItemTitle: true, aliases: { kg: ['Улак тартыш'] } },
   { id: 'kyz-kuumai', term: 'Кыз куумай', sourceContentType: 'culture_item', sourceContentId: 'horse-kyz-kuumai', sourceField: 'traditional_method', isItemTitle: true },
-  { id: 'oodarysh', term: 'Оодарыш', sourceContentType: 'culture_item', sourceContentId: 'horse-oodarysh', sourceField: 'traditional_method', isItemTitle: true },
+  { id: 'oodarysh', term: 'Оодарыш', sourceContentType: 'culture_item', sourceContentId: 'horse-oodarysh', sourceField: 'traditional_method', isItemTitle: true, aliases: { kg: ['Эңиш'] } },
 ];
 
 /** Explicit article <-> term links for the "Key terms" section. Never

@@ -108,7 +108,7 @@ describe('useOfflineStore', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     onlineManager.setOnline(true);
-    useOfflineStore.setState({ manifest: { entries: {} }, inFlight: [], failed: [] });
+    useOfflineStore.setState({ manifest: { entries: {} }, inFlight: [], failed: [], queue: { intents: [] }, isLoaded: true, appActive: true, network: { isConnected: true, type: 'WIFI' }, preference: 'any' });
   });
 
   it('downloads, persists across a reload, and hydrates the query cache', async () => {
@@ -128,11 +128,17 @@ describe('useOfflineStore', () => {
     expect(useOfflineStore.getState().manifest.entries['collection:horse-culture'].remoteImageUrls).toEqual(['https://cdn.example/horse.jpg']);
   });
 
-  it('fails honestly when offline instead of pretending to download', async () => {
+  it('offline: never pretends to download - the item waits in the queue (not failed) and runs when the connection is back', async () => {
     onlineManager.setOnline(false);
-    expect(await useOfflineStore.getState().download('nature', 'alay')).toBe(false);
-    expect(useOfflineStore.getState().failed).toContain('nature:alay');
+    const pending = useOfflineStore.getState().download('nature', 'alay');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(useOfflineStore.getState().failed).not.toContain('nature:alay');
+    expect(useOfflineStore.getState().inFlight).toContain('nature:alay');
     expect(useOfflineStore.getState().manifest.entries['nature:alay']).toBeUndefined();
+    onlineManager.setOnline(true);
+    void useOfflineStore.getState().pump();
+    expect(await pending).toBe(true);
+    expect(useOfflineStore.getState().manifest.entries['nature:alay']).toBeDefined();
   });
 
   it('removing downloads never touches progress, favorites or other app data', async () => {

@@ -38,6 +38,7 @@ import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { onConnectionRestored } from '@/services/offline/networkStatus';
 import { retryPartialPathPacks } from '@/services/offline/pathPacks';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
+import { useDownloadQueueRuntime } from '@/services/offline/useDownloadQueueRuntime';
 import { onAccountSignedIn, onGuestSession } from '@/services/sync/accountLifecycle';
 import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { flushFeedbackQueue } from '@/services/feedback/feedbackQueue';
@@ -121,6 +122,8 @@ const GAMEPLAY_ROUTES = ['games/chuko', 'games/kok-boru', 'games/jaa-atuu', 'gam
 const FOREGROUND_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
 export default function RootLayout() {
+  // Download queue: network type + foreground state (resumes queued downloads).
+  useDownloadQueueRuntime();
   const [flagsReady, setFlagsReady] = useState(false);
   const authStatus = useAuthStore((state) => state.status);
   const lastUnlockedAchievementId = useProgressStore((state) => state.lastUnlockedAchievementId);
@@ -225,6 +228,8 @@ export default function RootLayout() {
   useEffect(
     () =>
       onConnectionRestored(() => {
+        // Queued downloads waiting for a connection continue first.
+        void useOfflineStore.getState().pump();
         void useOfflineStore
           .getState()
           .refreshAll()

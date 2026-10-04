@@ -60,7 +60,16 @@ export const readingRules: DomainRules<ReadingProgress> = {
   deletes: true,
   validate: (raw) =>
     isObj(raw) && (raw.contentType === 'culture_item' || raw.contentType === 'culture_material') && str(raw.contentId, 120) && num(raw.progress) && num(raw.furthest) && iso(raw.lastReadAt) && (raw.completedAt === null || iso(raw.completedAt))
-      ? { contentType: raw.contentType, contentId: raw.contentId, progress: Math.min(1, Math.max(0, raw.progress)), furthest: Math.min(1, Math.max(0, raw.furthest)), lastReadAt: raw.lastReadAt, completedAt: raw.completedAt as string | null }
+      ? {
+          contentType: raw.contentType,
+          contentId: raw.contentId,
+          progress: Math.min(1, Math.max(0, raw.progress)),
+          furthest: Math.min(1, Math.max(0, raw.furthest)),
+          lastReadAt: raw.lastReadAt,
+          completedAt: raw.completedAt as string | null,
+          // Reader Navigator: optional section key; anything malformed is dropped, never fatal.
+          ...(typeof raw.lastSectionKey === 'string' && /^[a-z][a-z0-9_]{0,59}$/.test(raw.lastSectionKey) ? { lastSectionKey: raw.lastSectionKey } : {}),
+        }
       : null,
   merge: (_base, local, server) => {
     const newer = local.lastReadAt > server.lastReadAt ? local : server;

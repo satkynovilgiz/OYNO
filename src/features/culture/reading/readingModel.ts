@@ -16,6 +16,10 @@ export type ReadingProgress = {
   furthest: number;
   lastReadAt: string;
   completedAt: string | null;
+  /** The authored section last read by scrolling (Reader Navigator). A
+   * section KEY only - never text or pixels; ignored when the article no
+   * longer has that section. Optional: older records don't carry it. */
+  lastSectionKey?: string | null;
 };
 
 export type ReadingData = Record<string, ReadingProgress>;
@@ -64,9 +68,24 @@ export function recordPosition(data: ReadingData, contentType: ReadingContentTyp
     furthest,
     lastReadAt: at,
     completedAt: existing?.completedAt ?? (ratio >= COMPLETION_THRESHOLD ? at : null),
+    ...(existing?.lastSectionKey ? { lastSectionKey: existing.lastSectionKey } : {}),
   };
   if (existing && existing.progress === next.progress && existing.furthest === next.furthest && existing.completedAt === next.completedAt) return data;
   return { ...data, [key]: next };
+}
+
+/**
+ * Remember the section being read. Only updates an EXISTING record (a
+ * section alone never creates reading history) and never touches
+ * progress, furthest or completion - a Table of Contents jump can't make
+ * an article "read".
+ */
+export function recordSection(data: ReadingData, contentType: ReadingContentType, contentId: string, sectionKey: string | null): ReadingData {
+  const key = readingKey(contentType, contentId);
+  const existing = data[key];
+  if (!existing || (existing.lastSectionKey ?? null) === sectionKey) return data;
+  if (sectionKey !== null && !/^[a-z][a-z0-9_]{0,59}$/.test(sectionKey)) return data;
+  return { ...data, [key]: { ...existing, lastSectionKey: sectionKey } };
 }
 
 /** Explicit "Mark as read". */

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ChevronRight, History } from 'lucide-react-native';
+import { ChevronRight, History, Lightbulb } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -13,14 +13,29 @@ import { onThisDay } from './journalCalendar';
 
 /**
  * Journal timeline: ONE compact "On This Day" card, only when a memory
- * from this month/day in a previous year exists - nothing otherwise.
+ * from this month/day in a previous year exists. Otherwise nothing is
+ * pretended: at most a quiet "Write today's memory" (offering a writing
+ * prompt) for someone who already keeps a journal and hasn't written today.
  * Analytics never carry titles, notes, dates or photo paths.
  */
-export function OnThisDayCard() {
+export function OnThisDayCard({ onPressPrompt }: { onPressPrompt?: () => void }) {
   const { t } = useTranslation();
   const entries = useJournalStore((state) => state.entries);
-  const matches = onThisDay(entries, localDateKey());
-  if (matches.length === 0) return null;
+  const today = localDateKey();
+  const matches = onThisDay(entries, today);
+  if (matches.length === 0) {
+    const live = entries.filter((entry) => !entry.deletedAt);
+    if (!onPressPrompt || live.length === 0 || live.some((entry) => entry.date === today)) return null;
+    return (
+      <AnimatedPressable style={styles.card} onPress={onPressPrompt} press="soft" accessibilityRole="button" accessibilityLabel={`${t('journalPrompts.writeToday')}. ${t('journalPrompts.writeTodayHint')}`}>
+        <View style={styles.head}>
+          <Lightbulb size={16} color={colors.accentTerracotta} strokeWidth={2.25} />
+          <Text style={styles.title}>{t('journalPrompts.writeToday')}</Text>
+        </View>
+        <Text style={styles.meta}>{t('journalPrompts.writeTodayHint')}</Text>
+      </AnimatedPressable>
+    );
+  }
   return (
     <View style={styles.card}>
       <View style={styles.head}>

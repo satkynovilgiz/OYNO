@@ -168,6 +168,7 @@ export async function retryPartialPathPacks(store: () => PackStore): Promise<voi
     const path = LEARNING_PATHS.find((candidate) => candidate.id === pathId);
     if (!path) continue;
     const pack = buildLearningPathOfflineManifest(path);
-    if (pack.items.some((item) => !store().manifest.entries[item.id])) await downloadPathPack(pack, store);
+    // Background priority: anything the person starts by hand goes first.
+    if (pack.items.some((item) => !store().manifest.entries[item.id])) await downloadPackItems(pathRequester(pack.pathId), pack.items, store, 'background');
   }
 }

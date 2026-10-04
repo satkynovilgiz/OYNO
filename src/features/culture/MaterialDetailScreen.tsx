@@ -21,6 +21,7 @@ import { TopicQuizLink } from '@/features/culture/components/ArticleParts';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
+import { GlossaryText, InlineGlossaryProvider } from '@/features/culture/glossary/inline/InlineGlossary';
 import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import type { CultureMaterialRow } from '@/services/content/types';
@@ -73,107 +74,112 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The language the body is actually rendered in (full reviewed translation, else Kyrgyz).
+  const bodyLanguage: SupportedLanguage = i18n.language !== 'kg' && material.translation?.status === 'available' ? (i18n.language as SupportedLanguage) : 'kg';
+
   return (
-    <View style={styles.root}>
-      <ScrollView
-        ref={reading.scrollRef}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onScroll={reading.onScroll}
-        scrollEventThrottle={64}
-        onContentSizeChange={reading.onContentSizeChange}
-        onLayout={reading.onLayout}
-      >
-        {material.image_url ? (
-          <HeroEntrance>
-            <View style={[styles.hero, reader.focusMode && styles.heroFocus]}>
-              <ExpoImage source={{ uri: material.image_url }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
-              <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+    <InlineGlossaryProvider articleItemId={null}>
+      <View style={styles.root}>
+        <ScrollView
+          ref={reading.scrollRef}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onScroll={reading.onScroll}
+          scrollEventThrottle={64}
+          onContentSizeChange={reading.onContentSizeChange}
+          onLayout={reading.onLayout}
+          onScrollBeginDrag={reading.onScrollBeginDrag}
+        >
+          {material.image_url ? (
+            <HeroEntrance>
+              <View style={[styles.hero, reader.focusMode && styles.heroFocus]}>
+                <ExpoImage source={{ uri: material.image_url }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
+                <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
 
-              <View style={styles.heroOverlay} pointerEvents="box-none">
-                <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
-                  <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-                  <View style={styles.headerButtons}>
-                    <IconButton
-                      icon={Heart}
-                      shape="roundedSquare"
-                      variant={isFavorite ? 'primary' : 'surface'}
-                      accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                      onPress={onToggleFavorite}
-                    />
-                    <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
-            <ReaderButton isChild={experience === 'child'} />
-                    <ReaderButton isChild={experience === 'child'} elevated />
+                <View style={styles.heroOverlay} pointerEvents="box-none">
+                  <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
+                    <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                    <View style={styles.headerButtons}>
+                      <IconButton
+                        icon={Heart}
+                        shape="roundedSquare"
+                        variant={isFavorite ? 'primary' : 'surface'}
+                        accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                        onPress={onToggleFavorite}
+                      />
+                      <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+                      <ReaderButton isChild={experience === 'child'} elevated />
+                    </View>
                   </View>
+                  <Text style={styles.heroTitle} numberOfLines={2}>
+                    {material.title}
+                  </Text>
                 </View>
-                <Text style={styles.heroTitle} numberOfLines={2}>
-                  {material.title}
-                </Text>
               </View>
-            </View>
-          </HeroEntrance>
-        ) : (
-          <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.sm }]}>
-            <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-            <Text style={styles.plainHeaderTitle} numberOfLines={1}>
-              {material.title}
-            </Text>
-            <IconButton
-              icon={Heart}
-              shape="roundedSquare"
-              variant={isFavorite ? 'primary' : 'surface'}
-              accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-              onPress={onToggleFavorite}
-            />
-            <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
-          </View>
-        )}
-
-        <View style={styles.contentBody}>
-          <View style={styles.headerBlock}>
-            <Badge label={t(`culture.materials.types.${material.kind}`)} color={colors.surfaceAlt} textColor={colors.primary} />
-          </View>
-
-          <KyrgyzOnlyNote status={material.translation?.status} language={i18n.language} />
-          {material.body ? (
-            <AudioGuidePlayer
-              contentKey={`culture_material:${material.id}`}
-              title={material.title}
-              narration={materialNarration(material, i18n.language as SupportedLanguage)}
-            />
-          ) : null}
-          {material.body && materialNarration(material, i18n.language as SupportedLanguage)?.lang === i18n.language ? (
-            <ReadListenControls enabled={readListen} onToggle={setReadListen} follow={false} onToggleFollow={() => undefined} recorded={listen.recorded} showFollow={false} />
-          ) : null}
-
-          {material.body ? (
-            <View style={{ gap: spacing.xs }}>
-              <View style={bodyNow ? readListenStyles.current : undefined}>
-                <Text style={[styles.body, bodyStyle]}>{material.body}</Text>
-              </View>
-              <PassageActions
-                contentType="culture_material"
-                contentId={material.id}
-                sectionKey="body"
-                sectionLabel={t('highlights.section.body')}
-                title={material.title}
-                text={material.body}
-                language={i18n.language !== 'kg' && material.translation?.status === 'available' ? i18n.language : 'kg'}
-                simple={experience === 'child'}
-              />
-            </View>
+            </HeroEntrance>
           ) : (
-            <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
+            <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.sm }]}>
+              <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+              <Text style={styles.plainHeaderTitle} numberOfLines={1}>
+                {material.title}
+              </Text>
+              <IconButton
+                icon={Heart}
+                shape="roundedSquare"
+                variant={isFavorite ? 'primary' : 'surface'}
+                accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                onPress={onToggleFavorite}
+              />
+              <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+            </View>
           )}
 
-          {material.body ? <ReadingActions tracker={reading} /> : null}
-          <TopicQuizLink type="culture_material" id={material.id} />
-          <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} contentId={material.id} />
-          <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
-        </View>
-      </ScrollView>
-      <ReadingOverlay tracker={reading} experience={experience} />
-    </View>
+          <View style={styles.contentBody}>
+            <View style={styles.headerBlock}>
+              <Badge label={t(`culture.materials.types.${material.kind}`)} color={colors.surfaceAlt} textColor={colors.primary} />
+            </View>
+
+            <KyrgyzOnlyNote status={material.translation?.status} language={i18n.language} />
+            {material.body ? (
+              <AudioGuidePlayer
+                contentKey={`culture_material:${material.id}`}
+                title={material.title}
+                narration={materialNarration(material, i18n.language as SupportedLanguage)}
+              />
+            ) : null}
+            {material.body && materialNarration(material, i18n.language as SupportedLanguage)?.lang === i18n.language ? (
+              <ReadListenControls enabled={readListen} onToggle={setReadListen} follow={false} onToggleFollow={() => undefined} recorded={listen.recorded} showFollow={false} />
+            ) : null}
+
+            {material.body ? (
+              <View style={{ gap: spacing.xs }}>
+                <View style={bodyNow ? readListenStyles.current : undefined}>
+                  <GlossaryText text={material.body} language={bodyLanguage} style={[styles.body, bodyStyle]} />
+                </View>
+                <PassageActions
+                  contentType="culture_material"
+                  contentId={material.id}
+                  sectionKey="body"
+                  sectionLabel={t('highlights.section.body')}
+                  title={material.title}
+                  text={material.body}
+                  language={bodyLanguage}
+                  simple={experience === 'child'}
+                />
+              </View>
+            ) : (
+              <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
+            )}
+
+            {material.body ? <ReadingActions tracker={reading} /> : null}
+            <TopicQuizLink type="culture_material" id={material.id} />
+            <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} contentId={material.id} />
+            <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
+          </View>
+        </ScrollView>
+        <ReadingOverlay tracker={reading} experience={experience} />
+      </View>
+    </InlineGlossaryProvider>
   );
 }
 

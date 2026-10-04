@@ -18,7 +18,16 @@ export type ReadingTracker = {
   ratio: number | null;
   record: ReadingProgress | undefined;
   promptVisible: boolean;
-  resume: () => void;
+  /** Resume. `sectionOffset` (Reader Navigator) maps the remembered
+   * section key to its CURRENT offset; null/absent -> the saved ratio. */
+  resume: (sectionOffset?: (sectionKey: string) => number | null) => void;
+  /** Table of Contents jump: scrolls, but records NO progress / completion
+   * until the reader scrolls by hand again. */
+  jumpTo: (offsetY: number, animated: boolean) => void;
+  /** Wire to the ScrollView's onScrollBeginDrag (a hand scroll ends a jump). */
+  onScrollBeginDrag: () => void;
+  /** The section being read changed (from real scrolling only). */
+  noteSection: (sectionKey: string | null) => void;
   startFromTop: () => void;
   markRead: () => void;
   startOver: () => void;
@@ -47,6 +56,8 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
   const [promptVisible, setPromptVisible] = useState(false);
   const [ratio, setRatio] = useState<number | null>(null);
   const lastRatio = useRef<number | null>(null);
+  // True after a TOC jump until the next hand scroll: nothing is recorded.
+  const jumped = useRef(false);
 
   useEffect(() => {
     void useReadingStore.getState().load();
@@ -85,6 +96,8 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
       // Mid-relayout (text size change / resume pending): the offset still
       // belongs to the old layout - never record it.
       if (pendingResume.current !== null) return;
+      // A Table of Contents jump is not reading.
+      if (jumped.current) return;
       // While the resume question is open, the top-of-page position must not
       // overwrite the saved place; scrolling on past it is an answer.
       if (promptVisible) {
@@ -113,12 +126,29 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
     ratio,
     record,
     promptVisible,
-    resume: () => {
+    resume: (sectionOffset) => {
       setPromptVisible(false);
       if (!record) return;
-      pendingResume.current = record.progress;
       track('reading_resumed', { content_type: contentType, content_id: contentId });
+      const offset = record.lastSectionKey && sectionOffset ? sectionOffset(record.lastSectionKey) : null;
+      if (offset !== null) {
+        lastRecordAt.current = 0;
+        scrollRef.current?.scrollTo({ y: offset, animated: false });
+        return;
+      }
+      pendingResume.current = record.progress;
       tryApplyResume();
+    },
+    jumpTo: (offsetY, animated) => {
+      jumped.current = true;
+      scrollRef.current?.scrollTo({ y: Math.max(0, offsetY), animated });
+    },
+    onScrollBeginDrag: () => {
+      jumped.current = false;
+    },
+    noteSection: (sectionKey) => {
+      if (jumped.current || pendingResume.current !== null) return;
+      useReadingStore.getState().recordSection(owner, contentType, contentId, sectionKey);
     },
     startFromTop: () => {
       setPromptVisible(false);

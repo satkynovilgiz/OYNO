@@ -84,7 +84,7 @@ describe('Read & Listen', () => {
   it('screen integration: reader settings kept, reduce motion respected, no autoplay, reading tracker untouched', () => {
     const screen = fs.readFileSync(path.join(__dirname, '../CultureItemDetailScreen.tsx'), 'utf8');
     expect(screen).toMatch(/animated: !reducedMotion/);
-    expect(screen).toMatch(/onScrollBeginDrag=\{\(\) => \(lastManualScroll\.current = Date\.now\(\)\)\}/);
+    expect(screen).toMatch(/onScrollBeginDrag=\{\(\) => \{\s*lastManualScroll\.current = Date\.now\(\);/);
     expect(screen).toMatch(/style=\{\[styles\.paragraph, isChild && styles\.paragraphChild, bodyStyle\]\}/);
     const hook = fs.readFileSync(path.join(__dirname, 'ReadListen.tsx'), 'utf8');
     expect(hook).not.toMatch(/\.start\(|\.play\(|\.resume\(|markRead|useReadingStore/);

@@ -8,6 +8,7 @@ import type { TranslatedContentType } from '@/services/content/localizedContent'
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { kyrgyzSourceOf, translatableFields, validateTranslation, type AdminTranslationRow } from '../adminModel';
+import { changedTranslationKeys, translationKey, type TranslationDraft, type TranslationEdits } from '../revisions/revisionModel';
 import type { AdminRow } from '../sections';
 import { ADMIN_TRANSLATIONS_KEY } from '../useAdminData';
 
@@ -17,11 +18,21 @@ type Language = 'ru' | 'en';
 const LANGUAGE_LABEL: Record<Language, string> = { ru: 'RU · Russian', en: 'EN · English' };
 
 /**
+ * How RU/EN edits are written:
+ *  - `direct` (legacy): each field saves on its own through
+ *    admin_upsert_content_translation. Only for content without revision
+ *    history (Explore destinations, quests).
+ *  - `revision_draft`: edits stay in the editor's draft state (owned by the
+ *    parent) and go live only with the content through admin_publish_content
+ *    - nothing is written from this panel. Used for Culture items/materials.
+ */
+export type TranslationsPanelMode =
+  | { kind: 'direct'; onDirtyChange: (dirtyCount: number) => void }
+  | { kind: 'revision_draft'; live: readonly TranslationDraft[]; edits: TranslationEdits; onEditsChange: (edits: TranslationEdits) => void };
+
+/**
  * RU / EN translations of one content row, field by field, next to the
- * Kyrgyz original. Each field saves on its own (admin_upsert_content_
- * translation) with a real saving / saved / failed state; only "reviewed"
- * translations are shown to readers. Reports unsaved edits upward so the
- * editor can warn before leaving.
+ * Kyrgyz original. Only "reviewed" translations are shown to readers.
  */
 export function TranslationsPanel({
   contentType,
@@ -29,38 +40,53 @@ export function TranslationsPanel({
   row,
   translations,
   fieldLabel,
-  onDirtyChange,
+  mode,
 }: {
   contentType: TranslatedContentType;
   contentId: string;
   row: AdminRow;
   translations: readonly AdminTranslationRow[];
   fieldLabel: (field: string) => string;
-  onDirtyChange: (dirtyCount: number) => void;
+  mode: TranslationsPanelMode;
 }) {
   const queryClient = useQueryClient();
   const [language, setLanguage] = useState<Language>('ru');
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [directDrafts, setDirectDrafts] = useState<Record<string, Draft>>({});
   const [states, setStates] = useState<Record<string, { kind: 'saving' | 'saved' | 'error'; message?: string }>>({});
   const fields = translatableFields(contentType, row);
+  const revision = mode.kind === 'revision_draft' ? mode : null;
 
   const existing = useMemo(() => {
-    const map: Record<string, AdminTranslationRow> = {};
-    for (const translation of translations) if (translation.content_type === contentType && translation.content_id === contentId) map[`${translation.language}|${translation.field}`] = translation;
+    const map: Record<string, Pick<AdminTranslationRow, 'value' | 'status' | 'updated_at'>> = {};
+    if (revision) for (const entry of revision.live) map[translationKey(entry.language, entry.field)] = entry;
+    else for (const translation of translations) if (translation.content_type === contentType && translation.content_id === contentId) map[`${translation.language}|${translation.field}`] = translation;
     return map;
-  }, [translations, contentType, contentId]);
+  }, [revision, translations, contentType, contentId]);
 
-  const valueOf = (key: string): Draft => drafts[key] ?? { value: existing[key]?.value ?? '', status: existing[key]?.status ?? 'draft' };
+  const drafts: Record<string, Draft & { removed?: boolean }> = revision ? revision.edits : directDrafts;
+  const setDraft = (key: string, draft: Draft & { removed?: boolean }) => {
+    if (revision) revision.onEditsChange({ ...revision.edits, [key]: draft });
+    else setDirectDrafts((current) => ({ ...current, [key]: draft }));
+  };
+  const revertDraft = (key: string) => {
+    if (!revision) return;
+    const { [key]: _reverted, ...rest } = revision.edits;
+    revision.onEditsChange(rest);
+  };
+
+  const valueOf = (key: string): Draft & { removed?: boolean } => drafts[key] ?? { value: existing[key]?.value ?? '', status: existing[key]?.status ?? 'draft' };
   const isChanged = (key: string) => {
+    if (revision) return !!revision.edits[key] && changedTranslationKeys(revision.live, { [key]: revision.edits[key] }).length > 0;
     const draft = drafts[key];
     if (!draft) return false;
     return draft.value !== (existing[key]?.value ?? '') || draft.status !== (existing[key]?.status ?? 'draft');
   };
-  const dirtyKeys = Object.keys(drafts).filter(isChanged);
+  const dirtyCount = revision ? 0 : Object.keys(directDrafts).filter(isChanged).length;
+  const onDirtyChange = mode.kind === 'direct' ? mode.onDirtyChange : null;
 
   useEffect(() => {
-    onDirtyChange(dirtyKeys.length);
-  }, [dirtyKeys.length, onDirtyChange]);
+    onDirtyChange?.(dirtyCount);
+  }, [dirtyCount, onDirtyChange]);
 
   const save = useMutation({
     mutationFn: ({ key, draft }: { key: string; draft: Draft }) => {
@@ -77,17 +103,30 @@ export function TranslationsPanel({
     onMutate: ({ key }) => setStates((current) => ({ ...current, [key]: { kind: 'saving' } })),
     onSuccess: async (_data, { key }) => {
       await queryClient.invalidateQueries({ queryKey: ADMIN_TRANSLATIONS_KEY });
-      setDrafts(({ [key]: _saved, ...rest }) => rest);
+      setDirectDrafts(({ [key]: _saved, ...rest }) => rest);
       setStates((current) => ({ ...current, [key]: { kind: 'saved' } }));
     },
     onError: (error: Error, { key }) => setStates((current) => ({ ...current, [key]: { kind: 'error', message: error.message } })),
   });
 
   function saveOne(key: string) {
+    if (revision) return;
     const draft = valueOf(key);
     const problem = validateTranslation(draft.value, draft.status);
     if (problem) return setStates((current) => ({ ...current, [key]: { kind: 'error', message: problem } }));
     save.mutate({ key, draft });
+  }
+
+  function stateText(key: string): string {
+    const draft = valueOf(key);
+    if (revision) {
+      if (draft.removed) return 'Will be removed on publish';
+      if (isChanged(key)) return draft.value.trim() ? 'Unpublished change - goes live with Publish' : 'Empty - write it or revert before publishing';
+      return existing[key] ? (existing[key].status === 'reviewed' ? 'Live' : 'Saved as draft (not shown to readers)') : 'Not translated yet';
+    }
+    const state = states[key];
+    const updated = existing[key]?.updated_at;
+    return state?.kind === 'error' ? (state.message ?? '') : state?.kind === 'saved' ? 'Saved.' : isChanged(key) ? 'Unsaved changes' : updated ? `Last saved ${new Date(updated).toLocaleDateString()}` : existing[key] ? '' : 'Not translated yet';
   }
 
   if (fields.length === 0) return <Text style={styles.note}>Nothing to translate yet - fill in the Kyrgyz text first.</Text>;
@@ -108,13 +147,15 @@ export function TranslationsPanel({
           </AnimatedPressable>
         ))}
       </View>
-      <Text style={styles.note}>Only "Reviewed" translations are shown to readers, and an article body appears in {language.toUpperCase()} only once every field below is reviewed.</Text>
+      <Text style={styles.note}>
+        Only "Reviewed" translations are shown to readers, and an article body appears in {language.toUpperCase()} only once every field below is reviewed.
+        {revision ? ' Edits here are part of this draft: they go live together with the Kyrgyz content when you publish.' : ''}
+      </Text>
 
       {fields.map((field) => {
         const key = `${language}|${field}`;
         const draft = valueOf(key);
         const state = states[key];
-        const updated = existing[key]?.updated_at;
         return (
           <View key={key} style={styles.field}>
             <Text style={styles.fieldLabel}>{fieldLabel(field)}</Text>
@@ -126,8 +167,9 @@ export function TranslationsPanel({
             </View>
             <TextField
               label={`${language.toUpperCase()} · ${fieldLabel(field)}`}
-              value={draft.value}
-              onChangeText={(value) => setDrafts((current) => ({ ...current, [key]: { ...draft, value } }))}
+              value={draft.removed ? '' : draft.value}
+              editable={!draft.removed}
+              onChangeText={(value) => setDraft(key, { value, status: draft.status })}
               multiline
               numberOfLines={field === 'title' || field === 'alt_names' ? 1 : 4}
             />
@@ -136,7 +178,7 @@ export function TranslationsPanel({
                 <AnimatedPressable
                   key={status}
                   style={[styles.pill, draft.status === status && styles.pillActive]}
-                  onPress={() => setDrafts((current) => ({ ...current, [key]: { ...draft, status } }))}
+                  onPress={() => setDraft(key, { value: draft.value, status })}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: draft.status === status }}
                   accessibilityLabel={status === 'draft' ? 'Draft' : 'Reviewed'}
@@ -145,10 +187,17 @@ export function TranslationsPanel({
                 </AnimatedPressable>
               ))}
               <View style={styles.spacer} />
-              <Button label="Save" size="sm" onPress={() => saveOne(key)} disabled={!isChanged(key) || state?.kind === 'saving'} loading={state?.kind === 'saving'} />
+              {revision ? (
+                <>
+                  {existing[key] && !draft.removed ? <Button label="Remove" size="sm" variant="secondary" onPress={() => setDraft(key, { value: existing[key].value, status: existing[key].status, removed: true })} accessibilityHint={`Removes ${language.toUpperCase()} ${fieldLabel(field)} on publish`} /> : null}
+                  {isChanged(key) ? <Button label="Revert" size="sm" variant="secondary" onPress={() => revertDraft(key)} accessibilityHint={`Reverts ${language.toUpperCase()} ${fieldLabel(field)} to the live version`} /> : null}
+                </>
+              ) : (
+                <Button label="Save" size="sm" onPress={() => saveOne(key)} disabled={!isChanged(key) || state?.kind === 'saving'} loading={state?.kind === 'saving'} />
+              )}
             </View>
             <Text style={[styles.state, state?.kind === 'error' && styles.stateError]} accessibilityLiveRegion="polite">
-              {state?.kind === 'error' ? state.message : state?.kind === 'saved' ? 'Saved.' : isChanged(key) ? 'Unsaved changes' : updated ? `Last saved ${new Date(updated).toLocaleDateString()}` : existing[key] ? '' : 'Not translated yet'}
+              {stateText(key)}
             </Text>
           </View>
         );

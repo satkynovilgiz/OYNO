@@ -5,7 +5,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, ConfirmationModal } from '@/components/ui';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
-import { downloadPathPack, removePathPack, type LearningPathOfflineManifest, type PathPackState } from '@/services/offline/pathPacks';
+import { CancelPackButton, packQueueDetail, usePackPending, useQueueGate } from '@/components/offline/QueueControls';
+import { downloadPathPack, pathRequester, removePathPack, type LearningPathOfflineManifest, type PathPackState } from '@/services/offline/pathPacks';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
@@ -21,6 +22,8 @@ export function PathOfflineRow({ pack, state, title }: { pack: LearningPathOffli
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removing, setRemoving] = useState(false);
   const start = () => void downloadPathPack(pack, useOfflineStore.getState);
+  const gate = useQueueGate();
+  const pending = usePackPending(pathRequester(pack.pathId), pack.items);
 
   const heading =
     state.status === 'available'
@@ -33,7 +36,9 @@ export function PathOfflineRow({ pack, state, title }: { pack: LearningPathOffli
             ? t('pathOffline.retryTitle', { available: state.offlineCapable, total: state.totalSteps })
             : t('pathOffline.download');
   const detail =
-    isOffline && state.status !== 'available'
+    state.status === 'downloading'
+      ? packQueueDetail(t, gate, pack.items.length - state.missingItems, pack.items.length)
+      : isOffline && state.status !== 'available'
       ? t('pathOffline.needsInternet')
       : state.status === 'available'
         ? t('pathOffline.availableDetail')
@@ -48,6 +53,7 @@ export function PathOfflineRow({ pack, state, title }: { pack: LearningPathOffli
         <Text style={styles.title}>{heading}</Text>
         <Text style={styles.detail}>{detail}</Text>
       </View>
+      {pending ? <CancelPackButton requester={pathRequester(pack.pathId)} items={pack.items} name={title} /> : null}
       {state.status === 'none' ? (
         <AnimatedPressable style={styles.action} onPress={start} disabled={isOffline} accessibilityRole="button" accessibilityState={{ disabled: isOffline }} accessibilityLabel={t('pathOffline.downloadPath', { title })}>
           <Text style={[styles.actionText, isOffline && styles.disabled]}>{t('pathOffline.downloadShort')}</Text>

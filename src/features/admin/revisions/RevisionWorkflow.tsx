@@ -15,23 +15,43 @@ import {
   currentRevision,
   describeChangedFields,
   diffFields,
+  diffTranslations,
   editorLabel,
+  editsFromTranslations,
   fieldsFromValues,
   isConflict,
+  liveTranslationsFor,
+  mergeTranslations,
   publishProblem,
+  publishScope,
   revisionErrorMessage,
+  translationsProblem,
   valuesFromFields,
+  withDraftTranslations,
   type RevisionContentType,
+  type TranslationEdits,
 } from './revisionModel';
 import { discardDraft, getDraft, getRevision, listRevisions, publishContent, restoreRevision, saveDraft } from './revisionService';
 
 type Message = { tone: 'info' | 'error'; text: string } | null;
 
+/** A draft rejected locally before any request (shown verbatim). */
+class DraftProblem extends Error {}
+
+const SCOPE_STATUS = {
+  none: 'Matches the live version',
+  content: 'Unpublished changes: Kyrgyz content',
+  translations: 'Unpublished changes: translations',
+  both: 'Unpublished changes: Kyrgyz content + translations',
+} as const;
+
 /**
  * (Hook: returns the in-editor panel and the bottom bar.) Draft -> Preview -> Publish, plus Revision history and safe rollback, for
  * Culture items/materials inside the existing section editor. The live row
- * changes ONLY through admin_publish_content / admin_restore_revision; a
- * failed call leaves the editor's text on screen and never claims success.
+ * AND its RU/EN translations change ONLY through admin_publish_content /
+ * admin_restore_revision (one transaction each); a failed call leaves the
+ * editor's text on screen and never claims success. Translation edits live
+ * in `translationEdits` (editor state) until then.
  */
 export function useRevisionWorkflow({
   section,
@@ -41,6 +61,8 @@ export function useRevisionWorkflow({
   values,
   liveValues,
   translations,
+  translationEdits,
+  onTranslationEditsChange,
   fieldLabel,
   onPublished,
   onReplaceValues,
@@ -51,7 +73,11 @@ export function useRevisionWorkflow({
   isNew: boolean;
   values: Record<string, string>;
   liveValues: Record<string, string>;
+  /** Live admin translation rows (all content). */
   translations: readonly AdminTranslationRow[];
+  /** Unpublished RU/EN edits for this content (see TranslationsPanel revision_draft mode). */
+  translationEdits: TranslationEdits;
+  onTranslationEditsChange: (edits: TranslationEdits) => void;
   fieldLabel: (field: string) => string;
   onPublished: (values: Record<string, string>) => void;
   /** Replace the editor content (latest live version, a draft, or a restored revision). */
@@ -78,8 +104,14 @@ export function useRevisionWorkflow({
   const id = isNew ? (values[section.idField] ?? '').trim() : contentId;
   const fields = fieldsFromValues(section, values);
   const live = isNew ? null : fieldsFromValues(section, liveValues);
-  const changes = diffFields(live, fields, fieldLabel);
-  const problem = publishProblem(fields);
+  const fieldChanges = diffFields(live, fields, fieldLabel);
+  const liveTranslations = liveTranslationsFor(type, id, translations);
+  const draftTranslations = mergeTranslations(liveTranslations, translationEdits);
+  const translationChanges = isNew ? [] : diffTranslations(liveTranslations, draftTranslations, fieldLabel);
+  const scope = publishScope(fieldChanges, translationChanges);
+  const changes = [...fieldChanges, ...translationChanges];
+  const problem = publishProblem(fields) ?? translationsProblem(type, draftTranslations, fieldLabel, true);
+  const previewTranslations = withDraftTranslations(type, id, translations, draftTranslations);
   const revisionsMissing = !!revisions.error && /could not find the function|PGRST202/i.test(String((revisions.error as { message?: string; code?: string }).message ?? (revisions.error as { code?: string }).code));
 
   const invalidate = async () => {
@@ -92,18 +124,23 @@ export function useRevisionWorkflow({
   };
 
   const saveDraftMutation = useMutation({
-    mutationFn: () => saveDraft(type, id, fields, expected ?? 0),
+    mutationFn: async () => {
+      const draftProblem = translationsProblem(type, draftTranslations, fieldLabel, false);
+      if (draftProblem) throw new DraftProblem(draftProblem);
+      await saveDraft(type, id, fields, draftTranslations, expected ?? 0);
+    },
     onSuccess: async () => {
       setMessage({ tone: 'info', text: 'Draft saved. It is not public - readers still see the live version.' });
       await queryClient.invalidateQueries({ queryKey: ['admin_draft', type, id] });
     },
-    onError: (error: Error) => setMessage({ tone: 'error', text: revisionErrorMessage(error) }),
+    onError: (error: Error) => setMessage({ tone: 'error', text: error instanceof DraftProblem ? error.message : revisionErrorMessage(error) }),
   });
 
   const publishMutation = useMutation({
-    mutationFn: () => publishContent(type, id, fields, expected ?? -1),
+    mutationFn: () => publishContent(type, id, fields, draftTranslations, expected ?? -1),
     onSuccess: async (revision) => {
       setExpected(revision);
+      onTranslationEditsChange({});
       setConflict(false);
       setPreviewOpen(false);
       setMessage({ tone: 'info', text: `Published as revision ${revision}.` });
@@ -127,6 +164,7 @@ export function useRevisionWorkflow({
       setViewing(null);
       setConflict(false);
       if (snapshot) onReplaceValues(valuesFromFields(section, snapshot.fields, id), true);
+      onTranslationEditsChange({});
       setMessage({ tone: 'info', text: `Restored as new revision ${revision}.` });
       await invalidate();
     },
@@ -147,6 +185,8 @@ export function useRevisionWorkflow({
       const latest = valuesFromFields(section, row, id);
       onReplaceValues(latest, true);
     }
+    onTranslationEditsChange({});
+    await queryClient.invalidateQueries({ queryKey: ADMIN_TRANSLATIONS_KEY });
     setExpected(currentRevision(list));
     setConflict(false);
     setMessage({ tone: 'info', text: 'Loaded the latest live version.' });
@@ -154,7 +194,7 @@ export function useRevisionWorkflow({
 
   const draftRow = draft.data && !draftHandled ? draft.data : null;
   const busy = saveDraftMutation.isPending || publishMutation.isPending || restoreMutation.isPending;
-  const dirty = isNew || changes.length > 0;
+  const dirty = isNew || scope !== 'none';
 
   const panel = (
     <>
@@ -173,6 +213,8 @@ export function useRevisionWorkflow({
               variant="secondary"
               onPress={() => {
                 onReplaceValues(valuesFromFields(section, draftRow.fields, id), false);
+                // null = a draft saved before translations joined drafts: keep live RU/EN.
+                onTranslationEditsChange(draftRow.translations ? editsFromTranslations(liveTranslations, draftRow.translations) : {});
                 setDraftHandled(true);
               }}
             />
@@ -223,7 +265,7 @@ export function useRevisionWorkflow({
     <>
       <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.sm }]}>
         <Text style={[styles.status, message?.tone === 'error' && styles.error]} numberOfLines={3} accessibilityLiveRegion="polite">
-          {busy ? 'Working…' : (message?.text ?? (dirty ? 'Unpublished changes' : 'Matches the live version'))}
+          {busy ? 'Working…' : (message?.text ?? (isNew ? 'New - not published yet' : SCOPE_STATUS[scope]))}
         </Text>
         {conflict ? <Button label="Refresh" size="sm" variant="secondary" onPress={() => setConfirmRefresh(true)} /> : null}
         <Button label="Save draft" size="sm" variant="secondary" disabled={busy || !id || revisionsMissing} onPress={() => saveDraftMutation.mutate()} />
@@ -235,7 +277,7 @@ export function useRevisionWorkflow({
           <Text style={styles.modalTitle} accessibilityRole="header">
             Preview changes
           </Text>
-          <Text style={styles.sectionTitle}>What changes</Text>
+          <Text style={styles.sectionTitle}>What changes{scope === 'both' ? ' (content + translations, published together)' : scope === 'translations' ? ' (translations only)' : ''}</Text>
           {changes.length === 0 ? <Text style={styles.muted}>No changes.</Text> : changes.map((change) => <Text key={change} style={styles.change}>• {change}</Text>)}
           <Text style={styles.sectionTitle}>Verification & sources</Text>
           <VerificationBadge level={(fields.accuracy_level as 'verified' | 'partially_verified' | 'unverified') ?? 'unverified'} />
@@ -245,10 +287,11 @@ export function useRevisionWorkflow({
             </Text>
           ))}
           <Text style={styles.sectionTitle}>As readers will see it (KG / RU / EN)</Text>
-          <ContentPreviewPanel contentType={type} row={{ ...valuesToRow(section, values), id }} translations={translations} fieldLabel={fieldLabel} />
+          <Text style={styles.muted}>Built from this editor's draft - edited Kyrgyz text and edited RU/EN translations - not from the live version.</Text>
+          <ContentPreviewPanel contentType={type} row={{ ...valuesToRow(section, values), id }} translations={previewTranslations} fieldLabel={fieldLabel} />
           {problem ? <Text style={styles.error}>{problem}</Text> : null}
           {message?.tone === 'error' ? <Text style={styles.error}>{message.text}</Text> : null}
-          <Button label="Publish" disabled={!!problem || publishMutation.isPending || (!isNew && changes.length === 0)} loading={publishMutation.isPending} onPress={() => publishMutation.mutate()} />
+          <Button label="Publish" disabled={!!problem || publishMutation.isPending || (!isNew && scope === 'none')} loading={publishMutation.isPending} onPress={() => publishMutation.mutate()} />
           <Button label="Keep editing" variant="secondary" onPress={() => setPreviewOpen(false)} />
         </ScrollView>
       </Modal>

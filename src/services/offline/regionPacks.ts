@@ -94,9 +94,11 @@ export function requestedRegionIds(manifest: OfflineManifest): string[] {
 
 export type PackStore = {
   manifest: OfflineManifest;
-  download: (kind: OfflineKind, contentId: string, requester?: string) => Promise<boolean>;
+  download: (kind: OfflineKind, contentId: string, requester?: string, priority?: 'user' | 'background') => Promise<boolean>;
   claim: (id: string, requester: string) => Promise<void>;
   release: (id: string, requester: string) => Promise<void>;
+  /** Download queue: cancel this owner's queued / running request. */
+  cancel?: (id: string, requester: string) => Promise<void>;
 };
 
 /**
@@ -110,13 +112,27 @@ export async function downloadRegionPack(regionId: string, pack: RegionPackManif
 }
 
 /** Shared by Region and Learning Path packs: claim what is already on the
- * device (stored once), download only what is missing or failed. */
-export async function downloadPackItems(requester: string, items: readonly RegionPackItem[], store: () => PackStore): Promise<number> {
+ * device (stored once), then QUEUE everything missing in one go (the
+ * download queue dedupes items another pack already asked for and runs
+ * them under the network policy). */
+export async function downloadPackItems(requester: string, items: readonly RegionPackItem[], store: () => PackStore, priority: 'user' | 'background' = 'user'): Promise<number> {
+  const missing: RegionPackItem[] = [];
   for (const item of items) {
     if (store().manifest.entries[item.id]) await store().claim(item.id, requester);
-    else await store().download(item.kind, item.contentId, requester);
+    else missing.push(item);
   }
+  await Promise.all(missing.map((item) => store().download(item.kind, item.contentId, requester, priority)));
   return items.filter((item) => !!store().manifest.entries[item.id]).length;
+}
+
+/**
+ * Cancel a pack request that is still queued / downloading: only this
+ * pack's claim on items not yet downloaded is withdrawn. Items another
+ * owner wants keep downloading; items already downloaded stay (Remove
+ * handles those, with the same shared-ownership rule).
+ */
+export async function cancelPackItems(requester: string, items: readonly RegionPackItem[], store: () => PackStore): Promise<void> {
+  for (const item of items) if (!store().manifest.entries[item.id]) await store().cancel?.(item.id, requester);
 }
 
 /** Releases only this requester's claim on each item. */

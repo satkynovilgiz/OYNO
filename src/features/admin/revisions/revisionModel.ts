@@ -1,4 +1,6 @@
-import { isValidSourceUrl } from '../adminModel';
+import { CULTURE_ITEM_BODY_FIELDS } from '@/services/content/localizedContent';
+
+import { isValidSourceUrl, validateTranslation, type AdminTranslationRow } from '../adminModel';
 import type { AdminSectionConfig } from '../sections';
 
 /**
@@ -17,7 +19,18 @@ export const REVISION_SECTIONS: Record<string, RevisionContentType> = {
 };
 
 export type AuthoredFields = Record<string, unknown>;
-export type RevisionSnapshot = { fields: AuthoredFields; translations: { language: string; field: string; value: string; status: string }[] };
+export type TranslationLanguage = 'ru' | 'en';
+export type TranslationStatus = 'draft' | 'reviewed';
+/** One RU/EN field of a revision / draft / publish payload. */
+export type TranslationDraft = { language: TranslationLanguage; field: string; value: string; status: TranslationStatus };
+export type RevisionSnapshot = { fields: AuthoredFields; translations: TranslationDraft[] };
+/**
+ * Unpublished RU/EN edits in the editor, keyed `language|field`. Only
+ * touched fields are present; `removed` drops a live translation on
+ * publish. Nothing here is public until admin_publish_content.
+ */
+export type TranslationEdit = { value: string; status: TranslationStatus; removed?: boolean };
+export type TranslationEdits = Record<string, TranslationEdit>;
 
 export type RevisionRow = {
   revisionNumber: number;
@@ -123,15 +136,141 @@ export function publishProblem(fields: AuthoredFields): string | null {
   return null;
 }
 
+// ---------------------------------------------------------------------
+// RU / EN translations inside the revision workflow
+// ---------------------------------------------------------------------
+
+/** Mirrors content_translatable_fields() in 20261004000003_revision_translations.sql. */
+export const REVISION_TRANSLATABLE_FIELDS: Record<RevisionContentType, readonly string[]> = {
+  culture_item: ['title', 'alt_names', ...CULTURE_ITEM_BODY_FIELDS],
+  culture_material: ['title', 'description', 'body'],
+};
+export const MAX_TRANSLATION_LENGTH = 20000;
+
+export const translationKey = (language: string, field: string) => `${language}|${field}`;
+const byKey = (a: TranslationDraft, b: TranslationDraft) => translationKey(a.language, a.field).localeCompare(translationKey(b.language, b.field));
+
+/** Coerce any server/snapshot list into well-formed drafts (unknown shapes dropped). */
+export function parseTranslations(raw: unknown): TranslationDraft[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object')
+    .filter((entry) => (entry.language === 'ru' || entry.language === 'en') && typeof entry.field === 'string' && typeof entry.value === 'string')
+    .map((entry): TranslationDraft => ({ language: entry.language as TranslationLanguage, field: entry.field as string, value: entry.value as string, status: entry.status === 'reviewed' ? 'reviewed' : 'draft' }))
+    .sort(byKey);
+}
+
+/** The live RU/EN set of one content row, from the admin translation list. */
+export function liveTranslationsFor(type: RevisionContentType, id: string, rows: readonly AdminTranslationRow[]): TranslationDraft[] {
+  return parseTranslations(rows.filter((row) => row.content_type === type && row.content_id === id));
+}
+
+/** Live set + editor edits = the complete set a draft / publish carries. */
+export function mergeTranslations(live: readonly TranslationDraft[], edits: TranslationEdits): TranslationDraft[] {
+  const merged = new Map(live.map((entry) => [translationKey(entry.language, entry.field), { ...entry }]));
+  for (const [key, edit] of Object.entries(edits)) {
+    const [language, field] = key.split('|');
+    if (edit.removed) merged.delete(key);
+    else merged.set(key, { language: language as TranslationLanguage, field, value: edit.value, status: edit.status });
+  }
+  return [...merged.values()].sort(byKey);
+}
+
+/** Edits that differ from the live set (what makes the editor dirty). */
+export function changedTranslationKeys(live: readonly TranslationDraft[], edits: TranslationEdits): string[] {
+  const liveMap = new Map(live.map((entry) => [translationKey(entry.language, entry.field), entry]));
+  return Object.entries(edits)
+    .filter(([key, edit]) => {
+      const was = liveMap.get(key);
+      if (edit.removed) return !!was;
+      return !was ? edit.value !== '' || edit.status !== 'draft' : was.value !== edit.value || was.status !== edit.status;
+    })
+    .map(([key]) => key)
+    .sort();
+}
+
+/** Turn a saved draft's full set back into edits on top of the current live set. */
+export function editsFromTranslations(live: readonly TranslationDraft[], target: readonly TranslationDraft[]): TranslationEdits {
+  const edits: TranslationEdits = {};
+  for (const entry of target) edits[translationKey(entry.language, entry.field)] = { value: entry.value, status: entry.status };
+  for (const entry of live) {
+    const key = translationKey(entry.language, entry.field);
+    if (!edits[key]) edits[key] = { value: entry.value, status: entry.status, removed: true };
+  }
+  for (const key of Object.keys(edits)) if (!changedTranslationKeys(live, { [key]: edits[key] }).length) delete edits[key];
+  return edits;
+}
+
+/** Human summary of RU/EN changes for the preview ("EN · Title changed"). */
+export function diffTranslations(live: readonly TranslationDraft[], next: readonly TranslationDraft[], label: (field: string) => string): string[] {
+  const was = new Map(live.map((entry) => [translationKey(entry.language, entry.field), entry]));
+  const now = new Map(next.map((entry) => [translationKey(entry.language, entry.field), entry]));
+  const changes: string[] = [];
+  for (const key of [...new Set([...was.keys(), ...now.keys()])].sort()) {
+    const [language, field] = key.split('|');
+    const tag = `${language.toUpperCase()} · ${label(field)}`;
+    const a = was.get(key);
+    const b = now.get(key);
+    if (!a && b) changes.push(`${tag} added${b.status === 'reviewed' ? ' (reviewed)' : ' (draft)'}`);
+    else if (a && !b) changes.push(`${tag} removed`);
+    else if (a && b) {
+      if (a.value !== b.value) changes.push(`${tag} changed`);
+      if (a.status !== b.status) changes.push(`${tag} marked ${b.status}`);
+    }
+  }
+  return changes;
+}
+
+/**
+ * Same rules as content_translations_problem() on the server: supported
+ * languages and fields only, no duplicates, bounded length; for publish,
+ * every value must be non-empty (validateTranslation).
+ */
+export function translationsProblem(type: RevisionContentType, translations: readonly TranslationDraft[], label: (field: string) => string, forPublish: boolean): string | null {
+  const allowed = REVISION_TRANSLATABLE_FIELDS[type];
+  const seen = new Set<string>();
+  for (const entry of translations) {
+    const tag = `${String(entry.language).toUpperCase()} · ${label(entry.field)}`;
+    if (entry.language !== 'ru' && entry.language !== 'en') return `Unsupported translation language: ${String(entry.language)}`;
+    if (!allowed.includes(entry.field)) return `${tag}: this field can't be translated.`;
+    if (entry.value.length > MAX_TRANSLATION_LENGTH) return `${tag}: translation is too long.`;
+    const key = translationKey(entry.language, entry.field);
+    if (seen.has(key)) return `${tag}: duplicate translation.`;
+    seen.add(key);
+    if (forPublish) {
+      const problem = validateTranslation(entry.value, entry.status);
+      if (problem) return `${tag}: ${problem}`;
+    } else if (entry.status !== 'draft' && entry.status !== 'reviewed') return `${tag}: Unknown status.`;
+  }
+  return null;
+}
+
+/** Admin translation rows with this content's rows replaced by the edited set - for previews. */
+export function withDraftTranslations(type: RevisionContentType, id: string, rows: readonly AdminTranslationRow[], translations: readonly TranslationDraft[]): AdminTranslationRow[] {
+  return [
+    ...rows.filter((row) => !(row.content_type === type && row.content_id === id)),
+    ...translations.map((entry) => ({ id: `${type}|${id}|${entry.language}|${entry.field}`, content_type: type, content_id: id, ...entry })),
+  ];
+}
+
+/** What a publish would change: canonical fields, translations, or both. */
+export function publishScope(fieldChanges: readonly string[], translationChanges: readonly string[]): 'none' | 'content' | 'translations' | 'both' {
+  if (fieldChanges.length && translationChanges.length) return 'both';
+  if (fieldChanges.length) return 'content';
+  if (translationChanges.length) return 'translations';
+  return 'none';
+}
+
 /** Server errors -> admin-facing message. The editor content always stays on screen. */
 export function revisionErrorMessage(error: { message?: string; code?: string } | null | undefined): string {
   const message = error?.message ?? '';
-  if (error?.code === 'PGRST202' || error?.code === '42883' || /could not find the function/i.test(message)) return "Revision history isn't available yet - migration 20261004000002_content_revisions.sql is not applied on this project. Nothing was published.";
+  if (error?.code === 'PGRST202' || error?.code === '42883' || /could not find the function/i.test(message)) return "Revision history isn't available yet - migrations 20261004000002_content_revisions.sql / 20261004000003_revision_translations.sql are not applied on this project. Nothing was published.";
   if (/REVISION_CONFLICT/.test(message)) return 'Content changed since you opened it. Refresh before publishing.';
   if (/NOT_AUTHORIZED|permission denied/i.test(message)) return "This account isn't allowed to publish content.";
   if (/NO_CHANGES/.test(message)) return 'Nothing to publish - this matches the live version.';
   if (/ALREADY_CURRENT/.test(message)) return 'This is already the live version.';
-  const validation = /VALIDATION:([a-z_:-]+)/.exec(message);
+  if (/USE_REVISION_PUBLISH/.test(message)) return 'Culture translations are published with the content - use Save draft / Preview & publish.';
+  const validation = /VALIDATION:([a-z_:.-]+)/.exec(message);
   if (validation) {
     const code = validation[1];
     const known: Record<string, string> = {
@@ -141,7 +280,14 @@ export function revisionErrorMessage(error: { message?: string; code?: string } 
       unknown_category: 'The category does not exist.',
       invalid_kind: 'Choose a valid material kind.',
       invalid_verification: 'Choose a valid verification level.',
+      translation_language: 'Only RU and EN translations are supported.',
+      translation_status: 'A translation has an unknown status.',
+      translation_too_long: 'A translation is too long.',
+      translation_duplicate: 'A translation field appears twice.',
+      too_many_translations: 'Too many translations in one publish.',
     };
+    if (code.startsWith('translation_empty:')) return `Translation ${code.slice('translation_empty:'.length).toUpperCase()} is empty - write it or remove it.`;
+    if (code.startsWith('translation_field:')) return `"${code.slice('translation_field:'.length)}" can't be translated.`;
     return known[code] ?? `Publishing blocked: ${code}`;
   }
   return 'Publishing failed. Your edits are still here; nothing was published.';

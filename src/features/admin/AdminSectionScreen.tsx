@@ -19,7 +19,7 @@ import { CoverageBadges, VerificationBadge } from './components/StatusBadges';
 import { TranslationsPanel } from './components/TranslationsPanel';
 import { rowToFormValues, type AdminFieldConfig, type AdminRow, type AdminSectionConfig } from './sections';
 import { useAdminCatalog, useAdminReviewNotes, useAdminTranslations } from './useAdminData';
-import { REVISION_SECTIONS } from './revisions/revisionModel';
+import { changedTranslationKeys, liveTranslationsFor, mergeTranslations, REVISION_SECTIONS, withDraftTranslations, type TranslationEdits } from './revisions/revisionModel';
 import { RevisionScaffold } from './revisions/RevisionWorkflow';
 
 const IMAGE_UPLOAD_SECTIONS = {
@@ -109,6 +109,8 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
   const [imageError, setImageError] = useState<string | null>(null);
   const [filter, setFilter] = useState<AdminFilter>(EMPTY_FILTER);
   const [translationDirty, setTranslationDirty] = useState(0);
+  // Revision-managed content: unpublished RU/EN edits (never written live from here).
+  const [translationEdits, setTranslationEdits] = useState<TranslationEdits>({});
   const [noteDirty, setNoteDirty] = useState(false);
 
   const { data: rows, isLoading, error } = useQuery({ queryKey: ['admin_section', section.id], queryFn: section.fetch });
@@ -120,7 +122,11 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
 
   const coverageOf = useCallback((row: AdminRow) => (section.contentType ? coverageFor(section.contentType, row, translations ?? []) : null), [section.contentType, translations]);
 
-  const dirty = !!editingRow && (isDirty(initialValues, formValues) || translationDirty > 0 || noteDirty);
+  const revisionType = REVISION_SECTIONS[section.id];
+  const editingId = editingRow && editingRow !== 'new' ? String(editingRow[section.idField] ?? '') : '';
+  const liveTranslations = useMemo(() => (revisionType && editingId ? liveTranslationsFor(revisionType, editingId, translations ?? []) : []), [revisionType, editingId, translations]);
+  const revisionTranslationDirty = revisionType ? changedTranslationKeys(liveTranslations, translationEdits).length : 0;
+  const dirty = !!editingRow && (isDirty(initialValues, formValues) || translationDirty > 0 || revisionTranslationDirty > 0 || noteDirty);
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
 
@@ -165,6 +171,7 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
     setImageUrl((row?.image_url as string | null | undefined) ?? null);
     setImageError(null);
     setTranslationDirty(0);
+    setTranslationEdits({});
     setNoteDirty(false);
   }
 
@@ -172,6 +179,7 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
     const close = () => {
       setEditingRow(null);
       setTranslationDirty(0);
+      setTranslationEdits({});
       setNoteDirty(false);
     };
     if (dirty) setPendingLeave(() => close);
@@ -227,6 +235,7 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
         setPendingLeave(null);
         dirtyRef.current = false;
         setTranslationDirty(0);
+        setTranslationEdits({});
         setNoteDirty(false);
         leave?.();
       }}
@@ -239,7 +248,8 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
     const contentId = isNew ? '' : String(editingRow[section.idField] ?? '');
     const currentRow = valuesToRow(section, formValues);
     const canSave = (isDirty(initialValues, formValues) || isNew) && !saveMutation.isPending;
-    const revisionType = REVISION_SECTIONS[section.id];
+    // Revision editors preview their draft translations, not the live ones.
+    const previewTranslations = revisionType ? withDraftTranslations(revisionType, contentId, translations ?? [], mergeTranslations(liveTranslations, translationEdits)) : (translations ?? []);
     const editorSections = (
       <>
         {section.id in IMAGE_UPLOAD_SECTIONS && !isNew ? (
@@ -258,7 +268,14 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
 
         {section.contentType && !isNew ? (
           <Section title="Translations (RU / EN)">
-            <TranslationsPanel contentType={section.contentType} contentId={contentId} row={currentRow} translations={translations ?? []} fieldLabel={fieldLabel} onDirtyChange={setTranslationDirty} />
+            <TranslationsPanel
+              contentType={section.contentType}
+              contentId={contentId}
+              row={currentRow}
+              translations={translations ?? []}
+              fieldLabel={fieldLabel}
+              mode={revisionType ? { kind: 'revision_draft', live: liveTranslations, edits: translationEdits, onEditsChange: setTranslationEdits } : { kind: 'direct', onDirtyChange: setTranslationDirty }}
+            />
           </Section>
         ) : null}
 
@@ -270,7 +287,7 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
 
         {section.contentType ? (
           <Section title="Preview (as readers see it)">
-            <ContentPreviewPanel contentType={section.contentType} row={{ ...currentRow, id: contentId }} translations={translations ?? []} fieldLabel={fieldLabel} />
+            <ContentPreviewPanel contentType={section.contentType} row={{ ...currentRow, id: contentId }} translations={previewTranslations} fieldLabel={fieldLabel} />
           </Section>
         ) : null}
       </>
@@ -295,6 +312,8 @@ export function AdminSectionScreen({ section, onPressBack }: AdminSectionScreenP
             values={formValues}
             liveValues={initialValues}
             translations={translations ?? []}
+            translationEdits={translationEdits}
+            onTranslationEditsChange={setTranslationEdits}
             fieldLabel={fieldLabel}
             onPublished={(values) => {
               setInitialValues(values);

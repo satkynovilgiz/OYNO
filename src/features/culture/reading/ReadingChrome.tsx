@@ -11,7 +11,7 @@ import type { ReadingTracker } from './useReadingTracker';
 
 /** Quiet reading UI: a thin progress line at the very top and, for an
  * unfinished article, the "Continue where you left off?" choice. */
-export function ReadingOverlay({ tracker, experience }: { tracker: ReadingTracker; experience: AgeExperience }) {
+export function ReadingOverlay({ tracker, experience, sectionOffset }: { tracker: ReadingTracker; experience: AgeExperience; sectionOffset?: (sectionKey: string) => number | null }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isChild = experience === 'child';
@@ -38,7 +38,7 @@ export function ReadingOverlay({ tracker, experience }: { tracker: ReadingTracke
           <Text style={[styles.promptTitle, isChild && styles.promptTitleChild]}>{isChild ? t('reading.resumeChild') : t('reading.resumeQuestion')}</Text>
           {!isChild ? <Text style={styles.promptMeta}>{t('reading.percentRead', { percent: percentRead(tracker.record) })}</Text> : null}
           <View style={styles.promptActions}>
-            <Button label={t('reading.continue')} size="sm" onPress={tracker.resume} />
+            <Button label={t('reading.continue')} size="sm" onPress={() => tracker.resume(sectionOffset)} />
             <Button label={t('reading.fromBeginning')} variant="secondary" size="sm" onPress={tracker.startFromTop} />
           </View>
         </View>

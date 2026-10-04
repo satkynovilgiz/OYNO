@@ -21,6 +21,7 @@ import { formatEntryDate, linkArtwork, linkRoute, shiftDate } from './journalDis
 import { isValidJournalLink, JOURNAL_EXCERPT_MAX, JOURNAL_NOTE_MAX, JOURNAL_TITLE_MAX, shareExcerpt, validateDraft, type JournalLink } from './journalModel';
 import { showToast } from '@/components/ui/Toast';
 import { LinkContentSheet } from './LinkContentSheet';
+import { getPrompt } from './prompts/journalPrompts';
 
 function imagePickerAvailable(): boolean {
   return Platform.OS !== 'web' && !!requireOptionalNativeModule('ExponentImagePicker');
@@ -33,6 +34,8 @@ type Props = {
   initialLink?: JournalLink | null;
   /** New memory pre-filled from the Journal calendar (YYYY-MM-DD, not in the future); still editable. */
   initialDate?: string | null;
+  /** Optional writing prompt (new memories only): shown as helper text, never inserted into the note or stored. */
+  promptId?: string | null;
   onPressBack: () => void;
 };
 
@@ -41,7 +44,7 @@ type Props = {
  * never translated), date, an optional photo and an optional link to real
  * OYNO content. Deleting it changes nothing but the journal.
  */
-export function JournalEntryScreen({ entryId, initialLink = null, initialDate = null, onPressBack }: Props) {
+export function JournalEntryScreen({ entryId, initialLink = null, initialDate = null, promptId = null, onPressBack }: Props) {
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
   const insets = useSafeAreaInsets();
@@ -66,6 +69,8 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
   const [dateOpen, setDateOpen] = useState(false);
   const [excerpt, setExcerpt] = useState('');
   const [hydratedId, setHydratedId] = useState<string | null>(null);
+  const [promptHidden, setPromptHidden] = useState(false);
+  const prompt = !entryId && !promptHidden ? getPrompt(promptId) : null;
   const { share, shareHost } = useShareCard();
 
   useEffect(() => {
@@ -233,6 +238,17 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
             <Text style={styles.note}>{t('journal.photosPhoneOnly')}</Text>
           )}
 
+          {/* Writing prompt: helper text beside the note - the note stays exactly what the person types. */}
+          {prompt ? (
+            <View style={styles.prompt} accessible accessibilityLabel={`${t('journalPrompts.promptLabel')}: ${t(prompt.textKey)}. ${t('journalPrompts.notSaved')}`}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={styles.promptLabel}>{t('journalPrompts.promptLabel')}</Text>
+                <Text style={[styles.promptText, isChild && styles.promptTextChild]}>{t(prompt.textKey)}</Text>
+                <Text style={styles.note}>{t('journalPrompts.notSaved')}</Text>
+              </View>
+              <IconButton icon={X} size={36} iconSize={16} elevated={false} accessibilityLabel={t('journalPrompts.hide')} onPress={() => setPromptHidden(true)} />
+            </View>
+          ) : null}
           <TextField
             label={t('journal.noteLabel')}
             value={note}
@@ -381,4 +397,8 @@ const styles = StyleSheet.create({
   addPhotoText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },
   note: { ...textStyles.small, color: colors.textMuted },
   error: { ...textStyles.caption, color: colors.accentTerracotta },
+  prompt: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceAlt },
+  promptLabel: { ...textStyles.overline, color: colors.accentTerracotta },
+  promptText: { ...textStyles.bodyMedium, fontWeight: '600', color: colors.textPrimary },
+  promptTextChild: { fontSize: 18, lineHeight: 26 },
 });

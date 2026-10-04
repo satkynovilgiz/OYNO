@@ -20,6 +20,7 @@ import { LibraryEmptyState } from '@/components/library/LibraryChrome';
 import { Chip } from '@/components/ui/Chip';
 import { canOfferCollage } from './collage/collageModel';
 import { OnThisDayCard } from './calendar/OnThisDayCard';
+import { PromptSheet } from './prompts/PromptSheet';
 
 export const FILTERS: JournalFilter[] = ['all', 'places', 'culture', 'trails'];
 
@@ -34,6 +35,7 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
   const language = i18n.language as SupportedLanguage;
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
+  const [promptsOpen, setPromptsOpen] = useState(false);
   const entries = useJournalStore((state) => state.entries);
   const [filter, setFilter] = useState<JournalFilter>('all');
 
@@ -81,8 +83,10 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
           block
           onPress={() => router.push('/journal/new' as never)}
         />
+        {/* Optional, hand-authored writing ideas (never written into the note). */}
+        <Button label={t('journalPrompts.needIdea')} variant="text" block onPress={() => setPromptsOpen(true)} />
 
-        <OnThisDayCard />
+        <OnThisDayCard onPressPrompt={() => setPromptsOpen(true)} />
         {total > 0 ? <Button label={t('journalCalendar.title')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/calendar' as never)} /> : null}
         {canOfferCollage(entries) ? (
           <Button label={t('journalCollage.create')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/collage' as never)} />
@@ -113,6 +117,7 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
           ))
         )}
       </ScrollView>
+      {promptsOpen ? <PromptSheet onClose={() => setPromptsOpen(false)} /> : null}
     </View>
   );
 }

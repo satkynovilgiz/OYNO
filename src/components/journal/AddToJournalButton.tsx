@@ -5,6 +5,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import { rememberCultureItemId, type JournalLinkType } from '@/features/journal/journalModel';
+import { CULTURE_REFLECTION_PROMPT } from '@/features/journal/prompts/journalPrompts';
 import { colors, radii, spacing, typography } from '@/theme';
 
 /**
@@ -20,7 +21,9 @@ export function AddToJournalButton({ type, id, title }: { type: JournalLinkType;
       onPress={() => {
         // Culture items come from the database; this one is on screen, so it's real.
         if (type === 'culture_item') rememberCultureItemId(id);
-        router.push({ pathname: '/journal/new', params: { linkType: type, linkId: id, linkLabel: title } } as never);
+        // Culture: "Save a reflection" offers a generic authored prompt (no claims about the article).
+        const prompt = type === 'culture_item' ? { prompt: CULTURE_REFLECTION_PROMPT } : {};
+        router.push({ pathname: '/journal/new', params: { linkType: type, linkId: id, linkLabel: title, ...prompt } } as never);
       }}
       pressScale={0.97}
       haptic="light"

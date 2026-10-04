@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
@@ -23,9 +23,13 @@ import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
+import { ContentsButton } from '@/features/culture/reader/navigator/ContentsSheet';
+import { currentSectionAt, jumpOffset, resumeSection, tableOfContents, type NavSection } from '@/features/culture/reader/navigator/sectionNavigator';
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
 import { KeyTermsSection } from '@/features/culture/glossary/KeyTermsSection';
+import { GlossaryText, InlineGlossaryProvider } from '@/features/culture/glossary/inline/InlineGlossary';
+import { ConnectionsSection } from '@/features/culture/connections/ConnectionsSection';
 import { ThenAndNowSection } from '@/features/culture/thenNow/ThenAndNowSection';
 import { thenNowRoute } from '@/features/culture/thenNow/thenAndNow';
 import { cultureItemNarration, localizedSimpleSummary } from '@/services/audioGuide/contentNarration';
@@ -141,6 +145,47 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
   }, [currentKey, follow]);
   const hasAudio = !!audioTracks && audioTracks.length > 0;
 
+  // Reader Navigator: the EXACT rendered sections (same keys as Read &
+  // Listen and saved highlights). The simple summary is one block, so no TOC.
+  const navSections: NavSection[] = simpleSummary ? [] : filledFields.map((field) => ({ key: field.key as string, label: t(field.labelKey) }));
+  const toc = tableOfContents(navSections);
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
+  const currentSectionRef = useRef<string | null>(null);
+  // Absolute offset of a section in the CURRENT layout (never stored).
+  const sectionTop = (key: string): number | null => {
+    const { body, fields } = sectionOffsets.current;
+    const field = sectionOffsets.current[key];
+    return body === undefined || fields === undefined || field === undefined ? null : body + fields + field;
+  };
+  const onScroll: ComponentProps<typeof ScrollView>['onScroll'] = (event) => {
+    reading.onScroll(event);
+    if (navSections.length === 0) return;
+    const tops = navSections.flatMap((section) => {
+      const top = sectionTop(section.key);
+      return top === null ? [] : [{ key: section.key, top }];
+    });
+    const next = currentSectionAt(tops, event.nativeEvent.contentOffset.y, event.nativeEvent.layoutMeasurement.height);
+    if (next === currentSectionRef.current) return;
+    currentSectionRef.current = next;
+    setCurrentSection(next);
+    reading.noteSection(next);
+  };
+  const jumpToSection = (key: string) => {
+    const top = sectionTop(key);
+    if (top === null) return;
+    // Existing Read & Listen policy: a manual move pauses Follow Narration.
+    lastManualScroll.current = Date.now();
+    currentSectionRef.current = key;
+    setCurrentSection(key);
+    // No progress, completion or highlight is recorded for a jump.
+    reading.jumpTo(jumpOffset(top), !reducedMotion);
+  };
+  const resumeOffset = (key: string): number | null => {
+    const valid = resumeSection(key, navSections);
+    const top = valid ? sectionTop(valid) : null;
+    return top === null ? null : jumpOffset(top);
+  };
+
   // The primary photo (admin-uploaded image_url, falling back to the first
   // bundled image) becomes the cinematic hero; any remaining bundled images
   // still get their own browsable strip below, just no longer duplicated
@@ -164,6 +209,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
   const actions = (
     <View style={styles.headerActions}>
       <ReaderButton isChild={isChild} elevated={!!heroSource} />
+      {toc ? <ContentsButton sections={toc} current={currentSection} onJump={jumpToSection} elevated={!!heroSource} /> : null}
       <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" elevated={!!heroSource} accessibilityLabel={t('share.action')} onPress={handleShare} />
       <IconButton
         icon={Heart}
@@ -179,157 +225,168 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
     </View>
   );
 
-  return (
-    <View style={styles.root}>
-      <ScrollView
-        ref={reading.scrollRef}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onScroll={reading.onScroll}
-        scrollEventThrottle={64}
-        onContentSizeChange={reading.onContentSizeChange}
-        onLayout={reading.onLayout}
-        onScrollBeginDrag={() => (lastManualScroll.current = Date.now())}
-      >
-        {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
-        {heroSource ? (
-          <HeroEntrance>
-            <View style={[styles.hero, isChild && styles.heroChild, reader.focusMode && styles.heroFocus]}>
-              {item.image_url ? (
-                // Storage-backed (admin-uploaded, see admin_set_culture_item_image).
-                <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={200} />
-              ) : (
-                <MediaImage source={heroSource as ImageSourcePropType} />
-              )}
-              <LinearGradient colors={[colors.scrimTop, colors.scrimClear, colors.scrimBottom]} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+  const bodyLanguage = bodyLanguageFor(item, i18n.language) as SupportedLanguage;
 
-              <View style={styles.heroOverlay} pointerEvents="box-none">
-                <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.xs }]}>
-                  <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-                  {actions}
-                </View>
-                <View style={styles.heroText}>
-                  {typeLabel ? <Text style={styles.heroEyebrow}>{typeLabel}</Text> : null}
-                  <Text style={[styles.heroTitle, !isChild && styles.heroTitleEditorial]} numberOfLines={3} accessibilityRole="header">
-                    {item.title}
-                  </Text>
+  return (
+    <InlineGlossaryProvider articleItemId={item.id}>
+      <View style={styles.root}>
+        <ScrollView
+          ref={reading.scrollRef}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={64}
+          onContentSizeChange={reading.onContentSizeChange}
+          onLayout={reading.onLayout}
+          onScrollBeginDrag={() => {
+          lastManualScroll.current = Date.now();
+          reading.onScrollBeginDrag();
+        }}
+        >
+          {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
+          {heroSource ? (
+            <HeroEntrance>
+              <View style={[styles.hero, isChild && styles.heroChild, reader.focusMode && styles.heroFocus]}>
+                {item.image_url ? (
+                  // Storage-backed (admin-uploaded, see admin_set_culture_item_image).
+                  <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={200} />
+                ) : (
+                  <MediaImage source={heroSource as ImageSourcePropType} />
+                )}
+                <LinearGradient colors={[colors.scrimTop, colors.scrimClear, colors.scrimBottom]} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+
+                <View style={styles.heroOverlay} pointerEvents="box-none">
+                  <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.xs }]}>
+                    <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                    {actions}
+                  </View>
+                  <View style={styles.heroText}>
+                    {typeLabel ? <Text style={styles.heroEyebrow}>{typeLabel}</Text> : null}
+                    <Text style={[styles.heroTitle, !isChild && styles.heroTitleEditorial]} numberOfLines={3} accessibilityRole="header">
+                      {item.title}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </HeroEntrance>
-        ) : (
-          <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.xs }]}>
-            <View style={styles.plainTopRow}>
-              <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
-              {actions}
-            </View>
-            {typeLabel ? <Text style={styles.plainEyebrow}>{typeLabel}</Text> : null}
-            <Text style={[styles.plainHeaderTitle, !isChild && styles.heroTitleEditorial]} accessibilityRole="header">
-              {item.title}
-            </Text>
-          </View>
-        )}
-
-        <View style={styles.contentBody} onLayout={(event) => (sectionOffsets.current.body = event.nativeEvent.layout.y)}>
-          {/* 2. Short context: alternative names. (Review state and sources
-              live in the quiet "Sources & notes" row at the end.) */}
-          {item.alt_names ? (
-            <View style={styles.context}>
-              <Text style={styles.altNames}>{item.alt_names}</Text>
-            </View>
-          ) : null}
-
-          {simpleSummary ? null : <KyrgyzOnlyNote status={item.translation?.status} language={i18n.language} />}
-
-          {/* 3. Compact audio guide, right where reading starts. */}
-          <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} title={item.title} />
-          {narration.lang === i18n.language && narration.text ? <ReadListenControls enabled={readListen} onToggle={setReadListen} follow={follow} onToggleFollow={setFollow} recorded={listen.recorded} /> : null}
-
-          {/* 4. Content blocks - text straight on the page, no boxes. */}
-          {simpleSummary ? (
-            <View style={current.includes('simple_summary') ? readListenStyles.current : undefined} onLayout={(event) => (sectionOffsets.current.summary = event.nativeEvent.layout.y)}>
-              <Text style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]}>{simpleSummary}</Text>
-            </View>
-          ) : filledFields.length === 0 ? (
-            hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
+            </HeroEntrance>
           ) : (
-            <View style={styles.fields} onLayout={(event) => (sectionOffsets.current.fields = event.nativeEvent.layout.y)}>
-              {filledFields.map((field, index) => (
-                <View
-                  key={field.key}
-                  style={[styles.field, current.includes(field.key as string) && readListenStyles.current]}
-                  onLayout={(event) => {
-                    sectionOffsets.current[field.key] = event.nativeEvent.layout.y;
-                    scrollToInitialSection();
-                  }}
-                >
-                  {index > 0 && !reader.focusMode ? <OymoDivider /> : null}
-                  <Text style={styles.fieldLabel} accessibilityRole="header">
-                    {t(field.labelKey)}
-                  </Text>
-                  <Text style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]}>{item[field.key] as string}</Text>
-                  {/* Save the WHOLE authored section (no fragile text selection). */}
-                  <PassageActions
-                    contentType="culture_item"
-                    contentId={item.id}
-                    sectionKey={field.key}
-                    sectionLabel={t(field.labelKey)}
-                    title={item.title}
-                    text={item[field.key] as string}
-                    language={bodyLanguageFor(item, i18n.language)}
-                    simple={isChild}
-                  />
-                </View>
-              ))}
+            <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.xs }]}>
+              <View style={styles.plainTopRow}>
+                <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                {actions}
+              </View>
+              {typeLabel ? <Text style={styles.plainEyebrow}>{typeLabel}</Text> : null}
+              <Text style={[styles.plainHeaderTitle, !isChild && styles.heroTitleEditorial]} accessibilityRole="header">
+                {item.title}
+              </Text>
             </View>
           )}
 
-          {/* 4b. Then & Now - only when the item has real authored
-              historical AND modern fields (derived, never stored). */}
-          <ThenAndNowSection item={item} experience={experience} language={i18n.language} onPressOpen={() => router.push(thenNowRoute(item.id) as never)} />
+          <View style={styles.contentBody} onLayout={(event) => (sectionOffsets.current.body = event.nativeEvent.layout.y)}>
+            {/* 2. Short context: alternative names. (Review state and sources
+                live in the quiet "Sources & notes" row at the end.) */}
+            {item.alt_names ? (
+              <View style={styles.context}>
+                <Text style={styles.altNames}>{item.alt_names}</Text>
+              </View>
+            ) : null}
 
-          {/* Key terms: explicit glossary links for this article (no auto-linking). */}
-          <KeyTermsSection itemId={item.id} />
+            {simpleSummary ? null : <KyrgyzOnlyNote status={item.translation?.status} language={i18n.language} />}
 
-          {/* 5. Relevant images. */}
-          {/* Focus mode: the decorative gallery and related rail step back;
-              body, sources, verification and Report stay. */}
-          {hasRemainingGallery && !reader.focusMode ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery} style={styles.galleryBleed}>
-              {remainingImages!.map((source, index) => (
-                <View key={index} style={styles.galleryImage}>
-                  <MediaImage source={source} />
-                </View>
-              ))}
-            </ScrollView>
-          ) : null}
+            {/* 3. Compact audio guide, right where reading starts. */}
+            <AudioGuidePlayer contentKey={`culture_item:${item.id}`} narration={narration} title={item.title} />
+            {narration.lang === i18n.language && narration.text ? <ReadListenControls enabled={readListen} onToggle={setReadListen} follow={follow} onToggleFollow={setFollow} recorded={listen.recorded} /> : null}
 
-          {hasAudio ? (
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>{t('culture.item.tracksLabel')}</Text>
-              <KomuzPlaylist tracks={audioTracks} />
+            {/* 4. Content blocks - text straight on the page, no boxes. */}
+            {simpleSummary ? (
+              <View style={current.includes('simple_summary') ? readListenStyles.current : undefined} onLayout={(event) => (sectionOffsets.current.summary = event.nativeEvent.layout.y)}>
+                <GlossaryText text={simpleSummary} language={i18n.language as SupportedLanguage} style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]} />
+              </View>
+            ) : filledFields.length === 0 ? (
+              hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
+            ) : (
+              <View style={styles.fields} onLayout={(event) => (sectionOffsets.current.fields = event.nativeEvent.layout.y)}>
+                {filledFields.map((field, index) => (
+                  <View
+                    key={field.key}
+                    style={[styles.field, current.includes(field.key as string) && readListenStyles.current]}
+                    onLayout={(event) => {
+                      sectionOffsets.current[field.key] = event.nativeEvent.layout.y;
+                      scrollToInitialSection();
+                    }}
+                  >
+                    {index > 0 && !reader.focusMode ? <OymoDivider /> : null}
+                    <Text style={styles.fieldLabel} accessibilityRole="header">
+                      {t(field.labelKey)}
+                    </Text>
+                    {/* Known glossary terms are tappable (first per section, authored forms in this language only). */}
+                    <GlossaryText text={item[field.key] as string} language={bodyLanguage} style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]} />
+                    {/* Save the WHOLE authored section (no fragile text selection). */}
+                    <PassageActions
+                      contentType="culture_item"
+                      contentId={item.id}
+                      sectionKey={field.key}
+                      sectionLabel={t(field.labelKey)}
+                      title={item.title}
+                      text={item[field.key] as string}
+                      language={bodyLanguage}
+                      simple={isChild}
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* 4b. Then & Now - only when the item has real authored
+                historical AND modern fields (derived, never stored). */}
+            <ThenAndNowSection item={item} experience={experience} language={i18n.language} onPressOpen={() => router.push(thenNowRoute(item.id) as never)} />
+
+            {/* Key terms: explicit glossary links for this article (no auto-linking). */}
+            <KeyTermsSection itemId={item.id} />
+
+            {/* Connections: curated cross-topic relationships (explicit, sourced; not same-category browsing). */}
+            {reader.focusMode ? null : <ConnectionsSection type="culture_item" id={item.id} experience={experience} />}
+
+            {/* 5. Relevant images. */}
+            {/* Focus mode: the decorative gallery and related rail step back;
+                body, sources, verification and Report stay. */}
+            {hasRemainingGallery && !reader.focusMode ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.gallery} style={styles.galleryBleed}>
+                {remainingImages!.map((source, index) => (
+                  <View key={index} style={styles.galleryImage}>
+                    <MediaImage source={source} />
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+
+            {hasAudio ? (
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>{t('culture.item.tracksLabel')}</Text>
+                <KomuzPlaylist tracks={audioTracks} />
+              </View>
+            ) : null}
+
+            {/* 6. Save / Journal - secondary, after reading. */}
+            <View style={styles.actionsRow}>
+              <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
             </View>
-          ) : null}
+            <ReadingActions tracker={reading} />
 
-          {/* 6. Save / Journal - secondary, after reading. */}
-          <View style={styles.actionsRow}>
-            <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
+            {/* A Topic Quiz that really tests this article comes first; else the collection challenge. */}
+            {topicsForContent('culture_item', item.id, getQuestion).length > 0 ? <TopicQuizLink type="culture_item" id={item.id} /> : challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
+
+            <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
+            <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />
           </View>
-          <ReadingActions tracker={reading} />
 
-          {/* A Topic Quiz that really tests this article comes first; else the collection challenge. */}
-          {topicsForContent('culture_item', item.id, getQuestion).length > 0 ? <TopicQuizLink type="culture_item" id={item.id} /> : challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
-
-          <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
-          <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />
-        </View>
-
-        {/* 7. Related real items from the same category. */}
-        {reader.focusMode ? null : <RelatedItemsRail item={item} />}
-      </ScrollView>
-      <ReadingOverlay tracker={reading} experience={experience} />
-      {shareHost}
-    </View>
+          {/* 7. Related real items from the same category. */}
+          {reader.focusMode ? null : <RelatedItemsRail item={item} />}
+        </ScrollView>
+        <ReadingOverlay tracker={reading} experience={experience} sectionOffset={resumeOffset} />
+        {shareHost}
+      </View>
+    </InlineGlossaryProvider>
   );
 }
 

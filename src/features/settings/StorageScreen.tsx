@@ -17,6 +17,7 @@ import { formatBytes } from '@/services/offline/offlineModel';
 import { buildLearningPathOfflineManifest, downloadPathPack, learningPathPackState, removePathPack, requestedPathIds } from '@/services/offline/pathPacks';
 import { buildRegionOfflineManifest, downloadRegionPack, regionPackState, removeRegionPack, requestedRegionIds } from '@/services/offline/regionPacks';
 import { keptAfterRemoval, needsAttention, staleOwners, storageInventory, unusedEntries } from '@/services/offline/storageModel';
+import { summarizeQueue, type DownloadPreference, type QueueRowStatus } from '@/services/offline/downloadQueue';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
@@ -37,6 +38,11 @@ export function StorageScreen({ onPressBack }: { onPressBack: () => void }) {
   const manifest = useOfflineStore((state) => state.manifest);
   const inFlight = useOfflineStore((state) => state.inFlight);
   const failed = useOfflineStore((state) => state.failed);
+  const queue = useOfflineStore((state) => state.queue);
+  const preference = useOfflineStore((state) => state.preference);
+  const wifiSupported = useOfflineStore((state) => state.wifiSupported);
+  const gate = useOfflineStore((state) => state.gate());
+  const queueSummary = summarizeQueue(queue, gate);
   const regionConfigs = useRegionExperiences();
   const { data: regions } = useExploreRegions();
   const [bytes, setBytes] = useState<number | null>(null);
@@ -127,6 +133,52 @@ export function StorageScreen({ onPressBack }: { onPressBack: () => void }) {
         </View>
         <Text style={styles.note}>{t('storage.offlineOnly')}</Text>
 
+        {/* Settings -> Downloads: offered only where Wi-Fi can really be told apart. */}
+        <View style={{ gap: spacing.xs }}>
+          <Text style={styles.section} accessibilityRole="header">
+            {t('downloads.downloadOn')}
+          </Text>
+          {wifiSupported ? (
+            <View style={styles.choices} accessibilityRole="radiogroup" accessibilityLabel={t('downloads.downloadOn')}>
+              {(['any', 'wifi_only'] as DownloadPreference[]).map((option) => (
+                <AnimatedPressable
+                  key={option}
+                  style={[styles.choice, preference === option && styles.choiceOn]}
+                  onPress={() => void useOfflineStore.getState().setPreference(option)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: preference === option }}
+                  accessibilityLabel={t(`downloads.${option}`)}
+                >
+                  <Text style={[styles.choiceText, preference === option && styles.choiceTextOn]}>{t(`downloads.${option}`)}</Text>
+                </AnimatedPressable>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.note}>{t('downloads.wifiUnsupported')}</Text>
+          )}
+          <Text style={styles.note}>{t('downloads.activeOnly')}</Text>
+        </View>
+
+        {/* The one download queue (same source the pack rows use). */}
+        {(['downloading', 'queued', 'waiting_wifi', 'waiting_connection'] as QueueRowStatus[]).some((status) => queueSummary[status].length > 0) ? (
+          <View style={{ gap: spacing.xs }}>
+            <Text style={styles.section} accessibilityRole="header">
+              {t('downloads.queueTitle')}
+            </Text>
+            {(['downloading', 'queued', 'waiting_wifi', 'waiting_connection'] as QueueRowStatus[]).flatMap((status) =>
+              queueSummary[status].map((intent) => (
+                <View key={intent.id} style={styles.pack} accessible accessibilityLabel={`${t(`storage.kind.${intent.kind}`)}. ${t(`downloads.status.${status}`)}`}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={styles.lineTitle}>{t(`storage.kind.${intent.kind}`)}</Text>
+                    <Text style={styles.meta}>{t(`downloads.status.${status}`)}</Text>
+                  </View>
+                  {intent.requesters.includes('user') ? <Button label={t('downloads.cancel')} variant="text" onPress={() => void useOfflineStore.getState().cancel(intent.id, 'user')} /> : null}
+                </View>
+              )),
+            )}
+          </View>
+        ) : null}
+
         {inventory.itemCount > 0 ? (
           <View style={styles.card}>
             {(['articles', 'places', 'collections'] as const).map((category) =>
@@ -151,7 +203,7 @@ export function StorageScreen({ onPressBack }: { onPressBack: () => void }) {
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.lineTitle}>{pack.name}</Text>
                   <Text style={styles.meta}>
-                    {t(pack.type === 'path' ? 'storage.pathPack' : 'storage.regionPack')} · {t('storage.packItems', { count: pack.items })} · {statusLabel(pack.status)}
+                    {t(pack.type === 'path' ? 'storage.pathPack' : 'storage.regionPack')} · {pack.status === 'available' ? t('storage.packItems', { count: pack.items }) : t('downloads.progress', { done: pack.itemIds.filter((id) => !!manifest.entries[id]).length, total: pack.items })} · {pack.status === 'downloading' && gate !== 'go' ? t(`downloads.status.${gate}`) : statusLabel(pack.status)}
                   </Text>
                 </View>
                 {pack.status === 'partial' || pack.status === 'attention' ? (
@@ -221,4 +273,9 @@ const styles = StyleSheet.create({
   icon: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   meta: { ...textStyles.small, color: colors.textSecondary },
   note: { ...textStyles.small, color: colors.textMuted },
+  choices: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  choice: { minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: cardRadii.chip, borderWidth: 1, borderColor: colors.borderSubtle, backgroundColor: colors.surfaceElevated },
+  choiceOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  choiceText: { ...textStyles.bodyMedium, color: colors.textPrimary },
+  choiceTextOn: { color: colors.textOnPrimary, fontWeight: '700' },
 });

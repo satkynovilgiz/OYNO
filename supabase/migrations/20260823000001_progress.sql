@@ -70,6 +70,9 @@ create table public.xp_events (
   created_at timestamptz not null default now()
 );
 
+
+
+
 create table public.coin_transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,

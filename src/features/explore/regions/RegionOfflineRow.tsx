@@ -5,7 +5,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, ConfirmationModal } from '@/components/ui';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
-import { buildRegionOfflineManifest, downloadRegionPack, regionPackState, removeRegionPack } from '@/services/offline/regionPacks';
+import { CancelPackButton, packQueueDetail, usePackPending, useQueueGate } from '@/components/offline/QueueControls';
+import { buildRegionOfflineManifest, downloadRegionPack, regionPackState, regionRequester, removeRegionPack } from '@/services/offline/regionPacks';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
@@ -26,6 +27,8 @@ export function RegionOfflineRow({ config, regionName }: { config: RegionExperie
   const state = regionPackState(pack, config.id, manifest, inFlight, failed);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const gate = useQueueGate();
+  const pending = usePackPending(regionRequester(config.id), pack.items);
 
   if (pack.items.length === 0) return null;
   const count = t('regionHub.offline.items', { downloaded: state.downloaded, total: state.total });
@@ -41,7 +44,7 @@ export function RegionOfflineRow({ config, regionName }: { config: RegionExperie
           : state.status === 'attention'
             ? t('regionHub.offline.attention')
             : t('regionHub.offline.download');
-  const detail = state.status === 'none' ? t('regionHub.offline.includes', { count: state.total }) : count;
+  const detail = state.status === 'none' ? t('regionHub.offline.includes', { count: state.total }) : state.status === 'downloading' ? packQueueDetail(t, gate, state.downloaded, state.total) : count;
 
   return (
     <View style={styles.row} accessible={false}>
@@ -50,8 +53,9 @@ export function RegionOfflineRow({ config, regionName }: { config: RegionExperie
       </View>
       <View style={styles.text} accessible accessibilityLabel={`${title}. ${detail}`} accessibilityLiveRegion="polite">
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.detail}>{isOffline && state.status !== 'available' ? t('regionHub.offline.needsInternet') : detail}</Text>
+        <Text style={styles.detail}>{isOffline && state.status !== 'available' && state.status !== 'downloading' ? t('regionHub.offline.needsInternet') : detail}</Text>
       </View>
+      {pending ? <CancelPackButton requester={regionRequester(config.id)} items={pack.items} name={regionName} /> : null}
       {state.status === 'none' ? (
         <AnimatedPressable style={styles.action} onPress={start} disabled={isOffline} accessibilityRole="button" accessibilityState={{ disabled: isOffline }} accessibilityLabel={t('regionHub.offline.downloadRegion', { name: regionName })}>
           <Text style={[styles.actionText, isOffline && styles.disabled]}>{t('regionHub.offline.downloadShort')}</Text>
