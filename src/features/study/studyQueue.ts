@@ -32,7 +32,7 @@ export type StudyQueueInput = {
   /** glossary entry ids in the glossary review queue's own order. */
   glossaryIds: readonly string[];
   /** Started, unfinished paths with their next step route (from pathProgress). */
-  activePaths: readonly { id: string; nextStepRoute: string | null }[];
+  activePaths: readonly { id: string; nextStepRoute: string | null; nextIndex?: number | null }[];
   /** Unfinished readings, newest first (from recentlyRead / continue reading). */
   unfinishedReading: readonly { key: string; route: string }[];
 };

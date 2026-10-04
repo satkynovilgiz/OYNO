@@ -59,8 +59,9 @@ export function ChallengeRunScreen({
   challengeId: string;
   onPressBack: () => void;
   /** Study Queue "Quick review": review mode capped to the first `limit`
-   * mistakes (the queue's own order), then a single "next" action. */
-  quick?: { limit: number; nextLabel: string; onNext: () => void };
+   * mistakes (the queue's own order), then a single "next" action.
+   * `only` (Focus Session) restricts it to those mistakes. */
+  quick?: { limit: number; nextLabel: string; onNext: () => void; only?: readonly string[] };
 }) {
   useTrackScreenView('challenge_run');
   const { t, i18n } = useTranslation();
@@ -113,7 +114,11 @@ export function ChallengeRunScreen({
   const questions = useMemo<ChallengeQuestion[]>(() => {
     if (!storeLoaded) return [];
     let ids: string[] = [];
-    if (isReview) ids = reviewQueue(ownerMistakes(useChallengeMistakesStore.getState().saved, owner), questionExists).map((record) => record.questionId).slice(0, quick?.limit ?? Number.MAX_SAFE_INTEGER);
+    if (isReview)
+      ids = reviewQueue(ownerMistakes(useChallengeMistakesStore.getState().saved, owner), questionExists)
+        .map((record) => record.questionId)
+        .filter((id) => !quick?.only || quick.only.includes(id))
+        .slice(0, quick?.limit ?? Number.MAX_SAFE_INTEGER);
     else if (challengeId === 'daily') {
       const count = experience === 'child' ? CHILD_DAILY_QUESTION_COUNT : DAILY_QUESTION_COUNT;
       // Pure during render; today's identity is persisted in the effect below.

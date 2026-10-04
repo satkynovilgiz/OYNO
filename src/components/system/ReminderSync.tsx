@@ -79,12 +79,15 @@ export function ReminderSync() {
     const handled = new Set<string>();
     function open(response: Notifications.NotificationResponse | null) {
       const data = response?.notification.request.content.data;
-      if (!response || data?.oynoReminder !== true || typeof data.route !== 'string') return;
+      if (!response) return;
+      // Study Planner reminders open only the focus session screen.
+      const study = data?.oynoStudy === true;
+      if (!study && (data?.oynoReminder !== true || typeof data.route !== 'string')) return;
       const id = response.notification.request.identifier;
       if (handled.has(id)) return;
       handled.add(id);
-      track('reminder_opened', { type: String(data.type ?? '') });
-      router.push(data.route as never);
+      track('reminder_opened', { type: study ? 'study_planner' : String(data?.type ?? '') });
+      router.push((study ? '/study/session' : data!.route) as never);
     }
     open(Notifications.getLastNotificationResponse());
     const subscription = Notifications.addNotificationResponseReceivedListener(open);

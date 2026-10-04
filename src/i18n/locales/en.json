@@ -2094,8 +2094,8 @@
     },
     "widgets": {
       "title": "OYNO Widgets",
-      "entryDescription": "Daily discovery, journey and passport - at a glance.",
-      "previewNote": "These previews show your real progress. Home Screen and Lock Screen widgets arrive with the next full app update.",
+      "entryDescription": "Today's cultural date or Daily OYNO - at a glance.",
+      "previewNote": "This is how the Home Screen widget looks. It needs the full OYNO app update that includes the widget.",
       "homeScreen": "Home Screen",
       "lockScreen": "Lock Screen",
       "lockCaption": "Inline · Circular · Rectangular",
@@ -4078,5 +4078,110 @@
     "shareLabel": "My OYNO showcase",
     "noneEarned": "No achievements earned yet",
     "addToShowcase": "Add to Showcase"
+  },
+  "widget": {
+    "name": "Today in OYNO",
+    "open": "Open",
+    "fallbackTitle": "Explore OYNO",
+    "fallbackSubtitle": "The Kyrgyz world on your phone",
+    "fallbackLabel": "Before first open",
+    "privacyNote": "The widget shows only public OYNO content - today's cultural date or Daily OYNO. No account details, Journal or progress ever reach your Home Screen.",
+    "eyebrow": {
+      "calendarToday": "Today",
+      "calendarSoon": "Coming up",
+      "daily": "Daily OYNO",
+      "whatsNew": "New in OYNO",
+      "path": "Learning path"
+    }
+  },
+  "cultureTimeline": {
+    "title": "Culture Timeline",
+    "entryMeta": "Dates from OYNO's sourced stories, in order",
+    "intro": "Only dates that OYNO's authored, sourced stories state. Each card quotes the sentence the date comes from and shows that story's review status.",
+    "introChild": "Important moments in Kyrgyz culture, from OYNO's stories.",
+    "searchPlaceholder": "Search the timeline",
+    "sort": {
+      "oldest": "Oldest first",
+      "newest": "Newest first"
+    },
+    "empty": "No dates to show yet.",
+    "noMatches": "Nothing on the timeline matches that.",
+    "viewSources": "View sources",
+    "thenNow": "Then & Now",
+    "openStory": "Opens the story “{{title}}”",
+    "date": {
+      "year": "{{year}}",
+      "year_range": "{{start}}–{{end}}",
+      "exact_date": "{{date}}"
+    },
+    "events": {
+      "jorgo-salysh-official-sport": "Jorgo salysh recognised as an official national sport",
+      "tyiyn-enmei-classification": "Tyiyn enmei listed in the unified classification of national sports",
+      "kok-boru-unified-rules": "Unified modern rules of Kok Boru drawn up",
+      "kok-boru-federation": "International Kok Boru Federation founded in Bishkek",
+      "shyrdak-ala-kiyiz-unesco": "Shyrdak and ala kiyiz inscribed by UNESCO",
+      "kok-boru-unesco": "Kok Boru inscribed by UNESCO",
+      "world-kalpak-day-since": "World Kalpak Day first marked on 5 March"
+    }
+  },
+  "studySession": {
+    "title": "Focus session",
+    "intro": "A short, calm run through what is already waiting for you: review first, then your next path step and unfinished reading. Each activity opens in its usual screen.",
+    "introChild": "A short study time with things you already started.",
+    "size": {
+      "quick": "Quick · {{count}}",
+      "standard": "Standard · {{count}}",
+      "deep": "Deep · {{count}}"
+    },
+    "ready_one": "{{count}} activity ready",
+    "ready_other": "{{count}} activities ready",
+    "shorter_one": "Only {{count}} activity is ready right now - the session will be shorter.",
+    "shorter_other": "Only {{count}} activities are ready right now - the session will be shorter.",
+    "nothingReady": "Nothing is waiting right now.",
+    "start": "Start session",
+    "startFocus": "Start focus session",
+    "startFromForYou": "Or start a focus session",
+    "progress": "Activity {{current}} of {{total}}",
+    "now": "Now",
+    "startActivity": "Start",
+    "tryAgain": "Try again",
+    "notYet": "Not finished yet - you can try again or skip it for now.",
+    "skip": "Skip for now",
+    "end": "End session",
+    "needsConnection": "Needs connection",
+    "backToSession": "Back to focus session",
+    "status": {
+      "pending": "Waiting",
+      "done": "Done",
+      "skipped": "Skipped"
+    },
+    "activity": {
+      "mistake": "Review a challenge question",
+      "glossary": "Review the term “{{term}}”",
+      "path": "Next step: {{path}}",
+      "reading": "Continue reading: {{title}}"
+    },
+    "summaryTitle": "Session finished",
+    "summaryBody": "Done: {{completed}} · Skipped: {{skipped}} · Not started: {{remaining}}",
+    "another": "Plan another session",
+    "reminders": {
+      "title": "Study reminders",
+      "hint": "A gentle local notification on the days you choose. Off by default.",
+      "body": "A short focus session is ready when you are.",
+      "time": "Time: {{time}}",
+      "denied": "Notifications are off for OYNO in your phone's settings.",
+      "unavailable": "Reminders work only in the OYNO phone app.",
+      "day1": "Sun",
+      "day2": "Mon",
+      "day3": "Tue",
+      "day4": "Wed",
+      "day5": "Thu",
+      "day6": "Fri",
+      "day7": "Sat"
+    },
+    "ready_few": "{{count}} activities ready",
+    "ready_many": "{{count}} activities ready",
+    "shorter_few": "Only {{count}} activities are ready right now - the session will be shorter.",
+    "shorter_many": "Only {{count}} activities are ready right now - the session will be shorter."
   }
 }

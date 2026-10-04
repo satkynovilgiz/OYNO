@@ -6,13 +6,13 @@ import kg from '@/i18n/locales/kg.json';
 import ru from '@/i18n/locales/ru.json';
 import { challengePath, parseChallenge } from '@/features/games/friendChallenge/friendChallenge';
 
-import { buildOYNODeepLink, CONTENT_LINK_TYPES, contentRoute, LINKABLE_GAMES, linkShareText, OYNO_SCHEME, parseContentLink, parseOYNODeepLink, PRIVATE_TYPES } from './contentLinks';
+import { buildOYNODeepLink, CONTENT_LINK_TYPES, contentRoute, LINKABLE_GAMES, linkShareText, OYNO_SCHEME, parseContentLink, parseOYNODeepLink, PRIVATE_TYPES, widgetSurface } from './contentLinks';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: {} }));
 jest.mock('@/services/analytics/analytics', () => ({ track: jest.fn() }));
 
 const root = path.join(__dirname, '../../..');
-const SAMPLES = { culture_item: 'boz-uy-overview', culture_material: 'boz-uy-history', glossary: 'tunduk', game: 'kok-boru', learning_path: 'boz-uy', komuz_track: 'ak-maral-min' } as const;
+const SAMPLES = { culture_item: 'boz-uy-overview', culture_material: 'boz-uy-history', glossary: 'tunduk', game: 'kok-boru', learning_path: 'boz-uy', komuz_track: 'ak-maral-min', calendar_event: 'world-kalpak-day' } as const;
 
 describe('Shareable Content Links', () => {
   it('uses the real app.json scheme', () => {
@@ -36,6 +36,7 @@ describe('Shareable Content Links', () => {
       glossary: 'src/app/culture/glossary/[id]/index.tsx',
       learning_path: 'src/app/learn/[id].tsx',
       komuz_track: 'src/app/culture/komuz/listen.tsx',
+      calendar_event: 'src/app/culture/calendar/[id].tsx',
     };
     for (const type of CONTENT_LINK_TYPES) {
       const route = contentRoute({ type, id: SAMPLES[type] });
@@ -118,5 +119,13 @@ describe('Shareable Content Links', () => {
       const block = (dict as unknown as { contentLinks: Record<string, string> }).contentLinks;
       for (const key of ['shareLink', 'sharePath', 'shareGame', 'shareTerm', 'shareTrackShort', 'invalidTitle', 'goHome']) expect(block[key]).toBeTruthy();
     }
+  });
+});
+
+describe('widget surface param', () => {
+  it('only the two widget sizes are recognised', () => {
+    expect(widgetSurface('widget_small')).toBe('small');
+    expect(widgetSurface('widget_medium')).toBe('medium');
+    for (const value of [undefined, '', 'widget_large', 'https://x', ['widget_small']]) expect(widgetSurface(value)).toBeNull();
   });
 });

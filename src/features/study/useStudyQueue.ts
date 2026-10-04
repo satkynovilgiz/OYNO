@@ -42,7 +42,7 @@ export function useStudyQueueInput(): { input: StudyQueueInput; titles: { readin
     }
     const activePaths = LEARNING_PATHS.map((path) => ({ path, progress: pathProgress(path, signals) }))
       .filter(({ progress }) => progress.started && !progress.done)
-      .map(({ path, progress }) => ({ id: path.id, nextStepRoute: progress.nextIndex === null ? null : stepRoute(path.steps[progress.nextIndex], gameRouteFor) }));
+      .map(({ path, progress }) => ({ id: path.id, nextIndex: progress.nextIndex, nextStepRoute: progress.nextIndex === null ? null : stepRoute(path.steps[progress.nextIndex], gameRouteFor) }));
     return {
       input: {
         mistakeIds: mistakes.map((record) => record.questionId),

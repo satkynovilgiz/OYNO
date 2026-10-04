@@ -31,12 +31,15 @@ export function GlossaryStudyScreen({
   mode,
   onPressBack,
   limit,
+  only,
   onDone,
 }: {
   mode: SessionMode;
   onPressBack: () => void;
   /** Study Queue "Quick review": only the first `limit` cards of the session. */
   limit?: number;
+  /** Focus Session: only these entries (still in the session's own order). */
+  only?: readonly string[];
   /** Replaces the result actions (e.g. "Back to Study Queue"). */
   onDone?: { label: string; run: () => void };
 }) {
@@ -68,10 +71,12 @@ export function GlossaryStudyScreen({
     if (sessionCards || !studyLoaded || isLoading || validIds.length === 0) return;
     // Stale records (removed/invalid entries) never become cards.
     useGlossaryStudyStore.getState().prune(owner, validIds);
-    const session = buildSession(validIds, ownerStudy(useGlossaryStudyStore.getState().saved, owner), mode, seed).slice(0, limit ?? Number.MAX_SAFE_INTEGER);
+    const session = buildSession(validIds, ownerStudy(useGlossaryStudyStore.getState().saved, owner), mode, seed)
+      .filter((id) => !only || only.includes(id))
+      .slice(0, limit ?? Number.MAX_SAFE_INTEGER);
     setCards(session);
     track('glossary_study_started', { mode, cards: session.length });
-  }, [sessionCards, studyLoaded, isLoading, validIds, owner, mode, seed, limit]);
+  }, [sessionCards, studyLoaded, isLoading, validIds, owner, mode, seed, limit, only]);
 
   if (waitingForNetwork) return <OfflineUnavailable onRetry={retry} />;
 

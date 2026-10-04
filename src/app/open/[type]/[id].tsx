@@ -6,6 +6,6 @@ export { RouteErrorBoundary as ErrorBoundary } from '@/components/system/RouteEr
 
 /** oyno://open/<type>/<id> - validated before anything opens (see contentLinks.ts). */
 export default function ContentLinkRoute() {
-  const { type, id } = useLocalSearchParams<{ type?: string; id?: string }>();
-  return <ContentLinkScreen type={type} id={id} />;
+  const { type, id, via } = useLocalSearchParams<{ type?: string; id?: string; via?: string }>();
+  return <ContentLinkScreen type={type} id={id} via={via} />;
 }

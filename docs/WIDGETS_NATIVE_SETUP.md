@@ -1,61 +1,86 @@
-# OYNO native iOS widgets
+# OYNO iOS Home Screen widget - "Today in OYNO" (1.0)
 
-Real Home Screen and Lock Screen widgets (WidgetKit + SwiftUI), generated
-at `expo prebuild` by the `@bacons/apple-targets` config plugin - there is
-still **no committed `ios/` folder** (Continuous Native Generation).
+One widget product (`kind: "OYNOToday"`), two sizes: **systemSmall** and
+**systemMedium** (one responsive SwiftUI view). It replaces the earlier
+five-widget bundle (Daily / Journey / Passport / Trail / Culture), which
+also carried personal progress.
 
-**They do NOT work in Expo Go.** They exist only in a development or
-production build that includes the widget extension.
+Status: **CODE-LEVEL READY / DEVICE QA STILL REQUIRED.** Nothing here has
+been verified on a physical iPhone yet.
 
 ## Pieces
 
-| Piece | Where |
-| --- | --- |
-| Widget target config | `targets/widget/expo-target.config.js` (type `widget`, iOS 16+, bundle id `<app>.widget`) |
-| SwiftUI widgets | `targets/widget/OYNOWidgets.swift` (5 widgets) |
-| Snapshot model + timeline | `targets/widget/OYNOWidgetData.swift` |
-| App Group (declared once) | `app.json` -> `ios.entitlements['com.apple.security.application-groups']` = `group.com.ilgizsatkynov.oyno.widgets` |
-| Snapshot built from app state | `src/services/widgets/widgetSnapshot.ts` (`buildWidgetSnapshot`) + `src/features/appearance/useWidgetSnapshot.ts` |
-| Snapshot bridge (JS -> App Group) | `src/services/widgets/widgetBridge.ts` + `src/components/system/WidgetSync.tsx` |
+| File | Role |
+|---|---|
+| `targets/widget/expo-target.config.js` | Existing WidgetKit target (@bacons/apple-targets). Unchanged. |
+| `targets/widget/OYNOWidgetData.swift` | Snapshot model (v2), App Group read, bundled fallback, timeline provider. |
+| `targets/widget/OYNOWidgets.swift` | The single `TodayWidget` (small + medium) in OYNO style. |
+| `src/services/widgets/publicWidgetSnapshot.ts` | v2 schema, `buildPublicWidgetSnapshot`, `isWidgetSnapshotPublicSafe`. |
+| `src/features/appearance/useWidgetSnapshot.ts` | Builds the snapshot from PUBLIC content only. |
+| `src/services/widgets/widgetBridge.ts` | Writes to the App Group (iOS only, debounced, safety-checked). |
+| `src/components/system/WidgetSync.tsx` | Mounted once in the root layout; publishes on change. |
+| `src/features/appearance/WidgetsScreen.tsx` | In-app preview (same snapshot) + fallback preview. |
 
-The App Group string appears only in app.json. The widget target mirrors
-it from the Expo config; the JS bridge reads it via `expo-constants`; the
-Swift side derives it from its own bundle id (`<app>.widget` ->
-`group.<app>.widgets`).
+## App Group (reused - there is only one)
 
-## Data flow
+`group.com.ilgizsatkynov.oyno.widgets`, declared once in app.json
+`ios.entitlements`. The target config mirrors it; Swift derives the same id
+from its bundle id; JS reads it from `expo-constants`. Key:
+`oyno.widgetSnapshot.v2`. On its first write the app **removes the old
+`oyno.widgetSnapshot.v1` key** (which held personal progress).
 
-1. `WidgetSync` (mounted in the root layout, iOS only) builds the snapshot
-   with the same hook the in-app Widget Gallery uses - no progress is
-   recalculated anywhere else, and nothing in Swift.
-2. `publishWidgetSnapshot` writes it as JSON to the shared
-   `UserDefaults(suiteName: group)` under `oyno.widgetSnapshot.v1`, then
-   calls `WidgetCenter.shared.reloadAllTimelines()` (via
-   `ExtensionStorage.reloadWidget()`). It only writes when something the
-   widgets show changed (timestamp ignored) and debounces 1.5 s.
-3. Each widget reads the snapshot. Missing/unknown-version snapshot -> an
-   "Open OYNO" fallback; Daily from a previous day is never shown as today;
-   anything older than 3 days falls back too. Timelines also refresh just
-   after local midnight.
+## What the snapshot contains (and never contains)
 
-## Widgets and families
+Only: version, generatedAt, language, localDate, four labels, and up to two
+cards `{kind, eyebrow, title, subtitle, url}` where `url` is an
+`oyno://open/<type>/<id>` content link. `isWidgetSnapshotPublicSafe()` is an
+allow-list (any extra key fails), validates every link with the app's own
+`parseOYNODeepLink`, refuses query strings, caps text at 80 chars and
+rejects values that look like an email, JWT, UUID or auth token. The bridge
+writes nothing that fails it.
 
-| Widget | Families | Tap opens |
-| --- | --- | --- |
-| Daily OYNO | systemSmall, systemMedium, accessoryRectangular, accessoryInline | `/daily` |
-| Continue Journey | systemSmall, systemMedium, accessoryRectangular | Home recommendation route |
-| Discovery Passport | systemSmall, accessoryCircular, accessoryRectangular, accessoryInline | `/journey` |
-| Guided Trail | systemSmall, accessoryRectangular | `/trails/<id>` (or `/explore`) |
-| Culture of the Day | systemSmall, systemMedium | `/culture/material/<id>` |
+Never written: Supabase/session tokens, user id, email, name, age mode,
+Journal, notes, highlights, listening, study/challenge history, collections,
+Journey/Passport/Trail progress.
 
-Deep links use the app scheme: `oyno://daily`, `oyno://trails/horse-culture`.
+## Content priority (decided in the app)
+
+1. Cultural Calendar event today or within 3 days (same rule as Home).
+2. Today's Daily OYNO item.
+3. Nothing -> the widget's bundled fallback: **"Explore OYNO" /
+   "Кыргыз дүйнөсү телефонуңда"** (localized labels when a snapshot exists).
+
+Medium adds a secondary card: Daily (when the primary is a calendar date),
+else the newest What's New story, else the curated beginner Learning Path
+(`boz-uy`; static, not progress-based).
+
+A snapshot from a past local day is not shown - the fallback appears until
+the app is opened. The widget **never** calls Supabase or the network.
+
+## Opening
+
+Small: the whole widget (`widgetURL`). Medium: each card is a `Link`.
+URLs are `oyno://open/<type>/<id>?via=widget_small|widget_medium`. The app
+validates the link exactly like a shared link (`/open/[type]/[id]`, new
+type `calendar_event` checked against the bundled calendar) and reads only
+the whitelisted `via` value to record `widget_opened {surface_size,
+content_type}` (instead of `content_link_opened`). Unknown or removed
+content shows the existing "link not available" screen.
 
 ## Localization
 
-All widget text comes pre-localized (KG/RU/EN) inside the snapshot
-(`labels`) from the app's own i18n, in the language saved in the snapshot.
-Only the no-snapshot fallback and the widget-picker name/description use a
-small KG/RU/EN table in Swift, chosen from the device language.
+Labels and eyebrows come pre-localized (KG/RU/EN) in the snapshot from the
+app's i18n (`widget.*`). Only the no-snapshot fallback and the widget-picker
+name use bundled strings.
+
+## Device QA checklist (not yet done)
+
+- Add small and medium from the widget gallery on a fresh install -> fallback.
+- Open the app once -> today's content appears; tap opens the right screen.
+- Switch language KG/RU/EN -> widget follows after the next write.
+- Next day without opening the app -> fallback, not yesterday's card.
+- Sign out / switch account -> widget content unchanged (no personal data).
+- VoiceOver reads eyebrow + title; Dynamic Type does not clip badly.
 
 ## Required to build
 

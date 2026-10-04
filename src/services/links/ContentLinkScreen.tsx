@@ -10,15 +10,15 @@ import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureMaterials } from '@/services/content/cultureService';
 import { colors, spacing, textStyles, typography } from '@/theme';
 
-import { contentRoute, LINK_FALLBACK_ROUTE, parseContentLink } from './contentLinks';
+import { contentRoute, LINK_FALLBACK_ROUTE, parseContentLink, widgetSurface } from './contentLinks';
 import { resolveLink } from './resolveLink';
 
 /**
- * /open/[type]/[id] - every shared content link lands here first. Unknown
+ * /open/[type]/[id] - every shared content link lands here first. Other
  * query parameters are never read; the destination is built by
  * contentRoute(), so a link can't redirect anywhere else.
  */
-export function ContentLinkScreen({ type, id }: { type: unknown; id: unknown }) {
+export function ContentLinkScreen({ type, id, via }: { type: unknown; id: unknown; via?: unknown }) {
   const { t } = useTranslation();
   const link = parseContentLink(type, id);
   const items = useAllCultureItems();
@@ -34,9 +34,11 @@ export function ContentLinkScreen({ type, id }: { type: unknown; id: unknown }) 
   useEffect(() => {
     if (resolution !== 'open' || !link || opened.current) return;
     opened.current = true;
-    track('content_link_opened', { content_type: link.type, content_id: link.id });
+    const surface = widgetSurface(via);
+    if (surface) track('widget_opened', { surface_size: surface, content_type: link.type });
+    else track('content_link_opened', { content_type: link.type, content_id: link.id });
     router.replace(contentRoute(link) as never);
-  }, [resolution, link]);
+  }, [resolution, link, via]);
 
   if (resolution === 'invalid') {
     return (

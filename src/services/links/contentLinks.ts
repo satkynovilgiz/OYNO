@@ -19,7 +19,7 @@
 
 export const OYNO_SCHEME = 'oyno';
 
-export const CONTENT_LINK_TYPES = ['culture_item', 'culture_material', 'glossary', 'game', 'learning_path', 'komuz_track'] as const;
+export const CONTENT_LINK_TYPES = ['culture_item', 'culture_material', 'glossary', 'game', 'learning_path', 'komuz_track', 'calendar_event'] as const;
 export type ContentLinkType = (typeof CONTENT_LINK_TYPES)[number];
 export type ContentLink = { type: ContentLinkType; id: string };
 
@@ -70,6 +70,8 @@ export function contentRoute(link: ContentLink): string {
       return `/games/${link.id}`;
     case 'learning_path':
       return `/learn/${link.id}`;
+    case 'calendar_event':
+      return `/culture/calendar/${link.id}`;
     case 'komuz_track':
       // Selects the track; playback starts only when the person taps Play.
       return `/culture/komuz/listen?track=${link.id}`;
@@ -82,4 +84,12 @@ export const LINK_FALLBACK_ROUTE = '/home';
 /** "Боз үй - OYNO\noyno://open/..." - short; nothing else. */
 export function linkShareText(title: string, link: string): string {
   return `${title} - OYNO\n${link}`;
+}
+
+/** The only query parameter ever read: which Home Screen widget size opened
+ * the link (whitelisted; anything else is ignored). */
+export function widgetSurface(via: unknown): 'small' | 'medium' | null {
+  if (via === 'widget_small') return 'small';
+  if (via === 'widget_medium') return 'medium';
+  return null;
 }

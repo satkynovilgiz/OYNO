@@ -6,12 +6,16 @@ import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-n
 import { AnimatedPressable, Button, ProgressBar } from '@/components/ui';
 import { useWeeklyGoal } from '@/features/goals/useWeeklyGoal';
 import type { AgeExperience } from '@/services/ageExperience/types';
+import { FOCUS_SESSION_ROUTE } from '@/features/study/session/focusSession';
 import { track } from '@/services/analytics/analytics';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { useWeeklyGoalStore } from '@/store/useWeeklyGoalStore';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 
 import { useForYouToday } from './useForYouToday';
+import type { ForYouReason } from './forYouToday';
+
+const FOCUS_REASONS: ForYouReason[] = ['study_queue', 'review_mistakes', 'review_glossary', 'continue_learning_path', 'continue_reading'];
 
 /**
  * Home "For You Today": ONE learning recommendation (deterministic, from
@@ -79,6 +83,12 @@ export function ForYouSection({ experience, heroRoute }: { experience: AgeExperi
               <Text style={styles.notNowText}>{t('forYou.notNow')}</Text>
             </AnimatedPressable>
           </View>
+          {/* Study-type suggestions may also be done as a short focus session. */}
+          {FOCUS_REASONS.includes(card.reason) ? (
+            <AnimatedPressable style={styles.notNow} onPress={() => router.push(FOCUS_SESSION_ROUTE as never)} accessibilityRole="button" accessibilityLabel={t('studySession.startFromForYou')}>
+              <Text style={styles.focusText}>{t('studySession.startFromForYou')}</Text>
+            </AnimatedPressable>
+          ) : null}
         </View>
       ) : null}
 
@@ -125,6 +135,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   notNow: { minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.sm },
   notNowText: { ...textStyles.small, fontWeight: '700', color: colors.textSecondary },
+  focusText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
   goal: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
   goalText: { ...textStyles.small, fontWeight: '700', color: colors.textSecondary },
 });

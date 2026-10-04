@@ -1,60 +1,51 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { calendarList, CULTURAL_CALENDAR, homeEvent, isToday } from '@/features/culture/calendar/culturalCalendar';
+import { formatOccurrence } from '@/features/culture/calendar/CulturalCalendarScreen';
 import { useTodayDiscovery } from '@/features/daily/useTodayDiscovery';
-import { natureSiteImages } from '@/features/explore/data';
-import { useHomeRecommendation } from '@/features/home/useHomeRecommendation';
-import { buildPassport } from '@/features/journey/passport';
-import { computeTrailProgress } from '@/features/trails/trailProgress';
-import { trails } from '@/features/trails/trailsData';
-import { useTrailSignals } from '@/features/trails/useTrailSignals';
+import { LEARNING_PATHS } from '@/features/learn/learningPaths';
+import { useWhatsNew } from '@/features/whatsNew/useWhatsNew';
 import type { SupportedLanguage } from '@/i18n';
-import { useCultureMaterials } from '@/services/content/cultureService';
-import { useExploreRegions } from '@/services/content/exploreService';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
-import { buildWidgetSnapshot, type WidgetSnapshot } from '@/services/widgets/widgetSnapshot';
-import { useProgressStore } from '@/store/useProgressStore';
+import { buildPublicWidgetSnapshot, type PublicWidgetSnapshot } from '@/services/widgets/publicWidgetSnapshot';
 
-/** The widget snapshot from live app state - the same sources Home,
- * Daily, Passport and Trails use (no separate calculation). */
-export function useWidgetSnapshot(): WidgetSnapshot {
+/** The curated beginner path - static, never progress-based. */
+const BEGINNER_PATH_ID = 'boz-uy';
+
+/**
+ * The "Today in OYNO" widget snapshot from PUBLIC content only: the same
+ * Cultural Calendar rule Home uses (3-day window), today's Daily OYNO item,
+ * the newest What's New story and the curated beginner path. Nothing about
+ * the user (progress, Journal, account) is read here.
+ */
+export function useWidgetSnapshot(): PublicWidgetSnapshot {
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
   const { discovery } = useTodayDiscovery();
-  const { recommendation, display } = useHomeRecommendation();
-  const signals = useTrailSignals();
-  const { data: regions } = useExploreRegions();
-  const { data: materials } = useCultureMaterials();
-  const visitedRegionIds = useProgressStore((state) => state.visitedRegionIds);
-  const regionVisitDates = useProgressStore((state) => state.regionVisitDates);
+  const { items: whatsNew } = useWhatsNew();
+  const dailyId = discovery?.item.id ?? null;
+  const dailyTitle = discovery?.item.title ?? null;
+  const dailyMinutes = discovery?.minutes ?? null;
+  const latest = whatsNew[0] ?? null;
+  const today = localDateKey(new Date());
 
   return useMemo(() => {
-    const passport = buildPassport(regions ?? [], visitedRegionIds, regionVisitDates, (id) => natureSiteImages[id], language);
     const now = new Date();
-    return buildWidgetSnapshot({
+    const entry = homeEvent(calendarList(CULTURAL_CALENDAR, now), now);
+    const path = LEARNING_PATHS.find((candidate) => candidate.id === BEGINNER_PATH_ID) ?? null;
+    return buildPublicWidgetSnapshot({
       language,
       now,
-      localDate: localDateKey(now),
-      labels: {
-        daily: t('appearance.widgets.types.daily'),
-        dailyDone: t('daily.entry.done'),
-        minutes: discovery ? t('daily.minutes', { count: discovery.minutes }) : '',
-        journey: t('appearance.widgets.types.journey'),
-        passport: t('appearance.widgets.types.passport'),
-        passportProgress: t('explore.map.summary', { unlocked: passport.unlocked, total: passport.total }),
-        trail: t('appearance.widgets.types.trail'),
-        noTrail: t('appearance.widgets.noActiveTrail'),
-        cultureOfDay: t('appearance.widgets.types.cultureOfDay'),
-        openApp: t('appearance.widgets.openApp'),
-      },
-      daily: discovery ? { itemId: discovery.item.id, title: discovery.item.title, minutes: discovery.minutes, isCompleted: discovery.isCompleted } : null,
-      journey: { eyebrow: display.eyebrow, title: display.title, progress: recommendation.progress, route: recommendation.route },
-      passport: { unlocked: passport.unlocked, total: passport.total },
-      trails: trails.map((trail) => {
-        const progress = computeTrailProgress(trail, signals);
-        return { id: trail.id, title: trail.title[language] ?? trail.title.kg, status: progress.status, completed: progress.completed, total: progress.total };
-      }),
-      cultureMaterials: (materials ?? []).map((row) => ({ id: row.id, kind: row.kind, title: row.title, description: row.description })),
+      localDate: today,
+      labels: { brand: 'OYNO', open: t('widget.open'), fallbackTitle: t('widget.fallbackTitle'), fallbackSubtitle: t('widget.fallbackSubtitle') },
+      calendar: entry
+        ? { id: entry.event.id, title: t(entry.event.titleKey), dateText: formatOccurrence(entry.occurrence, language, ''), isToday: isToday(entry.occurrence, now), eyebrowToday: t('widget.eyebrow.calendarToday'), eyebrowSoon: t('widget.eyebrow.calendarSoon') }
+        : null,
+      daily: dailyId && dailyTitle ? { itemId: dailyId, title: dailyTitle, eyebrow: t('widget.eyebrow.daily'), subtitle: dailyMinutes ? t('daily.minutes', { count: dailyMinutes }) : null } : null,
+      whatsNew: latest ? { type: latest.type, id: latest.id, title: latest.title, eyebrow: t('widget.eyebrow.whatsNew') } : null,
+      path: path ? { id: path.id, title: t(path.titleKey), eyebrow: t('widget.eyebrow.path') } : null,
     });
-  }, [discovery, recommendation, display, signals, regions, materials, visitedRegionIds, regionVisitDates, language]);
+    // `today` re-evaluates the calendar window at midnight.
+  }, [t, language, today, dailyId, dailyTitle, dailyMinutes, latest]);
 }

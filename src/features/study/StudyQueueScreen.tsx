@@ -14,6 +14,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 
 import { buildStudyQueue, filterQueue, QUICK_REVIEW_ROUTE, studyPresentation, type StudyFilter, type StudyQueueItem } from './studyQueue';
+import { FOCUS_SESSION_ROUTE } from './session/focusSession';
 import { useStudyQueueInput } from './useStudyQueue';
 
 const FILTERS: StudyFilter[] = ['all', 'review', 'reading', 'paths'];
@@ -64,6 +65,8 @@ export function StudyQueueScreen({ onPressBack }: { onPressBack: () => void }) {
             ))}
           </View>
         ) : null}
+
+        {ready && queue.length > 0 ? <Button label={t('studySession.startFocus')} variant="secondary" block onPress={() => router.push(FOCUS_SESSION_ROUTE as never)} /> : null}
 
         {ready && queue.length === 0 ? (
           <View style={styles.empty}>

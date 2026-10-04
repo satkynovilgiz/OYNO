@@ -1,6 +1,7 @@
 import { komuzTracks } from '@/features/culture/audioData';
 import { GLOSSARY } from '@/features/culture/glossary/glossaryData';
 import { LEARNING_PATHS } from '@/features/learn/learningPaths';
+import { CULTURAL_CALENDAR } from '@/features/culture/calendar/culturalCalendar';
 
 import type { ContentLink } from './contentLinks';
 
@@ -16,6 +17,8 @@ export function resolveLink(link: ContentLink | null, data: { items: { id: strin
       return GLOSSARY.some((entry) => entry.id === link.id) ? 'open' : 'invalid';
     case 'learning_path':
       return LEARNING_PATHS.some((path) => path.id === link.id) ? 'open' : 'invalid';
+    case 'calendar_event':
+      return CULTURAL_CALENDAR.some((event) => event.id === link.id) ? 'open' : 'invalid';
     case 'komuz_track':
       return komuzTracks.some((entry) => entry.id === link.id) ? 'open' : 'invalid';
     case 'game':
