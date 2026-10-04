@@ -31,6 +31,8 @@ type Props = {
   entryId?: string;
   /** A new memory started from a detail screen ("Add to Journal"). */
   initialLink?: JournalLink | null;
+  /** New memory pre-filled from the Journal calendar (YYYY-MM-DD, not in the future); still editable. */
+  initialDate?: string | null;
   onPressBack: () => void;
 };
 
@@ -39,7 +41,7 @@ type Props = {
  * never translated), date, an optional photo and an optional link to real
  * OYNO content. Deleting it changes nothing but the journal.
  */
-export function JournalEntryScreen({ entryId, initialLink = null, onPressBack }: Props) {
+export function JournalEntryScreen({ entryId, initialLink = null, initialDate = null, onPressBack }: Props) {
   const { t, i18n } = useTranslation();
   const language = i18n.language as SupportedLanguage;
   const insets = useSafeAreaInsets();
@@ -52,7 +54,7 @@ export function JournalEntryScreen({ entryId, initialLink = null, onPressBack }:
 
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
-  const [date, setDate] = useState(localDateKey());
+  const [date, setDate] = useState(() => (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) && initialDate <= localDateKey() ? initialDate : localDateKey()));
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [link, setLink] = useState<JournalLink | null>(isValidJournalLink(initialLink) ? initialLink : null);
   const [error, setError] = useState<string | null>(null);

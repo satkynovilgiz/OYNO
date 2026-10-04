@@ -19,6 +19,8 @@ import { useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
 import { useLearningPathStore } from '@/store/useLearningPathStore';
 import { useWeeklyGoalStore } from '@/store/useWeeklyGoalStore';
 import { useListeningStore } from '@/store/useListeningStore';
+import { usePracticeMissionsStore } from '@/store/usePracticeMissionsStore';
+import { useAchievementShowcaseStore } from '@/store/useAchievementShowcaseStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
@@ -192,6 +194,10 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     useWeeklyGoalStore.getState().adoptGuest(userId);
     await useListeningStore.getState().load();
     useListeningStore.getState().adoptGuest(userId);
+    await usePracticeMissionsStore.getState().load();
+    usePracticeMissionsStore.getState().adoptGuest(userId);
+    await useAchievementShowcaseStore.getState().load();
+    useAchievementShowcaseStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

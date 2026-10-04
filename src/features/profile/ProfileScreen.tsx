@@ -35,6 +35,7 @@ import { achievementsTotal, getCollectionItems, profileAchievements } from './da
 import { getProfileSectionOrder, type ProfileSectionId } from './profileSections';
 import type { FavoriteGame, ProfileSummary } from './types';
 import { useShowMyReports } from '@/features/reports/MyReportsScreen';
+import { AchievementShowcaseSection } from './showcase/AchievementShowcase';
 
 export function ProfileScreen() {
   const showMyReports = useShowMyReports();
@@ -184,6 +185,7 @@ export function ProfileScreen() {
               total={achievementsTotal}
               onPressSeeAll={() => router.push('/achievements' as never)}
             />
+            <AchievementShowcaseSection />
           </View>
         );
       case 'favorites':

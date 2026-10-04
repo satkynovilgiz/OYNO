@@ -18,6 +18,8 @@ import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
+import { useShowcase } from '../showcase/AchievementShowcase';
+import { MAX_PINS } from '../showcase/showcaseModel';
 
 type AchievementUnlockedModalProps = {
   achievement: ProfileAchievement | null;
@@ -34,6 +36,8 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
   const contentOpacity = useSharedValue(0);
   const contentTranslateY = useSharedValue(8);
   const reducedMotion = useReducedMotion();
+  const showcase = useShowcase();
+  const canPin = !!achievement && showcase.pins.length < MAX_PINS && !showcase.pins.includes(achievement.id) && showcase.earnedIds.includes(achievement.id);
 
   useEffect(() => {
     if (!achievement) return;
@@ -108,6 +112,18 @@ export function AchievementUnlockedModal({ achievement, onDismiss }: Achievement
 
           <View style={styles.cta}>
             <Button label={t('profile.achievements.unlockedCta')} variant="accent" block onPress={onDismiss} />
+            {/* Optional, never automatic - only while a slot is free. */}
+            {canPin ? (
+              <Button
+                label={t('showcase.addToShowcase')}
+                variant="text"
+                block
+                onPress={() => {
+                  showcase.pin(achievement!.id);
+                  onDismiss();
+                }}
+              />
+            ) : null}
           </View>
         </View>
       </View>

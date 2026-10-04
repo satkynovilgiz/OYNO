@@ -14,6 +14,10 @@ const TUTORIAL_STEPS = ['games3d.kokBoru.tutorial1', 'games3d.kokBoru.tutorial2'
 export default function KokBoruRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<KokBoruMode | null>(null);
+  // Practice Academy: the chosen goal (null = Free Practice); returning to
+  // Game Detail with the picker open for "Choose another goal".
+  const [missionId, setMissionId] = useState<string | null>(null);
+  const [reopenPicker, setReopenPicker] = useState(false);
   const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(favoriteKey('game', 'kok-boru')));
 
   if (!mode) {
@@ -30,11 +34,25 @@ export default function KokBoruRoute() {
         cultureRoute="/culture/horse"
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', 'kok-boru')}
-        onPressPractice={() => setMode('practice')}
+        onPressPractice={(nextMission) => {
+          setMissionId(nextMission ?? null);
+          setReopenPicker(false);
+          setMode('practice');
+        }}
+        openPracticePicker={reopenPicker}
         onPressPlay={() => setMode('normal')}
       />
     );
   }
 
-  return <KokBoruGame mode={mode} />;
+  return (
+    <KokBoruGame
+      mode={mode}
+      practiceMissionId={missionId}
+      onChooseAnotherGoal={() => {
+        setReopenPicker(true);
+        setMode(null);
+      }}
+    />
+  );
 }

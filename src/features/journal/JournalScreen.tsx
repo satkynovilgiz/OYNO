@@ -19,8 +19,9 @@ import { groupByMonth, visibleEntries, type JournalEntry, type JournalFilter, ty
 import { LibraryEmptyState } from '@/components/library/LibraryChrome';
 import { Chip } from '@/components/ui/Chip';
 import { canOfferCollage } from './collage/collageModel';
+import { OnThisDayCard } from './calendar/OnThisDayCard';
 
-const FILTERS: JournalFilter[] = ['all', 'places', 'culture', 'trails'];
+export const FILTERS: JournalFilter[] = ['all', 'places', 'culture', 'trails'];
 
 /**
  * /journal - "My Kyrgyzstan Journal": a calm, private timeline grouped by
@@ -81,6 +82,8 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
           onPress={() => router.push('/journal/new' as never)}
         />
 
+        <OnThisDayCard />
+        {total > 0 ? <Button label={t('journalCalendar.title')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/calendar' as never)} /> : null}
         {canOfferCollage(entries) ? (
           <Button label={t('journalCollage.create')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/collage' as never)} />
         ) : null}
@@ -134,7 +137,7 @@ export function LinkedPill({ link }: { link: JournalLink }) {
  * text below) and TEXT (warm paper surface, small ornament). A memory
  * without a photo never borrows OYNO artwork as if it were the user's.
  */
-function MemoryCard({ entry, experience, index, language }: { entry: JournalEntry; experience: AgeExperience; index: number; language: SupportedLanguage }) {
+export function MemoryCard({ entry, experience, index, language }: { entry: JournalEntry; experience: AgeExperience; index: number; language: SupportedLanguage }) {
   const { t } = useTranslation();
   const photo: ImageSourcePropType | null = entry.photo?.localUri ? { uri: entry.photo.localUri } : null;
   const title = entry.title || entry.link?.label || t('journal.untitled');

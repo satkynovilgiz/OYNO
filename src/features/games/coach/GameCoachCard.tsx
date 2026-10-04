@@ -10,6 +10,7 @@ import { cardRadii, colors, spacing, textStyles } from '@/theme';
 
 import { useGameRecords, useRecordsOwner } from '../records/useGameRecords';
 import { coachAdvice } from './gameCoach';
+import { COACH_TIP_MISSION } from '../practice/practiceMissions';
 
 /** "Hide this tip" lasts for this app session only (never a permanent mute). */
 const hiddenThisSession = new Set<string>();
@@ -19,7 +20,7 @@ const hiddenThisSession = new Set<string>();
  * real to say. First time -> the existing tutorial's first step (no fake
  * personalization). Reads the current owner's records only.
  */
-export function GameCoachCard({ gameId, tutorialStepKeys, age, onPressPractice, onReplayTutorial }: { gameId: string; tutorialStepKeys: string[]; age: AgeExperience; onPressPractice: () => void; onReplayTutorial: () => void }) {
+export function GameCoachCard({ gameId, tutorialStepKeys, age, onPressPractice, onReplayTutorial }: { gameId: string; tutorialStepKeys: string[]; age: AgeExperience; onPressPractice: (missionId?: string | null) => void; onReplayTutorial: () => void }) {
   const { t } = useTranslation();
   const owner = useRecordsOwner();
   const { records, isLoaded } = useGameRecords();
@@ -71,7 +72,8 @@ export function GameCoachCard({ gameId, tutorialStepKeys, age, onPressPractice, 
             variant="secondary"
             onPress={() => {
               track('game_coach_tip_opened', { game_id: gameId, tip_id: advice.tip.tipId });
-              onPressPractice();
+              // Explicit mapping only; never marks anything complete.
+              onPressPractice(COACH_TIP_MISSION[advice.tip.tipId] ?? null);
             }}
           />
         ) : null}

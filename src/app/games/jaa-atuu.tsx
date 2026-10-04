@@ -22,6 +22,10 @@ const FAVORITE_GAME_ID = 'zhaa-atuu';
 export default function JaaAtuuRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<JaaAtuuMode | null>(null);
+  // Practice Academy: the chosen goal (null = Free Practice); returning to
+  // Game Detail with the picker open for "Choose another goal".
+  const [missionId, setMissionId] = useState<string | null>(null);
+  const [reopenPicker, setReopenPicker] = useState(false);
   // A friend's challenge from a link (validated; anonymous; normal mode only).
   const { challenge, invalid } = useFriendChallengeParam('jaa_atuu');
   const [withChallenge, setWithChallenge] = useState(false);
@@ -43,7 +47,12 @@ export default function JaaAtuuRoute() {
         cultureRoute="/culture/games"
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', FAVORITE_GAME_ID)}
-        onPressPractice={() => setMode('practice')}
+        onPressPractice={(nextMission) => {
+          setMissionId(nextMission ?? null);
+          setReopenPicker(false);
+          setMode('practice');
+        }}
+        openPracticePicker={reopenPicker}
         onPressPlay={() => {
           setWithChallenge(false);
           setMode('normal');
@@ -58,5 +67,16 @@ export default function JaaAtuuRoute() {
     );
   }
 
-  return <JaaAtuuGame mode={mode} difficulty={difficulty} challenge={withChallenge ? challenge : null} />;
+  return (
+    <JaaAtuuGame
+      mode={mode}
+      difficulty={difficulty}
+      challenge={withChallenge ? challenge : null}
+      practiceMissionId={missionId}
+      onChooseAnotherGoal={() => {
+        setReopenPicker(true);
+        setMode(null);
+      }}
+    />
+  );
 }

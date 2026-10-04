@@ -37,6 +37,8 @@ import { useKyzKuumaiGame } from './KyzKuumaiController';
 import { createKyzKuumaiAudio } from './kyzKuumaiAudio';
 import { KyzKuumaiScene } from './KyzKuumaiScene';
 import type { KyzKuumaiDifficulty, KyzKuumaiMode } from './KyzKuumaiTypes';
+import { usePracticeMission } from '@/features/games/practice/usePracticeMission';
+import { PracticeGoalPill } from '../../ui/PracticeGoalPill';
 
 const TUTORIAL_STEPS = ['games3d.kyzKuumai.tutorial1', 'games3d.kyzKuumai.tutorial2', 'games3d.kyzKuumai.tutorial3'];
 const GAME_ID = 'kyz_kuumai';
@@ -58,9 +60,13 @@ type KyzKuumaiGameProps = {
   mode?: KyzKuumaiMode;
   /** A friend's target (from a challenge link) - normal play only. */
   challenge?: FriendChallenge | null;
+  /** Practice Academy mission (practice mode only). */
+  practiceMissionId?: string | null;
+  /** Back to Game Detail with the goal picker open. */
+  onChooseAnotherGoal?: () => void;
 };
 
-export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challenge = null }: KyzKuumaiGameProps) {
+export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challenge = null, practiceMissionId = null, onChooseAnotherGoal }: KyzKuumaiGameProps) {
   useTrackScreenView('games3d_kyz_kuumai');
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -80,6 +86,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
   const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
+  const practice = usePracticeMission(GAME_ID, mode === 'practice' ? practiceMissionId : null);
 
   const audioRef = useRef(createKyzKuumaiAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
@@ -157,6 +164,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
     if (game.phase !== 'RESULT') {
       recordedResultRef.current = false;
       records.clear();
+      practice.reset();
       return;
     }
     if (recordedResultRef.current) return;
@@ -168,6 +176,8 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
       primary: game.summary.elapsedSeconds,
       secondary: { topSpeed: game.summary.topSpeed },
     });
+    // Practice goal: the course was finished (RESULT) - an abandoned ride never counts.
+    if (mode === 'practice') practice.finishRound({ seconds: game.summary.elapsedSeconds, topSpeed: game.summary.topSpeed });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -295,6 +305,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
         onDone={handleAboutDone}
       />
 
+      <PracticeGoalPill text={hudVisible ? practice.goalText : null} />
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
       <StartCountdown visible={game.phase === 'READY' && mode === 'normal'} onDone={game.startChase} />
@@ -315,6 +326,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
         stats={resultStats}
         personalBest={records.personalBest}
           coachTip={records.coachTip}
+          practiceGoal={practice.resultGoal && onChooseAnotherGoal ? { ...practice.resultGoal, onChooseAnother: onChooseAnotherGoal } : null}
         overlay={records.shareHost}
         friendChallenge={records.friendChallenge}
         onReplay={game.restart}

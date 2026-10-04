@@ -27,6 +27,8 @@ import { shareContentLink } from '@/services/links/shareContentLink';
 import { LINKABLE_GAMES } from '@/services/links/contentLinks';
 import { TutorialOverlay } from '@/games3d/ui/TutorialOverlay';
 import { GameCoachCard } from './coach/GameCoachCard';
+import { missionsFor } from './practice/practiceMissions';
+import { PracticePicker, PracticeProgressCard } from './practice/PracticePicker';
 
 export type GameDetailDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -55,7 +57,10 @@ type GameDetailScreenProps = {
   cultureRoute: string;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onPressPractice: () => void;
+  /** Practice: with a Practice Academy mission id, or null for Free Practice. */
+  onPressPractice: (missionId?: string | null) => void;
+  /** Re-open the goal picker (returning from a practice result). */
+  openPracticePicker?: boolean;
   onPressPlay: () => void;
   /** Opened from a friend's challenge link (already validated). */
   friendChallenge?: FriendChallenge | null;
@@ -94,6 +99,7 @@ export function GameDetailScreen({
   isFavorite,
   onToggleFavorite,
   onPressPractice,
+  openPracticePicker = false,
   onPressPlay,
   friendChallenge,
   invalidChallenge,
@@ -103,6 +109,9 @@ export function GameDetailScreen({
   const insets = useSafeAreaInsets();
   const { config, experience } = useAgeExperience();
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const hasMissions = missionsFor(gameId).length > 0;
+  const [pickerOpen, setPickerOpen] = useState(openPracticePicker && hasMissions);
+  const startPractice = () => (hasMissions ? setPickerOpen(true) : onPressPractice(null));
   const gamesPlayed = useProgressStore((state) => state.gameStats[gameId]?.played ?? 0);
   const gamesWon = useProgressStore((state) => state.gameStats[gameId]?.won ?? 0);
   const { scrollHandler, heroStyle } = useHeroParallax();
@@ -248,7 +257,8 @@ export function GameDetailScreen({
           <Button label={t('gameCoach.replayTutorial')} variant="text" size={isChild ? 'lg' : 'md'} onPress={() => setTutorialOpen(true)} />
         </FadeSlideIn>
 
-        <GameCoachCard gameId={gameId} tutorialStepKeys={tutorialStepKeys} age={experience} onPressPractice={onPressPractice} onReplayTutorial={() => setTutorialOpen(true)} />
+        <GameCoachCard gameId={gameId} tutorialStepKeys={tutorialStepKeys} age={experience} onPressPractice={(missionId) => (missionId ? onPressPractice(missionId) : startPractice())} onReplayTutorial={() => setTutorialOpen(true)} />
+        <PracticeProgressCard gameId={gameId} />
 
         {showDifficultyPicker ? (
           <FadeSlideIn style={styles.card} index={4}>
@@ -305,13 +315,22 @@ export function GameDetailScreen({
 
       <View style={[styles.footer, isAdult && styles.footerCompact, { paddingBottom: insets.bottom + spacing.md }]}>
         <View style={[styles.footerButton, styles.footerButtonSecondary]}>
-          <Button label={t('gameDetail.practice')} variant="secondary" onPress={onPressPractice} />
+          <Button label={t('gameDetail.practice')} variant="secondary" onPress={startPractice} />
         </View>
         {/* Play is always the strongest action: twice Practice's width, with icon. */}
         <View style={[styles.footerButton, styles.footerButtonPrimary]}>
           <Button label={t('games.play')} onPress={onPressPlay} icon={<Play size={16} color={colors.textOnPrimary} fill={colors.textOnPrimary} strokeWidth={0} />} />
         </View>
       </View>
+      <PracticePicker
+        gameId={gameId}
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onStart={(missionId) => {
+          setPickerOpen(false);
+          onPressPractice(missionId);
+        }}
+      />
       <TutorialOverlay key={tutorialOpen ? 'open' : 'closed'} visible={tutorialOpen} stepKeys={tutorialStepKeys} onDone={() => setTutorialOpen(false)} />
     </View>
   );

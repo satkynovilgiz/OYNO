@@ -35,15 +35,21 @@ import { useKokBoruGame } from './KokBoruController';
 import { createKokBoruAudio } from './kokBoruAudio';
 import { KokBoruScene } from './KokBoruScene';
 import { MATCH_DURATION_S, type KokBoruMode } from './KokBoruTypes';
+import { usePracticeMission } from '@/features/games/practice/usePracticeMission';
+import { PracticeGoalPill } from '../../ui/PracticeGoalPill';
 
 const TUTORIAL_STEPS = ['games3d.kokBoru.tutorial1', 'games3d.kokBoru.tutorial2', 'games3d.kokBoru.tutorial3'];
 const GAME_ID = 'kok_boru';
 
 type KokBoruGameProps = {
   mode?: KokBoruMode;
+  /** Practice Academy mission (practice mode only). */
+  practiceMissionId?: string | null;
+  /** Back to Game Detail with the goal picker open. */
+  onChooseAnotherGoal?: () => void;
 };
 
-export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
+export function KokBoruGame({ mode = 'normal', practiceMissionId = null, onChooseAnotherGoal }: KokBoruGameProps) {
   useTrackScreenView('games3d_kok_boru');
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -64,6 +70,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
   const sprint = useSprintButton();
   const recordedResultRef = useRef(false);
   const records = useRoundRecords(GAME_ID);
+  const practice = usePracticeMission(GAME_ID, mode === 'practice' ? practiceMissionId : null);
 
   const audioRef = useRef(createKokBoruAudio());
   useEffect(() => () => audioRef.current.dispose(), []);
@@ -153,6 +160,8 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
       primary: mode !== 'normal' ? (game.summary.scored ? 1 : 0) : game.summary.playerScore,
       secondary: {},
     });
+    // Practice goal: goals scored in the finished 90 s practice round.
+    if (mode === 'practice') practice.finishRound({ goals: game.practiceScoreCount });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -319,6 +328,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
         onDone={handleAboutDone}
       />
 
+      <PracticeGoalPill text={hudVisible ? practice.goalText : null} />
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
       <StartCountdown visible={game.phase === 'READY' && mode === 'normal'} onDone={game.start} />
@@ -334,6 +344,7 @@ export function KokBoruGame({ mode = 'normal' }: KokBoruGameProps) {
 
       <ResultScreen
         coachTip={records.coachTip}
+        practiceGoal={practice.resultGoal && onChooseAnotherGoal ? { ...practice.resultGoal, onChooseAnother: onChooseAnotherGoal } : null}
         visible={game.phase === 'RESULT'}
         title={resultTitle}
         outcome={

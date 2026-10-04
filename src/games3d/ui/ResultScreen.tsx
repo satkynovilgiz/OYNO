@@ -27,6 +27,8 @@ type ResultScreenProps = {
   personalBest?: { value: string; previous: string; onShare?: () => void } | null;
   /** Game Coach: ONE short "Next time, try…" line (never with a new best). */
   coachTip?: string | null;
+  /** Practice Academy: the mission's outcome (neutral copy) + its actions. */
+  practiceGoal?: { completed: boolean; title: string; progressText: string; onChooseAnother: () => void } | null;
   /** Rendered inside the sheet (e.g. the share preview host, so it opens
    * on top of this sheet rather than beside it). */
   overlay?: ReactNode;
@@ -46,7 +48,7 @@ type ResultScreenProps = {
  * Restrained: one short seal animation (skipped under Reduce Motion), no
  * confetti or casino effects. Actions: Play again / Back to games.
  */
-export function ResultScreen({ visible, title, outcome = 'completed', banner, stats, personalBest, coachTip, overlay, friendChallenge, onReplay, onExit }: ResultScreenProps) {
+export function ResultScreen({ visible, title, outcome = 'completed', banner, stats, personalBest, coachTip, practiceGoal, overlay, friendChallenge, onReplay, onExit }: ResultScreenProps) {
   const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const sealScale = useSharedValue(1);
@@ -119,6 +121,15 @@ export function ResultScreen({ visible, title, outcome = 'completed', banner, st
           </View>
         ) : null}
 
+        {practiceGoal ? (
+          <View style={styles.coach} accessible accessibilityLabel={`${practiceGoal.title}. ${practiceGoal.completed ? t('practiceAcademy.goalCompleted') : t('practiceAcademy.yourProgress')} ${practiceGoal.progressText}`}>
+            <Text style={styles.coachKicker}>{practiceGoal.completed ? `✓ ${t('practiceAcademy.goalCompleted')}` : t('practiceAcademy.yourProgress')}</Text>
+            <Text style={styles.coachText}>
+              {practiceGoal.title} · {practiceGoal.progressText}
+            </Text>
+          </View>
+        ) : null}
+
         {coachTip && !personalBest ? (
           <View style={styles.coach} accessible accessibilityLabel={`${t('gameCoach.nextTime')} ${coachTip}`}>
             <Text style={styles.coachKicker}>{t('gameCoach.nextTime')}</Text>
@@ -127,7 +138,8 @@ export function ResultScreen({ visible, title, outcome = 'completed', banner, st
         ) : null}
 
         <View style={styles.actions}>
-          <Button label={t('games3d.result.replay')} onPress={onReplay} />
+          <Button label={practiceGoal ? t('practiceAcademy.tryAgain') : t('games3d.result.replay')} onPress={onReplay} />
+          {practiceGoal ? <Button label={t('practiceAcademy.chooseAnother')} variant="secondary" onPress={practiceGoal.onChooseAnother} /> : null}
           <Button label={t('games3d.result.exit')} variant="secondary" onPress={onExit} />
         </View>
       </ScrollView>

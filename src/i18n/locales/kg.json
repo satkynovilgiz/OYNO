@@ -3984,5 +3984,99 @@
     "sourceUnavailable": "Булак жеткиликсиз",
     "offlineNote": "Булакты ачуу үчүн интернет керек.",
     "footnote": "Булактын көрсөтүлүшү ал ар бир сүйлөмдү далилдейт дегенди билдирбейт. OYNO окуянын абалын автоматтык түрдө өзгөртпөйт."
+  },
+  "journalCalendar": {
+    "title": "Календарь",
+    "today": "Бүгүн",
+    "previousMonth": "Мурунку ай",
+    "nextMonth": "Кийинки ай",
+    "memories_one": "{{count}} эскерүү",
+    "memories_other": "{{count}} эскерүү",
+    "noMemories": "Бул күнү эскерүү жок",
+    "addMemory": "Эскерүү кошуу",
+    "onThisDay": "Ушул күнү",
+    "yearsAgo_one": "{{count}} жыл мурун",
+    "yearsAgo_other": "{{count}} жыл мурун",
+    "memories_few": "{{count}} эскерүү",
+    "memories_many": "{{count}} эскерүү",
+    "yearsAgo_few": "{{count}} жыл мурун",
+    "yearsAgo_many": "{{count}} жыл мурун"
+  },
+  "practiceAcademy": {
+    "practiceGoals": "Машыгуу максаттары",
+    "practiceGoal": "Машыгуу максаты",
+    "chooseGoal": "Максат тандаңыз",
+    "freePractice": "Эркин машыгуу",
+    "goal": "Максат",
+    "goalCompleted": "Максатка жетилди",
+    "yourProgress": "Сиздин жыйынтык",
+    "tryAgain": "Дагы бир жолу",
+    "chooseAnother": "Башка максат тандоо",
+    "completedCount": "{{total}} максаттын {{done}} аткарылды",
+    "reset": "Машыгуу максаттарын баштапкы абалга келтирүү",
+    "metric": {
+      "accuracy": "Тактык {{value}}%",
+      "bullseyes_one": "Ортосуна {{count}} жолу",
+      "bullseyes_other": "Ортосуна {{count}} жолу",
+      "score": "{{value}} упай",
+      "seconds": "{{value}} сек",
+      "topSpeed": "{{value}} м/с",
+      "goals_one": "{{count}} гол",
+      "goals_other": "{{count}} гол",
+      "bullseyes_few": "Ортосуна {{count}} жолу",
+      "bullseyes_many": "Ортосуна {{count}} жолу",
+      "goals_few": "{{count}} гол",
+      "goals_many": "{{count}} гол"
+    },
+    "missions": {
+      "jaa_accuracy_60": {
+        "title": "Тактыкты жогорулатуу",
+        "description": "Машыгуу жебелериңиздин жок дегенде 60% бутага тийсин."
+      },
+      "jaa_one_bullseye": {
+        "title": "Ортосуна тийгизүү",
+        "description": "Жок дегенде бир жебени кызыл ортосуна тийгизиңиз."
+      },
+      "jaa_score_400": {
+        "title": "400 упай топтоо",
+        "description": "15 машыгуу жебеси менен 400 же андан көп упай топтоңуз."
+      },
+      "kyz_finish_15s": {
+        "title": "Жолду 15 секундда өтүү",
+        "description": "Машыгуу жолунун аягына 15 секунданын ичинде жетиңиз."
+      },
+      "kyz_top_speed_9": {
+        "title": "Тездетүүнү колдонуу",
+        "description": "9 м/с ылдамдыкка жетиңиз - буга тездетүү менен гана жетүүгө болот."
+      },
+      "kok_one_goal": {
+        "title": "Гол киргизүү",
+        "description": "Бир машыгууда улакты өз дарбазаңызга бир жолу алып барыңыз."
+      },
+      "kok_two_goals": {
+        "title": "Эки гол киргизүү",
+        "description": "Бир машыгууда улакты өз дарбазаңызга эки жолу алып барыңыз."
+      }
+    }
+  },
+  "showcase": {
+    "title": "Жетишкендиктер витринасы",
+    "choose": "Жетишкендиктерди тандоо",
+    "edit": "Витринаны өзгөртүү",
+    "pin": "Бекитүү",
+    "unpin": "Бекитүүнү алуу",
+    "pinned": "Бекитилген",
+    "earned": "Алынган жетишкендиктер",
+    "selected": "{{max}} ичинен {{count}} тандалды",
+    "full": "3 орун тең толук",
+    "position": "{{total}} ичинен {{index}}-орун",
+    "moveLeft": "Солго жылдыруу",
+    "moveRight": "Оңго жылдыруу",
+    "moveLeftLabel": "«{{name}}» солго жылдыруу",
+    "moveRightLabel": "«{{name}}» оңго жылдыруу",
+    "share": "Витрина менен бөлүшүү",
+    "shareLabel": "OYNOдогу менин витринам",
+    "noneEarned": "Азырынча жетишкендик алына элек",
+    "addToShowcase": "Витринага кошуу"
   }
 }

@@ -35,6 +35,8 @@ import { createJaaAtuuAudio } from './jaaAtuuAudio';
 import { JaaAtuuScene } from './JaaAtuuScene';
 import type { ArrowShot, JaaAtuuDifficulty, JaaAtuuMode } from './JaaAtuuTypes';
 import { JAA_ATUU_DIFFICULTY } from './JaaAtuuTypes';
+import { usePracticeMission } from '@/features/games/practice/usePracticeMission';
+import { PracticeGoalPill } from '../../ui/PracticeGoalPill';
 
 const TUTORIAL_STEPS = ['games3d.jaaAtuu.tutorial1', 'games3d.jaaAtuu.tutorial2', 'games3d.jaaAtuu.tutorial3'];
 const GAME_ID = 'jaa_atuu';
@@ -50,9 +52,13 @@ type JaaAtuuGameProps = {
   difficulty?: JaaAtuuDifficulty;
   /** A friend's target (from a challenge link) - normal play only. */
   challenge?: FriendChallenge | null;
+  /** Practice Academy mission (practice mode only). */
+  practiceMissionId?: string | null;
+  /** Back to Game Detail with the goal picker open. */
+  onChooseAnotherGoal?: () => void;
 };
 
-export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge = null }: JaaAtuuGameProps) {
+export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge = null, practiceMissionId = null, onChooseAnotherGoal }: JaaAtuuGameProps) {
   useTrackScreenView('games3d_jaa_atuu');
   const { t } = useTranslation();
   const game = useJaaAtuuGame(difficulty, mode);
@@ -72,6 +78,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
   const config = JAA_ATUU_DIFFICULTY[game.difficulty];
 
   const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
+  const practice = usePracticeMission(GAME_ID, mode === 'practice' ? practiceMissionId : null);
   const recordedResultRef = useRef(false);
 
   const audioRef = useRef(createJaaAtuuAudio());
@@ -185,6 +192,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
     setBullseyeSignalMs(undefined);
     recordedResultRef.current = false;
     records.clear();
+    practice.reset();
     countdownShownRef.current = false;
     // A restart from a pause taken mid-countdown starts a fresh 3-2-1.
     setShowCountdown(false);
@@ -210,6 +218,8 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
       primary: game.summary.totalScore,
       secondary: { accuracy: game.summary.accuracyPercent, bullseyes: game.summary.bullseyes, bestShot: game.summary.bestShot },
     });
+    // Practice goal: only a FINISHED practice round is evaluated.
+    if (mode === 'practice') practice.finishRound({ accuracy: game.summary.accuracyPercent, bullseyes: game.summary.bullseyes, score: game.summary.totalScore });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -281,6 +291,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
         onDone={handleAboutDone}
       />
 
+      <PracticeGoalPill text={hudVisible ? practice.goalText : null} />
       <TutorialOverlay visible={helpStage === 'controls'} stepKeys={TUTORIAL_STEPS} onDone={handleTutorialDone} />
 
       <StartCountdown visible={showCountdown && game.phase !== 'PAUSED'} onDone={handleCountdownDone} />
@@ -300,6 +311,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
         stats={resultStats}
         personalBest={records.personalBest}
           coachTip={records.coachTip}
+          practiceGoal={practice.resultGoal && onChooseAnotherGoal ? { ...practice.resultGoal, onChooseAnother: onChooseAnotherGoal } : null}
         overlay={records.shareHost}
         friendChallenge={records.friendChallenge}
         onReplay={handleRestart}

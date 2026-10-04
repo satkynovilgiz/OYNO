@@ -3984,5 +3984,99 @@
     "sourceUnavailable": "Source unavailable",
     "offlineNote": "Opening a source needs an internet connection.",
     "footnote": "A source being listed doesn't mean it proves every sentence. OYNO doesn't change a story's status automatically."
+  },
+  "journalCalendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "memories_one": "{{count}} memory",
+    "memories_other": "{{count}} memories",
+    "noMemories": "No memories on this day",
+    "addMemory": "Add memory",
+    "onThisDay": "On This Day",
+    "yearsAgo_one": "{{count}} year ago",
+    "yearsAgo_other": "{{count}} years ago",
+    "memories_few": "{{count}} memories",
+    "memories_many": "{{count}} memories",
+    "yearsAgo_few": "{{count}} years ago",
+    "yearsAgo_many": "{{count}} years ago"
+  },
+  "practiceAcademy": {
+    "practiceGoals": "Practice goals",
+    "practiceGoal": "Practice goal",
+    "chooseGoal": "Choose a goal",
+    "freePractice": "Free Practice",
+    "goal": "Goal",
+    "goalCompleted": "Goal completed",
+    "yourProgress": "Your progress",
+    "tryAgain": "Try again",
+    "chooseAnother": "Choose another goal",
+    "completedCount": "{{done}} of {{total}} goals completed",
+    "reset": "Reset practice goals",
+    "metric": {
+      "accuracy": "Accuracy {{value}}%",
+      "bullseyes_one": "{{count}} bullseye",
+      "bullseyes_other": "{{count}} bullseyes",
+      "score": "{{value}} points",
+      "seconds": "{{value}} s",
+      "topSpeed": "{{value}} m/s",
+      "goals_one": "{{count}} goal",
+      "goals_other": "{{count}} goals",
+      "bullseyes_few": "{{count}} bullseyes",
+      "bullseyes_many": "{{count}} bullseyes",
+      "goals_few": "{{count}} goals",
+      "goals_many": "{{count}} goals"
+    },
+    "missions": {
+      "jaa_accuracy_60": {
+        "title": "Improve accuracy",
+        "description": "Hit the target with at least 60% of your practice arrows."
+      },
+      "jaa_one_bullseye": {
+        "title": "Hit one bullseye",
+        "description": "Land at least one arrow in the red center."
+      },
+      "jaa_score_400": {
+        "title": "Reach 400 points",
+        "description": "Score 400 points or more across the 15 practice arrows."
+      },
+      "kyz_finish_15s": {
+        "title": "Ride the course in 15 seconds",
+        "description": "Reach the finish of the practice course within 15 seconds."
+      },
+      "kyz_top_speed_9": {
+        "title": "Use your sprint",
+        "description": "Reach a top speed of 9 m/s - only a sprint gets you there."
+      },
+      "kok_one_goal": {
+        "title": "Score a goal",
+        "description": "Carry the ulak into your goal circle once in a practice round."
+      },
+      "kok_two_goals": {
+        "title": "Score two goals",
+        "description": "Carry the ulak into your goal circle twice in one practice round."
+      }
+    }
+  },
+  "showcase": {
+    "title": "Achievement Showcase",
+    "choose": "Choose achievements",
+    "edit": "Edit Showcase",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinned": "Pinned",
+    "earned": "Earned achievements",
+    "selected": "{{count}} of {{max}} selected",
+    "full": "All 3 slots are used",
+    "position": "position {{index}} of {{total}}",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "moveLeftLabel": "Move {{name}} left",
+    "moveRightLabel": "Move {{name}} right",
+    "share": "Share Showcase",
+    "shareLabel": "My OYNO showcase",
+    "noneEarned": "No achievements earned yet",
+    "addToShowcase": "Add to Showcase"
   }
 }

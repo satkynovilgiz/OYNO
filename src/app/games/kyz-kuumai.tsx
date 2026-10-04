@@ -21,6 +21,10 @@ const FAVORITE_GAME_ID = 'kyz-kuumay';
 export default function KyzKuumaiRoute() {
   const { t } = useTranslation();
   const [mode, setMode] = useState<KyzKuumaiMode | null>(null);
+  // Practice Academy: the chosen goal (null = Free Practice); returning to
+  // Game Detail with the picker open for "Choose another goal".
+  const [missionId, setMissionId] = useState<string | null>(null);
+  const [reopenPicker, setReopenPicker] = useState(false);
   // A friend's challenge from a link (validated; anonymous; normal mode only).
   const { challenge, invalid } = useFriendChallengeParam('kyz_kuumai');
   const [withChallenge, setWithChallenge] = useState(false);
@@ -47,7 +51,12 @@ export default function KyzKuumaiRoute() {
         cultureRoute="/culture/horse"
         isFavorite={isFavorite}
         onToggleFavorite={() => void toggleFavoriteWithFeedback('game', FAVORITE_GAME_ID)}
-        onPressPractice={() => setMode('practice')}
+        onPressPractice={(nextMission) => {
+          setMissionId(nextMission ?? null);
+          setReopenPicker(false);
+          setMode('practice');
+        }}
+        openPracticePicker={reopenPicker}
         onPressPlay={() => {
           setWithChallenge(false);
           setMode('normal');
@@ -62,5 +71,16 @@ export default function KyzKuumaiRoute() {
     );
   }
 
-  return <KyzKuumaiGame difficulty={difficulty} mode={mode} challenge={withChallenge ? challenge : null} />;
+  return (
+    <KyzKuumaiGame
+      difficulty={difficulty}
+      mode={mode}
+      challenge={withChallenge ? challenge : null}
+      practiceMissionId={missionId}
+      onChooseAnotherGoal={() => {
+        setReopenPicker(true);
+        setMode(null);
+      }}
+    />
+  );
 }

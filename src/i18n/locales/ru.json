@@ -3984,5 +3984,99 @@
     "sourceUnavailable": "Источник недоступен",
     "offlineNote": "Чтобы открыть источник, нужен интернет.",
     "footnote": "Если источник указан, это не значит, что он доказывает каждое предложение. OYNO не меняет статус истории автоматически."
+  },
+  "journalCalendar": {
+    "title": "Календарь",
+    "today": "Сегодня",
+    "previousMonth": "Предыдущий месяц",
+    "nextMonth": "Следующий месяц",
+    "memories_one": "{{count}} воспоминание",
+    "memories_few": "{{count}} воспоминания",
+    "memories_many": "{{count}} воспоминаний",
+    "memories_other": "{{count}} воспоминания",
+    "noMemories": "В этот день воспоминаний нет",
+    "addMemory": "Добавить воспоминание",
+    "onThisDay": "В этот день",
+    "yearsAgo_one": "{{count}} год назад",
+    "yearsAgo_few": "{{count}} года назад",
+    "yearsAgo_many": "{{count}} лет назад",
+    "yearsAgo_other": "{{count}} года назад"
+  },
+  "practiceAcademy": {
+    "practiceGoals": "Цели тренировки",
+    "practiceGoal": "Цель тренировки",
+    "chooseGoal": "Выберите цель",
+    "freePractice": "Свободная тренировка",
+    "goal": "Цель",
+    "goalCompleted": "Цель достигнута",
+    "yourProgress": "Ваш результат",
+    "tryAgain": "Ещё раз",
+    "chooseAnother": "Выбрать другую цель",
+    "completedCount": "Выполнено целей: {{done}} из {{total}}",
+    "reset": "Сбросить цели тренировки",
+    "metric": {
+      "accuracy": "Точность {{value}}%",
+      "bullseyes_one": "{{count}} попадание в центр",
+      "bullseyes_few": "{{count}} попадания в центр",
+      "bullseyes_many": "{{count}} попаданий в центр",
+      "bullseyes_other": "{{count}} попадания в центр",
+      "score": "{{value}} очков",
+      "seconds": "{{value}} с",
+      "topSpeed": "{{value}} м/с",
+      "goals_one": "{{count}} гол",
+      "goals_few": "{{count}} гола",
+      "goals_many": "{{count}} голов",
+      "goals_other": "{{count}} гола"
+    },
+    "missions": {
+      "jaa_accuracy_60": {
+        "title": "Повысить точность",
+        "description": "Попадите в мишень не менее чем 60% тренировочных стрел."
+      },
+      "jaa_one_bullseye": {
+        "title": "Попасть в центр",
+        "description": "Попадите хотя бы одной стрелой в красный центр."
+      },
+      "jaa_score_400": {
+        "title": "Набрать 400 очков",
+        "description": "Наберите 400 очков или больше за 15 тренировочных стрел."
+      },
+      "kyz_finish_15s": {
+        "title": "Пройти трассу за 15 секунд",
+        "description": "Доберитесь до финиша тренировочной трассы за 15 секунд."
+      },
+      "kyz_top_speed_9": {
+        "title": "Используйте рывок",
+        "description": "Наберите скорость 9 м/с - это возможно только рывком."
+      },
+      "kok_one_goal": {
+        "title": "Забить гол",
+        "description": "Донесите улак до своих ворот один раз за тренировку."
+      },
+      "kok_two_goals": {
+        "title": "Забить два гола",
+        "description": "Донесите улак до своих ворот дважды за одну тренировку."
+      }
+    }
+  },
+  "showcase": {
+    "title": "Витрина достижений",
+    "choose": "Выбрать достижения",
+    "edit": "Изменить витрину",
+    "pin": "Закрепить",
+    "unpin": "Открепить",
+    "pinned": "Закреплено",
+    "earned": "Полученные достижения",
+    "selected": "Выбрано {{count}} из {{max}}",
+    "full": "Все 3 места заняты",
+    "position": "место {{index}} из {{total}}",
+    "moveLeft": "Сдвинуть влево",
+    "moveRight": "Сдвинуть вправо",
+    "moveLeftLabel": "Сдвинуть «{{name}}» влево",
+    "moveRightLabel": "Сдвинуть «{{name}}» вправо",
+    "share": "Поделиться витриной",
+    "shareLabel": "Моя витрина в OYNO",
+    "noneEarned": "Пока нет полученных достижений",
+    "addToShowcase": "Добавить на витрину"
   }
 }
