@@ -20,9 +20,12 @@ export const SHARE_CARD_HEIGHT = 450;
  *            forest green, its title - no rank, no rarity, no user data
  *   creation a design the user made in a Culture Lab (oymo, shyrdak):
  *            the live artwork, the lab it came from - nothing else
+ *   summary  a short list of REAL counts the user chose to share (Learning
+ *            Portfolio, Game Stats) + featured titles - never a rank,
+ *            score total or anything about the person
  * All share the wordmark, cream/forest/gold and a small oymo rule.
  */
-export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge' | 'creation';
+export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge' | 'creation' | 'summary';
 
 export type ShareCardContent = {
   title: string;
@@ -48,6 +51,12 @@ export type ShareCardContent = {
    * its natural size so the card can scale it to fit. */
   artwork?: ReactNode;
   artworkSize?: { width: number; height: number };
+  /** `summary` variant: up to 4 real figure lines ("3 Learning Paths"). */
+  lines?: string[];
+  /** `summary` variant: up to 3 featured content titles. */
+  featured?: string[];
+  /** `summary` variant: heading above the featured titles. */
+  featuredLabel?: string | null;
 };
 
 type ShareCardProps = ShareCardContent & {
@@ -61,6 +70,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
   if (variant === 'journal') return <JournalCard ref={ref} {...props} />;
   if (variant === 'badge') return <BadgeCard ref={ref} {...props} />;
   if (variant === 'creation') return <CreationCard ref={ref} {...props} />;
+  if (variant === 'summary') return <SummaryCard ref={ref} {...props} />;
   return <PhotoCard ref={ref} {...props} variant={variant} />;
 });
 
@@ -206,6 +216,38 @@ const CreationCard = forwardRef<View, ShareCardProps>(function CreationCard({ ti
   );
 });
 
+const SummaryCard = forwardRef<View, ShareCardProps>(function SummaryCard({ title, label, lines = [], featured = [], featuredLabel }, ref) {
+  return (
+    <View ref={ref} collapsable={false} style={[styles.card, styles.summaryCard]}>
+      <Brand light />
+      <View style={styles.summaryBody}>
+        <Text style={styles.label} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={[styles.title, styles.summaryTitle]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
+          {title}
+        </Text>
+        {lines.slice(0, 4).map((line) => (
+          <Text key={line} style={styles.summaryLine} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+            {line}
+          </Text>
+        ))}
+        {featured.length > 0 ? (
+          <View style={styles.summaryFeatured}>
+            {featuredLabel ? <Text style={styles.label}>{featuredLabel}</Text> : null}
+            {featured.slice(0, 3).map((name) => (
+              <Text key={name} style={styles.summaryFeaturedItem} numberOfLines={1}>
+                ◆ {name}
+              </Text>
+            ))}
+          </View>
+        ) : null}
+        <Rule />
+      </View>
+    </View>
+  );
+});
+
 function Brand({ light }: { light: boolean }) {
   return (
     <View style={styles.brandRow}>
@@ -265,5 +307,11 @@ const styles = StyleSheet.create({
   creationFrame: { width: CREATION_FRAME + 24, height: CREATION_FRAME + 24, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: '#FFFDF7', overflow: 'hidden' },
   creationTitle: { textAlign: 'center' },
   creationBrand: { alignSelf: 'stretch' },
+  summaryCard: { backgroundColor: colors.surfaceFeature },
+  summaryBody: { padding: spacing.lg, gap: spacing.xs },
+  summaryTitle: { fontSize: 30, lineHeight: 36, marginBottom: spacing.xs },
+  summaryLine: { ...editorial(textStyles.title), fontSize: 24, lineHeight: 30, color: colors.textOnDark },
+  summaryFeatured: { gap: 4, marginTop: spacing.sm },
+  summaryFeaturedItem: { ...textStyles.body, fontSize: 17, lineHeight: 23, color: 'rgba(255,255,255,0.9)' },
   paperLinked: { ...textStyles.caption, fontWeight: '700', color: colors.primary, marginTop: 'auto' },
 });

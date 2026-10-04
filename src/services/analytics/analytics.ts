@@ -116,7 +116,14 @@ export type AnalyticsEventName =
   | 'inline_glossary_opened'
   | 'culture_connection_opened'
   | 'journal_prompt_opened'
-  | 'journal_prompt_used';
+  | 'journal_prompt_used'
+  | 'learning_portfolio_opened'
+  | 'learning_portfolio_shared'
+  | 'game_stats_opened'
+  | 'game_stats_game_opened'
+  | 'game_stats_shared'
+  | 'journal_memory_book_started'
+  | 'journal_memory_book_created';
 
 export function track(eventName: AnalyticsEventName, properties?: Record<string, string | number | boolean>) {
   void supabase

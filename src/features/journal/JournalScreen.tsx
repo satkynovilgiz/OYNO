@@ -21,6 +21,7 @@ import { Chip } from '@/components/ui/Chip';
 import { canOfferCollage } from './collage/collageModel';
 import { OnThisDayCard } from './calendar/OnThisDayCard';
 import { PromptSheet } from './prompts/PromptSheet';
+import { MIN_BOOK_ENTRIES } from './book/memoryBookModel';
 
 export const FILTERS: JournalFilter[] = ['all', 'places', 'culture', 'trails'];
 
@@ -88,6 +89,9 @@ export function JournalScreen({ onPressBack }: { onPressBack: () => void }) {
 
         <OnThisDayCard onPressPrompt={() => setPromptsOpen(true)} />
         {total > 0 ? <Button label={t('journalCalendar.title')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/calendar' as never)} /> : null}
+        {visibleEntries(entries).length >= MIN_BOOK_ENTRIES ? (
+          <Button label={t('memoryBook.entry')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/book' as never)} />
+        ) : null}
         {canOfferCollage(entries) ? (
           <Button label={t('journalCollage.create')} variant="secondary" size={isChild ? 'lg' : 'md'} block onPress={() => router.push('/journal/collage' as never)} />
         ) : null}

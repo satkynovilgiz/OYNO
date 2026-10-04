@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, MessageSquareWarning } from 'lucide-react-native';
+import { Award, BarChart3, BookMarked, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, MessageSquareWarning } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -144,7 +144,9 @@ export function ProfileScreen() {
             </AnimatedPressable>
             {/* Two small private entries: per-game records and the recap. */}
             {[
+              { route: '/profile/portfolio', icon: BookMarked, title: t('portfolio.title'), meta: t('portfolio.profileMeta') },
               { route: '/profile/game-records', icon: Trophy, title: t('gameRecords.title'), meta: t('gameRecords.profileMeta') },
+              { route: '/games/stats', icon: BarChart3, title: t('gameStats.title'), meta: t('gameStats.profileMeta') },
               { route: '/profile/my-collections', icon: FolderOpen, title: t('myCollections.title'), meta: t('myCollections.profileMeta') },
               { route: '/profile/highlights', icon: Highlighter, title: t('highlights.title'), meta: t('highlights.profileMeta') },
               { route: '/study', icon: Zap, title: t('study.title'), meta: t('study.entryMeta') },

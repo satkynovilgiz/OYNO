@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BottomTabBar } from '@/components/navigation/BottomTabBar';
-import { EmptyState, FadeSlideIn, SectionHeader } from '@/components/ui';
+import { Button, EmptyState, FadeSlideIn, SectionHeader } from '@/components/ui';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { dayNumber, localDateKey } from '@/services/daily/dailyDiscovery';
@@ -119,6 +119,11 @@ export function GamesScreen() {
             </FadeSlideIn>
           ))
         )}
+
+        {/* My Game Stats: your own recent rounds per game (no ranking). */}
+        <FadeSlideIn index={8} style={styles.pad}>
+          <Button label={t('gameStats.title')} variant="secondary" block onPress={() => router.push('/games/stats' as never)} />
+        </FadeSlideIn>
 
         <FadeSlideIn index={9} style={styles.pad}>
           <InviteFriendsBanner onPressInvite={() => void Share.share({ message: t('games.invite.shareMessage') }).catch(() => {})} />
