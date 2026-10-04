@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
-import { AlarmClock, CloudDownload, Database, Gamepad2, Globe, HelpCircle, Info, Lock, LogOut, MessageSquareWarning, Palette, ShieldCheck, Sparkles, Wrench, type LucideIcon } from 'lucide-react-native';
+import { AlarmClock, CloudDownload, Database, LayoutList, Gamepad2, Globe, HelpCircle, Info, Lock, LogOut, MessageSquareWarning, Palette, ShieldCheck, Sparkles, Wrench, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
@@ -63,6 +63,7 @@ export function SettingsScreen({ onPressBack, onSignOut }: SettingsScreenProps) 
     experience: { icon: Sparkles, label: t('settings.rows.experience'), value: ageGroupLabel(ageGroup), onPress: () => go('/settings/experience') },
     language: { icon: Globe, label: t('settings.rows.language'), value: languageLabel(i18n.language), onPress: () => go('/settings/language') },
     appearance: { icon: Palette, label: t('settings.rows.appearance'), subtitle: t('settings.v2.appearanceSubtitle'), onPress: () => go('/appearance') },
+    homeLayout: { icon: LayoutList, label: t('customizeHome.title'), subtitle: t('customizeHome.rowSubtitle'), onPress: () => go('/settings/home') },
     reminders: { icon: AlarmClock, label: t('settings.rows.reminders'), value: reminderCount > 0 ? t('settings.v2.remindersOn', { count: reminderCount }) : t('settings.v2.off'), onPress: () => go('/settings/reminders') },
     offline: { icon: CloudDownload, label: t('offline.library.title'), value: downloads > 0 ? t('settings.v2.downloads', { count: downloads }) : t('settings.v2.noDownloads'), onPress: () => go('/offline') },
     game: { icon: Gamepad2, label: t('settings.rows.game'), subtitle: t('settings.v2.gameSubtitle'), onPress: () => go('/settings/game') },

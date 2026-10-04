@@ -33,7 +33,7 @@ describe('Shareable Content Links', () => {
     const fileFor: Record<string, string> = {
       culture_item: 'src/app/culture/item/[itemId]/index.tsx',
       culture_material: 'src/app/culture/material/[materialId].tsx',
-      glossary: 'src/app/culture/glossary/[id].tsx',
+      glossary: 'src/app/culture/glossary/[id]/index.tsx',
       learning_path: 'src/app/learn/[id].tsx',
       komuz_track: 'src/app/culture/komuz/listen.tsx',
     };

@@ -56,6 +56,8 @@ type OfflineState = {
    * removed only when no requester is left. */
   release: (id: string, requester: string) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  /** Forgets a failed attempt (no copy existed - nothing on disk to delete). */
+  dismissFailed: (id: string) => void;
   removeAll: () => Promise<void>;
   /** Re-downloads every entry when online (fresh data, older cache
    * versions upgraded). A failure keeps the existing copy. */
@@ -154,6 +156,8 @@ export const useOfflineStore = create<OfflineState>((set, get) => ({
     await writeManifest(manifest);
     set({ manifest, failed: get().failed.filter((entry) => entry !== id) });
   },
+
+  dismissFailed: (id) => set({ failed: get().failed.filter((entry) => entry !== id) }),
 
   removeAll: async () => {
     let manifest = get().manifest;

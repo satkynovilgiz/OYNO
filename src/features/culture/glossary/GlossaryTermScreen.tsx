@@ -17,6 +17,7 @@ import { colors, editorial, radii, spacing, textStyles, typography } from '@/the
 import type { GlossaryField } from './glossaryData';
 import { useGlossary } from './useGlossary';
 import { shareContentLink } from '@/services/links/shareContentLink';
+import { ListenRepeatEntry } from './practice/GlossaryPracticeScreen';
 
 /** The existing article label for each source field. */
 const FIELD_LABEL: Record<GlossaryField, string> = {
@@ -74,6 +75,7 @@ export function GlossaryTermScreen({ termId, onPressBack }: { termId: string; on
           {definition}
         </Text>
         {!isChild ? <Text style={styles.context}>{t('glossary.from', { title: item.title })}</Text> : null}
+        <ListenRepeatEntry entryId={entry.id} term={entry.term} />
         <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} />
         <Button
           label={t('glossary.learnMore', { title: item.title })}

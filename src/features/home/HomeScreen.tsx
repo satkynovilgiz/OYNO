@@ -31,7 +31,9 @@ import {
 import { ContinueRegionCard } from './components/ContinueRegionCard';
 import { ForYouSection } from './forYou/ForYouCard';
 import { HomeLearningPathCard } from '@/features/learn/LearningPathCard';
-import { getHomeSectionOrder, type HomeSectionId } from './homeSections';
+import { visibleSections } from './homeLayout';
+import { type HomeSectionId } from './homeSections';
+import { useHomeLayoutStore } from '@/store/useHomeLayoutStore';
 import { cultureTileAssets } from './mockData';
 import { mockGamesList } from '@/features/games/mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
@@ -65,6 +67,11 @@ export function HomeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
+  // Customize Home: the age default order with the person's own override.
+  const homeLayout = useHomeLayoutStore((state) => state.prefs);
+  useEffect(() => {
+    void useHomeLayoutStore.getState().load();
+  }, []);
   // Same inbox the Notifications screen shows - one unread source.
   const hasUnreadNotifications = useInbox().unread > 0;
   const user = useAuthStore((state) => state.user);
@@ -237,7 +244,7 @@ export function HomeScreen() {
         </ScreenEntrance>
 
         <AgeExperienceTransition style={styles.sectionList}>
-          {getHomeSectionOrder(experience).map((id, index) => (
+          {visibleSections(experience, homeLayout).map((id, index) => (
             <FadeSlideIn key={id} index={index} staggerMs={40}>
               {renderSection(id)}
             </FadeSlideIn>

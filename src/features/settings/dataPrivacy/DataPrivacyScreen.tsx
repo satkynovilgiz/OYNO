@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { BookOpenText, Download, Headphones, NotebookPen, RefreshCw, RotateCcw, Trash2, UserX } from 'lucide-react-native';
+import { BookOpenText, Download, HardDrive, Headphones, NotebookPen, RefreshCw, RotateCcw, Trash2, UserX } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -167,6 +167,7 @@ export function DataPrivacyScreen({ onPressBack }: { onPressBack: () => void }) 
         </View>
 
         <SettingsSection title={t('dataPrivacy.actionsTitle')}>
+          <SettingsRow icon={HardDrive} label={t('storage.title')} subtitle={t('storage.items', { count: downloads })} onPress={() => router.push('/settings/storage' as never)} />
           <SettingsRow icon={Download} label={t('dataPrivacy.clearDownloads')} subtitle={t('dataPrivacy.counts.downloads', { count: downloads })} onPress={() => setConfirm('downloads')} />
           <SettingsRow icon={Headphones} label={t('dataPrivacy.clearHistory')} subtitle={t('dataPrivacy.counts.history', { count: historyCount })} onPress={() => setConfirm('history')} />
           <SettingsRow icon={RotateCcw} label={t('dataPrivacy.resetLearning')} destructive onPress={() => setConfirm('reset')} />
