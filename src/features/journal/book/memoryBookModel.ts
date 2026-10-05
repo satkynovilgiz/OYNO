@@ -178,3 +178,45 @@ export function reviewItems(entries: readonly JournalEntry[], selected: readonly
     };
   });
 }
+
+/**
+ * A photo's identity: its immutable cloud version when it has one; for
+ * legacy photos without a versionId, the object path, else the device file
+ * path. A replaced photo always gets a new versionId (and file), so a
+ * cached image can never stand in for a different picture.
+ */
+export function photoIdentity(photo: JournalEntry['photo']): string | null {
+  if (!photo) return null;
+  return photo.versionId ? `v:${photo.versionId}` : photo.remotePath ? `r:${photo.remotePath}` : photo.localUri ? `l:${photo.localUri}` : null;
+}
+
+/** Cache key for one entry's CURRENT photo. */
+export function photoCacheKey(entry: Pick<JournalEntry, 'id' | 'photo'>): string | null {
+  const identity = photoIdentity(entry.photo);
+  return identity ? `${entry.id}|${identity}` : null;
+}
+
+/** The version of an entry's content as it goes into a book (any edit bumps updatedAt). */
+export function entryVersion(entry: Pick<JournalEntry, 'updatedAt' | 'photo' | 'deletedAt'>): string {
+  return `${entry.updatedAt}|${photoIdentity(entry.photo) ?? '-'}|${entry.deletedAt ?? '-'}`;
+}
+
+export type BookFreshness = { status: 'fresh' } | { status: 'changed'; ids: string[] } | { status: 'deleted'; ids: string[] };
+
+/**
+ * Is a prepared book still what the person reviewed? Deleted (or missing)
+ * memories win over edits: a deleted memory must never be exported.
+ */
+export function bookFreshness(sourceVersions: Readonly<Record<string, string>>, current: readonly JournalEntry[]): BookFreshness {
+  const byId = new Map(current.map((entry) => [entry.id, entry]));
+  const deleted: string[] = [];
+  const changed: string[] = [];
+  for (const [id, version] of Object.entries(sourceVersions)) {
+    const entry = byId.get(id);
+    if (!entry || entry.deletedAt) deleted.push(id);
+    else if (entryVersion(entry) !== version) changed.push(id);
+  }
+  if (deleted.length) return { status: 'deleted', ids: deleted };
+  if (changed.length) return { status: 'changed', ids: changed };
+  return { status: 'fresh' };
+}

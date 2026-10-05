@@ -17,7 +17,7 @@ import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { formatEntryDate } from '../journalDisplay';
 import type { JournalEntry } from '../journalModel';
-import { BOOK_LAYOUTS, bookCandidates, bookEntries, buildBookHtml, canGenerate, cleanBookTitle, dateRange, MAX_BOOK_ENTRIES, MIN_BOOK_ENTRIES, reviewItems, sortForBook, TITLE_MAX, toggleBookSelection, validSelection, type BookLayout, type BookPage, type BookSort, type ReviewItem } from './memoryBookModel';
+import { BOOK_LAYOUTS, bookCandidates, bookFreshness, bookEntries, buildBookHtml, canGenerate, cleanBookTitle, dateRange, MAX_BOOK_ENTRIES, MIN_BOOK_ENTRIES, reviewItems, sortForBook, TITLE_MAX, toggleBookSelection, validSelection, type BookLayout, type BookPage, type BookSort, type ReviewItem } from './memoryBookModel';
 import { createPhotoCache, photoCacheValid, prepareMemoryBook, shareMemoryBook, type PhotoCache, type PreparedBook } from './memoryBookExport';
 import { localFileExists, memoryBookSupported } from './memoryBookService';
 
@@ -46,6 +46,15 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
   const [pending, setPending] = useState<PreparedBook | null>(null);
   // Photo data prepared in THIS session, reused by "try again".
   const photoCache = useRef<PhotoCache | null>(null);
+  // Bumped whenever a running preparation is abandoned (back, exit, account
+  // change, new attempt): a stale run then updates nothing on screen.
+  const runRef = useRef(0);
+  useEffect(
+    () => () => {
+      runRef.current += 1;
+    },
+    [],
+  );
   // Any sign-in / sign-out / account switch (even back into the same account).
   const sessionKey = useAuthStore((state) => `${state.status}:${state.user?.id ?? ''}`);
 
@@ -56,11 +65,24 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
   // Another session: the previous person's picks, review and prepared private
   // content (photo data, notes) are dropped at once.
   useEffect(() => {
+    runRef.current += 1;
     setSelected([]);
     setPhase('select');
     setPending(null);
+    setBusy(false);
     photoCache.current = null;
   }, [owner, sessionKey]);
+
+  // A memory edited or deleted while the missing-photo question is open:
+  // that prepared book is no longer what was reviewed - review again.
+  useEffect(() => {
+    if (!pending) return;
+    if (bookFreshness(pending.sourceVersions, entries).status === 'fresh') return;
+    setPending(null);
+    setPhase('review');
+    showToast(t('memoryBook.changedReviewAgain'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, pending]);
 
   const candidates = useMemo(() => sortForBook(bookCandidates(entries), sort), [entries, sort]);
   const picked = validSelection(entries, selected);
@@ -83,13 +105,21 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
 
   async function share(book: PreparedBook) {
     setPending(null);
+    const run = ++runRef.current;
     setBusy(true);
+    let outcome: Awaited<ReturnType<typeof shareMemoryBook>> | null = null;
     try {
-      const outcome = await shareMemoryBook(book, buildHtml(book.entries), localDateKey());
-      // A deliberate stop (account/session changed) is silent - no failure toast.
-      if (outcome.status === 'failed') showToast(t('memoryBook.failed'));
+      outcome = await shareMemoryBook(book, buildHtml(book.entries), localDateKey(), () => useJournalStore.getState().entries);
     } finally {
-      setBusy(false);
+      if (run === runRef.current) setBusy(false);
+    }
+    if (run !== runRef.current || !outcome) return;
+    // A deliberate stop (account/session changed) is silent - no failure toast.
+    if (outcome.status === 'failed') showToast(t('memoryBook.failed'));
+    // Edited / deleted since preparation: never export it silently.
+    if (outcome.status === 'stale') {
+      setPhase('review');
+      showToast(t('memoryBook.changedReviewAgain'));
     }
   }
 
@@ -100,15 +130,17 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
     const book = bookEntries(useJournalStore.getState().entries, picked, sort);
     if (book.length < MIN_BOOK_ENTRIES) return;
     if (!photoCache.current || !photoCacheValid(photoCache.current)) photoCache.current = createPhotoCache();
+    const run = ++runRef.current;
     setBusy(true);
     let prepared: PreparedBook | null = null;
     try {
       const outcome = await prepareMemoryBook({ entries: book, includeText, layout, formatDate: fmt, cache: photoCache.current });
       if (outcome.status === 'ready') prepared = outcome.book;
     } finally {
-      setBusy(false);
+      if (run === runRef.current) setBusy(false);
     }
-    if (!prepared) return;
+    // Abandoned meanwhile (back / exit / account change): touch nothing.
+    if (run !== runRef.current || !prepared) return;
     if (prepared.missingPhotoIds.length > 0) setPending(prepared);
     else await share(prepared);
   }
@@ -165,7 +197,17 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
             </View>
           ))}
           <Button label={t('memoryBook.create')} variant="accent" size="lg" block disabled={!ready || busy} loading={busy} onPress={() => (includeText || hasPhotos ? setConfirm(true) : void prepare())} />
-          <Button label={t('memoryBook.backToSelection')} variant="secondary" block disabled={busy} onPress={() => setPhase('select')} />
+          <Button
+            label={t('memoryBook.backToSelection')}
+            variant="secondary"
+            block
+            onPress={() => {
+              // Going back abandons any preparation still running.
+              runRef.current += 1;
+              setBusy(false);
+              setPhase('select');
+            }}
+          />
         </ScrollView>
         ) : (
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled">

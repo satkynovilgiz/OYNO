@@ -4713,6 +4713,7 @@
     "missingTitle_many": "{{count}} photos could not be included",
     "missingMessage": "Nothing has been shared yet. Continue without these photos, or go back and try again (for example after connecting to the internet).",
     "continueWithout": "Continue without them",
-    "tryAgain": "Go back and try again"
+    "tryAgain": "Go back and try again",
+    "changedReviewAgain": "Some memories changed since you reviewed them. Please review the book again."
   }
 }

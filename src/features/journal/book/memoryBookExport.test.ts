@@ -123,7 +123,7 @@ jest.mock('@/services/journal/journalPhotos', () => ({
 import { useAuthStore } from '@/store/useAuthStore';
 
 import { createPhotoCache, exportMemoryBook, photoCacheValid, prepareMemoryBook, shareMemoryBook } from './memoryBookExport';
-import { reviewItems, reviewPhotoState } from './memoryBookModel';
+import { photoCacheKey, reviewItems, reviewPhotoState } from './memoryBookModel';
 import { ExportCancelledError, generateAndShareBook, SharingUnavailableError, type ExportSession } from './memoryBookService';
 
 const signIn = (id: string) => useAuthStore.setState({ status: 'authenticated', user: { id } as never });
@@ -439,5 +439,107 @@ describe('Review step (content review before export)', () => {
       for (const state of ['local', 'account', 'missing', 'none']) expect(locale.memoryBook.photoState[state]).toBeTruthy();
     }
     expect(locales[2].memoryBook.reviewNote).toMatch(/not a preview of the pages/);
+  });
+});
+
+describe('Prepared content stays current (photo versions, edits, deletions)', () => {
+  const base = (id: string, extra: Partial<JournalEntry> = {}) => entry(id, { date: `2026-0${id.length}-01`, updatedAt: '2026-10-04T00:00:00.000Z', ...extra });
+  const withPhoto = (id: string, version: string, extra: Partial<JournalEntry> = {}) => base(id, { photo: { localUri: `documents/journal/user-a/${id}-${version}.jpg`, remotePath: `user-a/${id}/${version}.jpg`, versionId: version }, ...extra });
+  const imageOf = (pages: { image: string | null }[], index: number) => pages[index].image;
+  const encoded = (text: string) => `data:image/jpeg;base64,${Buffer.from(text).toString('base64')}`;
+  const prepare = (entries: JournalEntry[], cache = createPhotoCache()) => prepareMemoryBook({ entries, includeText: true, layout: 'photo', formatDate: (d) => d, cache });
+
+  it('replacing photo A with B on the same entry: the next export uses B, not the cached A', async () => {
+    mockFs.files.set('documents/journal/user-a/m-v1.jpg', 'PHOTO-A');
+    mockFs.files.set('documents/journal/user-a/m-v2.jpg', 'PHOTO-B');
+    const cache = createPhotoCache();
+    const first = await prepare([withPhoto('m', 'v1'), base('n'), base('o')], cache);
+    expect(first.status === 'ready' && imageOf(first.book.pages, 0)).toBe(encoded('PHOTO-A'));
+    const replaced = withPhoto('m', 'v2', { updatedAt: '2026-10-04T01:00:00.000Z' });
+    const second = await prepare([replaced, base('n'), base('o')], cache);
+    expect(second.status === 'ready' && imageOf(second.book.pages, 0)).toBe(encoded('PHOTO-B'));
+    // The old picture is gone from the cache.
+    expect([...cache.images.keys()]).toEqual([photoCacheKey(replaced)]);
+  });
+
+  it('legacy photos without a versionId are keyed by their path, so a replacement is not reused', async () => {
+    mockFs.files.set('documents/journal/user-a/legacy-old.jpg', 'OLD');
+    mockFs.files.set('documents/journal/user-a/legacy-new.jpg', 'NEW');
+    const legacy = (file: string) => base('m', { photo: { localUri: `documents/journal/user-a/${file}.jpg`, remotePath: null } });
+    const cache = createPhotoCache();
+    await prepare([legacy('legacy-old'), base('n'), base('o')], cache);
+    const next = await prepare([legacy('legacy-new'), base('n'), base('o')], cache);
+    expect(next.status === 'ready' && imageOf(next.book.pages, 0)).toBe(encoded('NEW'));
+  });
+
+  it('removing a photo: the next export contains no previous image', async () => {
+    mockFs.files.set('documents/journal/user-a/m-v1.jpg', 'PHOTO-A');
+    const cache = createPhotoCache();
+    await prepare([withPhoto('m', 'v1'), base('n'), base('o')], cache);
+    const next = await prepare([base('m', { photo: null, updatedAt: '2026-10-04T02:00:00.000Z' }), base('n'), base('o')], cache);
+    expect(next.status === 'ready' && next.book.pages.map((page) => page.image)).toEqual([null, null, null]);
+    expect(cache.images.size).toBe(0);
+  });
+
+  it('unchanged photos are reused without downloading again', async () => {
+    mockFs.files.set('documents/journal/user-a/m.jpg', 'JPEG');
+    mockDownload.mockResolvedValue('documents/journal/user-a/m.jpg');
+    const remote = base('m', { photo: { localUri: null, remotePath: 'user-a/m/v1.jpg', versionId: 'v1' } });
+    const cache = createPhotoCache();
+    await prepare([remote, base('n'), base('o')], cache);
+    await prepare([remote, base('n'), base('o')], cache);
+    await prepare([remote, base('n'), base('o')], cache);
+    expect(mockDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it('a memory deleted while the missing-photo question is open can never be exported', async () => {
+    mockDownload.mockResolvedValue(null);
+    const list = [base('m', { photo: { localUri: null, remotePath: 'user-a/m/v1.jpg', versionId: 'v1' } }), base('n'), base('o')];
+    const prepared = await prepare(list);
+    if (prepared.status !== 'ready') throw new Error('not ready');
+    expect(prepared.book.missingPhotoIds).toEqual(['m']);
+    const afterDelete = [{ ...list[0], deletedAt: '2026-10-04T03:00:00.000Z' }, list[1], list[2]];
+    await expect(shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04', () => afterDelete)).resolves.toEqual({ status: 'stale', reason: 'deleted' });
+    await expect(shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04', () => [list[1], list[2]])).resolves.toEqual({ status: 'stale', reason: 'deleted' });
+    expect(mockPrintToFile).not.toHaveBeenCalled();
+    expect(mockShare).not.toHaveBeenCalled();
+  });
+
+  it('a note edited after preparation asks for a fresh review instead of exporting stale text', async () => {
+    const list = [base('m', { note: 'old text' }), base('n'), base('o')];
+    const prepared = await prepare(list);
+    if (prepared.status !== 'ready') throw new Error('not ready');
+    const edited = [{ ...list[0], note: 'new text', updatedAt: '2026-10-04T05:00:00.000Z' }, list[1], list[2]];
+    await expect(shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04', () => edited)).resolves.toEqual({ status: 'stale', reason: 'changed' });
+    expect(mockShare).not.toHaveBeenCalled();
+    expect(mockTrack).not.toHaveBeenCalled();
+  });
+
+  it('an edit that lands while the PDF renders still stops before the share sheet (temp files removed)', async () => {
+    const list = [base('m'), base('n'), base('o')];
+    let current: JournalEntry[] = list;
+    const prepared = await prepare(list);
+    if (prepared.status !== 'ready') throw new Error('not ready');
+    const gate = deferred();
+    mockPrintGates.push(gate);
+    const sharing = shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04', () => current);
+    await act(async () => undefined);
+    current = [{ ...list[0], updatedAt: '2026-10-04T06:00:00.000Z' }, list[1], list[2]];
+    gate.resolve();
+    await expect(sharing).resolves.toEqual({ status: 'stale', reason: 'changed' });
+    expect(mockShare).not.toHaveBeenCalled();
+    expect(leftovers()).toEqual({ files: [], dirs: [] });
+  });
+
+  it('an unchanged book still shares; an account change still cancels', async () => {
+    const list = [base('m'), base('n'), base('o')];
+    const prepared = await prepare(list);
+    if (prepared.status !== 'ready') throw new Error('not ready');
+    await expect(shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04', () => list)).resolves.toEqual({ status: 'shared', missingPhotos: 0 });
+    const again = await prepare(list);
+    if (again.status !== 'ready') throw new Error('not ready');
+    signIn('user-b');
+    await expect(shareMemoryBook(again.book, () => '<html/>', '2026-10-04', () => list)).resolves.toEqual({ status: 'cancelled' });
+    expect(mockShare).toHaveBeenCalledTimes(1);
   });
 });
