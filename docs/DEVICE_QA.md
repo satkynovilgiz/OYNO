@@ -128,3 +128,16 @@ web show the "can't create PDFs" state.
 Known limit: once the system share sheet is open, the file has been handed to the
 OS. If the person picks another app, OYNO cannot take that copy back; the app only
 guarantees that a stale session never *opens* the sheet.
+
+## 3D games - frame-timing baseline (2026-10-05)
+
+Not yet measured on a phone. Run the scenario in `docs/3D_GAMES.md`
+("Performance baseline") on a development build and record the
+`[FrameStats]` lines with device, OS and commit. Also check on device:
+
+| Check | Expected |
+| --- | --- |
+| Pause during the last countdown step ("GO"), wait, resume | Countdown/round does not start by itself while paused |
+| Exit a game during the countdown, reopen it | Starts normally; no double countdown, no sound from the old screen |
+| Background the app mid-round, return | Pause menu shown; one resume continues; frame stats exclude the background time |
+| Open and exit each game 5 times | No slowdown building up across reopenings |

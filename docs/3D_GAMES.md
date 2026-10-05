@@ -426,6 +426,78 @@ on-device FPS re-check across all 5 games before any performance claim
 about the current build** - it was verified only via `expo export --platform
 web` (bundles/resolves correctly), not by seeing it render.
 
+## Performance baseline (frame timing) - method, scenario, results
+
+**Status: no physical-device measurement has been recorded yet.** The tool
+and method below exist; every result table entry is *pending* until someone
+runs the scenario on a named device/build and fills it in. Simulator, web or
+Jest numbers are never entered as phone results.
+
+### Tool (development-only)
+
+`core/FrameTimingProbe.tsx` is rendered inside the shared `Game3DCanvas`
+only when `__DEV__` is true (never in a release bundle) and only for a game
+that passes `measure={{ gameId, active }}` (all 5 do). It samples the real
+react-three-fiber render loop (`useFrame` delta) - not the JS thread, unlike
+the older `FpsCounter` overlay, which counts React Native
+`requestAnimationFrame` ticks and keeps running while a game is paused.
+
+When gameplay stops (pause, result, exit) it prints one line to the dev
+console, e.g. `[FrameStats] jaa_atuu: frames=3542 median=16.67ms p95=18.4ms max=41.2ms (active gameplay only)`.
+Nothing is sent anywhere.
+
+### Calculation (`core/frameStats.ts`, unit-tested in `core/performanceBaseline.test.ts`)
+
+- Sample = `useFrame` delta in ms (time between two rendered frames).
+- Window = **active gameplay only**: `PLAYING` (Jaa Atuu, Kyz Kuumai, Kok Boru)
+  or `PLAYER_TURN` / `SETTLING` / `AI_TURN` (Ordo, Chuko), and the Canvas not
+  paused. Loading, intro, countdown, pause menu, results and background are
+  excluded (the Canvas loop is stopped while paused/backgrounded, so no
+  frames arrive then).
+- The first frame after every (re)activation is dropped (it spans the
+  inactive time).
+- Median = middle sorted sample (mean of the two middle for even counts);
+  p95 = nearest-rank, sample at rank ceil(0.95 × n); frames = kept samples.
+- At most 7,200 samples (≈2 min at 60 fps), newest kept.
+
+### Reproducible scenario
+
+Development build (`npx expo start --dev-client`), device on power, other
+apps closed, brightness and Low Power Mode noted. For each game: open it,
+skip nothing, play one full round from countdown to result (Jaa Atuu: one
+5-arrow round; Kyz Kuumai: one chase; Kok Boru: one match; Ordo/Chuko: one
+full match vs AI), then exit. Copy the `[FrameStats]` line printed at the
+result. Repeat 3 times, record each run.
+
+### Results
+
+| Date | Device / OS | Build (commit) | Game | Frames | Median ms | p95 ms | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| pending | pending | pending | all 5 | - | - | - | No physical-device run yet |
+
+### Lifecycle review (2026-10-05)
+
+Inspected: render loop (`frameloop` off while paused), AppState listener
+(`useGameLifecycle`), timers, audio players, textures/GL disposal.
+
+- **Fixed - countdown timer leak**: the final `onDone` timer of the 3-2-1-GO
+  countdown was created inside the last step's timer and never cleared.
+  Pausing (which hides the countdown) or exiting during the last step still
+  fired `onDone`: Jaa Atuu / Ordo / Chuko finished their countdown while
+  paused; Kyz Kuumai / Kok Boru called their start function after the
+  screen unmounted. All timers now share one cancel (`ui/countdownSchedule.ts`).
+- **Fixed - per-render allocation**: `useRef(createXAudio())` built a new
+  audio manager on every render of every game screen (only the first was
+  used). Now created once (`core/useLazyRef.ts`).
+- Verified by tests: one AppState listener per mounted game, none left after
+  exit across repeated reopen; backgrounding pauses once and returning does
+  not resume or add a listener.
+- No change needed: audio players are disposed on unmount in all 5 games;
+  unmounting `Game3DCanvas` disposes the renderer, scene and GL context
+  (react-three-fiber); no `setInterval` exists in `src/games3d`.
+- Not done: no lower-quality mode was added - there is no measured device
+  bottleneck to justify one yet.
+
 ## How to add a new 3D game
 
 1. Add its entry to `src/games3d/core/gameRegistry.ts` (`route: null`,

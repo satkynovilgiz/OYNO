@@ -9,6 +9,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
 
 import { useAimController } from '../../controls/AimController';
+import { useLazyRef } from '@/games3d/core/useLazyRef';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
@@ -81,7 +82,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
   const practice = usePracticeMission(GAME_ID, mode === 'practice' ? practiceMissionId : null);
   const recordedResultRef = useRef(false);
 
-  const audioRef = useRef(createJaaAtuuAudio());
+  const audioRef = useLazyRef(createJaaAtuuAudio);
   useEffect(() => () => audioRef.current.dispose(), []);
 
   const [shotFeedback, setShotFeedback] = useState<ShotFeedbackEvent | null>(null);
@@ -243,7 +244,7 @@ export function JaaAtuuGame({ mode = 'normal', difficulty = 'normal', challenge 
       <Game3DErrorBoundary fallback={(retry) => <ErrorOverlay onRetry={retry} onExit={handleExit} />}>
         <GestureDetector gesture={aim.gesture}>
           <View style={StyleSheet.absoluteFill}>
-            <Game3DCanvas isPaused={game.phase === 'PAUSED'}>
+            <Game3DCanvas isPaused={game.phase === 'PAUSED'} measure={{ gameId: 'jaa_atuu', active: game.phase === 'PLAYING' }}>
               <JaaAtuuScene
                 phase={game.phase}
                 config={config}

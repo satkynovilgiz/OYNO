@@ -12,6 +12,7 @@ import { spacing } from '@/theme';
 import { ContextActionButton } from '../../ui/ContextActionButton';
 import { SprintButtonView, useSprintButton } from '../../controls/SprintButton';
 import { useVirtualJoystick, VirtualJoystickView } from '../../controls/VirtualJoystick';
+import { useLazyRef } from '@/games3d/core/useLazyRef';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
@@ -72,7 +73,7 @@ export function KokBoruGame({ mode = 'normal', practiceMissionId = null, onChoos
   const records = useRoundRecords(GAME_ID);
   const practice = usePracticeMission(GAME_ID, mode === 'practice' ? practiceMissionId : null);
 
-  const audioRef = useRef(createKokBoruAudio());
+  const audioRef = useLazyRef(createKokBoruAudio);
   useEffect(() => () => audioRef.current.dispose(), []);
   const prevPossessionRef = useRef(game.possession);
   const lastGoalKeyRef = useRef(0);
@@ -244,7 +245,7 @@ export function KokBoruGame({ mode = 'normal', practiceMissionId = null, onChoos
   return (
     <View style={styles.root}>
       <Game3DErrorBoundary fallback={(retry) => <ErrorOverlay onRetry={retry} onExit={handleExit} />}>
-        <Game3DCanvas isPaused={game.phase === 'PAUSED'}>
+        <Game3DCanvas isPaused={game.phase === 'PAUSED'} measure={{ gameId: 'kok_boru', active: game.phase === 'PLAYING' }}>
           <KokBoruScene
             phase={game.phase}
             possession={game.possession}

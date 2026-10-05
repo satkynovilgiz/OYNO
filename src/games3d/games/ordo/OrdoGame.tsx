@@ -8,6 +8,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
 
 import { useDragPowerController } from '../../controls/DragPowerController';
+import { useLazyRef } from '@/games3d/core/useLazyRef';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
@@ -59,7 +60,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal', challenge = n
   const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
   const [hasThrown, setHasThrown] = useState(false);
 
-  const audioRef = useRef(createOrdoAudio());
+  const audioRef = useLazyRef(createOrdoAudio);
   useEffect(() => () => audioRef.current.dispose(), []);
   const [outcomeMessage, setOutcomeMessage] = useState<OrdoOutcomeMessage | null>(null);
   const prevTurnPhaseRef = useRef(game.phase);
@@ -248,7 +249,7 @@ export function OrdoGame({ difficulty = 'normal', mode = 'normal', challenge = n
       <Game3DErrorBoundary fallback={(retry) => <ErrorOverlay onRetry={retry} onExit={handleExit} />}>
         <GestureDetector gesture={drag.gesture}>
           <View style={StyleSheet.absoluteFill}>
-            <Game3DCanvas isPaused={game.phase === 'PAUSED'}>
+            <Game3DCanvas isPaused={game.phase === 'PAUSED'} measure={{ gameId: 'ordo', active: game.phase === 'PLAYER_TURN' || game.phase === 'SETTLING' || game.phase === 'AI_TURN' }}>
               <OrdoScene
                 phase={game.phase}
                 world={game.world}

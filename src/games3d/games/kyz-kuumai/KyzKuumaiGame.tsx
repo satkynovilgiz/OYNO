@@ -12,6 +12,7 @@ import { spacing } from '@/theme';
 
 import { SprintButtonView, useSprintButton } from '../../controls/SprintButton';
 import { useVirtualJoystick, VirtualJoystickView } from '../../controls/VirtualJoystick';
+import { useLazyRef } from '@/games3d/core/useLazyRef';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
@@ -88,7 +89,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
   const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
   const practice = usePracticeMission(GAME_ID, mode === 'practice' ? practiceMissionId : null);
 
-  const audioRef = useRef(createKyzKuumaiAudio());
+  const audioRef = useLazyRef(createKyzKuumaiAudio);
   useEffect(() => () => audioRef.current.dispose(), []);
   const lastCheckpointKeyRef = useRef<number | null>(null);
   const lastHoofbeatAtRef = useRef(0);
@@ -251,7 +252,7 @@ export function KyzKuumaiGame({ difficulty = 'normal', mode = 'normal', challeng
   return (
     <View style={styles.root}>
       <Game3DErrorBoundary fallback={(retry) => <ErrorOverlay onRetry={retry} onExit={handleExit} />}>
-        <Game3DCanvas isPaused={game.phase === 'PAUSED'}>
+        <Game3DCanvas isPaused={game.phase === 'PAUSED'} measure={{ gameId: 'kyz_kuumai', active: game.phase === 'PLAYING' }}>
           <KyzKuumaiScene
             phase={game.phase}
             playerHorseRef={game.playerHorseRef}

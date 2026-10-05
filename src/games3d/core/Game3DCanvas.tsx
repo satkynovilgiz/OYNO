@@ -4,6 +4,7 @@ import { PixelRatio, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { FpsCounter } from '../ui/FpsCounter';
+import { FrameTimingProbe } from './FrameTimingProbe';
 
 const SCENE_FADE_IN_MS = 220;
 
@@ -13,6 +14,9 @@ type Game3DCanvasProps = {
    * or user-paused game costs ~0 GPU/CPU (Section 17) without paying to
    * recreate the GL context on every resume. */
   isPaused: boolean;
+  /** Dev-only frame timing (frameStats.ts): the game id and whether active
+   * gameplay is running right now (phase PLAYING). Ignored in release. */
+  measure?: { gameId: string; active: boolean };
 };
 
 /** Shared 3D rendering host (Section 7). @react-three/fiber resolves to its
@@ -30,7 +34,7 @@ type Game3DCanvasProps = {
  * `LoadingOverlay` as a sibling of `Game3DCanvas`, using drei's
  * `useProgress` (a global store, safe to read outside the Canvas tree), not
  * through this fallback. */
-export function Game3DCanvas({ children, isPaused }: Game3DCanvasProps) {
+export function Game3DCanvas({ children, isPaused, measure }: Game3DCanvasProps) {
   // Starts fully transparent and fades in once `onCreated` fires (Section
   // "Add a smooth fade-in when the 3D scene becomes ready" / "Prevent the
   // player from briefly seeing an empty/unfinished scene") - `onCreated` is
@@ -67,6 +71,7 @@ export function Game3DCanvas({ children, isPaused }: Game3DCanvasProps) {
           shadows="soft"
         >
           <Suspense fallback={null}>{children}</Suspense>
+          {__DEV__ && measure ? <FrameTimingProbe gameId={measure.gameId} active={measure.active && !isPaused} /> : null}
         </Canvas>
       </Animated.View>
       <FpsCounter />

@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } 
 
 import { colors, typography } from '@/theme';
 
+import { scheduleCountdown } from './countdownSchedule';
 import { gameHaptics } from '../haptics/gameHaptics';
 
 type StartCountdownProps = {
@@ -38,18 +39,21 @@ export function StartCountdown({ visible, onDone }: StartCountdownProps) {
   useEffect(() => {
     if (!visible) return;
     setStepIndex(0);
-    const timers = steps.map((_, i) =>
-      setTimeout(() => {
+    // Every timer, including the final onDone, is cancelled when the
+    // countdown hides (pause) or unmounts (exit).
+    return scheduleCountdown(
+      steps.length,
+      STEP_MS,
+      (i) => {
         setStepIndex(i);
         scale.value = 1.3;
         scale.value = withSequence(withTiming(1, { duration: STEP_MS * 0.6 }));
         // A small pulse for 3/2/1, a stronger one for GO (Section "haptic
         // pulse").
         void (i === steps.length - 1 ? gameHaptics.heavy() : gameHaptics.light());
-        if (i === steps.length - 1) setTimeout(onDone, STEP_MS);
-      }, i * STEP_MS),
+      },
+      () => onDone(),
     );
-    return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 

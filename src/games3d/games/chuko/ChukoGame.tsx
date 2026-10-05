@@ -8,6 +8,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useProgressStore } from '@/store/useProgressStore';
 
 import { useDragPowerController } from '../../controls/DragPowerController';
+import { useLazyRef } from '@/games3d/core/useLazyRef';
 import { Game3DCanvas } from '../../core/Game3DCanvas';
 import { Game3DErrorBoundary } from '../../core/Game3DErrorBoundary';
 import { useGameLifecycle } from '../../core/useGameLifecycle';
@@ -57,7 +58,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal', challenge = 
   const records = useRoundRecords(GAME_ID, mode === 'normal' ? challenge : null);
   const [hasThrown, setHasThrown] = useState(false);
 
-  const audioRef = useRef(createChukoAudio());
+  const audioRef = useLazyRef(createChukoAudio);
   useEffect(() => () => audioRef.current.dispose(), []);
 
   const [helpStage, setHelpStage] = useState<'about' | 'controls' | null>(null);
@@ -224,7 +225,7 @@ export function ChukoGame({ difficulty = 'normal', mode = 'normal', challenge = 
       <Game3DErrorBoundary fallback={(retry) => <ErrorOverlay onRetry={retry} onExit={handleExit} />}>
         <GestureDetector gesture={drag.gesture}>
           <View style={StyleSheet.absoluteFill}>
-            <Game3DCanvas isPaused={game.phase === 'PAUSED'}>
+            <Game3DCanvas isPaused={game.phase === 'PAUSED'} measure={{ gameId: 'chuko', active: game.phase === 'PLAYER_TURN' || game.phase === 'SETTLING' || game.phase === 'AI_TURN' }}>
               <ChukoScene phase={game.phase} world={game.world} onSettled={game.onSettled} pullX={drag.pullX} pullY={drag.pullY} isPulling={drag.isPulling} />
             </Game3DCanvas>
           </View>
