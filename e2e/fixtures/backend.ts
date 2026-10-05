@@ -29,6 +29,21 @@ export const DISCARDED_WRITES: Record<string, readonly string[]> = {
 /** RPCs the guest journeys call, with their deterministic results. None today. */
 export const RPCS: Record<string, unknown> = {};
 
+/**
+ * Columns of the tables that have NO fixture rows (the journeys only need
+ * them to be empty). Tables with rows take their columns from the rows.
+ * Mirrors the queries in src/services/content/*.
+ */
+export const EMPTY_TABLE_COLUMNS: Record<string, readonly string[]> = {
+  culture_materials: ['id', 'sort_order'],
+  content_translations: ['content_type', 'content_id', 'language', 'field', 'value'],
+  explore_regions: ['id', 'sort_order'],
+  discoveries: ['id', 'published', 'sort_order'],
+  region_content_links: ['region_id', 'content_type', 'content_id', 'sort_order', 'updated_at'],
+  quests: ['id'],
+  quest_steps: ['id', 'quest_id', 'step_order'],
+};
+
 /** Auth endpoints a signed-out (guest) client may call. */
 const AUTH_GET: Record<string, unknown> = {
   '/auth/v1/settings': { external: { google: false, apple: false, email: true } },
@@ -54,14 +69,19 @@ function compare(a: unknown, b: unknown): number {
   return String(a).localeCompare(String(b));
 }
 
-function applyFilter(rows: Row[], column: string, raw: string): Row[] {
+/** Columns of a fixture table (union over its rows) - anything else is an unknown column. */
+function columnsOf(table: string, rows: Row[]): Set<string> {
+  return new Set([...rows.flatMap((row) => Object.keys(row)), ...(EMPTY_TABLE_COLUMNS[table] ?? [])]);
+}
+
+function applyFilter(rows: Row[], columns: Set<string>, column: string, raw: string): Row[] {
   if (raw.startsWith('not.')) throw new Unsupported(`negated filter "${column}=${raw}"`);
   const dot = raw.indexOf('.');
   const op = raw.slice(0, dot);
   const value = raw.slice(dot + 1);
   if (dot < 0 || !(OPERATORS as readonly string[]).includes(op)) throw new Unsupported(`operator in "${column}=${raw}" (supported: ${OPERATORS.join(', ')})`);
-  const known = rows.length === 0 || rows.some((row) => column in row);
-  if (!known) throw new Unsupported(`unknown column "${column}"`);
+  // Checked against the whole table, not the rows left by earlier filters.
+  if (!columns.has(column)) throw new Unsupported(`unknown column "${column}"`);
   switch (op) {
     case 'eq':
       return rows.filter((row) => String(row[column]) === value);
@@ -83,9 +103,10 @@ function applyFilter(rows: Row[], column: string, raw: string): Row[] {
   }
 }
 
-function applyOrder(rows: Row[], raw: string): Row[] {
+function applyOrder(rows: Row[], columns: Set<string>, raw: string): Row[] {
   const terms = raw.split(',').map((term) => {
     const [column, ...modifiers] = term.split('.');
+    if (!columns.has(column)) throw new Unsupported(`order by unknown column "${column}"`);
     for (const modifier of modifiers) if (!['asc', 'desc', 'nullsfirst', 'nullslast'].includes(modifier)) throw new Unsupported(`order modifier "${modifier}"`);
     return { column, desc: modifiers.includes('desc'), nullsFirst: modifiers.includes('nullsfirst') };
   });
@@ -103,10 +124,13 @@ function applyOrder(rows: Row[], raw: string): Row[] {
   });
 }
 
-function applySelect(rows: Row[], raw: string | null): Row[] {
+function applySelect(rows: Row[], known: Set<string>, raw: string | null): Row[] {
   if (!raw || raw === '*') return rows;
   if (/[()!:]/.test(raw)) throw new Unsupported(`embedded/aliased select "${raw}"`);
   const columns = raw.split(',').map((column) => column.trim());
+  // PostgREST rejects an unknown column; silently dropping it would hide a fixture gap.
+  const missing = columns.filter((column) => !known.has(column));
+  if (missing.length > 0) throw new Unsupported(`select of unknown column(s) ${missing.map((column) => `"${column}"`).join(', ')} - add them to the fixture rows`);
   return rows.map((row) => Object.fromEntries(columns.filter((column) => column in row).map((column) => [column, row[column]])));
 }
 
@@ -161,12 +185,13 @@ export async function installBackend(page: Page): Promise<BackendLog> {
     try {
       const params = url.searchParams;
       let rows = FIXTURE_TABLES[table];
-      for (const [key, raw] of params.entries()) if (!RESERVED.has(key)) rows = applyFilter(rows, key, raw);
-      if (params.has('order')) rows = applyOrder(rows, params.get('order')!);
+      const columns = columnsOf(table, rows);
+      for (const [key, raw] of params.entries()) if (!RESERVED.has(key)) rows = applyFilter(rows, columns, key, raw);
+      if (params.has('order')) rows = applyOrder(rows, columns, params.get('order')!);
       const total = rows.length;
       const headers = request.headers();
       const ranged = applyRange(rows, params, headers['range']);
-      const selected = applySelect(ranged.rows, params.get('select'));
+      const selected = applySelect(ranged.rows, columns, params.get('select'));
       const contentRange = `${selected.length ? `${ranged.from}-${ranged.from + selected.length - 1}` : '*'}/${(headers['prefer'] ?? '').includes('count=') ? total : '*'}`;
       if ((headers['accept'] ?? '').includes('vnd.pgrst.object')) {
         if (selected.length === 1) return respond(200, selected[0], { 'content-range': contentRange });

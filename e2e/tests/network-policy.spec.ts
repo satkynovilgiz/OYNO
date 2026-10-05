@@ -51,10 +51,17 @@ test('unsupported query syntax fails instead of being ignored', async ({ page, b
   await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?title=like.*Боз*`);
   await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?select=*,culture_categories(*)`);
   await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?no_such_column=eq.1`);
+  // Unknown column after a filter that already left zero rows - still refused.
+  await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?id=eq.missing&no_such_column=eq.1`);
+  await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?select=id,no_such_column`);
+  await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?order=no_such_column.asc`);
   expect(takeUnexpected(backend).map((request) => request.reason)).toEqual([
     expect.stringContaining('operator in "title=like'),
     expect.stringContaining('embedded/aliased select'),
     expect.stringContaining('unknown column "no_such_column"'),
+    expect.stringContaining('unknown column "no_such_column"'),
+    expect.stringContaining('select of unknown column(s) "no_such_column"'),
+    expect.stringContaining('order by unknown column "no_such_column"'),
   ]);
 });
 

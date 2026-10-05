@@ -7,8 +7,14 @@ test('guest onboarding reaches Home', async ({ page, errors }) => {
   await page.getByTestId('language-continue').click();
   await expect(page).toHaveURL(/\/onboarding$/);
   // "Explore as guest" is offered on the last slide (account creation is never forced first).
-  for (let slide = 0; slide < 5 && !(await page.getByTestId('onboarding-guest').isVisible()); slide += 1) await page.getByTestId('onboarding-next').click();
-  await page.getByTestId('onboarding-guest').click();
+  // The pager ignores a tap while its scroll animation settles (400 ms guard), so under load a
+  // Next can be dropped: retry until the last slide, never tapping there (Next becomes "Start").
+  const guest = page.getByTestId('onboarding-guest');
+  await expect(async () => {
+    if (!(await guest.isVisible())) await page.getByTestId('onboarding-next').click();
+    await expect(guest).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 20_000 });
+  await guest.click();
   await expect(page).toHaveURL(/\/age-group$/);
   await page.getByTestId('age-18+').click();
   await page.getByTestId('age-continue').click();
