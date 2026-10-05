@@ -3,7 +3,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
-import { supabase } from '@/services/supabase/client';
+import { createConfirmationClient, supabase, type ConfirmationClient } from '@/services/supabase/client';
 
 import {
   AuthError,
@@ -12,7 +12,7 @@ import {
   type AuthSession,
   type AuthUser,
   type DeletionConfirmation,
-  type DeletionMethod,
+  type DeletionOptions,
   type OAuthProvider,
   type OAuthSignInResult,
   type SignInInput,
@@ -104,7 +104,7 @@ async function toAuthSession(session: Session, user: User): Promise<AuthSession>
  * private browser session so a deletion confirmation can't silently reuse
  * an existing provider login cookie.
  */
-async function providerSession(provider: OAuthProvider, ephemeral: boolean): Promise<Session> {
+async function providerSession(provider: OAuthProvider, ephemeral: boolean, client: Pick<typeof supabase, 'auth'> = supabase): Promise<Session> {
   // `skipBrowserRedirect` gets back the provider URL instead of Supabase
   // trying (and failing) to redirect a React Native environment there
   // itself - WebBrowser opens it in an in-app sheet/popup and hands the
@@ -113,7 +113,7 @@ async function providerSession(provider: OAuthProvider, ephemeral: boolean): Pro
   // browser can't navigate a popup to one at all - on web this has to
   // be a same-origin http(s) URL instead so the opener can read it back.
   const redirectTo = Platform.OS === 'web' ? `${window.location.origin}/auth-callback` : Linking.createURL('auth-callback');
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await client.auth.signInWithOAuth({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },
   });
@@ -145,7 +145,7 @@ async function providerSession(provider: OAuthProvider, ephemeral: boolean): Pro
     throw new AuthError('unknown', redirectUrl.searchParams.get('error_description') ?? 'Белгисиз ката кетти.');
   }
 
-  const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: sessionData, error: exchangeError } = await client.auth.exchangeCodeForSession(code);
   if (exchangeError || !sessionData.session) throw mapSupabaseError(exchangeError);
   return sessionData.session;
 }
@@ -159,12 +159,24 @@ export function linkedProviders(user: Pick<User, 'identities' | 'app_metadata'>)
   return [...new Set([...fromIdentities, ...fromMetadata])];
 }
 
-/** Password when the account has an email identity; else its first linked OAuth provider. */
-export function deletionMethodFor(user: Pick<User, 'identities' | 'app_metadata' | 'email'>): DeletionMethod | null {
-  const providers = linkedProviders(user);
-  if (providers.includes('email') && user.email) return { kind: 'password' };
-  const provider = OAUTH_PROVIDERS.find((candidate) => providers.includes(candidate));
-  return provider ? { kind: 'oauth', provider } : null;
+/**
+ * Every confirmation this account may use: each linked supported provider,
+ * plus password when an email identity exists (a password is possible
+ * there, not guaranteed - see DeletionOptions). Null when nothing can
+ * confirm the account.
+ */
+export function deletionOptionsFor(user: Pick<User, 'id' | 'identities' | 'app_metadata' | 'email'>): DeletionOptions | null {
+  const linked = linkedProviders(user);
+  const password = linked.includes('email') && !!user.email;
+  const providers = OAUTH_PROVIDERS.filter((candidate) => linked.includes(candidate));
+  return password || providers.length > 0 ? { accountId: user.id, password, providers } : null;
+}
+
+const MISSING_FUNCTION = /could not find the function|PGRST202|42883/i;
+
+/** Ends the confirmation client's own session (memory + that one server session). */
+async function discard(client: ConfirmationClient): Promise<void> {
+  await client.auth.signOut({ scope: 'local' }).catch(() => undefined);
 }
 
 export const supabaseAuthService: AuthService = {
@@ -266,59 +278,67 @@ export const supabaseAuthService: AuthService = {
     await supabase.auth.signOut();
   },
 
-  async getDeletionMethod() {
+  async getDeletionOptions() {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) return null;
-    return deletionMethodFor(data.user);
+    return deletionOptionsFor(data.user);
   },
 
-  async deleteAccount(confirmation: DeletionConfirmation) {
+  async deleteAccount(confirmation: DeletionConfirmation, expectedUserId: string, isStillCurrent: () => boolean = () => true) {
+    // The app's session must still be the account the dialog was opened for.
     const { data: userData, error: userError } = await supabase.auth.getUser();
     const account = userData?.user;
     if (userError || !account) throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
+    if (account.id !== expectedUserId) throw new AuthError('reauth-mismatch', '');
 
-    if (confirmation.kind === 'password') {
-      if (!account.email) throw new AuthError('invalid-credentials', 'Сырсөз туура эмес.');
-      const { data, error: verifyError } = await supabase.auth.signInWithPassword({ email: account.email, password: confirmation.password });
-      if (verifyError || !data.user) throw new AuthError('invalid-credentials', 'Сырсөз туура эмес.');
-      if (data.user.id !== account.id) throw new AuthError('reauth-mismatch', '');
-    } else {
-      // Only a provider this account is really linked to can confirm it.
-      if (!linkedProviders(account).includes(confirmation.provider)) throw new AuthError('reauth-mismatch', '');
-      const { data: before } = await supabase.auth.getSession();
-      const previous = before.session;
-      if (!previous || previous.user.id !== account.id) throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
-      // Cancelled/blocked sheet -> AuthError 'cancelled'; nothing was exchanged or deleted.
-      const fresh = await providerSession(confirmation.provider, true);
-      if (fresh.user.id !== account.id) {
-        // A DIFFERENT account signed in at the provider. Its session replaced
-        // ours in the client: put the original account's session back (no
-        // sign-out event, so the app never treats this as a session loss)
-        // and refuse. The other account is never deleted.
-        const { error: restoreError } = await supabase.auth.setSession({ access_token: previous.access_token, refresh_token: previous.refresh_token });
-        if (restoreError) {
-          // The original session can't be restored: leave no foreign session
-          // behind. The app then handles it as an ended session.
-          await supabase.auth.signOut({ scope: 'local' });
-          throw new AuthError('user-not-found', 'Сиз тутумга кирген жоксуз.');
-        }
-        throw new AuthError('reauth-mismatch', '');
+    // Confirmation happens on an ISOLATED client: the app's own session is
+    // never replaced, so a wrong account signing in here can't reach sync,
+    // guest adoption or private-data writes (they all use `supabase`).
+    const confirm = createConfirmationClient();
+    try {
+      let confirmedId: string | null = null;
+      if (confirmation.kind === 'password') {
+        if (!account.email) throw new AuthError('invalid-credentials', 'Сырсөз туура эмес.');
+        const { data, error } = await confirm.auth.signInWithPassword({ email: account.email, password: confirmation.password });
+        if (error || !data.user) throw new AuthError('invalid-credentials', 'Сырсөз туура эмес.');
+        confirmedId = data.user.id;
+      } else {
+        // Only a provider this account is really linked to can confirm it.
+        if (!linkedProviders(account).includes(confirmation.provider)) throw new AuthError('reauth-mismatch', '');
+        // Cancelled/blocked sheet -> AuthError 'cancelled'; nothing exchanged, nothing deleted.
+        const fresh = await providerSession(confirmation.provider, true, confirm);
+        confirmedId = fresh.user.id;
       }
-    }
+      if (confirmedId !== expectedUserId) throw new AuthError('reauth-mismatch', '');
 
-    // Hard-deletes the actual auth.users row via delete_own_account()
-    // (supabase/migrations/20260829000002_delete_own_account.sql, hardened
-    // by 20261004000004 to also require a RECENT sign-in on this session -
-    // enforced server-side from the JWT, not by this client). Every
-    // user-owned table cascades from auth.users, so this removes profile,
-    // progress, achievements, discoveries, and settings in one statement.
-    const { error: deleteError } = await supabase.rpc('delete_own_account');
-    if (deleteError) {
-      if (/REAUTH_REQUIRED/.test(deleteError.message ?? '')) throw new AuthError('reauth-required', '');
-      throw new AuthError('unknown', 'Аккаунтту өчүрүү мүмкүн болгон жок. Кайра аракет кылыңыз.');
-    }
+      // Immediately before the destructive call: the app must still be on the
+      // same account session, and the server must agree who is signed in.
+      if (!isStillCurrent()) throw new AuthError('reauth-mismatch', '');
+      const { data: again } = await supabase.auth.getUser();
+      if (again?.user?.id !== expectedUserId || !isStillCurrent()) throw new AuthError('reauth-mismatch', '');
 
-    await supabase.auth.signOut();
+      // Runs with the CONFIRMATION session's token (a fresh interactive
+      // sign-in of exactly this account). The server re-checks that the
+      // token's user is p_expected_user_id and that the sign-in is recent
+      // (20261005000001_delete_account_binding.sql). Every user-owned table
+      // cascades from auth.users.
+      let { error: deleteError } = await confirm.rpc('delete_own_account', { p_expected_user_id: expectedUserId });
+      if (deleteError && MISSING_FUNCTION.test(`${deleteError.message ?? ''} ${(deleteError as { code?: string }).code ?? ''}`)) {
+        // Server without the binding migration yet: the older function. Safe
+        // here because this token was just proven to be expectedUserId's.
+        ({ error: deleteError } = await confirm.rpc('delete_own_account'));
+      }
+      if (deleteError) {
+        const message = deleteError.message ?? '';
+        if (/REAUTH_REQUIRED/.test(message)) throw new AuthError('reauth-required', '');
+        if (/ACCOUNT_MISMATCH/.test(message)) throw new AuthError('reauth-mismatch', '');
+        throw new AuthError('unknown', 'Аккаунтту өчүрүү мүмкүн болгон жок. Кайра аракет кылыңыз.');
+      }
+    } finally {
+      await discard(confirm);
+    }
+    // The app's own (now orphaned) session is ended by the caller
+    // (useAuthStore), which owns the local account cleanup around it.
   },
 
   async updateProfile({ name, email }) {

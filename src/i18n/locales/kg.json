@@ -193,7 +193,9 @@
       "customizeAvatar": "Аватарды өзгөртүү",
       "storyCompanion": "OYNOдогу жол көрсөтүүчү",
       "deleteConfirmWithProvider": "{{provider}} аркылуу ырастоо",
-      "deleteOAuthHint": "Ырастоо үчүн OYNOдо колдонгон ошол эле аккаунтка кайра кир. Аккаунт жана анын бардык маалыматтары өчүрүлөт."
+      "deleteOAuthHint": "Ырастоо үчүн OYNOдо колдонгон ошол эле аккаунтка кайра кир. Аккаунт жана анын бардык маалыматтары өчүрүлөт.",
+      "deleteConfirmHow": "Кантип ырастоо",
+      "deleteWithPassword": "Сырсөз менен"
     },
     "experience": {
       "title": "Жаш режими",

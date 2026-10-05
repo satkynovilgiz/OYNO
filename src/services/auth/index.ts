@@ -8,7 +8,7 @@ export {
   type AuthSession,
   type AuthUser,
   type DeletionConfirmation,
-  type DeletionMethod,
+  type DeletionOptions,
   type OAuthProvider,
   type OAuthSignInResult,
   type SignInInput,

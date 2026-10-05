@@ -168,18 +168,22 @@ Newest seven (checked 2026-09-29):
 | `20260927000004_guided_quests.sql` | quest reward claim | **yes** (`claim_guided_quest` answers `NOT_AUTHENTICATED` to the anon key) | progress shows; reward reports "will sync later" |
 | `20260929000001_feedback_v2.sql` | feedback categories/context, admin inbox | **yes** (applied later on 2026-09-29; first check that day returned `PGRST202`) | reports would send via `submit_beta_feedback` with legacy category + context in the message; admin inbox would show "needs migration" |
 
-Pending - written, **not applied** to the live project (2026-10-04):
+Pending - written, **not applied** to the live project:
 
 | Migration | Needed by | If missing |
 | --- | --- | --- |
-| `20261004000004_delete_own_account_recent_auth.sql` | Server-side enforcement that account deletion follows a sign-in from the last 10 minutes (JWT `amr` timestamp) | Deletion still works; the app's own password / provider re-sign-in still runs first, but the server does not enforce it |
+| `20261004000004_delete_own_account_recent_auth.sql` (2026-10-04) | First recent-sign-in check for account deletion. **Superseded** by the next row: it counted *any* `amr` method, and Supabase's JWT reference lists `token_refresh` as one, so a token refresh could satisfy it | — |
+| `20261005000001_delete_account_binding.sql` (2026-10-05) | `delete_own_account(p_expected_user_id)` refuses unless the token's user is that account (`ACCOUNT_MISMATCH`) and counts only interactive sign-ins (password, oauth, otp, totp, magiclink, sso/saml) within 10 minutes (`REAUTH_REQUIRED`); also fixes the no-argument version used by older app builds | The app falls back to the no-argument function after its own client-side checks (same verified token) - deletion still works, but the server does not enforce the account binding |
 
-Apply it after review via the SQL editor. It replaces `delete_own_account()`
-in place (same signature and grants); installed app versions keep working
-because they always sign in with the password right before calling it.
-After applying, verify on a test account: delete right after confirming
-(succeeds) and with a session older than 10 minutes without confirming
-(must fail with `REAUTH_REQUIRED`).
+Apply `20261005000001` after review via the SQL editor (it is safe whether
+or not `20261004000004` was applied; applying only the newer one is enough).
+No local Postgres/Supabase was available to execute these migrations in this
+environment (2026-10-05), so they are untested against a database. Verify on a
+staging project:
+1. Delete a test account right after confirming in the app -> succeeds.
+2. Call `delete_own_account('<another user id>')` with a fresh token -> `ACCOUNT_MISMATCH`.
+3. Call it with a token whose last interactive sign-in is older than 10 minutes
+   (only refreshed since) -> `REAUTH_REQUIRED`.
 
 Earlier (confirmed 2026-09-23/24):
 

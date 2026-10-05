@@ -193,7 +193,9 @@
       "customizeAvatar": "Edit your avatar",
       "storyCompanion": "Your OYNO guide",
       "deleteConfirmWithProvider": "Confirm with {{provider}}",
-      "deleteOAuthHint": "To confirm, sign in again with the same account you use for OYNO. Your account and all its data will be deleted."
+      "deleteOAuthHint": "To confirm, sign in again with the same account you use for OYNO. Your account and all its data will be deleted.",
+      "deleteConfirmHow": "How to confirm",
+      "deleteWithPassword": "With password"
     },
     "experience": {
       "title": "Experience",

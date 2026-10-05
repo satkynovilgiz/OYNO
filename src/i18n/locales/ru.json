@@ -193,7 +193,9 @@
       "customizeAvatar": "Изменить аватар",
       "storyCompanion": "Проводник в OYNO",
       "deleteConfirmWithProvider": "Подтвердить через {{provider}}",
-      "deleteOAuthHint": "Для подтверждения войди ещё раз в тот же аккаунт, который используешь в OYNO. Аккаунт и все его данные будут удалены."
+      "deleteOAuthHint": "Для подтверждения войди ещё раз в тот же аккаунт, который используешь в OYNO. Аккаунт и все его данные будут удалены.",
+      "deleteConfirmHow": "Как подтвердить",
+      "deleteWithPassword": "Паролем"
     },
     "experience": {
       "title": "Опыт",

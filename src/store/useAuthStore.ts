@@ -235,10 +235,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ error: offline });
       return false;
     }
-    set({ isSubmitting: true, error: null });
     const userId = get().user?.id;
+    if (get().status !== 'authenticated' || !userId) {
+      set({ error: localizeAuthError(new AuthError('user-not-found', ''), 'account') });
+      return false;
+    }
+    // Bound to THIS account session: any sign-out / sign-in / switch while
+    // confirming (even back into the same account) makes it stale.
+    // Lazy: accountGeneration imports this store.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const generation = require('@/services/sync/accountGeneration') as typeof import('@/services/sync/accountGeneration');
+    const token = generation.captureAccountGeneration();
+    const isStillCurrent = () => generation.isAccountGenerationCurrent(token) && get().user?.id === userId;
+    set({ isSubmitting: true, error: null });
     try {
-      await authService.deleteAccount(confirmation);
+      await authService.deleteAccount(confirmation, userId, isStillCurrent);
     } catch (error) {
       if (error instanceof AuthError && error.code === 'cancelled') {
         set({ isSubmitting: false });
@@ -247,11 +258,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isSubmitting: false, error: localizeAuthError(error, 'account') });
       return false;
     }
-    // Only after the server confirmed the deletion: clean up THIS account's
-    // local state (generation bump + per-owner data via the account hooks).
-    if (userId) await accountHooks.afterAccountDeleted?.(userId).catch(() => {});
-    await AsyncStorage.removeItem(GUEST_MODE_KEY);
-    set({ status: 'unauthenticated', user: null, isSubmitting: false });
+    // Deleted on the server. Only now: forget THIS account's local state and
+    // end the app's orphaned session. `signingOut` marks that sign-out as
+    // ours - otherwise the auth listener would treat it as a lost session
+    // and keep the deleted account's unsynced private state aside.
+    signingOut = true;
+    try {
+      await accountHooks.afterAccountDeleted?.(userId).catch(() => {});
+      await authService.signOut().catch(() => {});
+      await AsyncStorage.removeItem(GUEST_MODE_KEY);
+      set({ status: 'unauthenticated', user: null, isSubmitting: false });
+    } finally {
+      signingOut = false;
+    }
     return true;
   },
 

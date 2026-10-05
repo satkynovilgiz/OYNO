@@ -66,11 +66,15 @@ export type SignUpResult =
 export type OAuthProvider = 'google' | 'apple';
 
 /**
- * How the signed-in account can prove it is really its owner before
- * deletion: its password when it has an email/password identity, else a
- * fresh sign-in with a provider the account is linked to.
+ * How the signed-in account may prove it is its owner before deletion.
+ * `password` means the account has an email sign-in identity, so a
+ * password MAY exist - the client can't know that a password is actually
+ * set (an emailed-code-only account has the same identity), so it is
+ * offered as a choice, never asserted. `providers` are the linked OAuth
+ * providers this app supports. `accountId` binds the deletion to the
+ * account the dialog was opened for.
  */
-export type DeletionMethod = { kind: 'password' } | { kind: 'oauth'; provider: OAuthProvider };
+export type DeletionOptions = { accountId: string; password: boolean; providers: OAuthProvider[] };
 
 export type DeletionConfirmation = { kind: 'password'; password: string } | { kind: 'oauth'; provider: OAuthProvider };
 
@@ -122,14 +126,20 @@ export type AuthService = {
    * signs out afterward so the user re-authenticates with the new
    * password rather than silently staying logged in from the reset. */
   confirmPasswordReset(newPassword: string): Promise<void>;
-  /** The reauthentication this account supports; null when there is no
-   * usable session (expired / signed out). */
-  getDeletionMethod(): Promise<DeletionMethod | null>;
-  /** Requires a fresh confirmation of the SAME account (spec Section 63) -
-   * the current password, or a new provider sign-in for OAuth-only
-   * accounts - never a bare confirmation tap. Throws 'cancelled' if the
-   * provider sheet was closed, 'reauth-mismatch' for a different account. */
-  deleteAccount(confirmation: DeletionConfirmation): Promise<void>;
+  /** The confirmation choices for the signed-in account; null when there
+   * is no usable session (expired / signed out). */
+  getDeletionOptions(): Promise<DeletionOptions | null>;
+  /**
+   * Deletes `expectedUserId` - and only it - after a fresh confirmation of
+   * that same account (spec Section 63): its password, or a new sign-in
+   * with a linked provider. The confirmation runs on an isolated client,
+   * so the app's own session is never replaced. `isStillCurrent` is
+   * checked right before the destructive call (the app's account session
+   * must not have changed meanwhile). Throws 'cancelled' if the provider
+   * sheet was closed, 'reauth-mismatch' for any different account. Does
+   * NOT sign the app out - the caller does that after its cleanup.
+   */
+  deleteAccount(confirmation: DeletionConfirmation, expectedUserId: string, isStillCurrent?: () => boolean): Promise<void>;
   /** Updates the signed-in user's profile fields, returns the updated
    * session. Email changes trigger Supabase's own re-verification flow
    * for the new address. */

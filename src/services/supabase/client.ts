@@ -47,3 +47,34 @@ AppState.addEventListener('change', (state) => {
     void supabase.auth.stopAutoRefresh();
   }
 });
+
+let confirmationClients = 0;
+
+/**
+ * A short-lived, IN-MEMORY Supabase client for confirming a sensitive
+ * action (account deletion). Signing in on it never touches the app's own
+ * session: no shared storage, no auth events on `supabase`, no token
+ * refresh. So a wrong-account sign-in during confirmation can't be picked
+ * up by sync, guest adoption or any private-data write, which all use
+ * `supabase`. PKCE state lives in this client's own memory only.
+ */
+export function createConfirmationClient() {
+  const memory = new Map<string, string>();
+  confirmationClients += 1;
+  return createClient(supabaseUrl!, supabaseAnonKey!, {
+    auth: {
+      storage: {
+        getItem: (key: string) => memory.get(key) ?? null,
+        setItem: (key: string, value: string) => void memory.set(key, value),
+        removeItem: (key: string) => void memory.delete(key),
+      },
+      storageKey: `oyno-confirm-${confirmationClients}`,
+      persistSession: true,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      flowType: 'pkce',
+    },
+  });
+}
+
+export type ConfirmationClient = ReturnType<typeof createConfirmationClient>;

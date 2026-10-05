@@ -37,7 +37,7 @@ export default function AccountSettingsRoute() {
       onSaveProfile={updateProfile}
       onPressChangePassword={() => router.push('/settings/security' as never)}
       onDeleteAccount={deleteAccount}
-      loadDeletionMethod={() => authService.getDeletionMethod()}
+      loadDeletionOptions={() => authService.getDeletionOptions()}
       onPressCustomizeAvatar={() => router.push('/avatar-editor' as never)}
       onPressStoryCompanion={() => router.push('/character-select' as never)}
     />

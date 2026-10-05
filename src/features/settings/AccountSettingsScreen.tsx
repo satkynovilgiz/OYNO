@@ -4,7 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Button, ConfirmationModal, TextField } from '@/components/ui';
-import type { AuthUser, DeletionConfirmation, DeletionMethod } from '@/services/auth';
+import { Chip } from '@/components/ui/Chip';
+import type { AuthUser, DeletionConfirmation, DeletionOptions, OAuthProvider } from '@/services/auth';
 import { colors, radii, spacing, typography } from '@/theme';
 
 import { SettingsRow, SettingsSection } from './components/SettingsRow';
@@ -19,8 +20,8 @@ type AccountSettingsScreenProps = {
   onPressChangePassword: () => void;
   /** true = deleted, 'cancelled' = provider sheet closed (silent), false = failed (`error` is set). */
   onDeleteAccount: (confirmation: DeletionConfirmation) => Promise<boolean | 'cancelled'>;
-  /** How this account confirms deletion (password, or its sign-in provider); null = no usable session. */
-  loadDeletionMethod: () => Promise<DeletionMethod | null>;
+  /** Confirmation choices for this account (password and/or linked providers); null = no usable session. */
+  loadDeletionOptions: () => Promise<DeletionOptions | null>;
   onPressCustomizeAvatar: () => void;
   onPressStoryCompanion: () => void;
 };
@@ -33,7 +34,7 @@ export function AccountSettingsScreen({
   onSaveProfile,
   onPressChangePassword,
   onDeleteAccount,
-  loadDeletionMethod,
+  loadDeletionOptions,
   onPressCustomizeAvatar,
   onPressStoryCompanion,
 }: AccountSettingsScreenProps) {
@@ -46,7 +47,9 @@ export function AccountSettingsScreen({
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteMethod, setDeleteMethod] = useState<DeletionMethod | null | 'loading'>('loading');
+  const [deleteOptions, setDeleteOptions] = useState<DeletionOptions | null | 'loading'>('loading');
+  // Which confirmation the person chose: 'password' or a linked provider.
+  const [deleteChoice, setDeleteChoice] = useState<'password' | OAuthProvider | null>(null);
   const [deleteFailed, setDeleteFailed] = useState(false);
 
   const hasChanges = name.trim() !== user.name || email.trim().toLowerCase() !== user.email;
@@ -61,9 +64,12 @@ export function AccountSettingsScreen({
     setDeleteVisible(true);
     setDeleteError(null);
     setDeleteFailed(false);
-    setDeleteMethod('loading');
-    const method = await loadDeletionMethod().catch(() => null);
-    setDeleteMethod(method);
+    setDeleteOptions('loading');
+    setDeleteChoice(null);
+    const options = await loadDeletionOptions().catch(() => null);
+    setDeleteOptions(options);
+    // A sensible default; every available choice stays selectable.
+    setDeleteChoice(options ? (options.password ? 'password' : (options.providers[0] ?? null)) : null);
   };
 
   const closeDelete = () => {
@@ -74,19 +80,19 @@ export function AccountSettingsScreen({
   };
 
   const handleConfirmDelete = async () => {
-    if (deleteMethod === 'loading') return;
-    if (!deleteMethod) {
+    if (deleteOptions === 'loading') return;
+    if (!deleteOptions || !deleteChoice) {
       setDeleteError(t('auth.v2.errors.sessionEnded'));
       return;
     }
-    if (deleteMethod.kind === 'password' && !deletePassword) {
+    if (deleteChoice === 'password' && !deletePassword) {
       setDeleteError(t('settings.account.deletePasswordError'));
       return;
     }
     setDeleteError(null);
     setDeleteFailed(false);
     setIsDeleting(true);
-    const result = await onDeleteAccount(deleteMethod.kind === 'password' ? { kind: 'password', password: deletePassword } : { kind: 'oauth', provider: deleteMethod.provider });
+    const result = await onDeleteAccount(deleteChoice === 'password' ? { kind: 'password', password: deletePassword } : { kind: 'oauth', provider: deleteChoice });
     setIsDeleting(false);
     // Closing the provider sheet is not an error: stay in the dialog, nothing deleted.
     if (result === 'cancelled') return;
@@ -98,7 +104,9 @@ export function AccountSettingsScreen({
     closeDelete();
   };
 
-  const providerName = deleteMethod && deleteMethod !== 'loading' && deleteMethod.kind === 'oauth' ? (deleteMethod.provider === 'apple' ? 'Apple' : 'Google') : null;
+  const nameOf = (provider: OAuthProvider) => (provider === 'apple' ? 'Apple' : 'Google');
+  const providerName = deleteChoice && deleteChoice !== 'password' ? nameOf(deleteChoice) : null;
+  const choices: ('password' | OAuthProvider)[] = deleteOptions && deleteOptions !== 'loading' ? [...(deleteOptions.password ? (['password'] as const) : []), ...deleteOptions.providers] : [];
 
   return (
     <SettingsScreenLayout title={t('settings.account.title')} onPressBack={onPressBack}>
@@ -144,11 +152,27 @@ export function AccountSettingsScreen({
           <ShieldAlert size={16} color={colors.danger} strokeWidth={2} />
           <Text style={styles.deleteWarningText}>{providerName ? t('settings.account.deleteOAuthHint') : t('settings.account.deleteConfirmHint')}</Text>
         </View>
-        {deleteMethod && deleteMethod !== 'loading' && deleteMethod.kind === 'password' ? (
+        {choices.length > 1 ? (
+          <View style={styles.choices} accessibilityRole="radiogroup" accessibilityLabel={t('settings.account.deleteConfirmHow')}>
+            {choices.map((choice) => (
+              <Chip
+                key={choice}
+                label={choice === 'password' ? t('settings.account.deleteWithPassword') : t('settings.account.deleteConfirmWithProvider', { provider: nameOf(choice) })}
+                selected={deleteChoice === choice}
+                onPress={() => {
+                  setDeleteChoice(choice);
+                  setDeleteError(null);
+                  setDeleteFailed(false);
+                }}
+              />
+            ))}
+          </View>
+        ) : null}
+        {deleteChoice === 'password' ? (
           <TextField label={t('settings.account.passwordLabel')} value={deletePassword} onChangeText={setDeletePassword} error={deleteError ?? (deleteFailed ? error : null)} secure />
         ) : (
           <Text style={styles.error} accessibilityLiveRegion="polite">
-            {deleteError ?? (deleteFailed ? error : null) ?? (deleteMethod === null ? t('auth.v2.errors.sessionEnded') : '')}
+            {deleteError ?? (deleteFailed ? error : null) ?? (deleteOptions === null ? t('auth.v2.errors.sessionEnded') : '')}
           </Text>
         )}
       </ConfirmationModal>
@@ -171,6 +195,12 @@ const styles = StyleSheet.create({
   },
   group: {
     gap: spacing.md,
+  },
+  choices: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
   },
   deleteWarning: {
     flexDirection: 'row',
