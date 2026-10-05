@@ -115,3 +115,24 @@ export async function expectNoHorizontalOverflow(page: Page) {
 export function expectNoPageErrors(errors: string[]) {
   expect(errors.filter((error) => error.startsWith('pageerror'))).toEqual([]);
 }
+
+/**
+ * Onboarding Next is available. While a slide transition runs it keeps focus,
+ * so on web the unavailable state is aria-busy (see Button
+ * keepFocusWhenDisabled) - toBeEnabled() would pass too early.
+ */
+export async function expectNextAvailable(page: Page, message = 'onboarding Next should be available') {
+  await expect(page.getByTestId('onboarding-next'), message).not.toHaveAttribute('aria-busy', 'true');
+}
+
+/**
+ * One onboarding Next: the button must be available, and ONE tap must land on
+ * exactly `slide` (the pager never needs a retry - a dropped or doubled tap
+ * fails here with the slide it stopped on).
+ */
+export async function nextOnboardingSlide(page: Page, slide: number, total = 3) {
+  const next = page.getByTestId('onboarding-next');
+  await expectNextAvailable(page, `Next should be available before moving to slide ${slide} / ${total}`);
+  await next.click();
+  await expect(page.getByRole('progressbar'), `one Next tap should land on slide ${slide} / ${total}`).toHaveAttribute('aria-label', `${slide} / ${total}`, { timeout: 5_000 });
+}

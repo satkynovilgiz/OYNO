@@ -182,3 +182,21 @@ Web checks (axe, keyboard, focus, live region, 320 px + Reader XL) pass in
 Chromium - see `docs/ACCESSIBILITY.md`. Screen-reader and Dynamic Type
 checks on a physical iPhone / Android phone are listed there and are all
 **PENDING** - none has been done.
+
+## Onboarding pager - device checks still to do (2026-10-05)
+
+Web (`e2e/tests/onboarding.spec.ts`, Chromium) covers one tap per slide, a
+burst of taps (with and without Reduce Motion), a trackpad/wheel swipe there
+and back, keyboard Enter/Tab with focus kept during the transition, and guest
+access from the last slide. Model rules: `src/features/onboarding/onboardingPager.test.ts`.
+There is no in-screen Back; onboarding is reached with `router.replace`.
+
+| Check | Status |
+| --- | --- |
+| iOS / Android: swipe through all slides; dots, the "1 / 3" label, Next → Get Started and the guest link follow the slide shown | PENDING (device) |
+| Rapid double / triple tap on Next (each slide, especially slide 2): exactly one slide per burst, never leaves onboarding | PENDING (device) |
+| Same with Reduce Motion / Remove animations on (instant page change) | PENDING (device) |
+| Tap Next, then swipe back mid-transition: the pager settles on the slide shown and Next works again | PENDING (device) |
+| Rotate (iPad / Android tablet) on slide 2: stays on slide 2 | PENDING (device) |
+| VoiceOver / TalkBack: Next reads as dimmed during the transition, then "Next" / "Get Started"; guest link reachable on the last slide | PENDING (device) |
+| Android hardware Back on onboarding: leaves the app (no previous screen); no crash | PENDING (device) |

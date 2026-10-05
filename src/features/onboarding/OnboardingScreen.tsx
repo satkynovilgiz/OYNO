@@ -1,14 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
@@ -18,6 +11,7 @@ import Animated, {
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, TextButton } from '@/components/ui';
@@ -25,6 +19,20 @@ import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, editorial, radii, spacing, textStyles } from '@/theme';
 
 import { onboardingSlideImages, type OnboardingSlideImage } from './data';
+import {
+  ARRIVAL_COOLDOWN_MS,
+  cooledDown,
+  initialPagerState,
+  nearestPage,
+  pageReached,
+  pagerControls,
+  requestExit,
+  requestNext,
+  restingPage,
+  settleAt,
+  TRANSITION_WATCHDOG_MS,
+  type PagerState,
+} from './onboardingPager';
 import { DiscoverCollage, JourneyCollage, PlayCollage } from './OnboardingVisuals';
 
 /** Reserved bottom space so each slide's own text never sits under the
@@ -35,8 +43,8 @@ import { DiscoverCollage, JourneyCollage, PlayCollage } from './OnboardingVisual
 const BOTTOM_CHROME_HEIGHT = 150;
 
 type OnboardingScreenProps = {
-  onFinish: () => void;
-  onContinueAsGuest: () => void;
+  onFinish: () => void | Promise<void>;
+  onContinueAsGuest: () => void | Promise<void>;
 };
 
 export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScreenProps) {
@@ -45,42 +53,98 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const scrollRef = useRef<Animated.ScrollView>(null);
   const scrollX = useSharedValue(0);
-  const [index, setIndex] = useState(0);
-  const isLastSlide = index === onboardingSlideImages.length - 1;
+  const reducedMotion = useReducedMotion();
+  const pageCount = onboardingSlideImages.length;
 
-  const scrollHandler = useAnimatedScrollHandler((event) => {
-    scrollX.value = event.contentOffset.x;
-  });
+  // Pager state (onboardingPager.ts): the visible page follows the ACTUAL
+  // scroll position, so a tap, a swipe, a trackpad scroll (web never fires
+  // onMomentumScrollEnd) and a resize all agree. Next is unavailable while a
+  // transition is in flight, so a quick second tap can neither skip a slide
+  // nor become "Start" before the last slide (and its guest link) is shown.
+  // The ref is the synchronous truth for taps landing in the same frame.
+  const pagerRef = useRef<PagerState>(initialPagerState);
+  const [pager, setPager] = useState<PagerState>(initialPagerState);
+  const update = useCallback((next: PagerState) => {
+    if (next === pagerRef.current) return;
+    pagerRef.current = next;
+    setPager(next);
+  }, []);
+  const controls = pagerControls(pager, pageCount);
 
-  // A tap sets `index` immediately (not waiting on onMomentumScrollEnd,
-  // which doesn't reliably fire after a programmatic animated `scrollTo`
-  // on web) so the button/pagination update at once for a normal, one-tap-
-  // at-a-time press. `lastNavigationRef` guards against a second tap
-  // landing before the previous `scrollTo` animation has had time to
-  // settle, which would let `index` race ahead to a page the ScrollView
-  // hadn't actually reached yet (the animation's own scrollTo calls can
-  // override each other mid-flight). A real swipe still reconciles through
-  // `handleMomentumScrollEnd` regardless.
-  const lastNavigationRef = useRef(0);
-  const goToIndex = (nextIndex: number) => {
-    const now = Date.now();
-    if (now - lastNavigationRef.current < 400) return;
-    lastNavigationRef.current = now;
-    scrollRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
-    setIndex(nextIndex);
+  const watchdog = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearWatchdog = () => {
+    if (watchdog.current) clearTimeout(watchdog.current);
+    watchdog.current = null;
   };
+  useEffect(() => clearWatchdog, []);
+  useEffect(() => {
+    if (pager.target === null) clearWatchdog();
+  }, [pager.target]);
+  useEffect(() => {
+    if (!pager.cooldown) return undefined;
+    const timer = setTimeout(() => update(cooledDown(pagerRef.current)), ARRIVAL_COOLDOWN_MS);
+    return () => clearTimeout(timer);
+  }, [pager.cooldown, update]);
 
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
-    setIndex(nextIndex);
-  };
+  const onPageReached = useCallback((page: number) => update(pageReached(pagerRef.current, page)), [update]);
+  // A drag takes over from a Next transition; the page follows where it rests.
+  const onDragStart = useCallback(() => {
+    if (pagerRef.current.target !== null) update(settleAt(pagerRef.current, pagerRef.current.page));
+  }, [update]);
+
+  const scrollHandler = useAnimatedScrollHandler(
+    {
+      onScroll: (event) => {
+        scrollX.value = event.contentOffset.x;
+        const page = restingPage(event.contentOffset.x, screenWidth, pageCount);
+        if (page !== null) scheduleOnRN(onPageReached, page);
+      },
+      onBeginDrag: () => {
+        scheduleOnRN(onDragStart);
+      },
+      onMomentumEnd: (event) => {
+        const page = restingPage(event.contentOffset.x, screenWidth, pageCount);
+        if (page !== null) scheduleOnRN(onPageReached, page);
+      },
+    },
+    [screenWidth, pageCount, onPageReached, onDragStart],
+  );
+
+  // Rotation / window resize: stay on the same page at the new width.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ x: pagerRef.current.page * screenWidth, animated: false });
+  }, [screenWidth]);
 
   const handleContinue = () => {
-    if (isLastSlide) {
-      onFinish();
-    } else {
-      goToIndex(index + 1);
+    const { state, effect } = requestNext(pagerRef.current, pageCount);
+    update(state);
+    if (effect === 'finish') {
+      run(onFinish);
+    } else if (effect === 'scroll' && state.target !== null) {
+      scrollRef.current?.scrollTo({ x: state.target * screenWidth, animated: !reducedMotion });
+      clearWatchdog();
+      // Never stuck "in transition": if the target is not reached in time
+      // (a slow device, an interrupted animation), settle on the page shown.
+      watchdog.current = setTimeout(() => {
+        if (pagerRef.current.target === null) return;
+        const page = nearestPage(scrollX.value, screenWidth, pageCount);
+        scrollRef.current?.scrollTo({ x: page * screenWidth, animated: false });
+        update(settleAt(pagerRef.current, page));
+      }, TRANSITION_WATCHDOG_MS);
     }
+  };
+
+  // Start / Skip / guest run once; a failed exit makes the controls available again.
+  const run = (action: () => void | Promise<void>) => {
+    Promise.resolve()
+      .then(action)
+      .catch(() => update({ ...pagerRef.current, exiting: false }));
+  };
+  const exitWith = (action: () => void | Promise<void>) => () => {
+    const { state, allowed } = requestExit(pagerRef.current);
+    if (!allowed) return;
+    update(state);
+    run(action);
   };
 
   return (
@@ -92,8 +156,8 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={scrollHandler}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
         scrollEventThrottle={16}
+        testID="onboarding-pager"
       >
         {onboardingSlideImages.map((slide, slideIndex) => (
           <OnboardingSlide
@@ -109,24 +173,24 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
 
       <View style={[styles.skipRow, { top: insets.top + spacing.sm }]}>
         <View style={styles.skipChip}>
-          <TextButton label={t('onboarding.skip')} onPress={onFinish} tone="light" testID="onboarding-skip" />
+          <TextButton label={t('onboarding.skip')} onPress={exitWith(onFinish)} disabled={!controls.skipEnabled} tone="light" testID="onboarding-skip" />
         </View>
       </View>
 
       <View style={[styles.bottomChrome, { paddingBottom: insets.bottom + spacing.md }]}>
-        <View style={styles.dots} accessible accessibilityRole="progressbar" accessibilityLabel={`${index + 1} / ${onboardingSlideImages.length}`}>
+        <View style={styles.dots} accessible accessibilityRole="progressbar" accessibilityLabel={`${pager.page + 1} / ${pageCount}`}>
           {onboardingSlideImages.map((slide, dotIndex) => (
             <OnboardingDot key={slide.id} dotIndex={dotIndex} scrollX={scrollX} screenWidth={screenWidth} />
           ))}
         </View>
 
         <View style={styles.cta}>
-          <Button label={isLastSlide ? t('onboarding.start') : t('onboarding.next')} variant="accent" size="lg" block onPress={handleContinue} testID="onboarding-next" />
+          <Button label={controls.isLastSlide ? t('onboarding.start') : t('onboarding.next')} variant="accent" size="lg" block disabled={!controls.continueEnabled} keepFocusWhenDisabled onPress={handleContinue} testID="onboarding-next" />
         </View>
         {/* Guest-first stays one tap away on the last slide; account
             creation is never forced before the user has seen OYNO. */}
-        {isLastSlide ? (
-          <TextButton label={t('onboarding.v2.guest')} onPress={onContinueAsGuest} tone="light" style={styles.laterLink} testID="onboarding-guest" />
+        {controls.showGuest ? (
+          <TextButton label={t('onboarding.v2.guest')} onPress={exitWith(onContinueAsGuest)} disabled={!controls.guestEnabled} tone="light" style={styles.laterLink} testID="onboarding-guest" />
         ) : (
           <View style={styles.laterSpacer} />
         )}

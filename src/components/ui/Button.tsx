@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radii, spacing, textStyles } from '@/theme';
@@ -30,6 +30,21 @@ type ButtonProps = {
   accessibilityHint?: string;
   /** Stable id for UI tests (data-testid on web). */
   testID?: string;
+  /**
+   * Brief, transient unavailability (e.g. a pager transition) that must not
+   * move keyboard focus. Presses are ignored and the button looks disabled,
+   * but the underlying Pressable is never `disabled`:
+   * - web: react-native-web turns a disabled role=button into a native
+   *   `<button disabled>`, which drops focus to the page, and it overwrites
+   *   aria-disabled with the Pressable's own `disabled`. The state is exposed
+   *   as `aria-busy` instead.
+   * - native: accessibilityState / aria-disabled say "disabled" (dimmed).
+   * The press handler is stable and reads the latest props: react-native-web
+   * (and RN's Pressability) apply a Pressable's new onPress/disabled in a
+   * passive effect, so on a busy main thread a tap right after a re-render
+   * would otherwise run the previous render's handler, or none.
+   */
+  keepFocusWhenDisabled?: boolean;
 };
 
 const SIZE = {
@@ -53,9 +68,14 @@ const VARIANT: Record<Exclude<ButtonVariant, 'danger'>, { bg: string; fg: string
  * out (invisible) under the spinner so the button never changes size. For
  * icon-only actions, use IconButton.
  */
-export function Button({ label, onPress, icon, disabled = false, loading = false, variant = 'primary', size = 'md', block = false, accessibilityHint, testID }: ButtonProps) {
+export function Button({ label, onPress, icon, disabled = false, loading = false, variant = 'primary', size = 'md', block = false, accessibilityHint, testID, keepFocusWhenDisabled = false }: ButtonProps) {
   const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
+  const latest = useRef({ onPress, isDisabled });
+  latest.current = { onPress, isDisabled };
+  const guardedPress = useCallback(() => {
+    if (!latest.current.isDisabled) latest.current.onPress?.();
+  }, []);
   const v = VARIANT[variant === 'danger' ? 'destructive' : variant];
   const base = SIZE[size];
   // Accessibility & Comfort "Larger controls": a taller button (never below
@@ -75,21 +95,21 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
         pressed && !isDisabled && styles.pressed,
         disabled && styles.disabled,
       ]}
-      onPress={isDisabled ? undefined : onPress}
+      onPress={keepFocusWhenDisabled ? guardedPress : isDisabled ? undefined : onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       press="strong"
       hitSlop={hitSlop}
       testID={testID}
       haptic={isDisabled ? false : variant === 'primary' || variant === 'accent' ? 'medium' : 'light'}
-      disabled={isDisabled}
+      disabled={keepFocusWhenDisabled ? undefined : isDisabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       // react-native-web reads only aria-* (accessibilityState is dropped on web).
       aria-disabled={isDisabled}
-      aria-busy={loading}
+      aria-busy={loading || (keepFocusWhenDisabled && isDisabled)}
     >
       <View style={[styles.content, loading && styles.hidden]}>
         {icon}

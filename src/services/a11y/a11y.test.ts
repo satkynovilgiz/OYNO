@@ -72,7 +72,7 @@ describe('announce', () => {
 describe('shared controls expose state as aria-* (web drops accessibilityState)', () => {
   const read = (file: string) => fs.readFileSync(path.join(__dirname, '../../..', file), 'utf8');
   it.each([
-    ['src/components/ui/Button.tsx', ['aria-disabled={isDisabled}', 'aria-busy={loading}']],
+    ['src/components/ui/Button.tsx', ['aria-disabled={isDisabled}', 'aria-busy={loading || (keepFocusWhenDisabled && isDisabled)}']],
     ['src/components/ui/Chip.tsx', ['aria-selected={selected}']],
     ['src/components/ui/IconButton.tsx', ['aria-disabled={disabled}']],
     ['src/components/ui/Toggle.tsx', ['aria-checked={value}', 'aria-disabled={disabled}']],
