@@ -1,0 +1,3 @@
+{
+  "_comment": "Evidence for release checks a repository cannot verify. Only add an entry after the step was really done: {\"status\": \"PASS\", \"evidence\": \"what was checked and where (link, build number)\", \"date\": \"YYYY-MM-DD\", \"by\": \"role\"}. Keys: apple-portal, eas-credentials, sign-in-with-apple, live-migrations, device-qa, testflight-build. Leave out anything not done - it stays UNKNOWN."
+}

@@ -1,7 +1,15 @@
 # OYNO — EAS iOS Beta / TestFlight Readiness
 
-Status as of **2026-09-26** (release-candidate audit on `main`), updated
-**2026-09-29** after the post-feature integration pass (§6, §7c). Companion to
+> **Current results come from the release check, not from this file.**
+> Run `npm run release:check` (add `-- --markdown docs/RELEASE_CHECK.md` to
+> record it). Every result there is tied to a commit SHA and a date, and
+> anything a repository cannot prove (Apple portal, credentials, live
+> migrations, device QA) stays UNKNOWN until evidence is added to
+> `docs/release-evidence.json`. The dated sections below are a **historical
+> record** of earlier audits and are not re-verified automatically.
+
+Historical status as of **2026-09-26** (release-candidate audit on `main`),
+updated **2026-09-29** after the post-feature integration pass (§6, §7c). Companion to
 [`DEVICE_QA.md`](./DEVICE_QA.md) (device QA matrix + issue log),
 [`RELEASE_CANDIDATE_CHECKLIST.md`](./RELEASE_CANDIDATE_CHECKLIST.md) (the
 per-feature device test script) and [`VISUAL_QA.md`](./VISUAL_QA.md).
@@ -13,7 +21,9 @@ per-feature device test script) and [`VISUAL_QA.md`](./VISUAL_QA.md).
 1. **`ios.appleTeamId` missing** — REQUIRES APPLE DEVELOPER ACCOUNT ACTION.
    `@bacons/apple-targets` needs it to sign the widget extension; the
    generated Xcode project has no `DEVELOPMENT_TEAM` on any target.
-2. **Placeholder app icon and Android icons** — `assets/icon.png`,
+2. **Placeholder app icon and Android icons** (historical, 2026-09-29; the
+   release check now verifies size/opacity automatically but leaves "is it
+   final artwork" UNKNOWN for a person to confirm) — `assets/icon.png`,
    `assets/android-icon-*.png` are the default Expo template art (blue
    chevron). A real 1024×1024 OYNO icon (no transparency) is needed before
    anything goes to testers. No square OYNO icon exists in the repo.
@@ -37,7 +47,9 @@ still empty; Supabase auth settings still Google on / Apple off;
 ~~6. Pending migration `20260929000001_feedback_v2.sql`~~ — **applied**
    (re-checked later on 2026-09-29: `submit_beta_feedback_v2` answers its own
    `INVALID_INPUT` validation; `admin_get_beta_feedback` refuses the anon key
-   with `permission denied`, as designed). No migration is pending.
+   with `permission denied`, as designed). That was true on 2026-09-29;
+   **newer migrations written since are pending** - see §6 "Pending" and the
+   release check's Database rows for the current list.
 
 Once 1–3 are done, the repo is **ready for a preview build**. It is not
 TestFlight-ready until a production build is generated and the device
