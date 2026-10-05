@@ -2038,6 +2038,30 @@
         "kb": "KB",
         "mb": "MB"
       }
+    },
+    "check": {
+      "action": "Check downloads",
+      "hint": "Checks that everything saved for offline use is still on this device. No internet needed.",
+      "result": "{{ready}} ready offline · {{incomplete}} incomplete · {{updates}} with an update",
+      "incomplete": "Incomplete - repair to use offline",
+      "repair": "Repair",
+      "repairHint": "Downloads {{title}} again",
+      "needsRepair": "Needs repair",
+      "repairAll": "Repair all",
+      "updateAll": "Update all",
+      "updatesAvailable_one": "{{count}} download has a newer version.",
+      "updatesAvailable_other": "{{count}} downloads have a newer version.",
+      "updatesAvailable_few": "{{count}} downloads have a newer version.",
+      "updatesAvailable_many": "{{count}} downloads have a newer version.",
+      "repairPack_one": "Repair {{count}} item",
+      "repairPack_other": "Repair {{count}} items",
+      "repairPack_few": "Repair {{count}} items",
+      "repairPack_many": "Repair {{count}} items",
+      "repairQueued_one": "{{count}} item queued for repair",
+      "repairQueued_other": "{{count}} items queued for repair",
+      "repairQueued_few": "{{count}} items queued for repair",
+      "repairQueued_many": "{{count}} items queued for repair",
+      "repairWhenOnline": "Repairs start when you're back online. Nothing usable is removed meanwhile."
     }
   },
   "trails": {

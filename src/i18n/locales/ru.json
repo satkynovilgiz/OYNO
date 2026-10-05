@@ -2038,6 +2038,30 @@
         "kb": "КБ",
         "mb": "МБ"
       }
+    },
+    "check": {
+      "action": "Проверить загрузки",
+      "hint": "Проверяет, что всё сохранённое для офлайна по-прежнему есть на устройстве. Интернет не нужен.",
+      "result": "Готово офлайн: {{ready}} · неполные: {{incomplete}} · с обновлением: {{updates}}",
+      "incomplete": "Неполная загрузка - восстановите для офлайна",
+      "repair": "Восстановить",
+      "repairHint": "Загрузить «{{title}}» заново",
+      "needsRepair": "Нужно восстановить",
+      "repairAll": "Восстановить всё",
+      "updateAll": "Обновить всё",
+      "updatesAvailable_one": "Новая версия есть у загрузок: {{count}}.",
+      "updatesAvailable_few": "Новая версия есть у загрузок: {{count}}.",
+      "updatesAvailable_many": "Новая версия есть у загрузок: {{count}}.",
+      "updatesAvailable_other": "Новая версия есть у загрузок: {{count}}.",
+      "repairPack_one": "Восстановить ({{count}})",
+      "repairPack_few": "Восстановить ({{count}})",
+      "repairPack_many": "Восстановить ({{count}})",
+      "repairPack_other": "Восстановить ({{count}})",
+      "repairQueued_one": "В очереди на восстановление: {{count}}",
+      "repairQueued_few": "В очереди на восстановление: {{count}}",
+      "repairQueued_many": "В очереди на восстановление: {{count}}",
+      "repairQueued_other": "В очереди на восстановление: {{count}}",
+      "repairWhenOnline": "Восстановление начнётся, когда появится интернет. Пока ничего пригодного не удаляется."
     }
   },
   "trails": {

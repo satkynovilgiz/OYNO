@@ -6,7 +6,8 @@ import { getCollection } from '@/features/collections/collectionsData';
 import type { CultureItemRow, CultureMaterialRow, QuestRow } from '@/services/content/types';
 import { queryClient } from '@/services/queryClient';
 
-import { deleteQueries, hydrateQueryClient, measureOfflineBytes, pruneOrphanQueries, readManifest, writeManifest, writeQuery } from './offlineCache';
+import { deleteQueries, hydrateQueryClient, measureOfflineBytes, pruneOrphanQueries, readManifest, verifyStoredQueries, writeManifest, writeQuery } from './offlineCache';
+import { buildHealthReport, newerVersionAvailable, type HealthReport } from './offlineHealth';
 import {
   downloadId,
   EMPTY_MANIFEST,
@@ -103,6 +104,13 @@ type OfflineState = {
   gate: () => NetworkGate;
   /** Run queued work now if allowed (no-op while running or waiting). */
   pump: () => Promise<void>;
+  /** Last "Check downloads" result (null until checked). */
+  health: HealthReport | null;
+  /** Local-only check of every download's stored data (no network). */
+  checkDownloads: () => Promise<HealthReport>;
+  /** Re-download incomplete items through the SAME deduplicated queue (network
+   * and Wi-Fi rules apply). Existing copies stay until a repair succeeds. */
+  repair: (items: readonly { kind: OfflineKind; contentId: string; requester?: string }[]) => Promise<boolean[]>;
   /** Adds a requester to an entry that is already downloaded (no refetch). */
   claim: (id: string, requester: string) => Promise<void>;
   /** Drops one requester; the entry (and data no other entry uses) is
@@ -141,6 +149,7 @@ export const useOfflineStore = create<OfflineState>((set, get) => {
     queue: EMPTY_QUEUE,
     preference: DEFAULT_DOWNLOAD_PREFERENCE,
     wifiSupported: false,
+    health: null,
     network: { isConnected: undefined, type: undefined },
     appActive: true,
 
@@ -222,6 +231,14 @@ export const useOfflineStore = create<OfflineState>((set, get) => {
             // (the copy goes only if nobody else needs it).
             if (!(current?.requesters ?? []).includes(primary) && !hadPrimary) await get().release(intent.id, primary);
             setQueue(removeIntent(get().queue, intent.id));
+            // A fresh, complete copy was just written: no longer incomplete.
+            const health = get().health;
+            if (health && health.items[intent.id] && health.items[intent.id] !== 'ready') {
+              const items = { ...health.items, [intent.id]: 'ready' as const };
+              const counts = { ready: 0, incomplete: 0, update_available: 0 };
+              for (const value of Object.values(items)) counts[value] += 1;
+              set({ health: { ...health, items, counts } });
+            }
             settle(intent.id, true);
           } else if (!current) {
             settle(intent.id, false);
@@ -340,10 +357,33 @@ export const useOfflineStore = create<OfflineState>((set, get) => {
     },
 
     measureBytes: () => measureOfflineBytes(get().manifest),
+
+    checkDownloads: async () => {
+      const manifest = get().manifest;
+      const hashes = [...new Set(Object.values(manifest.entries).flatMap((entry) => entry.queryHashes))];
+      const stored = await verifyStoredQueries(hashes);
+      const report = buildHealthReport(manifest, stored, (entry) => {
+        if (entry.kind !== 'culture_item') return false;
+        const key = ['culture_item', entry.contentId];
+        const state = queryClient.getQueryState(key);
+        return newerVersionAvailable(stored.get(hashQueryKey(key)), state?.data !== undefined ? { data: state.data, updatedAt: state.dataUpdatedAt } : null);
+      });
+      set({ health: report });
+      return report;
+    },
+
+    repair: (items) =>
+      Promise.all(
+        items.map((item) => {
+          const entry = get().manifest.entries[downloadId(item.kind, item.contentId)];
+          return get().download(item.kind, item.contentId, item.requester ?? requestersOf(entry)[0] ?? USER_REQUESTER, 'user');
+        }),
+      ),
   };
 });
 
 export function useDownloadState(kind: OfflineKind, contentId: string) {
   const id = downloadId(kind, contentId);
-  return useOfflineStore((state) => (state.inFlight.includes(id) ? 'downloading' : state.failed.includes(id) ? 'error' : state.manifest.entries[id] ? 'downloaded' : 'not_downloaded'));
+  // An entry whose stored data failed the last check is NOT "downloaded".
+  return useOfflineStore((state) => (state.inFlight.includes(id) ? 'downloading' : state.failed.includes(id) || state.health?.items[id] === 'incomplete' ? 'error' : state.manifest.entries[id] ? 'downloaded' : 'not_downloaded'));
 }

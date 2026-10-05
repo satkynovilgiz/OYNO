@@ -2038,6 +2038,30 @@
         "kb": "КБ",
         "mb": "МБ"
       }
+    },
+    "check": {
+      "action": "Жүктөөлөрдү текшерүү",
+      "hint": "Офлайн үчүн сакталгандардын баары түзмөктө бар экенин текшерет. Интернет керек эмес.",
+      "result": "Офлайн даяр: {{ready}} · толук эмес: {{incomplete}} · жаңыртуу бар: {{updates}}",
+      "incomplete": "Толук эмес - офлайн үчүн калыбына келтириңиз",
+      "repair": "Калыбына келтирүү",
+      "repairHint": "«{{title}}» кайра жүктөлөт",
+      "needsRepair": "Калыбына келтирүү керек",
+      "repairAll": "Баарын калыбына келтирүү",
+      "updateAll": "Баарын жаңыртуу",
+      "updatesAvailable_one": "Жаңы версиясы бар жүктөөлөр: {{count}}.",
+      "updatesAvailable_other": "Жаңы версиясы бар жүктөөлөр: {{count}}.",
+      "updatesAvailable_few": "Жаңы версиясы бар жүктөөлөр: {{count}}.",
+      "updatesAvailable_many": "Жаңы версиясы бар жүктөөлөр: {{count}}.",
+      "repairPack_one": "Калыбына келтирүү ({{count}})",
+      "repairPack_other": "Калыбына келтирүү ({{count}})",
+      "repairPack_few": "Калыбына келтирүү ({{count}})",
+      "repairPack_many": "Калыбына келтирүү ({{count}})",
+      "repairQueued_one": "Калыбына келтирүү кезегинде: {{count}}",
+      "repairQueued_other": "Калыбына келтирүү кезегинде: {{count}}",
+      "repairQueued_few": "Калыбына келтирүү кезегинде: {{count}}",
+      "repairQueued_many": "Калыбына келтирүү кезегинде: {{count}}",
+      "repairWhenOnline": "Интернет келгенде калыбына келтирүү башталат. Ага чейин колдонууга жарактуу эч нерсе өчүрүлбөйт."
     }
   },
   "trails": {

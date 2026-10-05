@@ -6,7 +6,7 @@ import { downloadId, type OfflineKind, type OfflineManifest } from './offlineMan
  * "available" only when the manifest has its complete entry; a download
  * that is running or failed never counts as available.
  */
-export type OfflineRowState = 'available' | 'downloading' | 'failed' | 'removing';
+export type OfflineRowState = 'available' | 'downloading' | 'failed' | 'removing' | 'incomplete';
 
 export type OfflineRow = {
   id: string;
@@ -46,16 +46,19 @@ export type OfflineView = {
   downloading: OfflineRow[];
   /** Failed and no usable copy exists. */
   needsAttention: OfflineRow[];
+  /** On the manifest, but the last check found its stored data missing or malformed. */
+  needsRepair: OfflineRow[];
   /** Complete downloads, grouped by type, newest first. */
   groups: { id: OfflineGroupId; rows: OfflineRow[] }[];
   availableCount: number;
 };
 
-export function buildOfflineView(manifest: OfflineManifest, inFlight: string[], failed: string[], removing: string[] = []): OfflineView {
+export function buildOfflineView(manifest: OfflineManifest, inFlight: string[], failed: string[], removing: string[] = [], incomplete: readonly string[] = []): OfflineView {
   const downloading: OfflineRow[] = [];
   const needsAttention: OfflineRow[] = [];
   for (const id of inFlight) {
-    if (manifest.entries[id]) continue;
+    // A refresh of a usable copy stays in its group; a REPAIR shows as downloading.
+    if (manifest.entries[id] && !incomplete.includes(id)) continue;
     const parsed = parseId(id);
     if (parsed) downloading.push({ id, ...parsed, state: 'downloading', downloadedAt: null, route: offlineRoute(parsed.kind, parsed.contentId) });
   }
@@ -64,8 +67,11 @@ export function buildOfflineView(manifest: OfflineManifest, inFlight: string[], 
     const parsed = parseId(id);
     if (parsed) needsAttention.push({ id, ...parsed, state: 'failed', downloadedAt: null, route: offlineRoute(parsed.kind, parsed.contentId) });
   }
+  const needsRepair: OfflineRow[] = Object.values(manifest.entries)
+    .filter((entry) => !SUPPORT_KINDS.includes(entry.kind) && incomplete.includes(entry.id) && !inFlight.includes(entry.id))
+    .map((entry) => ({ id: entry.id, kind: entry.kind, contentId: entry.contentId, state: 'incomplete' as const, downloadedAt: entry.downloadedAt ?? null, route: offlineRoute(entry.kind, entry.contentId) }));
   const available: OfflineRow[] = Object.values(manifest.entries)
-    .filter((entry) => !SUPPORT_KINDS.includes(entry.kind))
+    .filter((entry) => !SUPPORT_KINDS.includes(entry.kind) && !incomplete.includes(entry.id))
     .map((entry) => ({
       id: entry.id,
       kind: entry.kind,
@@ -77,7 +83,7 @@ export function buildOfflineView(manifest: OfflineManifest, inFlight: string[], 
     // Newest first; stable tie-break by id so order never jumps.
     .sort((a, b) => (b.downloadedAt ?? '').localeCompare(a.downloadedAt ?? '') || a.id.localeCompare(b.id));
   const groups = GROUP_ORDER.map((id) => ({ id, rows: available.filter((row) => GROUP_BY_KIND[row.kind] === id) })).filter((group) => group.rows.length > 0);
-  return { downloading, needsAttention, groups, availableCount: available.filter((row) => row.state === 'available').length };
+  return { downloading, needsAttention, needsRepair, groups, availableCount: available.filter((row) => row.state === 'available').length };
 }
 
 /** "Available offline" is the one phrase for a complete download. */

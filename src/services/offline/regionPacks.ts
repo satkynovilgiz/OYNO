@@ -132,7 +132,20 @@ export async function downloadPackItems(requester: string, items: readonly Regio
  * handles those, with the same shared-ownership rule).
  */
 export async function cancelPackItems(requester: string, items: readonly RegionPackItem[], store: () => PackStore): Promise<void> {
-  for (const item of items) if (!store().manifest.entries[item.id]) await store().cancel?.(item.id, requester);
+  // Only this pack's claim on a PENDING download (incl. a repair of an item
+  // already on the device) is withdrawn; another pack's request continues.
+  for (const item of items) await store().cancel?.(item.id, requester);
+}
+
+/**
+ * Repair a pack: re-queue only the items that are missing or failed the
+ * last health check, tagged with this pack. Shared items another pack is
+ * repairing too become ONE download (the queue merges requesters).
+ */
+export async function repairPackItems(requester: string, items: readonly RegionPackItem[], toRepair: readonly RegionPackItem[], store: () => PackStore): Promise<number> {
+  const ids = new Set(toRepair.map((item) => item.id));
+  await Promise.all(items.filter((item) => ids.has(item.id)).map((item) => store().download(item.kind, item.contentId, requester, 'user')));
+  return items.filter((item) => !!store().manifest.entries[item.id]).length;
 }
 
 /** Releases only this requester's claim on each item. */

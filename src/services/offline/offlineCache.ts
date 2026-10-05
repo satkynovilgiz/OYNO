@@ -76,3 +76,37 @@ export async function pruneOrphanQueries(manifest: OfflineManifest): Promise<num
   if (orphans.length > 0) await AsyncStorage.multiRemove(orphans).catch(() => {});
   return orphans.length;
 }
+
+export type StoredQueryStatus = 'ok' | 'missing' | 'corrupt';
+export type StoredQueryCheck = { status: StoredQueryStatus; savedAt: number | null; data: unknown };
+
+/**
+ * Download health check, LOCAL ONLY (no network): is each stored query
+ * result still there, and does it parse into the shape this app wrote
+ * (its key matches, it has data)? Malformed values are reported as
+ * 'corrupt' - never thrown - and nothing is deleted here.
+ */
+export async function verifyStoredQueries(hashes: readonly string[]): Promise<Map<string, StoredQueryCheck>> {
+  const result = new Map<string, StoredQueryCheck>();
+  if (hashes.length === 0) return result;
+  const pairs: readonly (readonly [string, string | null])[] | null = await AsyncStorage.multiGet(hashes.map((hash) => QUERY_PREFIX + hash)).catch(() => null);
+  const byKey = new Map(pairs ?? []);
+  for (const hash of hashes) {
+    const raw = byKey.get(QUERY_PREFIX + hash) ?? null;
+    if (raw === null) {
+      result.set(hash, { status: 'missing', savedAt: null, data: undefined });
+      continue;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      result.set(hash, { status: 'corrupt', savedAt: null, data: undefined });
+      continue;
+    }
+    const stored = parsed as Partial<StoredQuery> | null;
+    const valid = !!stored && typeof stored === 'object' && Array.isArray(stored.key) && hashQueryKey(stored.key) === hash && 'data' in stored && stored.data !== undefined;
+    result.set(hash, valid ? { status: 'ok', savedAt: typeof stored!.savedAt === 'number' ? stored!.savedAt : null, data: stored!.data } : { status: 'corrupt', savedAt: null, data: undefined });
+  }
+  return result;
+}

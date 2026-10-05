@@ -22,8 +22,9 @@ import { formatShortDate } from '@/services/i18n/formatDate';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import type { OfflineKind } from '@/services/offline/offlineManifest';
 import { buildOfflineView, formatBytes, type OfflineRow } from '@/services/offline/offlineModel';
-import { buildRegionOfflineManifest, regionPackState, requestedRegionIds } from '@/services/offline/regionPacks';
-import { buildLearningPathOfflineManifest, learningPathPackState, requestedPathIds } from '@/services/offline/pathPacks';
+import { buildRegionOfflineManifest, regionPackState, regionRequester, repairPackItems, requestedRegionIds, type RegionPackItem } from '@/services/offline/regionPacks';
+import { buildLearningPathOfflineManifest, learningPathPackState, pathRequester, requestedPathIds } from '@/services/offline/pathPacks';
+import { itemsToRepair, packHealth } from '@/services/offline/offlineHealth';
 import { LEARNING_PATHS } from '@/features/learn/learningPaths';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
@@ -53,6 +54,10 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
   const manifest = useOfflineStore((state) => state.manifest);
   const inFlight = useOfflineStore((state) => state.inFlight);
   const failed = useOfflineStore((state) => state.failed);
+  const health = useOfflineStore((state) => state.health);
+  const [checking, setChecking] = useState(false);
+  const incomplete = useMemo(() => (health ? Object.keys(health.items).filter((id) => health.items[id] === 'incomplete') : []), [health]);
+  const updates = useMemo(() => (health ? Object.keys(health.items).filter((id) => health.items[id] === 'update_available') : []), [health]);
   const { data: regions } = useExploreRegions();
   const { data: cultureItems } = useAllCultureItems();
   const [bytes, setBytes] = useState<number | null>(null);
@@ -61,27 +66,32 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
   const [confirmOne, setConfirmOne] = useState<{ id: string; title: string } | null>(null);
 
   const regionConfigs = useRegionExperiences();
-  const view = useMemo(() => buildOfflineView(manifest, inFlight, failed, removing), [manifest, inFlight, failed, removing]);
+  const view = useMemo(() => buildOfflineView(manifest, inFlight, failed, removing, incomplete), [manifest, inFlight, failed, removing, incomplete]);
   const regionPacks = requestedRegionIds(manifest).flatMap((regionId) => {
     const config = regionConfigs.find((candidate) => candidate.id === regionId);
     if (!config) return [];
-    const state = regionPackState(buildRegionOfflineManifest(config), regionId, manifest, inFlight, failed);
+    const pack = buildRegionOfflineManifest(config);
+    const state = regionPackState(pack, regionId, manifest, inFlight, failed);
     const row = regions?.find((candidate) => candidate.id === regionId);
+    const repair = health ? itemsToRepair(pack.items, manifest, health) : [];
     const label = state.status === 'available' ? t('regionHub.offline.available') : state.status === 'downloading' ? t('regionHub.offline.downloading') : state.status === 'attention' ? t('regionHub.offline.attention') : t('regionHub.offline.partial');
-    return [{ id: regionId, name: row ? (mapExploreRegionName(row)[i18n.language as SupportedLanguage] ?? row.name_kg) : regionId, label, downloaded: state.downloaded, total: state.total }];
+    const checked = health ? packHealth(pack.items, manifest, health) : null;
+    return [{ id: regionId, name: row ? (mapExploreRegionName(row)[i18n.language as SupportedLanguage] ?? row.name_kg) : regionId, label, downloaded: checked ? checked.ready : state.downloaded, total: state.total, requester: regionRequester(regionId), items: pack.items, repair }];
   });
   // Learning Path packs - also tags on the same downloads.
   const pathPacks = requestedPathIds(manifest).flatMap((pathId) => {
     const path = LEARNING_PATHS.find((candidate) => candidate.id === pathId);
     if (!path) return [];
-    const state = learningPathPackState(buildLearningPathOfflineManifest(path), manifest, inFlight, failed);
+    const pack = buildLearningPathOfflineManifest(path);
+    const state = learningPathPackState(pack, manifest, inFlight, failed);
+    const repair = health ? itemsToRepair(pack.items, manifest, health) : [];
     const label =
       state.status === 'available'
         ? t('pathOffline.available')
         : state.status === 'downloading'
           ? t('pathOffline.downloading')
           : t('pathOffline.partial', { available: state.offlineCapable, total: state.totalSteps });
-    return [{ id: pathId, name: t(path.titleKey), label }];
+    return [{ id: pathId, name: t(path.titleKey), label, requester: pathRequester(pathId), items: pack.items, repair }];
   });
   const isChild = experience === 'child';
   const isAdult = experience === 'adult';
@@ -122,6 +132,27 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
     }
   }
 
+  /** Local-only: reads what is stored, no network request. */
+  async function check() {
+    setChecking(true);
+    try {
+      await useOfflineStore.getState().checkDownloads();
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  function repairPack(pack: { requester: string; items: RegionPackItem[]; repair: RegionPackItem[] }) {
+    showToast(t('offline.check.repairQueued', { count: pack.repair.length }), { tone: 'info' });
+    void repairPackItems(pack.requester, pack.items, pack.repair, useOfflineStore.getState);
+  }
+
+  function repairRows(rows: { kind: OfflineKind; contentId: string }[]) {
+    if (rows.length === 0) return;
+    showToast(t('offline.check.repairQueued', { count: rows.length }), { tone: 'info' });
+    void useOfflineStore.getState().repair(rows);
+  }
+
   function retry(row: OfflineRow) {
     showToast(t('offline.v2.retryStarted'), { tone: 'info' });
     // Same download path as the detail screens - success updates the real
@@ -143,7 +174,7 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
         compact={compact}
         onOpen={() => router.push(row.route as never)}
         onRemove={row.state === 'failed' ? () => useOfflineStore.getState().remove(row.id) : () => setConfirmOne({ id: row.id, title: info.title })}
-        onRetry={() => retry(row)}
+        onRetry={() => (row.state === 'incomplete' ? repairRows([row]) : retry(row))}
       />
     );
   }
@@ -184,6 +215,39 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
               </View>
             </View>
 
+            {/* Check downloads: local reads only, so it also works offline. */}
+            <View style={styles.check}>
+              <Button label={t('offline.check.action')} variant="secondary" size="sm" loading={checking} onPress={() => void check()} />
+              {health ? (
+                <Text style={styles.checkResult} accessibilityLiveRegion="polite">
+                  {t('offline.check.result', { ready: health.counts.ready, incomplete: health.counts.incomplete, updates: health.counts.update_available })}
+                </Text>
+              ) : (
+                <Text style={styles.hint}>{t('offline.check.hint')}</Text>
+              )}
+              {health && isOffline && health.counts.incomplete > 0 ? <Text style={styles.hint}>{t('offline.check.repairWhenOnline')}</Text> : null}
+            </View>
+
+            {view.needsRepair.length > 0 ? (
+              <View style={styles.section}>
+                <SectionHeader title={t('offline.check.needsRepair')} count={view.needsRepair.length} size="sm" inset={0} />
+                {view.needsRepair.map((row) => renderRow(row, true))}
+                {view.needsRepair.length > 1 ? <Button label={t('offline.check.repairAll')} variant="accent" size="sm" onPress={() => repairRows(view.needsRepair)} /> : null}
+              </View>
+            ) : null}
+
+            {updates.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={styles.hint}>{t('offline.check.updatesAvailable', { count: updates.length })}</Text>
+                <Button
+                  label={t('offline.check.updateAll')}
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => repairRows(updates.flatMap((id) => (manifest.entries[id] ? [{ kind: manifest.entries[id].kind, contentId: manifest.entries[id].contentId }] : [])))}
+                />
+              </View>
+            ) : null}
+
             {view.downloading.length > 0 ? (
               <View style={styles.section}>
                 <SectionHeader title={t('offline.v2.downloading')} size="sm" inset={0} />
@@ -215,6 +279,7 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
                     <Text style={styles.regionMeta}>
                       {t('regionHub.offline.items', { downloaded: pack.downloaded, total: pack.total })} · {pack.label}
                     </Text>
+                    {pack.repair.length > 0 ? <Button label={t('offline.check.repairPack', { count: pack.repair.length })} variant="accent" size="sm" onPress={() => repairPack(pack)} /> : null}
                   </AnimatedPressable>
                 ))}
               </View>
@@ -227,6 +292,7 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
                   <AnimatedPressable key={pack.id} style={styles.regionRow} onPress={() => router.push(`/learn/${pack.id}` as never)} accessibilityRole="button" accessibilityLabel={`${pack.name}. ${pack.label}`}>
                     <Text style={styles.regionName}>{pack.name}</Text>
                     <Text style={styles.regionMeta}>{pack.label}</Text>
+                    {pack.repair.length > 0 ? <Button label={t('offline.check.repairPack', { count: pack.repair.length })} variant="accent" size="sm" onPress={() => repairPack(pack)} /> : null}
                   </AnimatedPressable>
                 ))}
               </View>
@@ -312,4 +378,6 @@ const styles = StyleSheet.create({
   infoTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
   infoBody: { ...textStyles.caption, fontSize: 14, lineHeight: 20, color: colors.textSecondary },
   center: { alignItems: 'center' },
+  check: { gap: spacing.xs, alignItems: 'flex-start' },
+  checkResult: { ...textStyles.bodyMedium, color: colors.textPrimary },
 });

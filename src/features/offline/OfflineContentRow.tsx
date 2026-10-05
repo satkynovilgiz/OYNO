@@ -32,11 +32,11 @@ export function OfflineContentRow({ title, typeLabel, image, state, savedLabel, 
   const { t } = useTranslation();
   const size = large ? 64 : 52;
   const status =
-    state === 'available' ? t('offline.available') : state === 'downloading' ? t('offline.downloading') : state === 'failed' ? t('offline.v2.failed') : t('offline.v2.removing');
+    state === 'available' ? t('offline.available') : state === 'downloading' ? t('offline.downloading') : state === 'failed' ? t('offline.v2.failed') : state === 'incomplete' ? t('offline.check.incomplete') : t('offline.v2.removing');
   const a11y = [title, status, savedLabel ?? typeLabel].filter(Boolean).join('. ');
 
   return (
-    <View style={[styles.row, state === 'failed' && styles.rowFailed, large && styles.rowLarge]}>
+    <View style={[styles.row, (state === 'failed' || state === 'incomplete') && styles.rowFailed, large && styles.rowLarge]}>
       <AnimatedPressable style={styles.main} onPress={state === 'available' ? onOpen : undefined} disabled={state !== 'available'} press="soft" accessibilityRole="button" accessibilityLabel={a11y}>
         {image ? (
           <Image source={image} style={[styles.thumb, { width: size, height: size }, state !== 'available' && styles.thumbMuted]} resizeMode="cover" />
@@ -52,8 +52,8 @@ export function OfflineContentRow({ title, typeLabel, image, state, savedLabel, 
           <View style={styles.statusRow}>
             {state === 'available' ? <CheckCircle2 size={13} color={colors.success} strokeWidth={2.5} /> : null}
             {state === 'downloading' || state === 'removing' ? <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} /> : null}
-            {state === 'failed' ? <CloudOff size={13} color={colors.accentTerracotta} strokeWidth={2.5} /> : null}
-            <Text style={[styles.status, state === 'available' && styles.statusOk, state === 'failed' && styles.statusFailed]} numberOfLines={1}>
+            {state === 'failed' || state === 'incomplete' ? <CloudOff size={13} color={colors.accentTerracotta} strokeWidth={2.5} /> : null}
+            <Text style={[styles.status, state === 'available' && styles.statusOk, (state === 'failed' || state === 'incomplete') && styles.statusFailed]} numberOfLines={2}>
               {status}
             </Text>
           </View>
@@ -72,6 +72,11 @@ export function OfflineContentRow({ title, typeLabel, image, state, savedLabel, 
 
       {state === 'available' && onRemove ? (
         <IconButton icon={Trash2} size={40} iconSize={17} elevated={false} accessibilityLabel={t('offline.a11y.remove', { title })} onPress={onRemove} />
+      ) : null}
+      {state === 'incomplete' && onRetry ? (
+        <View style={styles.failedActions}>
+          <Button label={t('offline.check.repair')} icon={<RotateCw size={14} color={colors.textPrimary} strokeWidth={2.5} />} variant="accent" size="sm" onPress={onRetry} accessibilityHint={t('offline.check.repairHint', { title })} />
+        </View>
       ) : null}
       {state === 'failed' ? (
         <View style={styles.failedActions}>
