@@ -159,3 +159,19 @@ horizontal overflow; Reader XL text + larger controls (RU).
 Still device-only: Memory Book PDF (expo-print) and share sheet, widgets,
 notifications, 3D games performance, real file-system downloads, iOS Dynamic
 Type / Android font scale, Safari/WebKit and Firefox, OAuth and real sign-in.
+
+## Learning Path guided journey - device checks still to do (2026-10-05)
+
+Web smoke (`e2e/tests/path-journey.spec.ts`) covers articles, the glossary
+step, the manual-confirmation step, the completion state, direct links,
+missing targets and offline. Still device-only (3D games do not run in the
+web smoke):
+
+| Check | Status |
+| --- | --- |
+| Horse Games path → Kok Boru → finish an **official** round → result sheet shows "Continue learning" with "Read: Kyz Kuumai"; Replay and Exit still work | PENDING (device) |
+| Same path, **practice** round only → result sheet says practice does not complete the step; no Continue | PENDING (device) |
+| Continue from the result sheet replaces the game (sheet does not stay above the next screen); Back returns to the path | PENDING (device) |
+| Open a game directly (Games tab) → result sheet shows no path card | PENDING (device) |
+| Switch account while a step is open from a path → card and "Back to Learning Path" disappear | PENDING (device) |
+| Continue card + pill above the home indicator, not covering the reader's primary actions at the largest Dynamic Type | PENDING (device) |

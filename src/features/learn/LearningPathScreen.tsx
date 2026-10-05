@@ -25,11 +25,12 @@ import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { buildLearningPathOfflineManifest, learningPathPackState, offlineContinue } from '@/services/offline/pathPacks';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 
+import { stepHref } from './PathContinueCard';
 import { PathOfflineRow } from './PathOfflineRow';
 
-/** Opens a step with `fromPath` so the app can offer "Back to Learning Path". */
+/** Opens a step with `fromPath` so the app can offer "Back to Learning Path" and "Continue learning". */
 export function openStep(route: string, pathId: string) {
-  router.push(`${route}${route.includes('?') ? '&' : '?'}fromPath=${pathId}` as never);
+  router.push(stepHref(route, pathId) as never);
 }
 
 /**

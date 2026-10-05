@@ -213,3 +213,53 @@ export function validatePaths(
   }
   return problems;
 }
+
+// ---------------------------------------------------------------------
+// Guided journey: the path context a step screen was opened with
+// (`?fromPath=<id>`) and what to offer next. Derived from the same signals
+// as pathProgress - no second progress engine, nothing stored.
+// ---------------------------------------------------------------------
+
+/** The step of `fromPath` that `pathname` is - or null when the screen was
+ * opened independently (no/unknown path, or a route that is not one of
+ * that path's steps). A direct link never gets an unrelated path. */
+export function pathContextFor(
+  fromPath: string | undefined,
+  pathname: string,
+  gameRoute: (gameId: string) => string | null,
+  paths: readonly LearningPath[] = LEARNING_PATHS,
+): { path: LearningPath; stepIndex: number } | null {
+  if (!fromPath) return null;
+  const path = paths.find((candidate) => candidate.id === fromPath);
+  if (!path) return null;
+  const stepIndex = path.steps.findIndex((step) => stepRoute(step, gameRoute) === pathname);
+  return stepIndex >= 0 ? { path, stepIndex } : null;
+}
+
+export type Continuation =
+  /** The activity is not finished yet - offer nothing (opening never completes). */
+  | { kind: 'pending' }
+  /** No reliable completion evidence: the person confirms it themselves. */
+  | { kind: 'confirm'; step: LearningPathStep }
+  /** Finished: the next INCOMPLETE step (completed ones are skipped). */
+  | { kind: 'next'; step: LearningPathStep; index: number }
+  /** Every step done: suggest another path that is not finished, if any. */
+  | { kind: 'done'; otherPath: LearningPath | null };
+
+export function pathContinuation(path: LearningPath, stepIndex: number, signals: PathSignals, paths: readonly LearningPath[] = LEARNING_PATHS): Continuation {
+  const progress = pathProgress(path, signals);
+  const step = path.steps[stepIndex];
+  if (progress.states[stepIndex] !== 'completed') return isManualStep(step) ? { kind: 'confirm', step } : { kind: 'pending' };
+  if (progress.nextIndex === null) {
+    const others = paths.filter((candidate) => candidate.id !== path.id).map((candidate) => ({ candidate, progress: pathProgress(candidate, signals) }));
+    const other = others.find((entry) => entry.progress.started && !entry.progress.done) ?? others.find((entry) => !entry.progress.done);
+    return { kind: 'done', otherPath: other?.candidate ?? null };
+  }
+  // Same rule as the path screen's Continue: the first step, in order, not completed.
+  return { kind: 'next', step: path.steps[progress.nextIndex], index: progress.nextIndex };
+}
+
+/** Same owner the journey started with? A different account never inherits it. */
+export function pathContextValid(startedOwner: string | null, owner: string): boolean {
+  return startedOwner === null || startedOwner === owner;
+}

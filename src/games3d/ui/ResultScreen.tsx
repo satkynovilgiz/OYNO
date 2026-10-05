@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring, with
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, CompletionSheet } from '@/components/ui';
+import { PathContinueCard } from '@/features/learn/PathContinueCard';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, fontFamily, radii, spacing, textStyles, typography } from '@/theme';
 
@@ -136,6 +137,9 @@ export function ResultScreen({ visible, title, outcome = 'completed', banner, st
             <Text style={styles.coachText}>{coachTip}</Text>
           </View>
         ) : null}
+
+        {/* Opened from a Learning Path: the next step (or why this round did not count). Replay/Exit stay as they are. */}
+        <PathContinueCard inline />
 
         <View style={styles.actions}>
           <Button label={practiceGoal ? t('practiceAcademy.tryAgain') : t('games3d.result.replay')} onPress={onReplay} />
