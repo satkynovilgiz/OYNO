@@ -27,6 +27,7 @@ import { ActivityRecorder } from '@/components/system/ActivityRecorder';
 import { WidgetSync } from '@/components/system/WidgetSync';
 import { RegionCompletionWatcher } from '@/features/explore/regions/RegionCompletionWatcher';
 import { PathReturnPill } from '@/features/learn/PathReturnPill';
+import { prepareAnnouncer } from '@/services/a11y/announce';
 import { ListeningTracker } from '@/features/listening/ListeningTrackerMount';
 import { AchievementUnlockedModal } from '@/features/profile/components/AchievementUnlockedModal';
 import { getAchievement } from '@/features/profile/data';
@@ -92,6 +93,8 @@ function RouteGuard({ children, flagsReady }: { children: ReactNode; flagsReady:
   // Accessibility & Comfort (device-level): motion, haptics, control size.
   useEffect(() => {
     void useComfortStore.getState().load();
+    // Web: the screen-reader live region must exist before the first announcement.
+    prepareAnnouncer();
   }, []);
 
   // Beta feedback diagnostic trail: which screen is open (sanitized path only).

@@ -101,6 +101,7 @@ function TodayCard({
       haptic={onPress ? 'light' : false}
       accessibilityRole="button"
       accessibilityState={{ disabled: !onPress }}
+      aria-disabled={!onPress}
       accessibilityLabel={accessibilityLabel}
     >
       <View style={[styles.medallion, ready && styles.medallionReady]}>

@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   spinner: { transform: [{ scale: 0.7 }], width: 14, height: 14 },
   status: { ...textStyles.caption, color: colors.textSecondary, flexShrink: 1 },
   statusOk: { color: colors.success, fontWeight: '600' },
-  statusFailed: { color: colors.accentTerracotta, fontWeight: '600' },
+  statusFailed: { color: colors.accentTerracottaText, fontWeight: '600' },
   saved: { ...textStyles.small, color: colors.textMuted },
   failedActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 });

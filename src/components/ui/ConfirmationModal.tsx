@@ -35,10 +35,21 @@ export function ConfirmationModal({
   children,
 }: ConfirmationModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+      // Web: react-native-web forwards this to its role="dialog" element, which
+      // otherwise has no name. (Focus moves in, is trapped, Escape closes and
+      // focus returns to the trigger - react-native-web's Modal does that.)
+      {...({ 'aria-label': title } as object)}
+    >
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title} accessibilityRole="header">
+            {title}
+          </Text>
           <Text style={styles.message}>{message}</Text>
           {children}
 

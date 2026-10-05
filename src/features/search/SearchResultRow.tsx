@@ -38,7 +38,7 @@ export function SearchResultRow({ item, query, saved, offline, large = false, on
           )}
         </Text>
         <View style={styles.metaRow}>
-          <Text style={[styles.type, { color: meta.tone === colors.surfaceFeature ? colors.primary : meta.tone }]} numberOfLines={1}>
+          <Text style={[styles.type, { color: meta.textTone }]} numberOfLines={1}>
             {typeLabel}
           </Text>
           {item.metadata && !large ? (

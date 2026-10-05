@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   artChild: { width: 84, height: 84 },
   image: { width: '100%', height: '100%' },
   text: { flex: 1, gap: 1 },
-  heading: { ...textStyles.overline, color: colors.accentTerracotta },
+  heading: { ...textStyles.overline, color: colors.accentTerracottaText },
   title: { ...textStyles.bodyMedium, fontSize: 18, fontWeight: '800', color: colors.textPrimary },
   titleEditorial: { ...editorial(textStyles.bodyMedium), fontSize: 19 },
   titleChild: { fontSize: 20 },

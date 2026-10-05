@@ -10,18 +10,20 @@ import { colors } from '@/theme';
  * fallback colour for content without artwork. Purely presentational -
  * the content types themselves come from the shared catalog.
  */
-export type ContentTypeMeta = { labelKey: string; icon: LucideIcon; tone: string };
+/** `tone` colours icons/marks; `textTone` is the same hue made AA-safe
+ * (>= 4.5:1 on cream) for the small type label text. */
+export type ContentTypeMeta = { labelKey: string; icon: LucideIcon; tone: string; textTone: string };
 
 const META: Record<CatalogContentType, ContentTypeMeta> = {
-  game: { labelKey: 'library.types.game', icon: Gamepad2, tone: colors.primary },
-  nature: { labelKey: 'library.types.place', icon: Mountain, tone: '#3D6E72' },
-  region: { labelKey: 'library.types.place', icon: MapPin, tone: '#3D6E72' },
-  culture_item: { labelKey: 'library.types.culture', icon: Landmark, tone: colors.accentTerracotta },
-  culture_category: { labelKey: 'library.types.culture', icon: Landmark, tone: colors.accentTerracotta },
-  culture_material: { labelKey: 'library.types.material', icon: BookOpen, tone: '#7A3226' },
-  interactive_experience: { labelKey: 'library.types.experience', icon: Sparkles, tone: '#5B4B7A' },
-  trail: { labelKey: 'library.types.trail', icon: Route, tone: '#8B6B3D' },
-  collection: { labelKey: 'library.types.collection', icon: Layers, tone: colors.surfaceFeature },
+  game: { labelKey: 'library.types.game', icon: Gamepad2, tone: colors.primary, textTone: colors.primary },
+  nature: { labelKey: 'library.types.place', icon: Mountain, tone: '#3D6E72', textTone: '#3D6E72' },
+  region: { labelKey: 'library.types.place', icon: MapPin, tone: '#3D6E72', textTone: '#3D6E72' },
+  culture_item: { labelKey: 'library.types.culture', icon: Landmark, tone: colors.accentTerracotta, textTone: colors.accentTerracottaText },
+  culture_category: { labelKey: 'library.types.culture', icon: Landmark, tone: colors.accentTerracotta, textTone: colors.accentTerracottaText },
+  culture_material: { labelKey: 'library.types.material', icon: BookOpen, tone: '#7A3226', textTone: '#7A3226' },
+  interactive_experience: { labelKey: 'library.types.experience', icon: Sparkles, tone: '#5B4B7A', textTone: '#5B4B7A' },
+  trail: { labelKey: 'library.types.trail', icon: Route, tone: '#8B6B3D', textTone: '#7A5C33' },
+  collection: { labelKey: 'library.types.collection', icon: Layers, tone: colors.surfaceFeature, textTone: colors.primary },
 };
 
 export function contentTypeMeta(type: CatalogContentType): ContentTypeMeta {

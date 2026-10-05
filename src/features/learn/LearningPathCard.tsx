@@ -58,7 +58,7 @@ function PathRow({ path, progress, large, editorialTitle }: { path: LearningPath
 }
 
 const styles = StyleSheet.create({
-  section: { ...typography.overline, color: colors.accentTerracotta },
+  section: { ...typography.overline, color: colors.accentTerracottaText },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   rowLarge: { padding: spacing.md },
   thumb: { width: 56, height: 56, borderRadius: 12 },

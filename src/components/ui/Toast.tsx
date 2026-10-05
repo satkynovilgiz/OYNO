@@ -1,11 +1,12 @@
 import { hapticNotify } from '@/services/comfort/haptics';
 import { Check, Info } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
 
+import { announce } from '@/services/a11y/announce';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, elevation, motion, radii, spacing, textStyles } from '@/theme';
 
@@ -26,7 +27,7 @@ const useToastStore = create<{ toast: ToastState; show: (message: string, tone: 
 export function showToast(message: string, options: { tone?: ToastTone; haptic?: boolean } = {}) {
   useToastStore.getState().show(message, options.tone ?? 'success');
   if (options.haptic && Platform.OS !== 'web') void hapticNotify('success').catch(() => {});
-  AccessibilityInfo.announceForAccessibility?.(message);
+  announce(message);
 }
 
 /** Bottom clearance so a toast floats above the tab bar, not on it. */

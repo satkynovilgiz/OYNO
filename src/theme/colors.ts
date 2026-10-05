@@ -21,12 +21,21 @@ const palette = {
   gold600: '#C79A2E',
   silver400: '#9AA6AC',
   red500: '#D64545',
+  // Destructive button FILL: white on red500 measured 4.38:1 (AA needs 4.5).
+  red600: '#C53F3F',
   // Real terracotta accent (Section "Use terracotta selectively for
   // cultural warmth") - distinct from tileOrange below, which stays as
   // the existing Home culture-tile tone so nothing that already renders
   // with it shifts color.
   terracotta500: '#B9622F',
   terracotta700: '#7A3F1E',
+  // TEXT-only shades of the accents: small overline text in terracotta500
+  // measured 3.48:1 (cream100) / 3.92:1 (cream50) and gold600 2.08:1 -
+  // below AA 4.5:1. These clear it on cream100 (4.65 / 4.62) and cream50
+  // (5.24 / 5.21), not on cream200 (~4.25); the fills and decorative uses
+  // keep the brand shades.
+  terracotta600: '#9B5227',
+  gold800: '#7E621D',
   tileGreen: '#33482F',
   tileOrange: '#B9793A',
   tileRed: '#7A3226',
@@ -34,11 +43,11 @@ const palette = {
   tilePurple: '#5B4B7A',
   ink900: '#2B2019',
   ink600: '#6B5A47',
-  // Was #9C8A73 - measured ~2.7:1 contrast against the cream background,
-  // below WCAG AA's 4.5:1 for normal text. Darkened just enough to clear
-  // 4.5:1 while staying visibly lighter than ink600 (textSecondary), so
-  // the muted/secondary text hierarchy stays distinguishable.
-  ink400: '#786550',
+  // Was #9C8A73 (~2.7:1), then #786550 - axe measured 4.47:1 on cream100
+  // (2026-10-05), still under WCAG AA 4.5:1. #74614C: 4.74 on cream100,
+  // 5.35 on cream50 (4.36 on cream200 - avoid muted text there), still
+  // visibly lighter than ink600 (textSecondary).
+  ink400: '#74614C',
   white: '#FFFFFF',
 } as const;
 
@@ -70,8 +79,14 @@ export const colors = {
    * highlight, a "hero" tag), never as a default card border. */
   accentTerracotta: palette.terracotta500,
   accentTerracottaDark: palette.terracotta700,
+  /** Terracotta for TEXT on cream (AA 4.5:1); accentTerracotta stays for fills/marks. */
+  accentTerracottaText: palette.terracotta600,
+  /** Gold for TEXT on cream (AA 4.5:1); accentGold* stay for fills/marks. */
+  accentGoldText: palette.gold800,
 
   danger: palette.red500,
+  /** Fill behind white text on destructive buttons (AA: 5.05:1 with white). */
+  dangerFill: palette.red600,
 
   textPrimary: palette.ink900,
   textSecondary: palette.ink600,

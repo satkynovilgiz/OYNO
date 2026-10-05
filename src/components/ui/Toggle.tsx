@@ -37,6 +37,8 @@ export function Toggle({ value, onValueChange, accessibilityLabel, disabled = fa
       onPress={() => !disabled && onValueChange(!value)}
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled }}
+      aria-checked={value}
+      aria-disabled={disabled}
       accessibilityLabel={accessibilityLabel}
       style={[styles.pressable, disabled && styles.disabled]}
     >

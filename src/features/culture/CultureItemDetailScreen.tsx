@@ -249,7 +249,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
               <View style={[styles.hero, isChild && styles.heroChild, reader.focusMode && styles.heroFocus]}>
                 {item.image_url ? (
                   // Storage-backed (admin-uploaded, see admin_set_culture_item_image).
-                  <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={200} />
+                  <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={reducedMotion ? 0 : 200} accessibilityLabel="" />
                 ) : (
                   <MediaImage source={heroSource as ImageSourcePropType} />
                 )}

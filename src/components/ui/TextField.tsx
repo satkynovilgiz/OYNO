@@ -126,6 +126,7 @@ export function TextField({
           accessibilityLabel={label}
           accessibilityHint={error ?? hint ?? undefined}
           accessibilityState={{ disabled: !editable }}
+          aria-disabled={!editable}
         />
         {secure ? (
           <AnimatedPressable

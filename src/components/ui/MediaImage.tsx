@@ -40,6 +40,7 @@ export function MediaImage({
   position = 'center',
   fill = true,
   style,
+  alt = '',
 }: {
   source: ImageSourcePropType;
   backdrop?: ImageSourcePropType | null;
@@ -47,6 +48,10 @@ export function MediaImage({
   position?: ImageContentPosition;
   fill?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** Text alternative. Default '' = decorative (the card/button around it
+   * carries the name), so web screen readers skip it instead of reading a
+   * file name. Pass a description for an image that IS the content. */
+  alt?: string;
 }) {
   const reducedMotion = useReducedMotion();
   return (
@@ -58,6 +63,8 @@ export function MediaImage({
       transition={reducedMotion ? 0 : motion.fadeIn.durationMs}
       cachePolicy="memory-disk"
       accessibilityIgnoresInvertColors
+      // expo-image 57 (web) puts only accessibilityLabel on the loaded <img>'s alt.
+      accessibilityLabel={alt}
     />
   );
 }

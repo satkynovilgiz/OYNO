@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   headerText: { flex: 1, gap: 1 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  eyebrow: { ...typography.overline, color: colors.accentGoldPressed },
+  eyebrow: { ...typography.overline, color: colors.accentGoldText },
   title: { fontFamily: fontFamily.wordmark, fontSize: 28, lineHeight: 33, fontWeight: '700', color: colors.textPrimary },
   subtitle: { ...typography.caption, color: colors.textSecondary },
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs, marginTop: spacing.xs },

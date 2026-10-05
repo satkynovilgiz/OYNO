@@ -175,3 +175,10 @@ web smoke):
 | Open a game directly (Games tab) → result sheet shows no path card | PENDING (device) |
 | Switch account while a step is open from a path → card and "Back to Learning Path" disappear | PENDING (device) |
 | Continue card + pill above the home indicator, not covering the reader's primary actions at the largest Dynamic Type | PENDING (device) |
+
+## Accessibility (VoiceOver / TalkBack) - PENDING (2026-10-05)
+
+Web checks (axe, keyboard, focus, live region, 320 px + Reader XL) pass in
+Chromium - see `docs/ACCESSIBILITY.md`. Screen-reader and Dynamic Type
+checks on a physical iPhone / Android phone are listed there and are all
+**PENDING** - none has been done.

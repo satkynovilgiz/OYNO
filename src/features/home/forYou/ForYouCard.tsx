@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   card: { gap: spacing.sm, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   cardEditorial: { borderLeftWidth: 3, borderLeftColor: colors.accentGold },
-  kicker: { ...typography.overline, color: colors.accentTerracotta },
+  kicker: { ...typography.overline, color: colors.accentTerracottaText },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   thumb: { width: 56, height: 56, borderRadius: 12 },
   thumbChild: { width: 72, height: 72 },

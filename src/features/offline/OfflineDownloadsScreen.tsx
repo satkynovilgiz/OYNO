@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LibraryEmptyState, LibraryHeader } from '@/components/library/LibraryChrome';
 import { AnimatedPressable, Button, ConfirmationModal, SectionHeader } from '@/components/ui';
+import { announce } from '@/services/a11y/announce';
 import { showToast } from '@/components/ui/Toast';
 import { getCollection } from '@/features/collections/collectionsData';
 import { cultureItemImages } from '@/features/culture/data';
@@ -136,7 +137,9 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
   async function check() {
     setChecking(true);
     try {
-      await useOfflineStore.getState().checkDownloads();
+      const report = await useOfflineStore.getState().checkDownloads();
+      // The result text appears below the button; say it too (screen readers).
+      announce(t('offline.check.result', { ready: report.counts.ready, incomplete: report.counts.incomplete, updates: report.counts.update_available }));
     } finally {
       setChecking(false);
     }

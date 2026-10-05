@@ -55,12 +55,12 @@ export function PathOfflineRow({ pack, state, title }: { pack: LearningPathOffli
       </View>
       {pending ? <CancelPackButton requester={pathRequester(pack.pathId)} items={pack.items} name={title} /> : null}
       {state.status === 'none' ? (
-        <AnimatedPressable style={styles.action} onPress={start} disabled={isOffline} accessibilityRole="button" accessibilityState={{ disabled: isOffline }} accessibilityLabel={t('pathOffline.downloadPath', { title })}>
+        <AnimatedPressable style={styles.action} onPress={start} disabled={isOffline} accessibilityRole="button" accessibilityState={{ disabled: isOffline }} aria-disabled={isOffline} accessibilityLabel={t('pathOffline.downloadPath', { title })}>
           <Text style={[styles.actionText, isOffline && styles.disabled]}>{t('pathOffline.downloadShort')}</Text>
         </AnimatedPressable>
       ) : null}
       {state.status === 'partial' || state.status === 'attention' ? (
-        <AnimatedPressable style={styles.iconAction} onPress={start} disabled={isOffline} hitSlop={6} accessibilityRole="button" accessibilityLabel={t('pathOffline.retry')}>
+        <AnimatedPressable style={styles.iconAction} onPress={start} disabled={isOffline} hitSlop={6} accessibilityRole="button" accessibilityState={{ disabled: isOffline }} aria-disabled={isOffline} accessibilityLabel={t('pathOffline.retry')}>
           <RotateCw size={18} color={isOffline ? colors.textMuted : colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
       ) : null}

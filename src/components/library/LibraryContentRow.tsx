@@ -6,6 +6,7 @@ import { StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
+import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import type { CatalogContentType } from '@/services/content/contentCatalog';
 import { colors, fontFamily, radii, spacing, typography } from '@/theme';
@@ -23,6 +24,7 @@ export type LibraryItem = {
 /** Artwork, or a tasteful tonal oymo tile in the content type's colour. */
 export function LibraryArt({ item, size, radius }: { item: LibraryItem; size: number | '100%'; radius: number }) {
   const [failed, setFailed] = useState(false);
+  const reducedMotion = useReducedMotion();
   const meta = contentTypeMeta(item.contentType);
   const Icon = meta.icon;
   // A fixed-ratio frame with the image filling it - the frame, not the
@@ -33,7 +35,8 @@ export function LibraryArt({ item, size, radius }: { item: LibraryItem; size: nu
       <View style={[styles.art, frame]}>
         {/* expo-image: decoded at the frame's size (never the full-resolution
             bitmap for a thumbnail) and memory/disk cached across screens. */}
-        <Image source={item.thumbnail as never} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={120} onError={() => setFailed(true)} accessibilityIgnoresInvertColors />
+        // Decorative (the row carries the name): empty alt on web. No fade under Reduce Motion.
+        <Image source={item.thumbnail as never} style={styles.fill} contentFit="cover" cachePolicy="memory-disk" transition={reducedMotion ? 0 : 120} onError={() => setFailed(true)} accessibilityIgnoresInvertColors accessibilityLabel="" />
       </View>
     );
   }
@@ -97,7 +100,7 @@ export function LibraryContentRow({
             {item.title}
           </Text>
           <View style={styles.metaRow}>
-            <Text style={[styles.type, { color: meta.tone === colors.surfaceFeature ? colors.primary : meta.tone }]} numberOfLines={1}>
+            <Text style={[styles.type, { color: meta.textTone }]} numberOfLines={1}>
               {typeLabel}
             </Text>
             {item.subtitle && !isChild ? (
@@ -127,7 +130,7 @@ export function LibraryContentCard({ item, saved = false, offline = false, onPre
         {item.title}
       </Text>
       <View style={styles.metaRow}>
-        <Text style={[styles.type, { color: meta.tone === colors.surfaceFeature ? colors.primary : meta.tone }]} numberOfLines={1}>
+        <Text style={[styles.type, { color: meta.textTone }]} numberOfLines={1}>
           {t(meta.labelKey)}
         </Text>
         {saved ? <Heart size={11} color={colors.accentTerracotta} fill={colors.accentTerracotta} strokeWidth={0} style={styles.mark} /> : null}

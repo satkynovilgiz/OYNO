@@ -195,7 +195,8 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
             returnKeyType="search"
             enterKeyHint="search"
             onSubmitEditing={() => remember(query)}
-            accessibilityRole="search"
+            // "searchbox": a search FIELD (native: the search trait); "search" is the landmark role on web.
+            role="searchbox"
             accessibilityLabel={t('search.title')}
             accessibilityHint={t('search.v2.fieldHint')}
           />

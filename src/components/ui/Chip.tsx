@@ -35,6 +35,8 @@ export function Chip({ label, icon, selected = false, onPress, accessibilityRole
       haptic="light"
       accessibilityRole={accessibilityRole}
       accessibilityState={{ selected }}
+      // react-native-web reads only aria-* (accessibilityState is dropped on web).
+      aria-selected={selected}
       accessibilityLabel={label}
     >
       {icon}

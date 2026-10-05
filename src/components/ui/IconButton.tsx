@@ -61,6 +61,7 @@ export function IconButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
+      aria-disabled={disabled}
       style={[
         styles.base,
         elevated ? shadows.card : styles.flat,

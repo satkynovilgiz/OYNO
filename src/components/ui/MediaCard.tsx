@@ -107,6 +107,7 @@ export function MediaCard({
       haptic={onPress ? 'light' : false}
       accessibilityRole="button"
       accessibilityState={{ disabled: !onPress }}
+      aria-disabled={!onPress}
       accessibilityLabel={accessibilityLabel}
     >
       {artwork ?? (source ? <MediaImage source={source} backdrop={backdrop} position={imagePosition} /> : null)}

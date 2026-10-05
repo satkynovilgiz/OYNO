@@ -44,7 +44,7 @@ const VARIANT: Record<Exclude<ButtonVariant, 'danger'>, { bg: string; fg: string
   secondary: { bg: colors.surfaceElevated, fg: colors.primary, border: colors.borderSubtle },
   ghost: { bg: 'transparent', fg: colors.primary, border: colors.border },
   text: { bg: 'transparent', fg: colors.primary },
-  destructive: { bg: colors.error, fg: colors.textOnPrimary },
+  destructive: { bg: colors.dangerFill, fg: colors.textOnPrimary },
 };
 
 /**
@@ -87,6 +87,9 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
+      // react-native-web reads only aria-* (accessibilityState is dropped on web).
+      aria-disabled={isDisabled}
+      aria-busy={loading}
     >
       <View style={[styles.content, loading && styles.hidden]}>
         {icon}

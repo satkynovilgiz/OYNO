@@ -65,10 +65,10 @@ export function TextLink({ label, onPress }: { label: string; onPress: () => voi
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.sm },
   text: { flex: 1, gap: 2 },
-  eyebrow: { ...textStyles.overline, color: colors.accentTerracotta },
+  eyebrow: { ...textStyles.overline, color: colors.accentTerracottaText },
   titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs },
   title: { color: colors.textPrimary, flexShrink: 1 },
-  count: { ...textStyles.caption, fontWeight: '700', color: colors.accentTerracotta },
+  count: { ...textStyles.caption, fontWeight: '700', color: colors.accentTerracottaText },
   subtitle: { ...textStyles.caption, color: colors.textSecondary },
   link: { flexDirection: 'row', alignItems: 'center', gap: 2, minHeight: 44, flexShrink: 0 },
   linkText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },

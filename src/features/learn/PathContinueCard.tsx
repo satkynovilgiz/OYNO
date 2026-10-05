@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   card: { gap: spacing.xs, padding: spacing.md, borderRadius: radii.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accentGold },
   cardInline: { marginTop: spacing.sm },
   close: { position: 'absolute', top: spacing.xs, right: spacing.xs, minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
-  kicker: { ...typography.overline, color: colors.accentTerracotta, paddingRight: spacing.lg },
+  kicker: { ...typography.overline, color: colors.accentTerracottaText, paddingRight: spacing.lg },
   typeLabel: { ...textStyles.small, fontWeight: '700', color: colors.textSecondary },
   title: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
   body: { ...textStyles.small, color: colors.textSecondary },

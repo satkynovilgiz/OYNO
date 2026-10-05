@@ -270,7 +270,7 @@ function RoundRow({ session, rule, isPb, open, onPress }: { session: GameSession
   const metric = Number.isFinite(session.primary) && (rule.best !== 'lower' || session.result === 'win') ? formatMetric(rule.primary.unit, session.primary, t) : null;
   const label = [date, result, metric, session.practice ? t('gameRecords.practice') : null, isPb ? t('gameRecords.personalBest') : null].filter(Boolean).join('. ');
   return (
-    <AnimatedPressable style={styles.round} onPress={onPress} accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={label}>
+    <AnimatedPressable style={styles.round} onPress={onPress} accessibilityRole="button" accessibilityState={{ expanded: open }} aria-expanded={open} accessibilityLabel={label}>
       <View style={styles.roundMain}>
         <Text style={styles.roundDate}>{date}</Text>
         <Text style={styles.roundResult}>{result}</Text>
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   chartBlock: { gap: spacing.xs },
   chartTitle: { ...textStyles.small, fontWeight: '700', color: colors.textPrimary },
   group: { gap: spacing.sm },
-  sectionTitle: { ...typography.overline, color: colors.accentTerracotta },
+  sectionTitle: { ...typography.overline, color: colors.accentTerracottaText },
   lowerBetter: { ...textStyles.small, fontWeight: '700', color: colors.textPrimary },
   round: { gap: 4, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.borderSubtle },
   roundMain: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },

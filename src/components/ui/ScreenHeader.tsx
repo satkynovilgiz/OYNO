@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, paddingHorizontal: spacing.md },
   text: { flex: 1, gap: 3, minWidth: 0 },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  eyebrow: { ...textStyles.overline, color: colors.accentGoldPressed },
+  eyebrow: { ...textStyles.overline, color: colors.accentGoldText },
   title: { color: colors.textPrimary },
   subtitle: { ...textStyles.body, color: colors.textSecondary },
   actions: { flexDirection: 'row', gap: spacing.xs, paddingTop: 2 },

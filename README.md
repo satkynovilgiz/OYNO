@@ -64,7 +64,7 @@ npm run release:check -- --network                          # + optional live Su
 ```sh
 npx playwright install chromium   # once
 npm run e2e:build                 # web export pointed at the FAKE backend (https://oyno-e2e.test)
-npm run e2e                       # Playwright journeys + KG/RU/EN, 320 px and large-text sweeps
+npm run e2e                       # Playwright journeys, KG/RU/EN, 320 px, large text, accessibility (axe + keyboard)
 ```
 
 The suite (`e2e/`) runs the web export in Chromium with Pixel 7 emulation.
@@ -114,6 +114,7 @@ live project is a deliberate, manual step - see
 
 - `docs/TESTFLIGHT_READINESS.md` - release blockers, migrations, historical audits
 - `docs/DEVICE_QA.md` - real-device checks still to do
+- `docs/ACCESSIBILITY.md` - accessibility audit, measured contrast, pending VoiceOver/TalkBack checks
 - `docs/3D_GAMES.md` - 3D game architecture and performance baseline method
 - `docs/WIDGETS_NATIVE_SETUP.md` - iOS widget extension
 - `BACKEND_PLAN.md` - backend design

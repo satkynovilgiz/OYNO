@@ -62,7 +62,7 @@ export function UserAvatar({ avatarConfig, size = 'medium' }: UserAvatarProps) {
 
   return (
     <View style={isHero ? [styles.heroRing, { borderRadius: (px + 6) / 2 }] : undefined}>
-      <View style={[styles.wrap, dimensionStyle, isHero && styles.wrapHero]} accessibilityLabel={avatarConfig ? t('avatar.wipAvatarLabel') : t('avatar.yourAvatar')}>
+      <View style={[styles.wrap, dimensionStyle, isHero && styles.wrapHero]} accessible accessibilityRole="image" accessibilityLabel={avatarConfig ? t('avatar.wipAvatarLabel') : t('avatar.yourAvatar')}>
         <Image source={AVATAR_BUST_ART[config.base]} style={dimensionStyle} resizeMode="cover" />
         {avatarConfig ? (
           <View style={[styles.badge, { width: badgeSize, height: badgeSize, borderRadius: badgeSize / 2 }]}>

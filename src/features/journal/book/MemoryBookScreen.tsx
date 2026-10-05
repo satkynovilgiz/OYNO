@@ -5,6 +5,7 @@ import { Image, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, Button, ConfirmationModal, IconButton } from '@/components/ui';
+import { announce } from '@/services/a11y/announce';
 import { Chip } from '@/components/ui/Chip';
 import { showToast } from '@/components/ui/Toast';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
@@ -132,6 +133,7 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
     if (!photoCache.current || !photoCacheValid(photoCache.current)) photoCache.current = createPhotoCache();
     const run = ++runRef.current;
     setBusy(true);
+    announce(t('memoryBook.a11yPreparing'));
     let prepared: PreparedBook | null = null;
     try {
       const outcome = await prepareMemoryBook({ entries: book, includeText, layout, formatDate: fmt, cache: photoCache.current });
@@ -141,6 +143,7 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
     }
     // Abandoned meanwhile (back / exit / account change): touch nothing.
     if (run !== runRef.current || !prepared) return;
+    announce(t('memoryBook.a11yPrepared'));
     if (prepared.missingPhotoIds.length > 0) setPending(prepared);
     else await share(prepared);
   }
@@ -246,10 +249,13 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
             return (
               <AnimatedPressable
                 key={entry.id}
+                testID={`memory-book-entry-${entry.id}`}
                 style={[styles.item, on && styles.itemOn]}
                 onPress={() => setSelected((current) => toggleBookSelection(validSelection(entries, current), entry.id))}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on, disabled: !on && picked.length >= MAX_BOOK_ENTRIES }}
+                aria-checked={on}
+                aria-disabled={!on && picked.length >= MAX_BOOK_ENTRIES}
                 accessibilityLabel={`${t('memoryBook.memoryA11y', { date })}${entry.title ? `, ${entry.title}` : ''}, ${on ? t('memoryBook.selected') : t('memoryBook.notSelected')}`}
               >
                 {entry.photo?.localUri ? <Image source={{ uri: entry.photo.localUri }} style={styles.thumb} /> : <View style={[styles.thumb, styles.thumbPaper]} />}
@@ -264,7 +270,7 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
             );
           })}
 
-          <Button label={t('memoryBook.review')} variant="accent" size="lg" block disabled={!ready || busy} onPress={() => setPhase('review')} />
+          <Button label={t('memoryBook.review')} variant="accent" size="lg" block disabled={!ready || busy} onPress={() => setPhase('review')} testID="memory-book-review" />
           <Text style={styles.note}>{t('memoryBook.localOnly')}</Text>
         </ScrollView>
         )
@@ -321,7 +327,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.md },
   body: { ...textStyles.body, textAlign: 'center', color: colors.textSecondary },
   note: { ...textStyles.small, color: colors.textMuted },
-  label: { ...typography.overline, color: colors.accentTerracotta },
+  label: { ...typography.overline, color: colors.accentTerracottaText },
   input: { ...textStyles.body, color: colors.textPrimary, minHeight: 48, paddingHorizontal: spacing.sm, borderWidth: 1, borderColor: colors.surfaceBorder, borderRadius: cardRadii.compact, backgroundColor: colors.surface },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48 },
   rowLabel: { ...textStyles.bodyMedium, color: colors.textPrimary },

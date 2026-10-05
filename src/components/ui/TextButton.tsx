@@ -56,6 +56,7 @@ export function TextButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
+      aria-disabled={disabled}
     >
       {hideLabel ? null : (
         <Text style={[styles.label, tone === 'muted' && styles.labelMuted, tone === 'light' && styles.labelLight]}>{label}</Text>
