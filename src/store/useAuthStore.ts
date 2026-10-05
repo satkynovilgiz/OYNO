@@ -5,6 +5,7 @@ import {
   AuthError,
   authService,
   type AuthUser,
+  type DeletionConfirmation,
   type OAuthProvider,
   type SignInInput,
   type SignUpInput,
@@ -69,7 +70,10 @@ type AuthState = {
   signOut: () => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<boolean>;
   resendVerificationEmail: (email: string) => Promise<boolean>;
-  deleteAccount: (password: string) => Promise<boolean>;
+  /** true = deleted (local account state cleaned up); 'cancelled' = the
+   * provider sheet was closed (nothing happened, no error); false = failed
+   * (error set, account and local data untouched). */
+  deleteAccount: (confirmation: DeletionConfirmation) => Promise<boolean | 'cancelled'>;
   continueAsGuest: () => Promise<void>;
   updateProfile: (input: { name?: string; email?: string }) => Promise<boolean>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
@@ -224,19 +228,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  deleteAccount: async (password) => {
+  deleteAccount: async (confirmation) => {
+    if (get().isSubmitting) return false;
+    const offline = offlineMessage();
+    if (offline) {
+      set({ error: offline });
+      return false;
+    }
     set({ isSubmitting: true, error: null });
+    const userId = get().user?.id;
     try {
-      const userId = get().user?.id;
-      await authService.deleteAccount(password);
-      if (userId) await accountHooks.afterAccountDeleted?.(userId).catch(() => {});
-      await AsyncStorage.removeItem(GUEST_MODE_KEY);
-      set({ status: 'unauthenticated', user: null, isSubmitting: false });
-      return true;
+      await authService.deleteAccount(confirmation);
     } catch (error) {
+      if (error instanceof AuthError && error.code === 'cancelled') {
+        set({ isSubmitting: false });
+        return 'cancelled';
+      }
       set({ isSubmitting: false, error: localizeAuthError(error, 'account') });
       return false;
     }
+    // Only after the server confirmed the deletion: clean up THIS account's
+    // local state (generation bump + per-owner data via the account hooks).
+    if (userId) await accountHooks.afterAccountDeleted?.(userId).catch(() => {});
+    await AsyncStorage.removeItem(GUEST_MODE_KEY);
+    set({ status: 'unauthenticated', user: null, isSubmitting: false });
+    return true;
   },
 
   updateProfile: async (input) => {

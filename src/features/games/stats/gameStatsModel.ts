@@ -67,7 +67,12 @@ export type GameStatsSummary = {
   goals: number[];
 };
 
-/** Deterministic: plain mean rounded to one decimal; best by the rule's direction. */
+/**
+ * Deterministic: plain mean rounded to one decimal; best by the rule's
+ * direction. Pass ONE round type at a time (see roundGroups): official and
+ * practice rounds are not comparable (Jaa Atuu: 5 vs 15 arrows; Kyz Kuumai
+ * practice is a solo course; Kok Boru practice records "scored" 1/0).
+ */
 export function summarize(rule: GameRecordRule, sessions: readonly GameSessionRecord[]): GameStatsSummary {
   const values = sessions.filter((session) => hasMetric(rule, session)).map((session) => session.primary);
   const average = values.length && rule.best !== 'completion' ? Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10 : null;
@@ -79,7 +84,8 @@ export function summarize(rule: GameRecordRule, sessions: readonly GameSessionRe
     wins: sessions.filter((session) => session.result === 'win').length,
     draws: sessions.filter((session) => session.result === 'draw').length,
     losses: sessions.filter((session) => session.result === 'loss').length,
-    goals: rule.gameId === 'kok_boru' ? sessions.filter((session) => Number.isFinite(session.primary)).map((session) => session.primary) : [],
+    // Kok Boru practice records "scored or not" (1/0), not a goal count - never mixed into goals.
+    goals: rule.gameId === 'kok_boru' ? sessions.filter((session) => !session.practice && Number.isFinite(session.primary)).map((session) => session.primary) : [],
   };
 }
 
@@ -109,6 +115,13 @@ export function chartSummary(points: readonly ChartPoint[], words: { lead: (coun
   return `${words.lead(points.length)}: ${points.map((point) => words.format(point.value)).join(', ')}${words.unitSuffix ? ` ${words.unitSuffix}` : ''}.`;
 }
 
+/** The full text equivalent of one round type's chart: values (+ average when there is one). */
+export function chartDescription(points: readonly ChartPoint[], words: { lead: (count: number) => string; format: (value: number) => string; unitSuffix: string; average: string | null }): string {
+  const values = chartSummary(points, words);
+  if (!values) return '';
+  return words.average && points.length > 1 ? `${values} ${words.average}` : values;
+}
+
 /** Y range for the chart: the real min..max (padded), never starting at an invented zero for times. */
 export function chartRange(points: readonly ChartPoint[]): { min: number; max: number } | null {
   if (points.length === 0) return null;
@@ -128,4 +141,70 @@ export function statsShare(rule: GameRecordRule, records: OwnerRecords): { best:
   const official = recentSessions(records, rule.gameId, 'official');
   const best = rule.best === 'completion' ? null : (records.best[rule.gameId] ?? null);
   return { best, officialRecent: official.length, average: summarize(rule, official).average };
+}
+
+// ---------------------------------------------------------------------
+// Official vs practice: never one average, never one trend line
+// ---------------------------------------------------------------------
+export type RoundType = 'official' | 'practice';
+
+export type RoundGroup = {
+  type: RoundType;
+  sessions: GameSessionRecord[];
+  summary: GameStatsSummary;
+  points: ChartPoint[];
+};
+
+/**
+ * The groups a filter shows: 'official' / 'practice' -> that group only;
+ * 'all' -> BOTH groups side by side (each with its own summary and chart),
+ * never merged. Empty groups are kept for the single-type filters (the
+ * screen shows an empty state) and dropped from 'all'.
+ */
+export function roundGroups(rule: GameRecordRule, records: OwnerRecords, filter: SessionFilter, best: number | null): RoundGroup[] {
+  const types: RoundType[] = filter === 'all' ? ['official', 'practice'] : [filter];
+  return types
+    .map((type) => {
+      const sessions = recentSessions(records, rule.gameId, type);
+      // Practice never holds the PB: only the official group gets the stored best.
+      return { type, sessions, summary: summarize(rule, sessions), points: chartPoints(rule, sessions, type === 'official' ? best : null) };
+    })
+    .filter((group) => filter !== 'all' || group.sessions.length > 0);
+}
+
+// ---------------------------------------------------------------------
+// Aggregate formatting (averages) - separate from formatMetric, which keeps
+// formatting individual results exactly as before.
+// ---------------------------------------------------------------------
+const LOCALE_BY_LANGUAGE: Record<string, string> = { kg: 'ky', ru: 'ru', en: 'en' };
+
+export function appLocale(language: string): string {
+  return LOCALE_BY_LANGUAGE[language] ?? language;
+}
+
+function decimal(value: number, language: string, minimumIntegerDigits = 1): string {
+  try {
+    return new Intl.NumberFormat(appLocale(language), { maximumFractionDigits: 1, minimumFractionDigits: 0, minimumIntegerDigits, useGrouping: false }).format(value);
+  } catch {
+    const text = String(value);
+    return minimumIntegerDigits > 1 && value < 10 ? `0${text}` : text;
+  }
+}
+
+/**
+ * An average as people should read it: up to ONE decimal (10.5, not 11),
+ * no trailing ".0" (47, not 47.0), in the app's locale (RU: 10,5). Times
+ * keep the same one-decimal precision as m:ss.s (0:41.3). Null for a
+ * missing / non-finite / negative value - never a fabricated "0".
+ */
+export function formatAggregate(unit: GameRecordRule['primary']['unit'], value: number | null | undefined, language: string): string | null {
+  if (value === null || value === undefined || !Number.isFinite(value) || value < 0) return null;
+  const rounded = Math.round(value * 10) / 10;
+  if (unit === 'seconds') {
+    const minutes = Math.floor(rounded / 60);
+    const seconds = Math.round((rounded - minutes * 60) * 10) / 10;
+    return `${minutes}:${decimal(seconds, language, 2)}`;
+  }
+  if (unit === 'percent') return `${decimal(rounded, language)}%`;
+  return decimal(rounded, language);
 }

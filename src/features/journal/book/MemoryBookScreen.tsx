@@ -11,12 +11,13 @@ import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import type { SupportedLanguage } from '@/i18n';
 import { track } from '@/services/analytics/analytics';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
-import { currentPhotoOwner, useJournalStore } from '@/store/useJournalStore';
+import { useJournalStore } from '@/store/useJournalStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { formatEntryDate } from '../journalDisplay';
-import { BOOK_LAYOUTS, bookAnalytics, bookCandidates, bookEntries, buildBookHtml, canGenerate, cleanBookTitle, dateRange, MAX_BOOK_ENTRIES, MIN_BOOK_ENTRIES, sortForBook, TITLE_MAX, toggleBookSelection, validSelection, type BookLayout, type BookSort } from './memoryBookModel';
-import { generateAndShareBook, memoryBookSupported, photoDataUri } from './memoryBookService';
+import { BOOK_LAYOUTS, bookCandidates, bookEntries, buildBookHtml, canGenerate, cleanBookTitle, dateRange, MAX_BOOK_ENTRIES, MIN_BOOK_ENTRIES, sortForBook, TITLE_MAX, toggleBookSelection, validSelection, type BookLayout, type BookSort } from './memoryBookModel';
+import { exportMemoryBook } from './memoryBookExport';
+import { memoryBookSupported } from './memoryBookService';
 
 /**
  * /journal/book - pick 3-20 of your own memories, a layout and a title,
@@ -62,31 +63,27 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
     const book = bookEntries(latest, picked, sort);
     if (book.length < MIN_BOOK_ENTRIES) return;
     setBusy(true);
-    let missingPhotos = 0;
     try {
-      const photoOwner = currentPhotoOwner();
-      const pages = [];
-      for (const entry of book) {
-        const image = entry.photo ? await photoDataUri(entry, photoOwner, photoOwner !== 'guest') : null;
-        if (entry.photo && !image) missingPhotos += 1;
-        pages.push({ title: entry.title, dateLabel: fmt(entry.date), note: includeText && entry.note.trim() ? entry.note : null, image });
-      }
-      // The account changed while preparing: never export one person's memories under another.
-      if (currentPhotoOwner() !== photoOwner) return;
       const range = dateRange(book);
-      const html = buildBookHtml({
-        title: cleanBookTitle(title, t('memoryBook.defaultTitle')),
-        subtitle: showRange && range ? (range.from === range.to ? fmt(range.from) : `${fmt(range.from)} - ${fmt(range.to)}`) : null,
+      const outcome = await exportMemoryBook({
+        entries: book,
+        includeText,
         layout,
-        pages,
-        labels: { untitled: t('journal.untitled'), madeWith: t('memoryBook.madeWith') },
-        language,
+        formatDate: fmt,
+        today: localDateKey(),
+        buildHtml: (pages) =>
+          buildBookHtml({
+            title: cleanBookTitle(title, t('memoryBook.defaultTitle')),
+            subtitle: showRange && range ? (range.from === range.to ? fmt(range.from) : `${fmt(range.from)} - ${fmt(range.to)}`) : null,
+            layout,
+            pages,
+            labels: { untitled: t('journal.untitled'), madeWith: t('memoryBook.madeWith') },
+            language,
+          }),
       });
-      await generateAndShareBook(html, localDateKey());
-      track('journal_memory_book_created', bookAnalytics(book.length, layout, includeText));
-      if (missingPhotos > 0) showToast(t('memoryBook.photosMissing', { count: missingPhotos }));
-    } catch {
-      showToast(t('memoryBook.failed'));
+      // A deliberate stop (account/session changed) is silent - no failure toast.
+      if (outcome.status === 'failed') showToast(t('memoryBook.failed'));
+      if (outcome.status === 'shared' && outcome.missingPhotos > 0) showToast(t('memoryBook.photosMissing', { count: outcome.missingPhotos }));
     } finally {
       setBusy(false);
     }

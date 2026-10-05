@@ -33,6 +33,10 @@ export function authErrorKey(error: unknown, context: AuthErrorContext = 'signIn
       return 'auth.v2.errors.rateLimited';
     case 'network-error':
       return 'auth.v2.errors.offline';
+    case 'reauth-mismatch':
+      return 'auth.v2.errors.reauthMismatch';
+    case 'reauth-required':
+      return 'auth.v2.errors.reauthRequired';
     case 'user-not-found':
       return context === 'account' ? 'auth.v2.errors.sessionEnded' : 'auth.v2.errors.invalidCredentials';
     default:

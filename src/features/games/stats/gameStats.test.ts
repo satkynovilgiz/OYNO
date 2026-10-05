@@ -141,3 +141,143 @@ describe('Game Performance Lab - data', () => {
     for (const locale of [kg, ru, en]) for (const key of ['title', 'recentNote', 'lowerIsBetter', 'kokBoruNoBest', 'practiceNeverBest', 'share'] as const) expect(locale.gameStats[key]).toBeTruthy();
   });
 });
+
+// ---------------------------------------------------------------------
+// Official vs practice are separate (Jaa Atuu: 5 arrows vs 15 arrows)
+// ---------------------------------------------------------------------
+describe('Game Performance Lab - official and practice kept apart', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { roundGroups, chartDescription, formatAggregate, statsShare: share } = require('./gameStatsModel') as typeof import('./gameStatsModel');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { formatMetric } = require('../records/gameRecords') as typeof import('../records/gameRecords');
+  const mixed = () => play([s('jaa_atuu', 40), s('jaa_atuu', 120, { practice: true }), s('jaa_atuu', 50), s('jaa_atuu', 150, { practice: true })]);
+
+  it('the game really differs: official rounds have 5 arrows, practice 15', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const types = require('@/games3d/games/jaa-atuu/JaaAtuuTypes') as { TOTAL_ARROWS: number; PRACTICE_ARROWS: number };
+    expect(types.TOTAL_ARROWS).toBe(5);
+    expect(types.PRACTICE_ARROWS).toBe(15);
+  });
+
+  it('a mixed dataset under "All" gives two separate summaries, never one combined average', () => {
+    const records = mixed();
+    const groups = roundGroups(JAA, records, 'all', records.best.jaa_atuu ?? null);
+    expect(groups.map((g) => g.type)).toEqual(['official', 'practice']);
+    expect(groups[0].summary).toMatchObject({ rounds: 2, average: 45 });
+    expect(groups[1].summary).toMatchObject({ rounds: 2, average: 135 });
+    // The combined mean (90) appears nowhere.
+    expect(groups.map((g) => g.summary.average)).not.toContain(90);
+    // Two separate trends: no chart mixes types.
+    expect(groups[0].points.every((p) => !p.practice)).toBe(true);
+    expect(groups[1].points.every((p) => p.practice)).toBe(true);
+  });
+
+  it('"Official" and "Practice" filters each compute their own group', () => {
+    const records = mixed();
+    const official = roundGroups(JAA, records, 'official', records.best.jaa_atuu ?? null);
+    const practice = roundGroups(JAA, records, 'practice', records.best.jaa_atuu ?? null);
+    expect(official.map((g) => [g.type, g.summary.average])).toEqual([['official', 45]]);
+    expect(practice.map((g) => [g.type, g.summary.average])).toEqual([['practice', 135]]);
+  });
+
+  it('practice scores never receive a PB marker, even when higher than the official best', () => {
+    const records = mixed();
+    expect(records.best.jaa_atuu).toBe(50);
+    const [official, practice] = roundGroups(JAA, records, 'all', 50);
+    expect(official.points.filter((p) => p.isPb)).toHaveLength(1);
+    expect(practice.points.some((p) => p.isPb)).toBe(false);
+  });
+
+  it('empty groups and a single round', () => {
+    const onlyOfficial = play([s('jaa_atuu', 42)]);
+    expect(roundGroups(JAA, onlyOfficial, 'all', 42).map((g) => g.type)).toEqual(['official']);
+    const practiceView = roundGroups(JAA, onlyOfficial, 'practice', 42);
+    expect(practiceView).toHaveLength(1);
+    expect(practiceView[0].summary).toMatchObject({ rounds: 0, average: null });
+    const single = roundGroups(JAA, onlyOfficial, 'official', 42)[0];
+    expect(single.points).toHaveLength(1);
+    // A single round still gets a text description (no chart needs 2 points), without an "average" of one.
+    const text = chartDescription(single.points, { lead: (count) => `Last ${count} official round`, format: String, unitSuffix: 'points', average: 'Average: 42.' });
+    expect(text).toBe('Last 1 official round: 42 points.');
+  });
+
+  it('chart descriptions name the round type (KG/RU/EN) and add the average', () => {
+    for (const locale of [kg, ru, en] as unknown as { gameStats: { chartLead: Record<string, string>; avg: Record<string, string>; group: Record<string, string>; chartTitle: Record<string, string>; separateNote: string; averageSentence: string } }[]) {
+      for (const type of ['official', 'practice']) {
+        expect(locale.gameStats.chartLead[`${type}_other`]).toBeTruthy();
+        expect(locale.gameStats.avg[type]).toBeTruthy();
+        expect(locale.gameStats.group[type]).toBeTruthy();
+        expect(locale.gameStats.chartTitle[type]).toBeTruthy();
+      }
+      expect(locale.gameStats.separateNote).toBeTruthy();
+      expect(locale.gameStats.averageSentence).toContain('{{value}}');
+    }
+    const [, practice] = roundGroups(JAA, mixed(), 'all', 50);
+    const lead = en.gameStats.chartLead.practice_other.replace('{{count}}', '2');
+    expect(chartDescription(practice.points, { lead: () => lead, format: String, unitSuffix: 'points', average: 'Average: 135.' })).toBe('Last 2 practice rounds: 120, 150 points. Average: 135.');
+  });
+
+  it('Kok Boru practice "scored" flags (1/0) never count as goals', () => {
+    const records = play([s('kok_boru', 3, { result: 'win' }), s('kok_boru', 1, { practice: true, result: 'completed' }), s('kok_boru', 0, { practice: true, result: 'completed' })]);
+    const groups = roundGroups(KOK, records, 'all', null);
+    expect(groups[0].summary.goals).toEqual([3]);
+    expect(groups[1].summary.goals).toEqual([]);
+    expect(groups[1].summary.wins + groups[1].summary.draws + groups[1].summary.losses).toBe(0);
+  });
+
+  it('shared stats stay comparable: official rounds only, labelled as official', () => {
+    const data = share(JAA, mixed());
+    expect(data).toEqual({ best: 50, officialRecent: 2, average: 45 });
+    expect(en.gameStats.avg.official).toBe('Official average');
+  });
+
+  // -------------------------------------------------------------------
+  // Averages keep their precision (Task: 10 and 11 -> 10.5, not 11)
+  // -------------------------------------------------------------------
+  const t = ((key: string, options?: Record<string, unknown>) => `${key}:${JSON.stringify(options)}`) as never;
+
+  it('scores 10 and 11 display an average of 10.5 in English', () => {
+    const [official] = roundGroups(JAA, play([s('jaa_atuu', 10), s('jaa_atuu', 11)]), 'official', 11);
+    expect(official.summary.average).toBe(10.5);
+    expect(formatAggregate('points', official.summary.average, 'en')).toBe('10.5');
+  });
+
+  it('Russian uses its decimal separator; Kyrgyz formats too', () => {
+    expect(formatAggregate('points', 10.5, 'ru')).toBe('10,5');
+    expect(formatAggregate('points', 10.5, 'kg')).toMatch(/^10[.,]5$/);
+  });
+
+  it('integer averages have no trailing decimals; long values keep one decimal', () => {
+    expect(formatAggregate('points', 47, 'en')).toBe('47');
+    expect(formatAggregate('points', 47.04, 'en')).toBe('47');
+    expect(formatAggregate('points', 46.75, 'en')).toBe('46.8');
+    expect(formatAggregate('points', 1234.5, 'en')).toBe('1234.5');
+  });
+
+  it('times keep the same one-decimal precision as m:ss.s', () => {
+    expect(formatAggregate('seconds', 41.25, 'en')).toBe('0:41.3');
+    expect(formatAggregate('seconds', 65, 'en')).toBe('1:05');
+    expect(formatAggregate('seconds', 61.5, 'ru')).toBe('1:01,5');
+  });
+
+  it('empty / invalid input never shows a fabricated average', () => {
+    expect(formatAggregate('points', null, 'en')).toBeNull();
+    expect(formatAggregate('points', undefined, 'en')).toBeNull();
+    expect(formatAggregate('points', Number.NaN, 'en')).toBeNull();
+    expect(formatAggregate('points', -1, 'en')).toBeNull();
+    expect(formatAggregate('points', 0, 'en')).toBe('0');
+    expect(roundGroups(JAA, EMPTY_RECORDS, 'official', null)[0].summary.average).toBeNull();
+  });
+
+  it('individual result formatting is unchanged', () => {
+    expect(formatMetric('points', 10.5, t)).toBe('gameRecords.unit.points:{"count":11}');
+    expect(formatMetric('seconds', 41.25, t)).toBe('gameRecords.unit.time:{"time":"0:41"}');
+  });
+
+  it('the shared average equals the official summary\'s displayed average', () => {
+    const records = play([s('jaa_atuu', 10), s('jaa_atuu', 11), s('jaa_atuu', 99, { practice: true })]);
+    const [official] = roundGroups(JAA, records, 'official', records.best.jaa_atuu ?? null);
+    expect(formatAggregate('points', share(JAA, records).average, 'en')).toBe(formatAggregate('points', official.summary.average, 'en'));
+    expect(formatAggregate('points', share(JAA, records).average, 'en')).toBe('10.5');
+  });
+});

@@ -27,6 +27,12 @@ export type AuthErrorCode =
   /** The user closed the OAuth browser sheet before finishing - not a
    * real error, callers should treat this as a silent no-op. */
   | 'cancelled'
+  /** Account deletion: the confirming sign-in was a DIFFERENT account
+   * (or a provider this account isn't linked to). Nothing was deleted. */
+  | 'reauth-mismatch'
+  /** Account deletion: the server found no recent sign-in on this session
+   * (REAUTH_REQUIRED from delete_own_account). Nothing was deleted. */
+  | 'reauth-required'
   | 'unknown';
 
 export class AuthError extends Error {
@@ -58,6 +64,15 @@ export type SignUpResult =
   | { status: 'signed-in'; session: AuthSession };
 
 export type OAuthProvider = 'google' | 'apple';
+
+/**
+ * How the signed-in account can prove it is really its owner before
+ * deletion: its password when it has an email/password identity, else a
+ * fresh sign-in with a provider the account is linked to.
+ */
+export type DeletionMethod = { kind: 'password' } | { kind: 'oauth'; provider: OAuthProvider };
+
+export type DeletionConfirmation = { kind: 'password'; password: string } | { kind: 'oauth'; provider: OAuthProvider };
 
 export type OAuthSignInResult = {
   session: AuthSession;
@@ -107,9 +122,14 @@ export type AuthService = {
    * signs out afterward so the user re-authenticates with the new
    * password rather than silently staying logged in from the reset. */
   confirmPasswordReset(newPassword: string): Promise<void>;
-  /** Requires the current password (spec Section 63) - not just a bare
-   * confirmation tap. */
-  deleteAccount(password: string): Promise<void>;
+  /** The reauthentication this account supports; null when there is no
+   * usable session (expired / signed out). */
+  getDeletionMethod(): Promise<DeletionMethod | null>;
+  /** Requires a fresh confirmation of the SAME account (spec Section 63) -
+   * the current password, or a new provider sign-in for OAuth-only
+   * accounts - never a bare confirmation tap. Throws 'cancelled' if the
+   * provider sheet was closed, 'reauth-mismatch' for a different account. */
+  deleteAccount(confirmation: DeletionConfirmation): Promise<void>;
   /** Updates the signed-in user's profile fields, returns the updated
    * session. Email changes trigger Supabase's own re-verification flow
    * for the new address. */

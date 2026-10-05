@@ -137,7 +137,9 @@
         "rateLimited": "Too many attempts. Please wait a minute and try again.",
         "offline": "You're offline. Connect to the internet to sign in - you can keep exploring without an account.",
         "sessionEnded": "Your session has ended. Please sign in again.",
-        "unknown": "Something went wrong. Please try again."
+        "unknown": "Something went wrong. Please try again.",
+        "reauthMismatch": "That was a different account. Nothing was deleted.",
+        "reauthRequired": "Please confirm it's you again. Nothing was deleted."
       }
     }
   },
@@ -189,7 +191,9 @@
       "deleteConfirmHint": "Enter your password to confirm.",
       "passwordLabel": "Password",
       "customizeAvatar": "Edit your avatar",
-      "storyCompanion": "Your OYNO guide"
+      "storyCompanion": "Your OYNO guide",
+      "deleteConfirmWithProvider": "Confirm with {{provider}}",
+      "deleteOAuthHint": "To confirm, sign in again with the same account you use for OYNO. Your account and all its data will be deleted."
     },
     "experience": {
       "title": "Experience",
@@ -4605,7 +4609,25 @@
       "all_many": "Last {{count}} rounds"
     },
     "share": "Share stats",
-    "shareLabel": "My game stats"
+    "shareLabel": "My game stats",
+    "avg": {
+      "official": "Official average",
+      "practice": "Practice average"
+    },
+    "group": {
+      "official": "Official rounds",
+      "practice": "Practice rounds"
+    },
+    "groupEmpty": {
+      "official": "No official rounds in the recent history.",
+      "practice": "No practice rounds in the recent history."
+    },
+    "chartTitle": {
+      "official": "Official rounds over time",
+      "practice": "Practice rounds over time"
+    },
+    "separateNote": "Official and practice rounds are scored differently, so they are shown separately.",
+    "averageSentence": "Average: {{value}}."
   },
   "memoryBook": {
     "entry": "Create Memory Book",

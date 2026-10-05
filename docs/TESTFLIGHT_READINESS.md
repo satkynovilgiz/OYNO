@@ -168,6 +168,19 @@ Newest seven (checked 2026-09-29):
 | `20260927000004_guided_quests.sql` | quest reward claim | **yes** (`claim_guided_quest` answers `NOT_AUTHENTICATED` to the anon key) | progress shows; reward reports "will sync later" |
 | `20260929000001_feedback_v2.sql` | feedback categories/context, admin inbox | **yes** (applied later on 2026-09-29; first check that day returned `PGRST202`) | reports would send via `submit_beta_feedback` with legacy category + context in the message; admin inbox would show "needs migration" |
 
+Pending - written, **not applied** to the live project (2026-10-04):
+
+| Migration | Needed by | If missing |
+| --- | --- | --- |
+| `20261004000004_delete_own_account_recent_auth.sql` | Server-side enforcement that account deletion follows a sign-in from the last 10 minutes (JWT `amr` timestamp) | Deletion still works; the app's own password / provider re-sign-in still runs first, but the server does not enforce it |
+
+Apply it after review via the SQL editor. It replaces `delete_own_account()`
+in place (same signature and grants); installed app versions keep working
+because they always sign in with the password right before calling it.
+After applying, verify on a test account: delete right after confirming
+(succeeds) and with a session older than 10 minutes without confirming
+(must fail with `REAUTH_REQUIRED`).
+
 Earlier (confirmed 2026-09-23/24):
 
 1. `20260923000001_account_sync.sql` — cross-device sync (visits, daily, challenges, favorites)
@@ -231,6 +244,11 @@ No installed binary has that runtime yet (the only preview build is SDK 54),
 so those updates only reach testers **after** the new preview build is
 installed. After that, JS-only changes can ship by `eas update`; anything
 touching native modules or config needs a new build.
+
+`expo-print` (Journal Memory Book PDF, added 2026-10-04) is a native module:
+only builds made after that date can create PDFs. Earlier builds receiving the
+same JS by `eas update` show the honest "can't create PDFs" state. Real-device
+checks for it are listed in `docs/DEVICE_QA.md` and have not been run yet.
 
 ## 10. Readiness checklist
 

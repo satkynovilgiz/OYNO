@@ -104,3 +104,27 @@ Verified so far: TypeScript, Jest, and web (Chrome) only. Not yet on an iPhone o
 | Feedback | Send a content report online and offline (queued, sends on reconnect); it should arrive in the structured columns (migration 20260929000001 is live) and show in /admin/feedback for an admin account | Real submission was deliberately not sent from web QA |
 | Feedback | Account A queues a report offline → signs out → B signs in → reconnect: report arrives unlinked | Real accounts (logic covered by `feedback.test.ts`) |
 | Feedback | Attach one screenshot, remove it; screen capture disabled on Journal/account screens | Native capture module |
+
+## Journal Memory Book PDF - device checks still to do (2026-10-04)
+
+Verified so far: TypeScript and Jest only, with Expo Print / Sharing / FileSystem
+replaced by in-memory fakes (`src/features/journal/book/memoryBookExport.test.ts`).
+**No native PDF has been rendered and none of the checks below has been performed
+yet.** The feature needs a native build that includes `expo-print`; older builds and
+web show the "can't create PDFs" state.
+
+| Check on a real device (iOS and Android) | Expected |
+| --- | --- |
+| Export 3+ memories with photos AND "Include journal text" on | Privacy prompt first; PDF opens in the share sheet; photos and full notes appear |
+| Export with text off | No note text anywhere in the PDF |
+| A memory whose photo is missing (deleted file, account photo while offline) | Book still created; toast "1 photo could not be included" |
+| A very long note (several pages) | Text continues onto following pages; nothing cut off; each memory starts a new page |
+| Titles/notes in Kyrgyz (ү ө ң), Russian and English | All characters render (no empty boxes); text is selectable in a PDF viewer |
+| Save to Files / send to another app | File is named `OYNO-Memory-Book-YYYY-MM-DD.pdf` and opens |
+| Cancel the share sheet | No error toast; nothing left behind in the app cache |
+| Sign out / switch account while "Working…" (photos preparing or PDF rendering) | Share sheet never opens; no toast |
+| Two exports back to back | Each shares its own PDF |
+
+Known limit: once the system share sheet is open, the file has been handed to the
+OS. If the person picks another app, OYNO cannot take that copy back; the app only
+guarantees that a stale session never *opens* the sheet.

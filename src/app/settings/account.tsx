@@ -1,6 +1,7 @@
 import { Redirect, router } from 'expo-router';
 
 import { AccountSettingsScreen } from '@/features/settings/AccountSettingsScreen';
+import { authService } from '@/services/auth';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export default function AccountSettingsRoute() {
@@ -36,6 +37,7 @@ export default function AccountSettingsRoute() {
       onSaveProfile={updateProfile}
       onPressChangePassword={() => router.push('/settings/security' as never)}
       onDeleteAccount={deleteAccount}
+      loadDeletionMethod={() => authService.getDeletionMethod()}
       onPressCustomizeAvatar={() => router.push('/avatar-editor' as never)}
       onPressStoryCompanion={() => router.push('/character-select' as never)}
     />

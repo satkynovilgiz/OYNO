@@ -19,7 +19,7 @@ import { gameArt } from '../gamesCatalog';
 import { formatMetric, GAME_RECORD_RULES, type GameRecordRule, type GameSessionRecord } from '../records/gameRecords';
 import { useGameRecords } from '../records/useGameRecords';
 import { gameTitleKey } from '../types';
-import { chartPoints, chartRange, chartSummary, gamesOverview, pbSessionId, recentSessions, RECENT_LIMIT, statsShare, summarize, type ChartPoint, type SessionFilter } from './gameStatsModel';
+import { chartDescription, chartRange, formatAggregate, gamesOverview, pbSessionId, recentSessions, RECENT_LIMIT, roundGroups, statsShare, type ChartPoint, type RoundGroup, type SessionFilter } from './gameStatsModel';
 
 export function statsRoute(gameId: string): string {
   return `/games/stats/${gameId}`;
@@ -85,9 +85,9 @@ export function GameStatsScreen({ onPressBack }: { onPressBack: () => void }) {
   );
 }
 
-/** /games/stats/[gameId] - one game: filters, summary, recent chart and rounds. */
+/** /games/stats/[gameId] - one game: filters, summaries, recent charts and rounds. */
 export function GameStatsDetailScreen({ gameId, onPressBack }: { gameId: string; onPressBack: () => void }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { experience } = useAgeExperience();
   const { records } = useGameRecords();
@@ -100,49 +100,33 @@ export function GameStatsDetailScreen({ gameId, onPressBack }: { gameId: string;
     if (rule) track('game_stats_game_opened', { game_id: rule.gameId });
   }, [rule]);
 
-  const sessions = useMemo(() => (rule ? recentSessions(records, rule.gameId, filter) : []), [records, rule, filter]);
+  const storedBest = rule && rule.best !== 'completion' ? (records.best[rule.gameId] ?? null) : null;
+  const groups = useMemo(() => (rule ? roundGroups(rule, records, filter, storedBest) : []), [records, rule, filter, storedBest]);
+  const history = useMemo(() => (rule ? recentSessions(records, rule.gameId, filter) : []), [records, rule, filter]);
   if (!rule) return <NotFoundState onPressBack={onPressBack} />;
 
   const name = t(gameTitleKey(rule.listId));
-  const storedBest = rule.best === 'completion' ? null : (records.best[rule.gameId] ?? null);
-  const summary = summarize(rule, sessions);
-  const points = chartPoints(rule, sessions, storedBest);
-  const pbId = pbSessionId(rule, recentSessions(records, rule.gameId, 'all'), storedBest);
   const fmt = (value: number) => formatMetric(rule.primary.unit, value, t);
-  const a11ySummary = chartSummary(points, {
-    lead: (count) => t(`gameStats.chartLead.${filter}`, { count }),
-    format: (value) => (rule.primary.unit === 'points' || rule.primary.unit === 'goals' ? String(Math.round(value * 10) / 10) : fmt(value)),
-    unitSuffix: rule.primary.unit === 'points' ? t('gameStats.pointsWord') : rule.primary.unit === 'goals' ? t('gameStats.goalsWord') : '',
-  });
+  const avg = (value: number | null) => formatAggregate(rule.primary.unit, value, i18n.language);
+  const pbId = pbSessionId(rule, recentSessions(records, rule.gameId, 'official'), storedBest);
 
   function shareStats() {
     if (!rule) return;
+    // Comparable data only: the stored (official) PB and OFFICIAL rounds, each labelled as such.
     const data = statsShare(rule, records);
     track('game_stats_shared', { game_id: rule.gameId });
+    const average = avg(data.average);
     const lines = [
       data.best !== null ? `${t(rule.best === 'lower' ? 'gameStats.bestTime' : 'gameRecords.personalBest')}: ${fmt(data.best)}` : null,
       t('gameStats.officialRecent', { count: data.officialRecent }),
-      rule.best === 'completion' ? t('gameStats.wins', { count: records.wins[rule.gameId] ?? 0 }) : data.average !== null ? `${t('gameStats.recentAverage')}: ${fmt(data.average)}` : null,
+      rule.best === 'completion' ? t('gameStats.wins', { count: records.wins[rule.gameId] ?? 0 }) : average !== null ? `${t('gameStats.avg.official')}: ${average}` : null,
     ].filter((line): line is string => !!line);
     void share({ variant: 'summary', label: t('gameStats.shareLabel'), title: name, imageSource: null, lines }, `${name} - OYNO`);
   }
 
-  const tiles = rule.best === 'completion'
-    ? [
-        { label: t('gameRecords.result.win'), value: String(summary.wins) },
-        { label: t('gameRecords.result.draw'), value: String(summary.draws) },
-        { label: t('gameRecords.result.loss'), value: String(summary.losses) },
-      ]
-    : [
-        { label: t('gameStats.roundsPlayed'), value: String(summary.rounds) },
-        ...(summary.average !== null ? [{ label: t('gameStats.recentAverage'), value: fmt(summary.average) }] : []),
-        ...(storedBest !== null ? [{ label: t(rule.best === 'lower' ? 'gameStats.bestTime' : 'gameRecords.personalBest'), value: fmt(storedBest) }] : []),
-        ...(rule.gameId !== 'jaa_atuu' ? [{ label: t(rule.gameId === 'kyz_kuumai' ? 'gameStats.catchesLabel' : 'gameStats.winsLabel'), value: String(summary.wins) }] : []),
-      ];
-
   return (
     <View style={styles.root}>
-      <Header title={name} onPressBack={onPressBack} onShare={sessions.length > 0 || storedBest !== null ? shareStats : undefined} />
+      <Header title={name} onPressBack={onPressBack} onShare={history.length > 0 || storedBest !== null ? shareStats : undefined} />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={styles.filters} accessibilityRole="tablist">
           {(['official', 'practice', 'all'] as SessionFilter[]).map((option) => (
@@ -151,7 +135,97 @@ export function GameStatsDetailScreen({ gameId, onPressBack }: { gameId: string;
         </View>
         <Text style={styles.note}>{t('gameStats.recentNote', { count: RECENT_LIMIT })}</Text>
         {filter !== 'official' ? <Text style={styles.note}>{t('gameStats.practiceNeverBest')}</Text> : null}
+        {filter === 'all' && groups.length > 1 ? <Text style={styles.note}>{t('gameStats.separateNote')}</Text> : null}
+        {rule.gameId === 'kok_boru' ? <Text style={styles.note}>{t('gameStats.kokBoruNoBest')}</Text> : null}
+        {rule.best === 'lower' ? <Text style={styles.lowerBetter}>↓ {t('gameStats.lowerIsBetter')}</Text> : null}
 
+        {groups.length === 0 ? <Text style={styles.meta}>{t('gameStats.noRounds')}</Text> : null}
+        {groups.map((group) => (
+          <GroupSection
+            key={group.type}
+            group={group}
+            rule={rule}
+            experience={experience}
+            showHeading={filter === 'all'}
+            storedBest={group.type === 'official' ? storedBest : null}
+            selected={selected}
+            onSelect={setSelected}
+            fmt={fmt}
+            avg={avg}
+          />
+        ))}
+
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          {t('gameStats.recentRounds')}
+        </Text>
+        {history.length === 0 ? <Text style={styles.meta}>{t('gameStats.noRounds')}</Text> : null}
+        {[...history].reverse().map((session) => (
+          <RoundRow key={session.id} session={session} rule={rule} isPb={session.id === pbId} open={selected === session.id} onPress={() => setSelected(selected === session.id ? null : session.id)} />
+        ))}
+      </ScrollView>
+      {shareHost}
+    </View>
+  );
+}
+
+/**
+ * One round type's own summary and chart. Official and practice are never
+ * averaged together or joined into one line.
+ */
+function GroupSection({
+  group,
+  rule,
+  experience,
+  showHeading,
+  storedBest,
+  selected,
+  onSelect,
+  fmt,
+  avg,
+}: {
+  group: RoundGroup;
+  rule: GameRecordRule;
+  experience: AgeExperience;
+  showHeading: boolean;
+  storedBest: number | null;
+  selected: string | null;
+  onSelect: (id: string | null) => void;
+  fmt: (value: number) => string;
+  avg: (value: number | null) => string | null;
+}) {
+  const { t } = useTranslation();
+  const { summary, points, type } = group;
+  const average = avg(summary.average);
+  const tiles =
+    rule.best === 'completion'
+      ? type === 'official'
+        ? [
+            { label: t('gameRecords.result.win'), value: String(summary.wins) },
+            { label: t('gameRecords.result.draw'), value: String(summary.draws) },
+            { label: t('gameRecords.result.loss'), value: String(summary.losses) },
+          ]
+        : [{ label: t('gameStats.roundsPlayed'), value: String(summary.rounds) }]
+      : [
+          { label: t('gameStats.roundsPlayed'), value: String(summary.rounds) },
+          ...(average !== null ? [{ label: t(`gameStats.avg.${type}`), value: average }] : []),
+          ...(storedBest !== null ? [{ label: t(rule.best === 'lower' ? 'gameStats.bestTime' : 'gameRecords.personalBest'), value: fmt(storedBest) }] : []),
+          ...(type === 'official' && rule.gameId !== 'jaa_atuu' ? [{ label: t(rule.gameId === 'kyz_kuumai' ? 'gameStats.catchesLabel' : 'gameStats.winsLabel'), value: String(summary.wins) }] : []),
+        ];
+  const description = chartDescription(points, {
+    lead: (count) => t(`gameStats.chartLead.${type}`, { count }),
+    format: (value) => (rule.primary.unit === 'points' || rule.primary.unit === 'goals' ? String(Math.round(value * 10) / 10) : fmt(value)),
+    unitSuffix: rule.primary.unit === 'points' ? t('gameStats.pointsWord') : rule.primary.unit === 'goals' ? t('gameStats.goalsWord') : '',
+    average: average !== null ? t('gameStats.averageSentence', { value: average }) : null,
+  });
+  return (
+    <View style={styles.group}>
+      {showHeading ? (
+        <Text style={styles.sectionTitle} accessibilityRole="header">
+          {t(`gameStats.group.${type}`)}
+        </Text>
+      ) : null}
+      {summary.rounds === 0 ? <Text style={styles.meta}>{t(`gameStats.groupEmpty.${type}`)}</Text> : null}
+      {summary.rounds > 0 ? (
         <View style={styles.tiles}>
           {tiles.map((tile) => (
             <View key={tile.label} style={[styles.tile, experience === 'child' && styles.tileChild]} accessible accessibilityLabel={`${tile.label}: ${tile.value}`}>
@@ -160,30 +234,16 @@ export function GameStatsDetailScreen({ gameId, onPressBack }: { gameId: string;
             </View>
           ))}
         </View>
-        {rule.gameId === 'kok_boru' ? <Text style={styles.note}>{t('gameStats.kokBoruNoBest')}</Text> : null}
-        {rule.gameId === 'kok_boru' && summary.goals.length > 0 ? <Text style={styles.meta}>{t('gameStats.recentGoals', { goals: summary.goals.join(', ') })}</Text> : null}
-
-        {points.length >= 2 ? (
-          <View style={styles.chartBlock}>
-            <Text style={styles.sectionTitle} accessibilityRole="header">
-              {t('gameStats.recentPerformance')}
-            </Text>
-            {rule.best === 'lower' ? <Text style={styles.lowerBetter}>↓ {t('gameStats.lowerIsBetter')}</Text> : null}
-            <RecentChart points={points} experience={experience} summary={a11ySummary} format={fmt} onSelect={setSelected} selected={selected} pbLabel={t('gameStats.pbShort')} />
-            {/* The chart's text equivalent - never the only representation. */}
-            <Text style={styles.meta}>{a11ySummary}</Text>
-          </View>
-        ) : null}
-
-        <Text style={styles.sectionTitle} accessibilityRole="header">
-          {t('gameStats.recentRounds')}
-        </Text>
-        {sessions.length === 0 ? <Text style={styles.meta}>{t('gameStats.noRounds')}</Text> : null}
-        {[...sessions].reverse().map((session) => (
-          <RoundRow key={session.id} session={session} rule={rule} isPb={session.id === pbId} open={selected === session.id} onPress={() => setSelected(selected === session.id ? null : session.id)} />
-        ))}
-      </ScrollView>
-      {shareHost}
+      ) : null}
+      {rule.gameId === 'kok_boru' && type === 'official' && summary.goals.length > 0 ? <Text style={styles.meta}>{t('gameStats.recentGoals', { goals: summary.goals.join(', ') })}</Text> : null}
+      {points.length >= 2 ? (
+        <View style={styles.chartBlock}>
+          <Text style={styles.chartTitle}>{t(`gameStats.chartTitle.${type}`)}</Text>
+          <RecentChart points={points} experience={experience} summary={description} format={fmt} onSelect={onSelect} selected={selected} pbLabel={t('gameStats.pbShort')} />
+        </View>
+      ) : null}
+      {/* The chart's text equivalent (also the only view for a single round). */}
+      {description ? <Text style={styles.meta}>{description}</Text> : null}
     </View>
   );
 }
@@ -313,6 +373,8 @@ const styles = StyleSheet.create({
   tileValueAdult: { fontSize: 22, lineHeight: 28 },
   tileLabel: { ...textStyles.small, color: colors.textSecondary },
   chartBlock: { gap: spacing.xs },
+  chartTitle: { ...textStyles.small, fontWeight: '700', color: colors.textPrimary },
+  group: { gap: spacing.sm },
   sectionTitle: { ...typography.overline, color: colors.accentTerracotta },
   lowerBetter: { ...textStyles.small, fontWeight: '700', color: colors.textPrimary },
   round: { gap: 4, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.borderSubtle },
