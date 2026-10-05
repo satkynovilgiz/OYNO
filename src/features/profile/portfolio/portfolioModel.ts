@@ -4,7 +4,7 @@ import type { ReadingData } from '@/features/culture/reading/readingModel';
 import { TOPIC_QUIZZES, topicResultKey } from '@/features/challenges/topics/topicQuizzes';
 import { GAME_RECORD_RULES } from '@/features/games/records/gameRecords';
 import { LEARNING_PATHS, pathProgress, type LearningPath, type PathSignals } from '@/features/learn/learningPaths';
-import type { OwnerRecords } from '@/store/useGameRecordsStore';
+import { officialRounds, type OwnerRecords } from '@/store/useGameRecordsStore';
 import type { ChallengeResult } from '@/store/useChallengeStore';
 
 /**
@@ -24,6 +24,8 @@ export type PortfolioGame = {
   listId: string;
   /** All rounds recorded for this game on this device (official + practice). */
   rounds: number;
+  /** Finished OFFICIAL rounds - the same durable signal Learning Paths use. */
+  officialRounds: number;
   /** Only for games whose rule HAS a numeric best (never Kok Boru). */
   best: number | null;
   bestRule: 'higher' | 'lower' | null;
@@ -93,6 +95,7 @@ export function buildPortfolio(input: PortfolioInput): Portfolio {
       gameId: rule.gameId,
       listId: rule.listId,
       rounds,
+      officialRounds: officialRounds(input.records, rule.gameId),
       best: best !== null && Number.isFinite(best) ? best : null,
       bestRule: numeric ? (rule.best as 'higher' | 'lower') : null,
       wins: (WIN_MEANINGFUL_GAMES as readonly string[]).includes(rule.gameId) ? (input.records.wins[rule.gameId] ?? 0) : null,

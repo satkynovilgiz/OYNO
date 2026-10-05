@@ -216,7 +216,9 @@ export const glossarySessionRules: DomainRules<SessionMonth> = {
 // rounds unioned by round id (newest 10); rounds played + wins three-way.
 // Never deleted.
 // ---------------------------------------------------------------------
-export type GameRecordEntry = { best: number | null; recent: GameSessionRecord[]; sessions: number; wins: number };
+/** `official` = finished official rounds (durable completion signal); optional
+ * so records pushed by older app versions still validate. */
+export type GameRecordEntry = { best: number | null; recent: GameSessionRecord[]; sessions: number; wins: number; official?: number };
 
 export function betterBest(gameId: string, a: number | null, b: number | null): number | null {
   if (a === null) return b;
@@ -237,7 +239,7 @@ export const gameRecordRules: DomainRules<GameRecordEntry> = {
     validate: (raw) => {
       if (!isObj(raw) || !(raw.best === null || num(raw.best)) || !count(raw.sessions) || !count(raw.wins) || !Array.isArray(raw.recent)) return null;
       const recent = raw.recent.slice(0, 10).map(validSession).filter((session): session is GameSessionRecord => !!session);
-      return { best: raw.best as number | null, recent, sessions: raw.sessions, wins: raw.wins };
+      return { best: raw.best as number | null, recent, sessions: raw.sessions, wins: raw.wins, ...(count(raw.official) ? { official: raw.official } : {}) };
     },
     merge: (base, local, server, gameId) => {
       let recent: GameSessionRecord[] = [];
@@ -247,6 +249,8 @@ export const gameRecordRules: DomainRules<GameRecordEntry> = {
         recent,
         sessions: mergeCounter(base?.sessions, local.sessions, server.sessions),
         wins: mergeCounter(base?.wins, local.wins, server.wins),
+        // Never below either side: a record from an older app (no field) can't erase it.
+        official: Math.max(mergeCounter(base?.official ?? 0, local.official ?? 0, server.official ?? 0), local.official ?? 0, server.official ?? 0),
       };
     },
 };

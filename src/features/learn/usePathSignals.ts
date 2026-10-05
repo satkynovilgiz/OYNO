@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { readingKey } from '@/features/culture/reading/readingModel';
 import { useGameRecords, useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { useChallengeStore } from '@/store/useChallengeStore';
+import { officialRounds } from '@/store/useGameRecordsStore';
 import { ownerStudy, useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
 import { ownerManualSteps, useLearningPathStore } from '@/store/useLearningPathStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -42,7 +43,9 @@ export function usePathSignals(): { signals: PathSignals; owner: string; ready: 
       glossarySeen: (id) => !!study[id],
       challengeCompleted: (id) => !!challengeResults[challengeResultKey(id)]?.completedAt,
       challengeStarted: (id) => !!challengeResults[challengeResultKey(id)],
-      gamePlayed: (id) => (records.recent[id] ?? []).some((session) => !session.practice),
+      // Durable: an official round EVER finished - not just one still in the
+      // 10-round recent history (practice rounds would otherwise evict it).
+      gamePlayed: (id) => officialRounds(records, id) > 0,
       labFlag: (flag) => progress.loadedOwner === owner && !!progress[flag],
       manualCompleted: (pathId, stepId) => !!manual[pathId]?.[stepId],
     }),

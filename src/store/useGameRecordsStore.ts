@@ -12,9 +12,28 @@ const LEGACY_GAMES = ['jaa_atuu', 'ordo', 'chuko'];
 export type OwnerRecords = {
   recent: Record<string, GameSessionRecord[]>;
   best: Record<string, number>;
+  /** All finished rounds, practice INCLUDED. */
   sessions: Record<string, number>;
   wins: Record<string, number>;
+  /** Finished OFFICIAL (non-practice) rounds - durable, never trimmed like
+   * `recent`. Optional: records saved before it existed are read through
+   * officialRounds(), which infers only from reliable evidence. */
+  official?: Record<string, number>;
 };
+
+/**
+ * How many official rounds this owner has finished in `gameId` - the
+ * durable "has really played it" signal (Learning Paths, Portfolio).
+ * Stored count first; for older records without it, only RELIABLE
+ * evidence counts: official rounds still in `recent`, a stored personal
+ * best (only official, eligible rounds can set one) or official wins.
+ * Practice rounds and launches never count.
+ */
+export function officialRounds(records: OwnerRecords, gameId: string): number {
+  const recentOfficial = (records.recent[gameId] ?? []).filter((session) => !session.practice).length;
+  const evidence = Math.max(recentOfficial, records.best[gameId] !== undefined ? 1 : 0, (records.wins[gameId] ?? 0) > 0 ? 1 : 0);
+  return Math.max(records.official?.[gameId] ?? 0, evidence);
+}
 
 /** owner ('guest' or account id) -> that owner's records. */
 type Saved = Record<string, OwnerRecords>;
@@ -32,6 +51,9 @@ export function recordInto(records: OwnerRecords, session: GameSessionRecord): {
       recent: { ...records.recent, [session.gameId]: addRecent(records.recent[session.gameId] ?? [], session) },
       best: outcome.best === null ? records.best : { ...records.best, [session.gameId]: outcome.best },
       sessions: { ...records.sessions, [session.gameId]: (records.sessions[session.gameId] ?? 0) + 1 },
+      // Persisted on EVERY round (practice too) so the count survives the
+      // official round later being trimmed out of `recent`.
+      official: { ...(records.official ?? {}), [session.gameId]: officialRounds(records, session.gameId) + (session.practice ? 0 : 1) },
       wins: session.result === 'win' && !session.practice ? { ...records.wins, [session.gameId]: (records.wins[session.gameId] ?? 0) + 1 } : records.wins,
     },
   };
@@ -52,6 +74,13 @@ export function mergeRecords(into: OwnerRecords, from: OwnerRecords): OwnerRecor
   }
   for (const [gameId, count] of Object.entries(from.sessions)) merged.sessions[gameId] = (merged.sessions[gameId] ?? 0) + count;
   for (const [gameId, count] of Object.entries(from.wins)) merged.wins[gameId] = (merged.wins[gameId] ?? 0) + count;
+  // Official rounds: guest's and account's are different rounds - add them.
+  const official: Record<string, number> = {};
+  for (const gameId of new Set([...Object.keys(into.official ?? {}), ...Object.keys(from.official ?? {}), ...Object.keys(into.recent), ...Object.keys(from.recent), ...Object.keys(into.best), ...Object.keys(from.best), ...Object.keys(into.wins), ...Object.keys(from.wins)])) {
+    const total = officialRounds(into, gameId) + officialRounds(from, gameId);
+    if (total > 0) official[gameId] = total;
+  }
+  merged.official = official;
   merged = { ...merged };
   return merged;
 }

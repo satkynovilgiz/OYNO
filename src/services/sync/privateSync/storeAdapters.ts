@@ -5,7 +5,7 @@
  */
 import type { MistakesData } from '@/features/challenges/mistakes/mistakesModel';
 import type { CollectionsData } from '@/features/myCollections/myCollectionsModel';
-import { EMPTY_RECORDS, type OwnerRecords, useGameRecordsStore } from '@/store/useGameRecordsStore';
+import { EMPTY_RECORDS, officialRounds, type OwnerRecords, useGameRecordsStore } from '@/store/useGameRecordsStore';
 import { ownerMistakes, useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
 import { ownerStudy, useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
 import { ownerHighlights, useHighlightsStore } from '@/store/useHighlightsStore';
@@ -166,18 +166,19 @@ const gameRecords: StoreAdapter = {
   read: (owner) => {
     const data = useGameRecordsStore.getState().saved[owner] ?? EMPTY_RECORDS;
     const records: Record<string, GameRecordEntry> = {};
-    for (const gameId of new Set([...Object.keys(data.recent), ...Object.keys(data.best), ...Object.keys(data.sessions), ...Object.keys(data.wins)])) {
-      records[gameId] = { best: data.best[gameId] ?? null, recent: data.recent[gameId] ?? [], sessions: data.sessions[gameId] ?? 0, wins: data.wins[gameId] ?? 0 };
+    for (const gameId of new Set([...Object.keys(data.recent), ...Object.keys(data.best), ...Object.keys(data.sessions), ...Object.keys(data.wins), ...Object.keys(data.official ?? {})])) {
+      records[gameId] = { best: data.best[gameId] ?? null, recent: data.recent[gameId] ?? [], sessions: data.sessions[gameId] ?? 0, wins: data.wins[gameId] ?? 0, official: officialRounds(data, gameId) };
     }
     return records;
   },
   write: (owner, records) => {
-    const data: OwnerRecords = { recent: {}, best: {}, sessions: {}, wins: {} };
+    const data: OwnerRecords = { recent: {}, best: {}, sessions: {}, wins: {}, official: {} };
     for (const [gameId, entry] of Object.entries(records as Record<string, GameRecordEntry>)) {
       if (entry.recent.length > 0) data.recent[gameId] = entry.recent;
       if (entry.best !== null) data.best[gameId] = entry.best;
       if (entry.sessions > 0) data.sessions[gameId] = entry.sessions;
       if (entry.wins > 0) data.wins[gameId] = entry.wins;
+      if ((entry.official ?? 0) > 0) data.official![gameId] = entry.official!;
     }
     useGameRecordsStore.getState().applySynced(owner, data);
   },
