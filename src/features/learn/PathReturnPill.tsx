@@ -27,6 +27,7 @@ export function PathReturnPill() {
       onPress={() => (router.canGoBack() ? router.back() : router.replace(learnRoute(path.id) as never))}
       accessibilityRole="button"
       accessibilityLabel={`${t('learningPaths.backToPath')}: ${t(path.titleKey)}`}
+      testID="path-return"
     >
       <ChevronLeft size={14} color={colors.textOnDark} strokeWidth={2.5} />
       <Text style={styles.text} numberOfLines={1}>

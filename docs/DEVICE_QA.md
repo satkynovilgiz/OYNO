@@ -141,3 +141,21 @@ Not yet measured on a phone. Run the scenario in `docs/3D_GAMES.md`
 | Exit a game during the countdown, reopen it | Starts normally; no double countdown, no sound from the old screen |
 | Background the app mid-round, return | Pause menu shown; one resume continues; frame stats exclude the background time |
 | Open and exit each game 5 times | No slowdown building up across reopenings |
+
+## Web smoke suite - what it does and does NOT cover (2026-10-05)
+
+`npm run e2e:build && npm run e2e` (also the `smoke` CI job) runs Playwright
+against the **web export** in **Chromium only**, with Pixel 7 emulation and a
+deterministic fake backend. Results are **CODE VERIFIED (web)** - never a
+device result.
+
+Covered on web: guest onboarding → Home; Search → article; Learning Path
+start → finish article → back to path → progress survives reload; Game
+statistics filters (seeded records); Offline Downloads check (ready /
+incomplete → Repair shown); not-found states (article, path, game stats);
+KG/RU/EN screen sweep with no raw i18n keys; 320 px width (KG, RU) with no
+horizontal overflow; Reader XL text + larger controls (RU).
+
+Still device-only: Memory Book PDF (expo-print) and share sheet, widgets,
+notifications, 3D games performance, real file-system downloads, iOS Dynamic
+Type / Android font scale, Safari/WebKit and Firefox, OAuth and real sign-in.

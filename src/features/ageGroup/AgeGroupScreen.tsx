@@ -48,6 +48,7 @@ export function AgeGroupScreen({ initialSelected, onContinue }: AgeGroupScreenPr
             return (
               <FadeSlideIn key={option.id} index={optionIndex} style={styles.cell}>
                 <AnimatedPressable
+                  testID={`age-${option.id}`}
                   onPress={() => setSelected(option.id)}
                   press="strong"
                   haptic="light"
@@ -75,6 +76,7 @@ export function AgeGroupScreen({ initialSelected, onContinue }: AgeGroupScreenPr
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
           label={t('ageGroup.continue')}
+          testID="age-continue"
           variant="accent"
           size="lg"
           block

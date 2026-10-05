@@ -233,7 +233,7 @@ export function HomeScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="home-screen">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}

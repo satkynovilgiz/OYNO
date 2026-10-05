@@ -183,6 +183,7 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
         <View style={styles.field}>
           <SearchIcon size={18} color={colors.textSecondary} strokeWidth={2.25} />
           <TextInput
+            testID="search-input"
             value={query}
             onChangeText={setQuery}
             placeholder={t('search.v2.placeholder')}

@@ -12,7 +12,7 @@ import { useMinTarget } from '@/services/comfort/useComfortStore';
  *                44 pt, selected state exposed to screen readers
  *   informational (no onPress) quiet tonal label, not a button
  */
-export function Chip({ label, icon, selected = false, onPress, accessibilityRole = 'button' }: { label: string; icon?: ReactNode; selected?: boolean; onPress?: () => void; accessibilityRole?: 'button' | 'tab' }) {
+export function Chip({ label, icon, selected = false, onPress, accessibilityRole = 'button', testID }: { label: string; icon?: ReactNode; selected?: boolean; onPress?: () => void; accessibilityRole?: 'button' | 'tab'; testID?: string }) {
   const target = useMinTarget();
   const larger = target > 44;
   if (!onPress) {
@@ -27,6 +27,7 @@ export function Chip({ label, icon, selected = false, onPress, accessibilityRole
   }
   return (
     <AnimatedPressable
+      testID={testID}
       style={[styles.chip, larger && styles.chipLarge, selected && styles.chipSelected]}
       hitSlop={Math.max(4, Math.ceil((target - (larger ? 48 : 38)) / 2))}
       onPress={onPress}

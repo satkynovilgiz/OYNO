@@ -16,9 +16,9 @@ export function NotFoundState({ message, onPressBack }: { message?: string; onPr
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   return (
-    <View style={styles.root}>
+    <View style={styles.root} testID="not-found">
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} testID="not-found-back" />
       </View>
       <View style={styles.center}>
         <Text style={styles.message} accessibilityRole="text">

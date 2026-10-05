@@ -28,6 +28,8 @@ type ButtonProps = {
   /** Stretch to the parent's width. */
   block?: boolean;
   accessibilityHint?: string;
+  /** Stable id for UI tests (data-testid on web). */
+  testID?: string;
 };
 
 const SIZE = {
@@ -51,7 +53,7 @@ const VARIANT: Record<Exclude<ButtonVariant, 'danger'>, { bg: string; fg: string
  * out (invisible) under the spinner so the button never changes size. For
  * icon-only actions, use IconButton.
  */
-export function Button({ label, onPress, icon, disabled = false, loading = false, variant = 'primary', size = 'md', block = false, accessibilityHint }: ButtonProps) {
+export function Button({ label, onPress, icon, disabled = false, loading = false, variant = 'primary', size = 'md', block = false, accessibilityHint, testID }: ButtonProps) {
   const [pressed, setPressed] = useState(false);
   const isDisabled = disabled || loading;
   const v = VARIANT[variant === 'danger' ? 'destructive' : variant];
@@ -78,6 +80,7 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
       onPressOut={() => setPressed(false)}
       press="strong"
       hitSlop={hitSlop}
+      testID={testID}
       haptic={isDisabled ? false : variant === 'primary' || variant === 'accent' ? 'medium' : 'light'}
       disabled={isDisabled}
       accessibilityRole="button"

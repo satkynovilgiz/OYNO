@@ -32,3 +32,29 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx jest --silent --ci
+
+  # Deterministic smoke suite: the WEB export of the app against a fake
+  # backend (e2e/fixtures). No real Supabase, no accounts, no network.
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:build
+      - run: npm run e2e
+        env:
+          CI: 'true'
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-failures
+          path: |
+            e2e/.results
+            e2e/.report
+          retention-days: 14

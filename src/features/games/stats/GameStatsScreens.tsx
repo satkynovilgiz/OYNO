@@ -61,6 +61,7 @@ export function GameStatsScreen({ onPressBack }: { onPressBack: () => void }) {
             return (
               <AnimatedPressable
                 key={game.gameId}
+                testID={`game-stats-row-${game.gameId}`}
                 style={[styles.row, experience === 'child' && styles.rowChild]}
                 onPress={() => router.push(statsRoute(game.gameId) as never)}
                 accessibilityRole="button"
@@ -130,7 +131,7 @@ export function GameStatsDetailScreen({ gameId, onPressBack }: { gameId: string;
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
         <View style={styles.filters} accessibilityRole="tablist">
           {(['official', 'practice', 'all'] as SessionFilter[]).map((option) => (
-            <Chip key={option} label={t(`gameStats.filter.${option}`)} selected={filter === option} onPress={() => setFilter(option)} accessibilityRole="tab" />
+            <Chip key={option} label={t(`gameStats.filter.${option}`)} selected={filter === option} onPress={() => setFilter(option)} accessibilityRole="tab" testID={`stats-filter-${option}`} />
           ))}
         </View>
         <Text style={styles.note}>{t('gameStats.recentNote', { count: RECENT_LIMIT })}</Text>
@@ -218,7 +219,7 @@ function GroupSection({
     average: average !== null ? t('gameStats.averageSentence', { value: average }) : null,
   });
   return (
-    <View style={styles.group}>
+    <View style={styles.group} testID={`stats-group-${type}`}>
       {showHeading ? (
         <Text style={styles.sectionTitle} accessibilityRole="header">
           {t(`gameStats.group.${type}`)}

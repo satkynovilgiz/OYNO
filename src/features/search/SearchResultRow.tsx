@@ -23,7 +23,7 @@ export function SearchResultRow({ item, query, saved, offline, large = false, on
   const a11y = [item.title, typeLabel, item.metadata, saved ? t('library.status.saved') : null, offline ? t('library.status.offline') : null].filter(Boolean).join(', ');
 
   return (
-    <AnimatedPressable style={styles.row} onPress={onPress} press="soft" hoverEffect accessibilityRole="button" accessibilityLabel={a11y}>
+    <AnimatedPressable style={styles.row} onPress={onPress} press="soft" hoverEffect accessibilityRole="button" accessibilityLabel={a11y} testID={`search-result-${item.contentType}-${item.id}`}>
       <LibraryArt item={item} size={large ? 68 : 52} radius={large ? cardRadii.chip : 12} />
       <View style={styles.text}>
         <Text style={[styles.title, large && styles.titleLarge]} numberOfLines={2}>

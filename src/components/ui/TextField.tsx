@@ -38,6 +38,7 @@ type TextFieldProps = {
   /** Keep the keyboard up on return (moving to the next field). */
   submitBehavior?: TextInputProps['submitBehavior'];
   inputRef?: Ref<TextInput>;
+  testID?: string;
   editable?: boolean;
   autoFocus?: boolean;
   /** Child experience: slightly larger text and field. */
@@ -54,6 +55,7 @@ type TextFieldProps = {
  * announced to screen readers when they appear. `secure` adds the
  * show/hide password toggle. */
 export function TextField({
+  testID,
   label,
   value,
   onChangeText,
@@ -99,6 +101,7 @@ export function TextField({
         ]}
       >
         <TextInput
+          testID={testID}
           ref={inputRef}
           value={value}
           onChangeText={onChangeText}

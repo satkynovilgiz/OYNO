@@ -109,7 +109,7 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
 
       <View style={[styles.skipRow, { top: insets.top + spacing.sm }]}>
         <View style={styles.skipChip}>
-          <TextButton label={t('onboarding.skip')} onPress={onFinish} tone="light" />
+          <TextButton label={t('onboarding.skip')} onPress={onFinish} tone="light" testID="onboarding-skip" />
         </View>
       </View>
 
@@ -121,12 +121,12 @@ export function OnboardingScreen({ onFinish, onContinueAsGuest }: OnboardingScre
         </View>
 
         <View style={styles.cta}>
-          <Button label={isLastSlide ? t('onboarding.start') : t('onboarding.next')} variant="accent" size="lg" block onPress={handleContinue} />
+          <Button label={isLastSlide ? t('onboarding.start') : t('onboarding.next')} variant="accent" size="lg" block onPress={handleContinue} testID="onboarding-next" />
         </View>
         {/* Guest-first stays one tap away on the last slide; account
             creation is never forced before the user has seen OYNO. */}
         {isLastSlide ? (
-          <TextButton label={t('onboarding.v2.guest')} onPress={onContinueAsGuest} tone="light" style={styles.laterLink} />
+          <TextButton label={t('onboarding.v2.guest')} onPress={onContinueAsGuest} tone="light" style={styles.laterLink} testID="onboarding-guest" />
         ) : (
           <View style={styles.laterSpacer} />
         )}

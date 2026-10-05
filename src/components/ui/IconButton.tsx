@@ -14,6 +14,7 @@ type IconButtonProps = {
   icon: LucideIcon;
   onPress?: () => void;
   accessibilityLabel: string;
+  testID?: string;
   size?: number;
   iconSize?: number;
   variant?: Variant;
@@ -30,6 +31,7 @@ export function IconButton({
   icon: Icon,
   onPress,
   accessibilityLabel,
+  testID,
   size = 44,
   iconSize,
   variant = 'surface',
@@ -48,6 +50,7 @@ export function IconButton({
 
   return (
     <AnimatedPressable
+      testID={testID}
       onPress={disabled ? undefined : onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}

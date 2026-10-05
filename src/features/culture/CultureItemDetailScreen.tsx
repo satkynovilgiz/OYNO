@@ -262,7 +262,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                   </View>
                   <View style={styles.heroText}>
                     {typeLabel ? <Text style={styles.heroEyebrow}>{typeLabel}</Text> : null}
-                    <Text style={[styles.heroTitle, !isChild && styles.heroTitleEditorial]} numberOfLines={3} accessibilityRole="header">
+                    <Text style={[styles.heroTitle, !isChild && styles.heroTitleEditorial]} numberOfLines={3} accessibilityRole="header" testID="culture-item-title">
                       {item.title}
                     </Text>
                   </View>
@@ -276,7 +276,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                 {actions}
               </View>
               {typeLabel ? <Text style={styles.plainEyebrow}>{typeLabel}</Text> : null}
-              <Text style={[styles.plainHeaderTitle, !isChild && styles.heroTitleEditorial]} accessibilityRole="header">
+              <Text style={[styles.plainHeaderTitle, !isChild && styles.heroTitleEditorial]} accessibilityRole="header" testID="culture-item-title">
                 {item.title}
               </Text>
             </View>

@@ -91,7 +91,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
           <View style={{ alignSelf: 'flex-start' }}>
             <Button label={t('contentLinks.sharePath')} variant="text" icon={<Link2 size={16} color={colors.primary} strokeWidth={2} />} onPress={() => void shareContentLink({ type: 'learning_path', id: path.id, title })} />
           </View>
-          <View accessible accessibilityLabel={t('learningPaths.progress', { completed: progress.completed, total: progress.total })}>
+          <View accessible accessibilityLabel={t('learningPaths.progress', { completed: progress.completed, total: progress.total })} testID="path-progress">
             <Text style={styles.progressText}>{t('learningPaths.progress', { completed: progress.completed, total: progress.total })}</Text>
             <ProgressBar progress={progress.completed / progress.total} height={isChild ? 8 : 4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
           </View>
@@ -110,7 +110,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
               />
             </View>
           ) : nextRoute ? (
-            <Button label={progress.started ? t('learningPaths.continue') : t('learningPaths.start')} size={isChild ? 'lg' : 'md'} onPress={() => openStep(nextRoute, path.id)} />
+            <Button label={progress.started ? t('learningPaths.continue') : t('learningPaths.start')} size={isChild ? 'lg' : 'md'} onPress={() => openStep(nextRoute, path.id)} testID="path-start" />
           ) : null}
           {offlineNext?.trueNextUnavailable && trueNext ? (
             <Text style={styles.offlineNote} accessibilityLiveRegion="polite">

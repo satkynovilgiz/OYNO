@@ -68,6 +68,7 @@ export function LanguageSelectScreen({ selected, onSelect, onContinue }: Languag
             return (
               <FadeSlideIn key={option.id} index={optionIndex + 1}>
                 <AnimatedPressable
+                  testID={`language-${option.id}`}
                   onPress={() => onSelect(option.id)}
                   press="strong"
                   haptic="light"
@@ -87,7 +88,7 @@ export function LanguageSelectScreen({ selected, onSelect, onContinue }: Languag
 
         <Text style={styles.hint}>{t('onboarding.v2.languageHint')}</Text>
 
-        <Button label={t('onboarding.start')} variant="accent" size="lg" block onPress={onContinue} />
+        <Button label={t('onboarding.start')} variant="accent" size="lg" block onPress={onContinue} testID="language-continue" />
       </ScrollView>
     </View>
   );

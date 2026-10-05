@@ -43,3 +43,8 @@ yarn-error.*
 
 # Claude Code runtime state
 .claude/scheduled_tasks.lock
+
+# Playwright smoke suite (web export, results, HTML report)
+/e2e/.web
+/e2e/.results
+/e2e/.report

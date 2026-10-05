@@ -179,7 +179,8 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
     );
   }
 
-  const empty = view.availableCount === 0 && view.downloading.length === 0 && view.needsAttention.length === 0;
+  // Incomplete downloads are not "nothing": they must stay visible with Repair.
+  const empty = view.availableCount === 0 && view.downloading.length === 0 && view.needsAttention.length === 0 && view.needsRepair.length === 0;
   const size = formatBytes(bytes, t('offline.v2.units', { returnObjects: true }) as { b: string; kb: string; mb: string });
 
   return (
@@ -217,9 +218,9 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
 
             {/* Check downloads: local reads only, so it also works offline. */}
             <View style={styles.check}>
-              <Button label={t('offline.check.action')} variant="secondary" size="sm" loading={checking} onPress={() => void check()} />
+              <Button label={t('offline.check.action')} variant="secondary" size="sm" loading={checking} onPress={() => void check()} testID="downloads-check" />
               {health ? (
-                <Text style={styles.checkResult} accessibilityLiveRegion="polite">
+                <Text style={styles.checkResult} accessibilityLiveRegion="polite" testID="downloads-check-result">
                   {t('offline.check.result', { ready: health.counts.ready, incomplete: health.counts.incomplete, updates: health.counts.update_available })}
                 </Text>
               ) : (
@@ -229,7 +230,7 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
             </View>
 
             {view.needsRepair.length > 0 ? (
-              <View style={styles.section}>
+              <View style={styles.section} testID="downloads-needs-repair">
                 <SectionHeader title={t('offline.check.needsRepair')} count={view.needsRepair.length} size="sm" inset={0} />
                 {view.needsRepair.map((row) => renderRow(row, true))}
                 {view.needsRepair.length > 1 ? <Button label={t('offline.check.repairAll')} variant="accent" size="sm" onPress={() => repairRows(view.needsRepair)} /> : null}

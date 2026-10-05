@@ -59,9 +59,27 @@ npm run release:check -- --markdown docs/RELEASE_CHECK.md   # record it, tied to
 npm run release:check -- --network                          # + optional live Supabase reachability
 ```
 
+### Smoke tests (end-to-end, web)
+
+```sh
+npx playwright install chromium   # once
+npm run e2e:build                 # web export pointed at the FAKE backend (https://oyno-e2e.test)
+npm run e2e                       # Playwright journeys + KG/RU/EN, 320 px and large-text sweeps
+```
+
+The suite (`e2e/`) runs the web export in Chromium with Pixel 7 emulation.
+Every request to the backend is answered by deterministic fixtures
+(`e2e/fixtures/`); unhandled hosts never reach a real server, and no
+account is used. Failures leave screenshots, traces, page errors and the
+backend request log in `e2e/.results`; the HTML report is in `e2e/.report`.
+Rebuild with `npm run e2e:build` after app changes. Native-only features
+(PDF, widgets, notifications, 3D performance, Dynamic Type) are not covered -
+they stay in `docs/DEVICE_QA.md`.
+
 CI (`.github/workflows/ci.yml`) runs `npm ci`, `npx tsc --noEmit` and
 `npx jest --silent --ci` on every push / pull request to `main`. Tests mock
-Supabase and never touch the network.
+Supabase and never touch the network. A second job (`smoke`) builds the web
+export and runs the Playwright smoke suite, uploading results on failure.
 
 The release check only reports what the repository can prove. Apple
 Developer portal setup, EAS credentials, which migrations are live, and

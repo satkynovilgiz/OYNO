@@ -53,9 +53,9 @@ export function ReadingActions({ tracker }: { tracker: ReadingTracker }) {
   const completed = !!tracker.record?.completedAt;
   return (
     <View style={styles.actions}>
-      {completed ? <Text style={styles.completed}>✓ {t('reading.completed')}</Text> : null}
+      {completed ? <Text style={styles.completed} testID="reading-completed">✓ {t('reading.completed')}</Text> : null}
       {!completed ? (
-        <AnimatedPressable style={styles.link} onPress={tracker.markRead} accessibilityRole="button" accessibilityLabel={t('reading.markRead')}>
+        <AnimatedPressable style={styles.link} onPress={tracker.markRead} accessibilityRole="button" accessibilityLabel={t('reading.markRead')} testID="reading-mark-read">
           <Text style={styles.linkText}>{t('reading.markRead')}</Text>
         </AnimatedPressable>
       ) : null}

@@ -22,6 +22,8 @@ type TextButtonProps = {
   /** Layout-only overrides (alignment, margin) for the call site - never
    * used to redefine the button's own look. */
   style?: StyleProp<ViewStyle>;
+  /** Stable id for UI tests (data-testid on web). */
+  testID?: string;
 };
 
 /** Ghost/ text-only button - the "Баарын көрүү ›" / "Сырсөздү унуттуңузбу?"
@@ -37,6 +39,7 @@ export function TextButton({
   tone = 'primary',
   hideLabel = false,
   style,
+  testID,
 }: TextButtonProps) {
   const [pressed, setPressed] = useState(false);
 
@@ -49,6 +52,7 @@ export function TextButton({
       haptic={disabled ? false : 'light'}
       disabled={disabled}
       hitSlop={10}
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
