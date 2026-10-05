@@ -4666,6 +4666,29 @@
     "photosMissing_few": "{{count}} photos could not be included.",
     "photosMissing_many": "{{count}} photos could not be included.",
     "failed": "The Memory Book couldn't be created. Nothing was shared.",
-    "unsupported": "Memory Book PDFs can be made in the OYNO phone app. This version can't create PDFs."
+    "unsupported": "Memory Book PDFs can be made in the OYNO phone app. This version can't create PDFs.",
+    "review": "Review book",
+    "reviewTitle": "Review your book",
+    "reviewNote": "This is a check of what goes into the PDF, in its final order - not a preview of the pages. Page breaks are decided when the PDF is made.",
+    "backToSelection": "Back to selection",
+    "on": "On",
+    "off": "Off",
+    "reviewCount_one": "{{count}} memory, in book order",
+    "reviewCount_other": "{{count}} memories, in book order",
+    "reviewCount_few": "{{count}} memories, in book order",
+    "reviewCount_many": "{{count}} memories, in book order",
+    "photoState": {
+      "local": "Photo on this device",
+      "account": "Photo saved in your account - we'll try to get it while preparing",
+      "missing": "Photo not available on this device",
+      "none": "No photo"
+    },
+    "missingTitle_one": "{{count}} photo could not be included",
+    "missingTitle_other": "{{count}} photos could not be included",
+    "missingTitle_few": "{{count}} photos could not be included",
+    "missingTitle_many": "{{count}} photos could not be included",
+    "missingMessage": "Nothing has been shared yet. Continue without these photos, or go back and try again (for example after connecting to the internet).",
+    "continueWithout": "Continue without them",
+    "tryAgain": "Go back and try again"
   }
 }

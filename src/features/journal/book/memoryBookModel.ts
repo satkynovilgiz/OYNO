@@ -136,3 +136,45 @@ ${pages}
 export function bookAnalytics(entryCount: number, layout: BookLayout, includedText: boolean): { entry_count: number; layout: BookLayout; included_text: boolean } {
   return { entry_count: entryCount, layout, included_text: includedText };
 }
+
+/**
+ * What the review can honestly say about an entry's photo WITHOUT trying
+ * to fetch it:
+ *   local    a copy is on this device (thumbnail shown)
+ *   account  only the signed-in account has it; it will be TRIED during
+ *            preparation - not promised
+ *   missing  referenced, but neither a local copy nor a way to restore it
+ *   none     the memory has no photo
+ */
+export type ReviewPhotoState = 'local' | 'account' | 'missing' | 'none';
+
+export function reviewPhotoState(entry: Pick<JournalEntry, 'photo'>, localExists: (uri: string) => boolean, signedIn: boolean): ReviewPhotoState {
+  const photo = entry.photo;
+  if (!photo) return 'none';
+  if (photo.localUri && localExists(photo.localUri)) return 'local';
+  if (signedIn && photo.remotePath) return 'account';
+  return 'missing';
+}
+
+export type ReviewItem = { id: string; title: string; date: string; photo: ReviewPhotoState; thumbnailUri: string | null; notePreview: string | null };
+
+export const NOTE_PREVIEW_MAX = 160;
+
+/**
+ * The review list, in the EXACT order the PDF will use (same bookEntries
+ * call). With text OFF no note content is part of the review at all.
+ */
+export function reviewItems(entries: readonly JournalEntry[], selected: readonly string[], sort: BookSort, includeText: boolean, localExists: (uri: string) => boolean, signedIn: boolean): ReviewItem[] {
+  return bookEntries(entries, selected, sort).map((entry) => {
+    const photo = reviewPhotoState(entry, localExists, signedIn);
+    const note = includeText ? entry.note.trim() : '';
+    return {
+      id: entry.id,
+      title: entry.title,
+      date: entry.date,
+      photo,
+      thumbnailUri: photo === 'local' ? entry.photo!.localUri : null,
+      notePreview: note ? (note.length > NOTE_PREVIEW_MAX ? `${note.slice(0, NOTE_PREVIEW_MAX).trimEnd()}…` : note) : null,
+    };
+  });
+}

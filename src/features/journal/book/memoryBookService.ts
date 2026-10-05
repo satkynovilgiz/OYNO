@@ -83,6 +83,16 @@ export async function photoDataUri(entry: JournalEntry, owner: string, signedIn:
   }
 }
 
+/** Whether a local file exists right now (review only - no download, no network). */
+export function localFileExists(uri: string): boolean {
+  try {
+    const { File } = fileSystem();
+    return new File(uri).exists;
+  } catch {
+    return false;
+  }
+}
+
 let exportCounter = 0;
 
 /** A cache folder no other export uses - concurrent exports never share files. */

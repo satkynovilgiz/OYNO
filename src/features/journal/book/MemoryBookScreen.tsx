@@ -1,5 +1,5 @@
-import { Check, ChevronLeft } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { Check, ChevronLeft, CloudDownload, ImageOff } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,13 +11,15 @@ import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import type { SupportedLanguage } from '@/i18n';
 import { track } from '@/services/analytics/analytics';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
+import { useAuthStore } from '@/store/useAuthStore';
 import { useJournalStore } from '@/store/useJournalStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { formatEntryDate } from '../journalDisplay';
-import { BOOK_LAYOUTS, bookCandidates, bookEntries, buildBookHtml, canGenerate, cleanBookTitle, dateRange, MAX_BOOK_ENTRIES, MIN_BOOK_ENTRIES, sortForBook, TITLE_MAX, toggleBookSelection, validSelection, type BookLayout, type BookSort } from './memoryBookModel';
-import { exportMemoryBook } from './memoryBookExport';
-import { memoryBookSupported } from './memoryBookService';
+import type { JournalEntry } from '../journalModel';
+import { BOOK_LAYOUTS, bookCandidates, bookEntries, buildBookHtml, canGenerate, cleanBookTitle, dateRange, MAX_BOOK_ENTRIES, MIN_BOOK_ENTRIES, reviewItems, sortForBook, TITLE_MAX, toggleBookSelection, validSelection, type BookLayout, type BookPage, type BookSort, type ReviewItem } from './memoryBookModel';
+import { createPhotoCache, photoCacheValid, prepareMemoryBook, shareMemoryBook, type PhotoCache, type PreparedBook } from './memoryBookExport';
+import { localFileExists, memoryBookSupported } from './memoryBookService';
 
 /**
  * /journal/book - pick 3-20 of your own memories, a layout and a title,
@@ -39,15 +41,26 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
   const [includeText, setIncludeText] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<'select' | 'review'>('select');
+  // Prepared book waiting for a missing-photo decision (before any sharing).
+  const [pending, setPending] = useState<PreparedBook | null>(null);
+  // Photo data prepared in THIS session, reused by "try again".
+  const photoCache = useRef<PhotoCache | null>(null);
+  // Any sign-in / sign-out / account switch (even back into the same account).
+  const sessionKey = useAuthStore((state) => `${state.status}:${state.user?.id ?? ''}`);
 
   useEffect(() => {
     if (!useJournalStore.getState().isLoaded) void useJournalStore.getState().load();
     track('journal_memory_book_started');
   }, []);
-  // Another account (or signing out): the previous person's picks are gone at once.
+  // Another session: the previous person's picks, review and prepared private
+  // content (photo data, notes) are dropped at once.
   useEffect(() => {
     setSelected([]);
-  }, [owner]);
+    setPhase('select');
+    setPending(null);
+    photoCache.current = null;
+  }, [owner, sessionKey]);
 
   const candidates = useMemo(() => sortForBook(bookCandidates(entries), sort), [entries, sort]);
   const picked = validSelection(entries, selected);
@@ -56,38 +69,52 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
   const hasPhotos = chosen.some((entry) => !!entry.photo);
   const fmt = (date: string) => formatEntryDate(date, language);
 
-  async function generate() {
-    setConfirm(false);
-    // Re-read: anything deleted meanwhile is dropped before generation.
-    const latest = useJournalStore.getState().entries;
-    const book = bookEntries(latest, picked, sort);
-    if (book.length < MIN_BOOK_ENTRIES) return;
+  const buildHtml = (book: readonly JournalEntry[]) => (pages: BookPage[]) => {
+    const range = dateRange(book);
+    return buildBookHtml({
+      title: cleanBookTitle(title, t('memoryBook.defaultTitle')),
+      subtitle: showRange && range ? (range.from === range.to ? fmt(range.from) : `${fmt(range.from)} - ${fmt(range.to)}`) : null,
+      layout,
+      pages,
+      labels: { untitled: t('journal.untitled'), madeWith: t('memoryBook.madeWith') },
+      language,
+    });
+  };
+
+  async function share(book: PreparedBook) {
+    setPending(null);
     setBusy(true);
     try {
-      const range = dateRange(book);
-      const outcome = await exportMemoryBook({
-        entries: book,
-        includeText,
-        layout,
-        formatDate: fmt,
-        today: localDateKey(),
-        buildHtml: (pages) =>
-          buildBookHtml({
-            title: cleanBookTitle(title, t('memoryBook.defaultTitle')),
-            subtitle: showRange && range ? (range.from === range.to ? fmt(range.from) : `${fmt(range.from)} - ${fmt(range.to)}`) : null,
-            layout,
-            pages,
-            labels: { untitled: t('journal.untitled'), madeWith: t('memoryBook.madeWith') },
-            language,
-          }),
-      });
+      const outcome = await shareMemoryBook(book, buildHtml(book.entries), localDateKey());
       // A deliberate stop (account/session changed) is silent - no failure toast.
       if (outcome.status === 'failed') showToast(t('memoryBook.failed'));
-      if (outcome.status === 'shared' && outcome.missingPhotos > 0) showToast(t('memoryBook.photosMissing', { count: outcome.missingPhotos }));
     } finally {
       setBusy(false);
     }
   }
+
+  /** Gather photos first; ask about missing ones BEFORE anything is shared. */
+  async function prepare() {
+    setConfirm(false);
+    // Re-read: anything deleted meanwhile is dropped before generation.
+    const book = bookEntries(useJournalStore.getState().entries, picked, sort);
+    if (book.length < MIN_BOOK_ENTRIES) return;
+    if (!photoCache.current || !photoCacheValid(photoCache.current)) photoCache.current = createPhotoCache();
+    setBusy(true);
+    let prepared: PreparedBook | null = null;
+    try {
+      const outcome = await prepareMemoryBook({ entries: book, includeText, layout, formatDate: fmt, cache: photoCache.current });
+      if (outcome.status === 'ready') prepared = outcome.book;
+    } finally {
+      setBusy(false);
+    }
+    if (!prepared) return;
+    if (prepared.missingPhotoIds.length > 0) setPending(prepared);
+    else await share(prepared);
+  }
+
+  const signedIn = owner !== 'guest';
+  const review: ReviewItem[] = phase === 'review' ? reviewItems(entries, picked, sort, includeText, localFileExists, signedIn) : [];
 
   return (
     <View style={styles.root}>
@@ -103,6 +130,44 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
           <Button label={t('common.back')} variant="secondary" onPress={onPressBack} />
         </View>
       ) : (
+        phase === 'review' ? (
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
+          <Text style={styles.reviewHeading} accessibilityRole="header">
+            {t('memoryBook.reviewTitle')}
+          </Text>
+          {/* Honest scope: a check of the content, not the rendered pages. */}
+          <Text style={styles.note}>{t('memoryBook.reviewNote')}</Text>
+          <View style={styles.summary}>
+            <SummaryLine label={t('memoryBook.bookTitle')} value={cleanBookTitle(title, t('memoryBook.defaultTitle'))} />
+            <SummaryLine label={t('memoryBook.showRange')} value={showRange ? t('memoryBook.on') : t('memoryBook.off')} />
+            <SummaryLine label={t('memoryBook.layout')} value={t(`memoryBook.layouts.${layout}`)} />
+            <SummaryLine label={t('memoryBook.includeText')} value={includeText ? t('memoryBook.on') : t('memoryBook.off')} />
+            <SummaryLine label={t('memoryBook.sort')} value={t(`memoryBook.sortBy.${sort}`)} />
+          </View>
+          <Text style={styles.counter}>{t('memoryBook.reviewCount', { count: review.length })}</Text>
+          {review.map((item, index) => (
+            <View key={item.id} style={styles.reviewItem} accessible accessibilityLabel={`${index + 1}. ${t('memoryBook.memoryA11y', { date: fmt(item.date) })}${item.title ? `, ${item.title}` : ''}. ${t(`memoryBook.photoState.${item.photo}`)}${item.notePreview ? `. ${item.notePreview}` : ''}`}>
+              <Text style={styles.reviewIndex}>{index + 1}</Text>
+              {item.thumbnailUri ? (
+                <Image source={{ uri: item.thumbnailUri }} style={styles.thumb} />
+              ) : (
+                <View style={[styles.thumb, styles.thumbPaper, styles.thumbIcon]}>
+                  {item.photo === 'account' ? <CloudDownload size={18} color={colors.textSecondary} strokeWidth={2} /> : item.photo === 'missing' ? <ImageOff size={18} color={colors.textSecondary} strokeWidth={2} /> : null}
+                </View>
+              )}
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={styles.itemTitle}>{item.title || t('journal.untitled')}</Text>
+                <Text style={styles.note}>{fmt(item.date)}</Text>
+                {item.photo === 'account' || item.photo === 'missing' ? <Text style={styles.note}>{t(`memoryBook.photoState.${item.photo}`)}</Text> : null}
+                {/* Text OFF: no note content anywhere in the review. */}
+                {item.notePreview ? <Text style={styles.notePreview}>{item.notePreview}</Text> : null}
+              </View>
+            </View>
+          ))}
+          <Button label={t('memoryBook.create')} variant="accent" size="lg" block disabled={!ready || busy} loading={busy} onPress={() => (includeText || hasPhotos ? setConfirm(true) : void prepare())} />
+          <Button label={t('memoryBook.backToSelection')} variant="secondary" block disabled={busy} onPress={() => setPhase('select')} />
+        </ScrollView>
+        ) : (
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled">
           <Text style={styles.note}>{t('memoryBook.intro', { min: MIN_BOOK_ENTRIES, max: MAX_BOOK_ENTRIES })}</Text>
 
@@ -157,17 +222,10 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
             );
           })}
 
-          <Button
-            label={t('memoryBook.create')}
-            variant="accent"
-            size="lg"
-            block
-            disabled={!ready || busy}
-            loading={busy}
-            onPress={() => (includeText || hasPhotos ? setConfirm(true) : void generate())}
-          />
+          <Button label={t('memoryBook.review')} variant="accent" size="lg" block disabled={!ready || busy} onPress={() => setPhase('review')} />
           <Text style={styles.note}>{t('memoryBook.localOnly')}</Text>
         </ScrollView>
+        )
       )}
       <ConfirmationModal
         visible={confirm}
@@ -175,9 +233,28 @@ export function MemoryBookScreen({ onPressBack }: { onPressBack: () => void }) {
         message={t('memoryBook.privacyMessage')}
         confirmLabel={t('memoryBook.continue')}
         cancelLabel={t('common.cancel')}
-        onConfirm={() => void generate()}
+        onConfirm={() => void prepare()}
         onCancel={() => setConfirm(false)}
       />
+      {/* Missing photos are decided BEFORE anything is shared. */}
+      <ConfirmationModal
+        visible={!!pending}
+        title={t('memoryBook.missingTitle', { count: pending?.missingPhotoIds.length ?? 0 })}
+        message={t('memoryBook.missingMessage')}
+        confirmLabel={t('memoryBook.continueWithout')}
+        cancelLabel={t('memoryBook.tryAgain')}
+        onConfirm={() => pending && void share(pending)}
+        onCancel={() => setPending(null)}
+      />
+    </View>
+  );
+}
+
+function SummaryLine({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.summaryLine} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Text style={styles.summaryLabel}>{label}</Text>
+      <Text style={styles.summaryValue}>{value}</Text>
     </View>
   );
 }
@@ -215,4 +292,14 @@ const styles = StyleSheet.create({
   itemTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
   check: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.borderSubtle, alignItems: 'center', justifyContent: 'center' },
   checkOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  reviewHeading: { ...typography.h2, color: colors.textPrimary },
+  summary: { gap: spacing.xs, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated },
+  // Wraps under large text instead of truncating.
+  summaryLine: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.xs },
+  summaryLabel: { ...textStyles.small, color: colors.textSecondary, flexShrink: 1 },
+  summaryValue: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
+  reviewItem: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, padding: spacing.xs, borderRadius: cardRadii.compact, borderWidth: 1, borderColor: colors.borderSubtle, backgroundColor: colors.surfaceElevated },
+  reviewIndex: { ...textStyles.small, fontWeight: '700', color: colors.textMuted, minWidth: 18, paddingTop: 2 },
+  thumbIcon: { alignItems: 'center', justifyContent: 'center' },
+  notePreview: { ...textStyles.small, color: colors.textSecondary, fontStyle: 'italic' },
 });

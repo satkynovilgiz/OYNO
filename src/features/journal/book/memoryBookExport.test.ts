@@ -122,7 +122,8 @@ jest.mock('@/services/journal/journalPhotos', () => ({
 // eslint-disable-next-line import/first
 import { useAuthStore } from '@/store/useAuthStore';
 
-import { exportMemoryBook } from './memoryBookExport';
+import { createPhotoCache, exportMemoryBook, photoCacheValid, prepareMemoryBook, shareMemoryBook } from './memoryBookExport';
+import { reviewItems, reviewPhotoState } from './memoryBookModel';
 import { ExportCancelledError, generateAndShareBook, SharingUnavailableError, type ExportSession } from './memoryBookService';
 
 const signIn = (id: string) => useAuthStore.setState({ status: 'authenticated', user: { id } as never });
@@ -341,5 +342,102 @@ describe('exportMemoryBook - session safety', () => {
     expect(html).toContain(`data:image/jpeg;base64,${Buffer.from('JPEGDATA').toString('base64')}`);
     expect(html).not.toContain('documents/journal');
     expect(html).not.toContain('"note":"note"');
+  });
+});
+
+describe('Review step (content review before export)', () => {
+  const photoEntry = (id: string, date: string, extra: Partial<JournalEntry> = {}) => entry(id, { date, note: `private note ${id}`, ...extra });
+  const local = (id: string) => ({ localUri: `documents/journal/user-a/${id}.jpg`, remotePath: `user-a/${id}/v1.jpg`, versionId: 'v1' });
+  const remoteOnly = (id: string) => ({ localUri: null, remotePath: `user-a/${id}/v1.jpg`, versionId: 'v1' });
+  const exists = (uri: string) => mockFs.files.has(uri);
+
+  it('review order is exactly the export order', async () => {
+    const list = [photoEntry('c', '2026-03-01'), photoEntry('a', '2026-01-01'), photoEntry('b', '2026-02-01')];
+    const review = reviewItems(list, ['a', 'b', 'c'], 'newest', true, exists, true);
+    expect(review.map((item) => item.id)).toEqual(['c', 'b', 'a']);
+    const prepared = await prepareMemoryBook({ entries: list.filter(() => true).sort((x, y) => y.date.localeCompare(x.date)), includeText: true, layout: 'classic', formatDate: (d) => d });
+    expect(prepared.status === 'ready' && prepared.book.pages.map((page) => page.title)).toEqual(review.map((item) => `Memory ${item.id}`));
+  });
+
+  it('text OFF: no note content anywhere in the review', () => {
+    const list = [photoEntry('a', '2026-01-01'), photoEntry('b', '2026-02-01'), photoEntry('c', '2026-03-01')];
+    const review = reviewItems(list, ['a', 'b', 'c'], 'oldest', false, exists, true);
+    expect(review.every((item) => item.notePreview === null)).toBe(true);
+    expect(JSON.stringify(review)).not.toContain('private note');
+    expect(reviewItems(list, ['a', 'b', 'c'], 'oldest', true, exists, true)[0].notePreview).toBe('private note a');
+  });
+
+  it('distinguishes a local photo, an account copy (tried, not promised) and a missing one - without fetching', () => {
+    mockFs.files.set('documents/journal/user-a/a.jpg', 'JPEG');
+    expect(reviewPhotoState({ photo: local('a') }, exists, true)).toBe('local');
+    expect(reviewPhotoState({ photo: remoteOnly('b') }, exists, true)).toBe('account');
+    expect(reviewPhotoState({ photo: remoteOnly('b') }, exists, false)).toBe('missing');
+    expect(reviewPhotoState({ photo: { localUri: 'gone.jpg', remotePath: null, versionId: null } }, exists, true)).toBe('missing');
+    expect(reviewPhotoState({ photo: null }, exists, true)).toBe('none');
+    expect(mockDownload).not.toHaveBeenCalled();
+    const [item] = reviewItems([photoEntry('a', '2026-01-01', { photo: local('a') })], ['a'], 'oldest', false, exists, true);
+    expect(item.thumbnailUri).toBe('documents/journal/user-a/a.jpg');
+  });
+
+  it('missing photos are known BEFORE sharing (nothing printed or shared during preparation)', async () => {
+    mockDownload.mockResolvedValue(null);
+    const prepared = await prepareMemoryBook({ entries: [photoEntry('a', '2026-01-01', { photo: remoteOnly('a') }), photoEntry('b', '2026-02-01'), photoEntry('c', '2026-03-01')], includeText: false, layout: 'classic', formatDate: (d) => d });
+    expect(prepared).toMatchObject({ status: 'ready', book: { missingPhotoIds: ['a'] } });
+    expect(mockPrintToFile).not.toHaveBeenCalled();
+    expect(mockShare).not.toHaveBeenCalled();
+  });
+
+  it('"try again" reuses prepared photos and only retries the missing ones', async () => {
+    mockFs.files.set('documents/journal/user-a/ok.jpg', 'JPEG');
+    mockDownload.mockResolvedValueOnce('documents/journal/user-a/ok.jpg').mockResolvedValueOnce(null);
+    const list = [photoEntry('ok', '2026-01-01', { photo: remoteOnly('ok') }), photoEntry('later', '2026-02-01', { photo: remoteOnly('later') }), photoEntry('c', '2026-03-01')];
+    const cache = createPhotoCache();
+    const first = await prepareMemoryBook({ entries: list, includeText: false, layout: 'classic', formatDate: (d) => d, cache });
+    expect(first.status === 'ready' && first.book.missingPhotoIds).toEqual(['later']);
+    expect(mockDownload).toHaveBeenCalledTimes(2);
+    // Second attempt (connection back): only "later" is fetched again.
+    mockFs.files.set('documents/journal/user-a/later.jpg', 'JPEG');
+    mockDownload.mockResolvedValueOnce('documents/journal/user-a/later.jpg');
+    const second = await prepareMemoryBook({ entries: list, includeText: false, layout: 'classic', formatDate: (d) => d, cache });
+    expect(second.status === 'ready' && second.book.missingPhotoIds).toEqual([]);
+    expect(mockDownload).toHaveBeenCalledTimes(3);
+    expect(mockDownload.mock.calls[2][1]).toBe('later');
+  });
+
+  it('continuing without the missing photos shares the prepared book (no second download)', async () => {
+    mockDownload.mockResolvedValue(null);
+    const prepared = await prepareMemoryBook({ entries: [photoEntry('a', '2026-01-01', { photo: remoteOnly('a') }), photoEntry('b', '2026-02-01'), photoEntry('c', '2026-03-01')], includeText: false, layout: 'classic', formatDate: (d) => d });
+    if (prepared.status !== 'ready') throw new Error('not ready');
+    const calls = mockDownload.mock.calls.length;
+    await expect(shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04')).resolves.toEqual({ status: 'shared', missingPhotos: 1 });
+    expect(mockDownload.mock.calls.length).toBe(calls);
+  });
+
+  it('an account change invalidates prepared private content and the photo cache', async () => {
+    mockFs.files.set('documents/journal/user-a/a.jpg', 'JPEG');
+    const cache = createPhotoCache();
+    const prepared = await prepareMemoryBook({ entries: [photoEntry('a', '2026-01-01', { photo: local('a') }), photoEntry('b', '2026-02-01'), photoEntry('c', '2026-03-01')], includeText: true, layout: 'photo', formatDate: (d) => d, cache });
+    if (prepared.status !== 'ready') throw new Error('not ready');
+    expect(cache.images.size).toBe(1);
+    signIn('user-b');
+    expect(photoCacheValid(cache)).toBe(false);
+    // The old prepared book can't be shared in the new session.
+    await expect(shareMemoryBook(prepared.book, () => '<html/>', '2026-10-04')).resolves.toEqual({ status: 'cancelled' });
+    expect(mockShare).not.toHaveBeenCalled();
+    // A stale cache is never used by a new preparation.
+    mockFs.files.delete('documents/journal/user-a/a.jpg');
+    const fresh = await prepareMemoryBook({ entries: [photoEntry('a', '2026-01-01', { photo: { localUri: 'documents/journal/user-a/a.jpg', remotePath: null, versionId: 'v1' } }), photoEntry('b', '2026-02-01'), photoEntry('c', '2026-03-01')], includeText: false, layout: 'classic', formatDate: (d) => d, cache });
+    expect(fresh.status === 'ready' && fresh.book.missingPhotoIds).toEqual(['a']);
+  });
+
+  it('review copy exists in KG/RU/EN and calls itself a content check, not a page preview', () => {
+    /* eslint-disable @typescript-eslint/no-require-imports */
+    const locales = [require('@/i18n/locales/kg.json'), require('@/i18n/locales/ru.json'), require('@/i18n/locales/en.json')];
+    /* eslint-enable @typescript-eslint/no-require-imports */
+    for (const locale of locales) {
+      for (const key of ['review', 'reviewTitle', 'reviewNote', 'backToSelection', 'missingMessage', 'continueWithout', 'tryAgain']) expect(locale.memoryBook[key]).toBeTruthy();
+      for (const state of ['local', 'account', 'missing', 'none']) expect(locale.memoryBook.photoState[state]).toBeTruthy();
+    }
+    expect(locales[2].memoryBook.reviewNote).toMatch(/not a preview of the pages/);
   });
 });
