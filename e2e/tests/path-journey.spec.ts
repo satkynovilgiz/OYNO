@@ -1,4 +1,4 @@
-import { expect, expectNoExposedKeys, expectNoPageErrors, seed, test } from '../helpers';
+import { expect, expectNoExposedKeys, expectNoPageErrors, seed, test, waitForStored } from '../helpers';
 
 /**
  * Guided Learning Path journey (browser-supported part). Native game rounds
@@ -115,4 +115,71 @@ test('offline: a next step that is not saved says so and offers the way back', a
   await expect(page).toHaveURL(/\/learn\/boz-uy/);
   await context.setOffline(false);
   expectNoPageErrors(errors);
+});
+
+const challengeDone = { daily: null, results: { 'collection:boz-uy-world': { startedAt: AT, completedAt: AT, lastCorrect: 5, lastTotal: 5, bestCorrect: 5, attempts: 1, updatedAt: AT } } };
+
+test('cold start: the path never shows a guessed progress before the saved one', async ({ page, errors }) => {
+  await seed(page, {
+    language: 'en',
+    guest: true,
+    storage: { 'oyno.reading.v1': { guest: { ...read('boz-uy-overview'), ...read('boz-uy-karkas') } }, 'oyno.challenges.v1': challengeDone },
+  });
+  // Every rendered progress / Start-Continue state, from the first frame on.
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    (window as unknown as { __pathStates: string[] }).__pathStates = seen;
+    new MutationObserver(() => {
+      const progress = document.querySelector('[data-testid="path-progress"]');
+      if (!progress) return;
+      const state = `${progress.getAttribute('aria-label')} | ${document.querySelector('[data-testid="path-start"]')?.textContent ?? '-'}`;
+      if (seen[seen.length - 1] !== state) seen.push(state);
+    }).observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+  });
+  await page.goto('/learn/boz-uy');
+  await expect(page.getByTestId('path-progress')).toHaveAttribute('aria-label', /3\b.*5/);
+  const states = await page.evaluate(() => (window as unknown as { __pathStates: string[] }).__pathStates);
+  expect(states, 'before the saved progress loads, the screen shows a loading state - never 0/5 and "Start path"').toEqual(['3 of 5 completed | Continue path']);
+  expectNoPageErrors(errors);
+});
+
+test('a confirmed manual step survives an app restart', async ({ page, errors }) => {
+  await seed(page, { language: 'en', guest: true });
+  await page.goto('/learn/boz-uy');
+  await expect(page.getByTestId('path-progress')).toHaveAttribute('aria-label', /0\b.*5/);
+  await page.getByRole('checkbox', { name: 'Mark step complete' }).click();
+  await expect(page.getByTestId('path-progress')).toHaveAttribute('aria-label', /1\b.*5/);
+  await waitForStored<Record<string, Record<string, Record<string, string>>>>(page, 'oyno.learningPaths.v1', (saved) => !!saved?.guest?.['boz-uy']?.build, 'manual completion persisted');
+  await page.reload();
+  await expect(page.getByTestId('path-progress')).toHaveAttribute('aria-label', /1\b.*5/);
+  await expect(page.getByRole('checkbox', { name: 'Mark step complete' })).toHaveAttribute('aria-checked', 'true');
+  expectNoPageErrors(errors);
+});
+
+test('removed content: the step says so, cannot be opened, and Continue moves on to the next step that exists', async ({ page, errors }) => {
+  // The Horse Games articles are not in the fixture catalogue (= removed from the content backend).
+  await seed(page, { language: 'en', guest: true });
+  await page.goto('/learn/horse-games');
+  const removed = page.getByRole('button', { name: /^Step 1\. Read: No longer available\.$/ });
+  await expect(removed).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByTestId('path-next-removed')).toHaveText('Step 1 is no longer available. You can continue with Play: Kok Boru.');
+  await page.getByTestId('path-start').click();
+  await expect(page).toHaveURL(/\/games\/kok-boru\?fromPath=horse-games/);
+  expectNoPageErrors(errors);
+});
+
+test('step titles that fail to load offer a retry', async ({ page, errors }) => {
+  await seed(page, { language: 'en', guest: true });
+  let failing = true;
+  // Served here (before the fake backend) - a failing content request, not an unexpected one.
+  await page.route('**/rest/v1/culture_items?*', (route) => (failing ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"unavailable"}' }) : route.fallback()));
+  await page.goto('/learn/boz-uy');
+  const retry = page.getByTestId('path-catalog-retry');
+  await expect(retry).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Step 1\. Read: …\./ })).toBeVisible();
+  failing = false;
+  await retry.click();
+  await expect(page.getByRole('button', { name: /^Step 1\. Read: Боз үй\./ })).toBeVisible();
+  await expect(retry).toHaveCount(0);
+  expect(errors.filter((error) => error.startsWith('pageerror'))).toEqual([]);
 });

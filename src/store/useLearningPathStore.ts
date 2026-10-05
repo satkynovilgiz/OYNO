@@ -39,30 +39,46 @@ type State = {
 /** Learning Path manual step completions - on this device, per owner. */
 export const useLearningPathStore = create<State>((set, get) => {
   const persist = () => void AsyncStorage.setItem(LEARNING_PATH_KEY, JSON.stringify(get().saved)).catch(() => undefined);
+  // One read at a time: a second load() joins the first, so a later read can
+  // never overwrite a change applied after the first one finished.
+  let loading: Promise<void> | null = null;
+  // Writes wait for the stored state: persisting before it is read would
+  // replace every saved completion (all owners) with just this change.
+  const whenLoaded = (apply: () => void) => {
+    if (get().isLoaded) apply();
+    else void get().load().then(apply);
+  };
   return {
     isLoaded: false,
     saved: {},
-    load: async () => {
-      if (get().isLoaded) return;
-      const raw = await AsyncStorage.getItem(LEARNING_PATH_KEY).catch(() => null);
-      const parsed = safeJsonParse<Saved>(raw, {});
-      set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
+    load: () => {
+      if (get().isLoaded) return Promise.resolve();
+      loading ??= (async () => {
+        const raw = await AsyncStorage.getItem(LEARNING_PATH_KEY).catch(() => null);
+        const parsed = safeJsonParse<Saved>(raw, {});
+        set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
+      })().finally(() => {
+        loading = null;
+      });
+      return loading;
     },
-    setManual: (owner, pathId, stepId, completed) => {
-      const mine = ownerManualSteps(get().saved, owner);
-      const steps = { ...(mine[pathId] ?? {}) };
-      if (completed) steps[stepId] = steps[stepId] ?? new Date().toISOString();
-      else delete steps[stepId];
-      set({ saved: { ...get().saved, [owner]: { ...mine, [pathId]: steps } } });
-      persist();
-    },
-    applySynced: (owner, data) => {
-      const saved = { ...get().saved };
-      if (data) saved[owner] = data;
-      else delete saved[owner];
-      set({ saved });
-      persist();
-    },
+    setManual: (owner, pathId, stepId, completed) =>
+      whenLoaded(() => {
+        const mine = ownerManualSteps(get().saved, owner);
+        const steps = { ...(mine[pathId] ?? {}) };
+        if (completed) steps[stepId] = steps[stepId] ?? new Date().toISOString();
+        else delete steps[stepId];
+        set({ saved: { ...get().saved, [owner]: { ...mine, [pathId]: steps } } });
+        persist();
+      }),
+    applySynced: (owner, data) =>
+      whenLoaded(() => {
+        const saved = { ...get().saved };
+        if (data) saved[owner] = data;
+        else delete saved[owner];
+        set({ saved });
+        persist();
+      }),
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
       if (!guest || userId === 'guest') return;

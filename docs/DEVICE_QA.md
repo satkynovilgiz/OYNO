@@ -200,3 +200,32 @@ There is no in-screen Back; onboarding is reached with `router.replace`.
 | Rotate (iPad / Android tablet) on slide 2: stays on slide 2 | PENDING (device) |
 | VoiceOver / TalkBack: Next reads as dimmed during the transition, then "Next" / "Get Started"; guest link reachable on the last slide | PENDING (device) |
 | Android hardware Back on onboarding: leaves the app (no previous screen); no crash | PENDING (device) |
+
+## Learning Path progress & recovery audit (2026-10-05)
+
+Automated where the browser allows (`e2e/tests/path-journey.spec.ts`,
+`src/store/learningPathStore.test.ts`, `src/features/learn/pathJourney.test.ts`).
+
+| # | Scenario | Result |
+| --- | --- | --- |
+| 1 | Path → activity → complete → back to path | OK (existing e2e: article done → next incomplete step, progress 2/5 kept) |
+| 2 | Close / reopen before and after completion | **Defect fixed.** On a cold start the path screen first rendered "0 of 5 / Start path" for a path at 3/5 (signal stores not loaded; Start reopened step 1) and the manual "Mark step complete" was live. Now a loading state until every signal store is loaded (Home card waits, Culture list shows no status). Manual step persists across reload (e2e). |
+| 2b | Mark step complete before the store loaded | **Defect fixed (data loss).** The write persisted over the unread storage and erased every saved manual completion, all owners. Writes now wait for the load; concurrent loads share one read (Jest). |
+| 3 | Offline while opening / recording | OK. Completion is local (reading, glossary, challenge, records, manual); the card says when the next step is not saved offline and offers the way back (existing e2e). Cloud sync of the result when back online: device check. |
+| 4 | Unavailable / removed content | **Defect fixed.** A removed article showed as "Read: …" (same as loading) and Start opened a not-found screen. Now "No longer available", not openable, and Continue moves to the next step that exists with a note (e2e). Article catalogue failed to load: retry row (e2e). |
+| 5 | Account change | OK by code review: reading, glossary, manual steps, game records are per owner; challenge results are cleared on sign-out / another account (accountLifecycle); the path card context is dropped for another account (pathJourney.test). Device check below. |
+| 6 | Practice game does not count | OK (pathJourney.test: practice alone ≠ official round). 3D result sheet: device check (see the guided-journey table above). |
+| 7 | Reopening a completion screen | OK: reading keeps the first completedAt, challenge results are recorded only on final submit, manual confirm keeps the first time (Jest); path progress is derived (yes/no), so nothing is double counted. |
+
+Observed once, not reproduced in 6 reruns: the step list announced "Unavailable offline" while online (web, `navigator.onLine` true). Not treated as a defect; worth watching on device.
+
+Still to check on a device (PENDING):
+
+| Check | Status |
+| --- | --- |
+| Cold start (kill app) with a half-done path: brief loading placeholder, then correct progress and "Continue path" - never "Start path" | PENDING (device) |
+| Tap "Mark step complete" immediately after a cold start: earlier confirmations (other paths) still there after another restart | PENDING (device) |
+| Signed-in: confirm a manual step offline, reconnect, sign in on a second device: step is complete there | PENDING (device) |
+| Sign out A, sign in B on the same device: B sees none of A's path progress; A's returns after signing back in | PENDING (device) |
+| Airplane mode, open a path with unsaved articles: notes and Continue choose a saved step; Retry row when titles cannot load | PENDING (device) |
+| VoiceOver / TalkBack: loading state read as "Loading…", removed step read as unavailable and dimmed | PENDING (device) |

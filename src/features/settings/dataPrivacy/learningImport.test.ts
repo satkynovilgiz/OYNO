@@ -9,6 +9,7 @@ import { useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
 import { useGameRecordsStore } from '@/store/useGameRecordsStore';
 import { useHighlightsStore } from '@/store/useHighlightsStore';
 import { useMyCollectionsStore } from '@/store/useMyCollectionsStore';
+import { useLearningPathStore } from '@/store/useLearningPathStore';
 import { useReadingStore } from '@/store/useReadingStore';
 import { useWeeklyGoalStore } from '@/store/useWeeklyGoalStore';
 
@@ -127,7 +128,8 @@ describe('stage 2: merge plan reuses the Private Cloud Sync rules', () => {
 
 describe('apply: owner safety, atomicity, idempotency, cloud honesty', () => {
   const reset = () => {
-    for (const store of [useReadingStore, useHighlightsStore, useMyCollectionsStore, useChallengeMistakesStore, useGameRecordsStore, useWeeklyGoalStore] as unknown as { setState: (state: unknown) => void }[]) store.setState({ saved: {}, isLoaded: true });
+    // Loaded, as adapter.load() is stubbed below (the path store holds writes until it has read storage).
+    for (const store of [useReadingStore, useHighlightsStore, useMyCollectionsStore, useChallengeMistakesStore, useGameRecordsStore, useWeeklyGoalStore, useLearningPathStore] as unknown as { setState: (state: unknown) => void }[]) store.setState({ saved: {}, isLoaded: true });
   };
   const deps = (owner: string, over: Partial<ImportDeps> = {}): ImportDeps => ({ owner: () => owner, adapters: STORE_ADAPTERS.map((adapter) => ({ ...adapter, load: async () => {} })), deletedKeys: async () => ({}), cloud: () => (owner === 'guest' ? 'device_only_guest' : 'cloud_unavailable'), requestSync: jest.fn(), ...over });
   beforeEach(reset);

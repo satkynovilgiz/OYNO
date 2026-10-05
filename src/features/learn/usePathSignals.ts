@@ -20,13 +20,17 @@ export function usePathSignals(): { signals: PathSignals; owner: string; ready: 
   const study = ownerStudy(useGlossaryStudyStore((state) => state.saved), owner);
   const manual = ownerManualSteps(useLearningPathStore((state) => state.saved), owner);
   const challengeResults = useChallengeStore((state) => state.results);
-  const { records } = useGameRecords();
+  const { records, isLoaded: recordsLoaded } = useGameRecords();
   const progress = useProgressStore();
   // Each hook is always called (no short-circuit between hooks).
   const readingLoaded = useReadingStore((state) => state.isLoaded);
   const studyLoaded = useGlossaryStudyStore((state) => state.isLoaded);
   const manualLoaded = useLearningPathStore((state) => state.isLoaded);
-  const loaded = readingLoaded && studyLoaded && manualLoaded;
+  const challengesLoaded = useChallengeStore((state) => state.isLoaded);
+  // EVERY signal store: before that, completed steps would read as "not
+  // started" (a cold start showed 0/5 and "Start path" for a path at 3/5).
+  // The progress store (lab flags) is loaded by the root layout.
+  const loaded = readingLoaded && studyLoaded && manualLoaded && challengesLoaded && recordsLoaded && progress.isLoaded;
 
   useEffect(() => {
     void useReadingStore.getState().load();

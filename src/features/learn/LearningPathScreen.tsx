@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { NotFoundState } from '@/components/system/NotFoundState';
-import { AnimatedPressable, Button, IconButton, MediaImage, ProgressBar } from '@/components/ui';
+import { AnimatedPressable, Button, IconButton, MediaImage, ProgressBar, Skeleton } from '@/components/ui';
 import { cultureItemImages } from '@/features/culture/data';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useShareCard } from '@/services/share/useShareCard';
@@ -18,7 +18,7 @@ import { colors, editorial, radii, spacing, textStyles, typography } from '@/the
 import { buildPathShareCard } from './learningPathShare';
 import { isManualStep, LEARNING_PATHS, pathProgress, type StepState } from './learningPaths';
 import { usePathSignals } from './usePathSignals';
-import { useStepDisplay } from './useStepDisplay';
+import { useStepCatalog, useStepDisplay } from './useStepDisplay';
 import { shareContentLink } from '@/services/links/shareContentLink';
 import { isRouteAvailableOffline } from '@/services/offline/offlineAvailability';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
@@ -45,7 +45,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
   const { experience } = useAgeExperience();
   const isChild = experience === 'child';
   const isAdult = experience === 'adult';
-  const { signals, owner } = usePathSignals();
+  const { signals, owner, ready } = usePathSignals();
   const display = useStepDisplay();
   const { share, shareHost } = useShareCard();
   const { isOffline } = useNetworkStatus();
@@ -64,14 +64,21 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
   // Offline: each step says whether it opens on this device (the existing
   // offline check over the query cache - downloads, Region packs or simply
   // read before); Continue picks the first unfinished step that does.
-  const routes = path.steps.map((step) => display(step).route);
+  const displays = path.steps.map((step) => display(step));
+  const routes = displays.map((entry) => entry.route);
   const availableOffline = routes.map((route) => !!route && isRouteAvailableOffline(route, queryClient));
-  const offlineNext = isOffline ? offlineContinue(progress.nextIndex, progress.states.map((state) => state === 'completed'), availableOffline) : null;
-  const continueIndex = offlineNext ? offlineNext.index : progress.nextIndex;
+  // Continue: the first unfinished step that opens now - it still exists
+  // (removed content is skipped, not opened into a dead end) and, offline,
+  // is saved on this device. Same rule as before, one more condition.
+  const reachable = routes.map((route, index) => !!route && (!isOffline || availableOffline[index]));
+  const pick = offlineContinue(progress.nextIndex, progress.states.map((state) => state === 'completed'), reachable);
+  const continueIndex = pick.index;
   const nextRoute = continueIndex !== null ? routes[continueIndex] : null;
   const trueNext = progress.nextIndex !== null ? path.steps[progress.nextIndex] : null;
+  const trueNextRemoved = progress.nextIndex !== null && displays[progress.nextIndex].status === 'missing';
   const stateLabel = (state: StepState) => t(`learningPaths.state.${state}`);
   const stepLabel = (step: (typeof path.steps)[number]) => `${display(step).verb}: ${display(step).title}`;
+  const catalog = useStepCatalog();
 
   return (
     <View style={styles.root}>
@@ -92,12 +99,22 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
           <View style={{ alignSelf: 'flex-start' }}>
             <Button label={t('contentLinks.sharePath')} variant="text" icon={<Link2 size={16} color={colors.primary} strokeWidth={2} />} onPress={() => void shareContentLink({ type: 'learning_path', id: path.id, title })} />
           </View>
-          <View accessible accessibilityLabel={t('learningPaths.progress', { completed: progress.completed, total: progress.total })} testID="path-progress">
-            <Text style={styles.progressText}>{t('learningPaths.progress', { completed: progress.completed, total: progress.total })}</Text>
-            <ProgressBar progress={progress.completed / progress.total} height={isChild ? 8 : 4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
-          </View>
+          {/* Saved progress first: until every signal store has loaded, completed
+              steps would read as not started (and Start would reopen step 1). */}
+          {!ready ? (
+            <View accessible accessibilityLabel={t('common.loading')} aria-busy testID="path-progress-loading" style={{ gap: spacing.xs }}>
+              <Skeleton width="40%" height={14} />
+              <Skeleton height={isChild ? 8 : 4} />
+              <Skeleton height={isChild ? 52 : 44} borderRadius={radii.pill} />
+            </View>
+          ) : (
+            <View accessible accessibilityLabel={t('learningPaths.progress', { completed: progress.completed, total: progress.total })} testID="path-progress">
+              <Text style={styles.progressText}>{t('learningPaths.progress', { completed: progress.completed, total: progress.total })}</Text>
+              <ProgressBar progress={progress.completed / progress.total} height={isChild ? 8 : 4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
+            </View>
+          )}
 
-          {progress.done ? (
+          {!ready ? null : progress.done ? (
             <View style={styles.done} accessibilityLiveRegion="polite">
               <OymoOrnament size={18} color={colors.accentGold} strokeWidth={1.5} />
               <Text style={styles.doneText}>{t('learningPaths.completed')}</Text>
@@ -113,39 +130,54 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
           ) : nextRoute ? (
             <Button label={progress.started ? t('learningPaths.continue') : t('learningPaths.start')} size={isChild ? 'lg' : 'md'} onPress={() => openStep(nextRoute, path.id)} testID="path-start" />
           ) : null}
-          {offlineNext?.trueNextUnavailable && trueNext ? (
-            <Text style={styles.offlineNote} accessibilityLiveRegion="polite">
-              {offlineNext.index !== null
-                ? t('pathOffline.nextUnavailable', { step: stepLabel(trueNext), other: stepLabel(path.steps[offlineNext.index]) })
-                : t('pathOffline.nextUnavailableNone', { step: stepLabel(trueNext) })}
+          {ready && pick.trueNextUnavailable && trueNext && progress.nextIndex !== null ? (
+            <Text style={styles.offlineNote} accessibilityLiveRegion="polite" testID={trueNextRemoved ? 'path-next-removed' : 'path-next-offline'}>
+              {trueNextRemoved
+                ? pick.index !== null
+                  ? t('pathJourney.nextRemoved', { index: progress.nextIndex + 1, other: stepLabel(path.steps[pick.index]) })
+                  : t('pathJourney.nextRemovedNone', { index: progress.nextIndex + 1 })
+                : pick.index !== null
+                  ? t('pathOffline.nextUnavailable', { step: stepLabel(trueNext), other: stepLabel(path.steps[pick.index]) })
+                  : t('pathOffline.nextUnavailableNone', { step: stepLabel(trueNext) })}
             </Text>
+          ) : null}
+          {catalog.failed ? (
+            <View style={styles.catalogFailed} accessibilityLiveRegion="polite">
+              <Text style={styles.offlineNote}>{t('pathJourney.loadFailed')}</Text>
+              <Button label={t('common.retry')} size="sm" variant="secondary" onPress={catalog.retry} testID="path-catalog-retry" />
+            </View>
           ) : null}
 
           <PathOfflineRow pack={pack} state={packState} title={title} />
 
           <View style={{ gap: spacing.xs }}>
             {path.steps.map((step, index) => {
-              const { verb, title: stepTitle, route } = display(step);
+              const { verb, title: stepTitle, route, status } = displays[index];
+              const removed = status === 'missing';
               const state = progress.states[index];
-              const manual = isManualStep(step);
+              // Not loaded yet: no state shown and nothing to mark (a tap would act on a guess).
+              const manual = ready && isManualStep(step);
               return (
-                <View key={step.id} style={[styles.step, isChild && styles.stepChild, state === 'completed' && styles.stepDone]}>
+                <View key={step.id} style={[styles.step, isChild && styles.stepChild, ready && state === 'completed' && styles.stepDone]}>
                   <AnimatedPressable
                     style={styles.stepMain}
                     onPress={() => route && openStep(route, path.id)}
+                    disabled={removed}
                     accessibilityRole="button"
-                    accessibilityLabel={`${t('learningPaths.step', { index: index + 1 })}. ${verb}: ${stepTitle}. ${stateLabel(state)}.${isOffline ? ` ${availableOffline[index] ? t('pathOffline.stepAvailable') : t('pathOffline.stepUnavailable')}.` : ''}`}
+                    accessibilityState={{ disabled: removed }}
+                    aria-disabled={removed}
+                    accessibilityLabel={`${t('learningPaths.step', { index: index + 1 })}. ${verb}: ${stepTitle}.${ready && !removed ? ` ${stateLabel(state)}.` : ''}${isOffline && !removed ? ` ${availableOffline[index] ? t('pathOffline.stepAvailable') : t('pathOffline.stepUnavailable')}.` : ''}`}
                   >
-                    <View style={[styles.badge, state === 'completed' && styles.badgeDone]}>
-                      {state === 'completed' ? <Check size={14} color={colors.textOnDark} strokeWidth={3} /> : state === 'in_progress' ? <Circle size={12} color={colors.accentGold} fill={colors.accentGold} /> : <Text style={styles.badgeText}>{index + 1}</Text>}
+                    <View style={[styles.badge, ready && state === 'completed' && styles.badgeDone]}>
+                      {!ready ? <Text style={styles.badgeText}>{index + 1}</Text> : state === 'completed' ? <Check size={14} color={colors.textOnDark} strokeWidth={3} /> : state === 'in_progress' ? <Circle size={12} color={colors.accentGold} fill={colors.accentGold} /> : <Text style={styles.badgeText}>{index + 1}</Text>}
                     </View>
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={styles.stepVerb}>{verb}</Text>
                       <Text style={[styles.stepTitle, isChild && styles.stepTitleChild]} numberOfLines={2}>
                         {stepTitle}
                       </Text>
-                      {!isChild ? <Text style={styles.stepState}>{stateLabel(state)}</Text> : null}
-                      {isOffline ? <Text style={[styles.stepOffline, !availableOffline[index] && styles.stepOfflineNo]}>{availableOffline[index] ? t('pathOffline.stepAvailable') : t('pathOffline.stepUnavailable')}</Text> : null}
+                      {!isChild && ready && !removed ? <Text style={styles.stepState}>{stateLabel(state)}</Text> : null}
+                      {isOffline && !removed ? <Text style={[styles.stepOffline, !availableOffline[index] && styles.stepOfflineNo]}>{availableOffline[index] ? t('pathOffline.stepAvailable') : t('pathOffline.stepUnavailable')}</Text> : null}
                     </View>
                     <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
                   </AnimatedPressable>
@@ -200,5 +232,6 @@ const styles = StyleSheet.create({
   markText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
   stepOffline: { ...textStyles.small, fontWeight: '600', color: colors.primary },
   stepOfflineNo: { color: colors.textMuted },
+  catalogFailed: { gap: spacing.xs, alignItems: 'flex-start' },
   offlineNote: { ...textStyles.small, color: colors.textSecondary },
 });

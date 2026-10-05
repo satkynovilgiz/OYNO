@@ -4726,6 +4726,10 @@
     "anotherPath": "Next path",
     "nextMissing": "The next activity isn't available right now. You can choose another step on the path.",
     "nextOffline": "The next activity isn't saved for offline use. Go back to the path to pick a step that opens offline, or download the path when you're online.",
-    "officialRoundNeeded": "Practice rounds don't complete this path step - finish a regular round."
+    "officialRoundNeeded": "Practice rounds don't complete this path step - finish a regular round.",
+    "stepRemoved": "No longer available",
+    "nextRemoved": "Step {{index}} is no longer available. You can continue with {{other}}.",
+    "nextRemovedNone": "Step {{index}} is no longer available.",
+    "loadFailed": "Some step titles couldn't be loaded."
   }
 }

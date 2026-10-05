@@ -14,7 +14,9 @@ import { usePathSignals } from './usePathSignals';
  * suggested one. Nothing when every path is done. */
 export function HomeLearningPathCard({ experience }: { experience: AgeExperience }) {
   const { t } = useTranslation();
-  const { signals } = usePathSignals();
+  const { signals, ready } = usePathSignals();
+  // Which path is active (or whether all are done) needs the saved progress.
+  if (!ready) return null;
   const pick = pickHomePath(LEARNING_PATHS, signals);
   if (!pick) return null;
   return (
@@ -28,21 +30,22 @@ export function HomeLearningPathCard({ experience }: { experience: AgeExperience
 /** Culture: the paths as a small list (no new tab). */
 export function CultureLearningPaths({ experience }: { experience: AgeExperience }) {
   const { t } = useTranslation();
-  const { signals } = usePathSignals();
+  const { signals, ready } = usePathSignals();
   return (
     <View style={{ gap: spacing.xs }}>
       <Text style={styles.section}>{t('learningPaths.title')}</Text>
       {LEARNING_PATHS.map((path) => (
-        <PathRow key={path.id} path={path} progress={pathProgress(path, signals)} large={false} editorialTitle={experience === 'adult'} />
+        <PathRow key={path.id} path={path} progress={ready ? pathProgress(path, signals) : null} large={false} editorialTitle={experience === 'adult'} />
       ))}
     </View>
   );
 }
 
-function PathRow({ path, progress, large, editorialTitle }: { path: LearningPath; progress: PathProgress; large: boolean; editorialTitle: boolean }) {
+/** `progress` null: saved progress not loaded yet - no status rather than a wrong 0/N. */
+function PathRow({ path, progress, large, editorialTitle }: { path: LearningPath; progress: PathProgress | null; large: boolean; editorialTitle: boolean }) {
   const { t } = useTranslation();
   const hero = path.heroItemId ? cultureItemImages[path.heroItemId]?.[0] : null;
-  const status = progress.done ? t('learningPaths.completed') : t('learningPaths.progress', { completed: progress.completed, total: progress.total });
+  const status = !progress ? t('common.loading') : progress.done ? t('learningPaths.completed') : t('learningPaths.progress', { completed: progress.completed, total: progress.total });
   return (
     <AnimatedPressable style={[styles.row, large && styles.rowLarge]} onPress={() => router.push(learnRoute(path.id) as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${t(path.titleKey)}. ${status}.`}>
       {hero ? <Image source={hero} style={[styles.thumb, large && styles.thumbLarge]} resizeMode="cover" /> : <View style={[styles.thumb, styles.thumbFallback]} />}
@@ -51,7 +54,7 @@ function PathRow({ path, progress, large, editorialTitle }: { path: LearningPath
           {t(path.titleKey)}
         </Text>
         <Text style={styles.meta}>{status}</Text>
-        <ProgressBar progress={progress.completed / progress.total} height={large ? 6 : 3} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
+        <ProgressBar progress={progress ? progress.completed / progress.total : 0} height={large ? 6 : 3} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
       </View>
     </AnimatedPressable>
   );
