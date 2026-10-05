@@ -96,7 +96,8 @@
       "<rootDir>/src/games3d/**/*.test.ts",
       "<rootDir>/src/features/**/*.test.ts",
       "<rootDir>/src/i18n/**/*.test.ts",
-      "<rootDir>/src/components/**/*.test.ts"
+      "<rootDir>/src/components/**/*.test.ts",
+      "<rootDir>/e2e/fixtures/**/*.test.ts"
     ]
   },
   "private": true

@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
 test('unknown table is refused and reported', async ({ page, backend }) => {
   const result = await call(page, `${FAKE_SUPABASE}/rest/v1/user_progress?select=*`);
   expect(result.status).toBe(400);
-  expect(takeUnexpected(backend)).toEqual([expect.objectContaining({ kind: 'backend', reason: expect.stringContaining('table "user_progress" is not registered') })]);
+  expect(takeUnexpected(backend)).toEqual([expect.objectContaining({ kind: 'backend', reason: expect.stringContaining('table "user_progress" is not mocked') })]);
 });
 
 test('unknown RPC is refused and reported', async ({ page, backend }) => {
@@ -55,13 +55,14 @@ test('unsupported query syntax fails instead of being ignored', async ({ page, b
   await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?id=eq.missing&no_such_column=eq.1`);
   await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?select=id,no_such_column`);
   await call(page, `${FAKE_SUPABASE}/rest/v1/culture_items?order=no_such_column.asc`);
+  // Each reason names the table and the offending column / syntax.
   expect(takeUnexpected(backend).map((request) => request.reason)).toEqual([
-    expect.stringContaining('operator in "title=like'),
-    expect.stringContaining('embedded/aliased select'),
-    expect.stringContaining('unknown column "no_such_column"'),
-    expect.stringContaining('unknown column "no_such_column"'),
-    expect.stringContaining('select of unknown column(s) "no_such_column"'),
-    expect.stringContaining('order by unknown column "no_such_column"'),
+    expect.stringContaining('culture_items: unsupported operator in filter "title=like'),
+    expect.stringContaining('culture_items: embedded resources'),
+    expect.stringContaining('culture_items: unknown column "no_such_column" in filter'),
+    expect.stringContaining('culture_items: unknown column "no_such_column" in filter'),
+    expect.stringContaining('culture_items: unknown column "no_such_column" in select'),
+    expect.stringContaining('culture_items: unknown column "no_such_column" in order'),
   ]);
 });
 

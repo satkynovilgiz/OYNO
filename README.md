@@ -74,8 +74,15 @@ served (analytics inserts are accepted and discarded); an unknown table,
 RPC, write or unsupported query syntax fails the test. The network is
 deny-by-default - only the local app server and the fake backend are
 reachable; other hosts and all WebSockets are blocked and reported, and
-service workers are blocked. No account is used. When a journey needs a new
-table or RPC, register it there with deterministic fixture data. Failures leave screenshots, traces, page errors, the
+service workers are blocked. No account is used. Reads are checked against
+an explicit column schema per mocked table (`e2e/fixtures/schema.ts`), never
+against the fixture rows; `npx jest e2e/fixtures` checks that schema against
+`supabase/migrations` (including column grants) and the content queries in
+`src/services`, and checks the fixture rows against it. When a journey needs
+a new table, add its readable columns to `schema.ts` and rows to
+`fixtures/data.ts`; new RPCs go in `backend.ts` with a deterministic result.
+This is a contract for the smoke suite, not a substitute for integration
+tests against a real Supabase. Failures leave screenshots, traces, page errors, the
 backend request log and any unexpected requests in `e2e/.results`; the HTML report is in `e2e/.report`.
 Rebuild with `npm run e2e:build` after app changes. Native-only features
 (PDF, widgets, notifications, 3D performance, Dynamic Type) are not covered -
