@@ -68,10 +68,15 @@ npm run e2e                       # Playwright journeys + KG/RU/EN, 320 px and l
 ```
 
 The suite (`e2e/`) runs the web export in Chromium with Pixel 7 emulation.
-Every request to the backend is answered by deterministic fixtures
-(`e2e/fixtures/`); unhandled hosts never reach a real server, and no
-account is used. Failures leave screenshots, traces, page errors and the
-backend request log in `e2e/.results`; the HTML report is in `e2e/.report`.
+The fake backend is strict
+(`e2e/fixtures/backend.ts`): only registered tables, RPCs and writes are
+served (analytics inserts are accepted and discarded); an unknown table,
+RPC, write or unsupported query syntax fails the test. The network is
+deny-by-default - only the local app server and the fake backend are
+reachable; other hosts and all WebSockets are blocked and reported, and
+service workers are blocked. No account is used. When a journey needs a new
+table or RPC, register it there with deterministic fixture data. Failures leave screenshots, traces, page errors, the
+backend request log and any unexpected requests in `e2e/.results`; the HTML report is in `e2e/.report`.
 Rebuild with `npm run e2e:build` after app changes. Native-only features
 (PDF, widgets, notifications, 3D performance, Dynamic Type) are not covered -
 they stay in `docs/DEVICE_QA.md`.

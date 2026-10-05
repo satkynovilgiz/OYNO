@@ -26,6 +26,8 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     video: 'off',
+    // A service worker could fetch around page/context routes - none may register.
+    serviceWorkers: 'block',
   },
   webServer: {
     command: 'node server.mjs',

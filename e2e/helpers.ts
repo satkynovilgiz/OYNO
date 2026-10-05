@@ -4,7 +4,7 @@ import en from '../src/i18n/locales/en.json';
 import kg from '../src/i18n/locales/kg.json';
 import ru from '../src/i18n/locales/ru.json';
 
-import { installBackend, type BackendLog } from './fixtures/backend';
+import { installBackend, installNetworkGuard, type BackendLog, type UnexpectedRequest } from './fixtures/backend';
 
 export type Language = 'kg' | 'ru' | 'en';
 export const LANGUAGES: Language[] = ['kg', 'ru', 'en'];
@@ -20,15 +20,25 @@ const flatten = (node: unknown, prefix = '') => {
 type Fixtures = { backend: BackendLog; errors: string[] };
 
 /**
- * Every test gets the fake backend and a record of page errors / console
- * errors. On failure the backend log and errors are attached next to the
- * screenshot and trace, so a failure can be reproduced from the report.
+ * Every test gets the STRICT fake backend + deny-by-default network policy
+ * and a record of page errors / console errors. Any request the registry
+ * does not allow fails the test; on failure the backend log, the unexpected
+ * requests and the page errors are attached next to the screenshot/trace.
  */
 export const test = base.extend<Fixtures>({
-  // auto: EVERY test talks to the fake backend - a test can never reach a real host.
+  // auto: EVERY test talks only to the fake backend - a test can never reach a real host.
   backend: [
-    async ({ page }, use) => {
-      await use(await installBackend(page));
+    async ({ page, context, baseURL }, use, testInfo) => {
+      const log = await installBackend(page);
+      await installNetworkGuard(context, new URL(baseURL!).origin, log);
+      await use(log);
+      if (log.unexpected.length > 0 || testInfo.status !== testInfo.expectedStatus) {
+        await testInfo.attach('backend-requests.json', { body: JSON.stringify(log.requests, null, 2), contentType: 'application/json' });
+      }
+      if (log.unexpected.length > 0) {
+        await testInfo.attach('unexpected-requests.json', { body: JSON.stringify(log.unexpected, null, 2), contentType: 'application/json' });
+        throw new Error(`Unexpected network requests (see unexpected-requests.json):\n${log.unexpected.map(describeUnexpected).join('\n')}`);
+      }
     },
     { auto: true },
   ],
@@ -47,8 +57,14 @@ export const test = base.extend<Fixtures>({
 });
 export { expect };
 
-export async function attachBackendLog(log: BackendLog, testInfo: { attach: (name: string, options: { body: string; contentType: string }) => Promise<void> }) {
-  await testInfo.attach('backend-requests.json', { body: JSON.stringify(log, null, 2), contentType: 'application/json' });
+export const describeUnexpected = (request: UnexpectedRequest) => `  [${request.kind}] ${request.method} ${request.url} - ${request.reason}`;
+
+/**
+ * For tests that PROVOKE an unexpected request on purpose: returns the
+ * recorded ones and clears them so the teardown check passes.
+ */
+export function takeUnexpected(log: BackendLog): UnexpectedRequest[] {
+  return log.unexpected.splice(0);
 }
 
 /**
@@ -66,6 +82,17 @@ export async function seed(page: Page, options: { language: Language; guest?: bo
     for (const [key, value] of Object.entries(entries)) localStorage.setItem(key, value);
     sessionStorage.setItem('e2e-seeded', '1');
   }, values);
+}
+
+/** Parsed value of a device-storage key (AsyncStorage = localStorage on web). */
+export async function readStored<T = unknown>(page: Page, key: string): Promise<T | null> {
+  const raw = await page.evaluate((storageKey) => localStorage.getItem(storageKey), key);
+  return raw === null ? null : (JSON.parse(raw) as T);
+}
+
+/** Wait until a stored value satisfies `ready` - persistence is debounced, so never a fixed sleep. */
+export async function waitForStored<T = unknown>(page: Page, key: string, ready: (value: T | null) => boolean, message: string) {
+  await expect.poll(async () => ready(await readStored<T>(page, key)), { message, timeout: 10_000 }).toBe(true);
 }
 
 /** Visible text must not contain raw translation keys (e.g. "gameStats.title"). */

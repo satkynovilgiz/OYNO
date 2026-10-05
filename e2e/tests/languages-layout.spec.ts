@@ -1,8 +1,4 @@
-import { attachBackendLog, expect, expectNoExposedKeys, expectNoHorizontalOverflow, expectNoPageErrors, LANGUAGES, seed, test } from '../helpers';
-
-test.afterEach(async ({ backend }, testInfo) => {
-  if (testInfo.status !== testInfo.expectedStatus) await attachBackendLog(backend, testInfo);
-});
+import { expect, expectNoExposedKeys, expectNoHorizontalOverflow, expectNoPageErrors, LANGUAGES, seed, test } from '../helpers';
 
 /** Screens of the main journeys + the control that must be there on each. */
 const SCREENS: { route: string; ready: string }[] = [

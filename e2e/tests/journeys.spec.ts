@@ -1,8 +1,4 @@
-import { attachBackendLog, expect, expectNoExposedKeys, expectNoPageErrors, seed, test } from '../helpers';
-
-test.afterEach(async ({ backend }, testInfo) => {
-  if (testInfo.status !== testInfo.expectedStatus) await attachBackendLog(backend, testInfo);
-});
+import { expect, expectNoExposedKeys, expectNoPageErrors, seed, test, waitForStored } from '../helpers';
 
 test('guest onboarding reaches Home', async ({ page, errors }) => {
   await seed(page, { language: 'kg' });
@@ -54,8 +50,13 @@ test('start a learning path, complete a step, reopen its progress (survives relo
   await expect(page).toHaveURL(/\/learn\/boz-uy/);
   await expect(page.getByTestId('path-progress')).toHaveAttribute('aria-label', /1\b.*5/);
   await expect(page.getByTestId('path-start')).toContainText('Continue');
-  // Reading progress is saved with a short debounce; then a full reload must keep it.
-  await page.waitForTimeout(1000);
+  // Reading progress is saved with a short debounce: wait for the STORED completion, then reload.
+  await waitForStored<Record<string, Record<string, { contentId: string; completedAt?: string | null }>>>(
+    page,
+    'oyno.reading.v1',
+    (saved) => Object.values(saved?.guest ?? {}).some((record) => record.contentId === 'boz-uy-overview' && !!record.completedAt),
+    'guest reading progress for boz-uy-overview is persisted as completed',
+  );
   await page.reload();
   await expect(page.getByTestId('path-progress')).toHaveAttribute('aria-label', /1\b.*5/);
   expectNoPageErrors(errors);
