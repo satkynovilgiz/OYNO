@@ -52,6 +52,7 @@ export const FIXTURE_TABLES: Record<string, Record<string, unknown>[]> = {
   explore_regions: [],
   discoveries: [],
   region_content_links: [],
+  region_intros: [],
   quests: [],
   quest_steps: [],
 };

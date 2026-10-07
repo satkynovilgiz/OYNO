@@ -4969,5 +4969,76 @@
     "sharedFirst": "Shared first place: {{names}}!",
     "points_few": "{{count}} points",
     "points_many": "{{count}} points"
+  },
+  "mapChallenge": {
+    "title": "Map Challenge",
+    "entryMeta": "Find regions and places on the map of Kyrgyzstan",
+    "intro": "Find each region or place on the illustrated map - tap its marker, or choose from the list. No timer.",
+    "notVisiting": "Playing doesn't count as visiting: your visits and Discovery Passport don't change.",
+    "start": "Start",
+    "questionOf": "Question {{current}} of {{total}}",
+    "findRegion": "Find this region: {{name}}",
+    "findPlace": "Find this place: {{name}}",
+    "markerA11y": "Map marker {{number}}",
+    "markerNamedA11y": "{{name}}",
+    "listTitle": "Or choose from the list",
+    "correct": "Right - that's {{name}}.",
+    "wrong": "Not quite - you chose {{chosen}}. {{name}} is highlighted.",
+    "factsTitle": "From the {{name}} page",
+    "openRegion": "Open the {{name}} page",
+    "next": "Next question",
+    "seeResults": "See results",
+    "resultsTitle": "Map Challenge done",
+    "score": "Correct: {{correct}} of {{total}}",
+    "mistakesTitle": "Review your mistakes",
+    "mistake": "{{name}} - you chose {{chosen}}",
+    "noMistakes": "No mistakes this time.",
+    "replay": "Play again",
+    "practiseMissed": "Practise the missed ones",
+    "back": "Back to the map",
+    "entryButton": "Map Challenge",
+    "best": "Your best: {{correct}}",
+    "mapA11y": "Map of Kyrgyzstan for the challenge - labels are hidden",
+    "names": {
+      "chuy": "Chüy",
+      "talas": "Talas",
+      "ysyk-kol": "Issyk-Kul",
+      "naryn": "Naryn",
+      "jalal-abad": "Jalal-Abad",
+      "osh": "Osh",
+      "batken": "Batken",
+      "son-kol": "Son-Köl",
+      "suusamyr": "Suusamyr",
+      "alay": "Alay",
+      "sary-chelek": "Sary-Chelek",
+      "arslanbob": "Arslanbob",
+      "ala-too": "Ala-Too"
+    },
+    "facts": {
+      "chuy": {
+        "fact0": "Its main towns are Tokmok, Kant and Kara-Balta.",
+        "fact1": "The city of Bishkek has its own national-level status, so it is not part of the region."
+      },
+      "naryn": {
+        "fact0": "95% of the region lies more than 1,000 metres above sea level.",
+        "fact1": "It is home to high mountain lakes such as Son-Köl, Kol-Suu and Chatyr-Köl."
+      },
+      "osh": {
+        "fact0": "It lies in the eastern part of the Fergana Valley, at the foot of the Alay mountains.",
+        "fact1": "It is the second-largest city in Kyrgyzstan."
+      },
+      "jalal-abad": {
+        "fact0": "Resorts have grown up around its mineral springs.",
+        "fact1": "The Arslanbob walnut forest and the Sary-Chelek Biosphere Reserve are in this region."
+      },
+      "suusamyr": {
+        "fact0": "It lies between the Kyrgyz Ala-Too, Suusamyr and Jumgal ranges, at 2,000-3,200 metres.",
+        "fact1": "It is the main pasture for livestock brought from the Chüy, Talas and Ketmen-Töbö valleys."
+      },
+      "arslanbob": {
+        "fact0": "It lies in Jalal-Abad Region, in the Arstanbap valley.",
+        "fact1": "Some of its walnut trees are more than a thousand years old."
+      }
+    }
   }
 }

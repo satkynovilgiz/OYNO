@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Check, ChevronLeft, Minus, Plus, X } from 'lucide-react-native';
+import { Check, ChevronLeft, Minus, Plus, X, Target } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, findNodeHandle, Image, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
@@ -305,6 +305,7 @@ export function InteractiveMapScreen({
             </Text>
           ) : null}
         </View>
+        <IconButton icon={Target} size={40} iconSize={18} shape="roundedSquare" elevated={false} accessibilityLabel={t('mapChallenge.entryButton')} onPress={() => router.push('/explore/map-challenge' as never)} testID="map-challenge-entry" />
       </View>
 
       {showModeSwitch ? (

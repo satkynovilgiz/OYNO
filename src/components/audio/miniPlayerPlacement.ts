@@ -19,7 +19,7 @@ export function miniPlayerPlacement(pathname: string): MiniPlayerPlacement {
   if (CULTURE_LABS.some((lab) => path.startsWith(lab))) return null;
   if (CONTENT_ROUTES.some((route) => path === route || path.startsWith(`${route}/`))) return 'bottom';
   // A destination (/explore/<id>) or a culture category (/culture/<id>).
-  if (/^\/explore\/[^/]+$/.test(path) && path !== '/explore/map') return 'bottom';
+  if (/^\/explore\/[^/]+$/.test(path) && path !== '/explore/map' && path !== '/explore/map-challenge') return 'bottom';
   if (/^\/culture\/[^/]+$/.test(path)) return 'bottom';
   return null;
 }
