@@ -6,7 +6,7 @@ import kg from '@/i18n/locales/kg.json';
 import ru from '@/i18n/locales/ru.json';
 import { seededRng } from '@/features/detective/detectiveModel';
 
-import { cleanName, duelReducer, firstPlayer, outcome, rematch, scores, startDuel, visible, type DuelState } from './duelModel';
+import { cleanName, duelReducer, firstPlayer, outcome, ranking, rematch, scores, startDuel, turnOrder, visible, type DuelState } from './duelModel';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: {} }));
 
@@ -54,7 +54,7 @@ describe('turn transitions and answer concealment', () => {
     expect(state.phase).toEqual({ kind: 'reveal', round: 0 });
     state = duelReducer(state, { type: 'next' });
     expect(state.phase).toEqual({ kind: 'handoff', round: 1, player: 1 });
-    expect([0, 1, 2, 3].map(firstPlayer)).toEqual([0, 1, 0, 1]);
+    expect([0, 1, 2, 3].map((round) => firstPlayer(round))).toEqual([0, 1, 0, 1]);
   });
 
   it('the handoff and the second turn reveal NOTHING about the first answer or the correct one', () => {
@@ -108,14 +108,14 @@ describe('scoring, ties, rematch', () => {
     state = playRound(state, 'right', 'right'); // round 1: P2 first -> both +1
     state = playRound(state, 'wrong', 'right'); // round 2: P1 first -> P2 +1
     expect(state.phase).toEqual({ kind: 'final' });
-    expect(outcome(state)).toEqual({ kind: 'tie', scores: [2, 2] });
+    expect(outcome(state)).toMatchObject({ kind: 'tie', leaders: [0, 1], scores: [2, 2] });
   });
 
   it('a clear winner, either way round', () => {
     let state = start(3);
     for (let round = 0; round < 3; round += 1) state = playRound(state, 'right', 'wrong');
     // P1 answers first in rounds 0 and 2, P2 first in round 1 -> the "first" answer was P1, P2, P1.
-    expect(outcome(state)).toEqual({ kind: 'win', winner: 0, scores: [2, 1] });
+    expect(outcome(state)).toMatchObject({ kind: 'win', winner: 0, scores: [2, 1] });
   });
 
   it('rematch: same players and length, new match from zero', () => {
@@ -142,5 +142,71 @@ describe('separation, privacy, languages', () => {
   it('KG / RU / EN', () => {
     const keys = Object.keys((en as unknown as { duel: Record<string, string> }).duel);
     for (const locale of [kg, ru]) for (const key of keys) expect([key, !!(locale as unknown as { duel: Record<string, string> }).duel[key]]).toEqual([key, true]);
+  });
+});
+
+describe('Party Mode (3-4 players)', () => {
+  const party = (players: number, rounds: 3 | 5 = 3) => startDuel({ names: ['A', 'B', 'C', 'D'].slice(0, players), rounds }, seededRng(5));
+  /** Everyone answers round r; picks[player] = 'right' | 'wrong'. Returns the phases seen. */
+  function playPartyRound(state: DuelState, picks: ('right' | 'wrong')[]) {
+    const round = state.phase.kind === 'handoff' ? state.phase.round : -1;
+    const seen: string[] = [];
+    let next = state;
+    while (next.phase.kind === 'handoff') {
+      const player = next.phase.player;
+      seen.push(`handoff:${player}`);
+      // During every handoff nothing about earlier answers is visible.
+      expect(JSON.stringify(visible(next))).not.toMatch(/chosen|correct|sourceId/);
+      expect(scores(next)).toEqual(scores(state));
+      next = duelReducer(next, { type: 'ready' });
+      // A double tap on "ready" or on the answer never skips or double-scores.
+      next = duelReducer(next, { type: 'ready' });
+      const option = picks[player] === 'right' ? next.questions[round].sourceId : next.questions[round].options.find((value) => value !== next.questions[round].sourceId)!;
+      next = duelReducer(next, { type: 'answer', optionId: option });
+      next = duelReducer(next, { type: 'answer', optionId: option });
+    }
+    expect(next.phase).toEqual({ kind: 'reveal', round });
+    return { state: duelReducer(next, { type: 'next' }), seen };
+  }
+
+  it('the starting player rotates through every seat; everyone answers once per round', () => {
+    expect([0, 1, 2, 3, 4].map((round) => turnOrder(round, 4))).toEqual([[0, 1, 2, 3], [1, 2, 3, 0], [2, 3, 0, 1], [3, 0, 1, 2], [0, 1, 2, 3]]);
+    expect([0, 1, 2].map((round) => turnOrder(round, 3)[0])).toEqual([0, 1, 2]);
+    expect([0, 1, 2, 3].map((round) => firstPlayer(round, 2))).toEqual([0, 1, 0, 1]); // two-player duel unchanged
+    let state = party(4, 5);
+    for (let round = 0; round < 5; round += 1) {
+      const result = playPartyRound(state, ['right', 'wrong', 'right', 'wrong']);
+      expect(result.seen).toEqual(turnOrder(round, 4).map((player) => `handoff:${player}`));
+      state = result.state;
+    }
+    expect(state.phase).toEqual({ kind: 'final' });
+  });
+
+  it('points are awarded only after everyone answered, from the answers', () => {
+    let state = party(3);
+    state = duelReducer(state, { type: 'ready' });
+    state = duelReducer(state, { type: 'answer', optionId: state.questions[0].sourceId });
+    state = duelReducer(state, { type: 'ready' });
+    state = duelReducer(state, { type: 'answer', optionId: state.questions[0].sourceId });
+    expect(scores(state)).toEqual([0, 0, 0]); // one player still to answer
+    state = duelReducer(state, { type: 'ready' });
+    state = duelReducer(state, { type: 'answer', optionId: state.questions[0].options.find((option) => option !== state.questions[0].sourceId)! });
+    expect(visible(state)).toMatchObject({ kind: 'reveal', correct: [true, true, false], scores: [1, 1, 0] });
+  });
+
+  it('final ranking: equal scores share a position', () => {
+    expect(ranking([3, 3, 1, 0]).map(({ player, position }) => [player, position])).toEqual([[0, 1], [1, 1], [2, 3], [3, 4]]);
+    expect(ranking([2, 5, 2, 5]).map(({ player, position }) => [player, position])).toEqual([[1, 1], [3, 1], [0, 3], [2, 3]]);
+    let state = party(4);
+    for (let round = 0; round < 3; round += 1) state = playPartyRound(state, ['right', 'right', 'wrong', 'wrong']).state;
+    expect(outcome(state)).toMatchObject({ kind: 'tie', leaders: [0, 1], scores: [3, 3, 0, 0] });
+    expect(outcome(state)!.ranking.map((entry) => entry.position)).toEqual([1, 1, 3, 3]);
+  });
+
+  it('backgrounding mid-turn returns to that player\'s handoff; rematch keeps all players', () => {
+    let state = duelReducer(party(4), { type: 'ready' });
+    state = duelReducer(state, { type: 'conceal' });
+    expect(state.phase).toEqual({ kind: 'handoff', round: 0, player: 0 });
+    expect(rematch(state, seededRng(1)).names).toEqual(['A', 'B', 'C', 'D']);
   });
 });

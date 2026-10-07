@@ -396,8 +396,28 @@ mid-turn returns to "Pass the phone" (nothing recorded). Nicknames and
 results are never stored or sent; nothing counts as learning progress or
 official game records.
 
-Known: on web, the browser's own Back during a duel leaves without the
-"Leave the duel?" prompt (the header Back and Android back ask first).
+Party Mode (2026-10-07): 2-4 players; round r starts with player r mod n
+(two players: the same alternation as before); everyone gets the same
+question and answer order; every handoff conceals all earlier answers;
+answers and points are revealed only after everyone has answered; the final
+ranking shares positions for equal scores (1, 1, 3). The "show my question"
+button ignores presses for 0.7 s after a handoff appears, so a double tap
+on an answer can't open the next player's turn.
+
+Leaving an unfinished match: header Back, Android back and browser Back
+all ask "Leave the duel?" (shared `src/hooks/useLeaveGuard.ts`, also used by
+the Journal editor). Web: a held Back restores the duel's URL, so the
+address bar matches the screen and the next Back is held again. iOS: the
+swipe-back gesture is turned off while a match runs, because a native swipe
+can't be held halfway. Leaving the app (Home, app switcher) isn't
+"leaving": the match stays, and an active turn returns to its handoff.
+
+Native limitations (not testable on web):
+- The iOS app-switcher snapshot is taken by the OS. The app hides the turn
+  when it goes inactive, but whether the snapshot is taken before or after
+  that re-render isn't guaranteed.
+- Android predictive back (system gesture preview) may show the previous
+  screen behind the dialog before the app holds it.
 
 Still to check on a device (PENDING):
 
@@ -406,6 +426,9 @@ Still to check on a device (PENDING):
 | Duel: lock the phone / switch apps during a turn, come back: "Pass the phone" shows, not the question | PENDING (device) |
 | Duel: iOS app switcher snapshot during a turn - note whether the question is visible in the snapshot (OS-level, not hidden by the app) | PENDING (device) |
 | Duel: Android hardware Back mid-match asks "Leave the duel?" | PENDING (device) |
+| Duel: iOS swipe-back does nothing during a match, works again after it ends | PENDING (device) |
+| Party: four players on one phone, 5 rounds, airplane mode: rotation, handoffs and final ranking | PENDING (device) |
+| Party: a quick double tap on an answer never opens the next player's question | PENDING (device) |
 | Duel and Detective: largest Dynamic Type / font scale - answers and buttons stay reachable without overlap | PENDING (device) |
 | VoiceOver / TalkBack: handoff announced; answers read as a radio group; reveal reads both players' answers | PENDING (device) |
 | Reduce Motion on: no motion beyond press feedback in either mode | PENDING (device) |

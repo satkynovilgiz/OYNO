@@ -2,24 +2,25 @@ import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, Lightbulb, Smartphone, Swords, X } from 'lucide-react-native';
 import { useEffect, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, BackHandler, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, Button, ConfirmationModal, IconButton, TextField } from '@/components/ui';
 import { detectiveQuestion, questionArtwork, sourceRoute } from '@/features/detective/detectiveQuestions';
+import { useLeaveGuard } from '@/hooks/useLeaveGuard';
 import { announce } from '@/services/a11y/announce';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 
-import { duelReducer, MAX_NAME_LENGTH, rematch, startDuel, visible, type DuelAction, type DuelState, type MatchLength, type PlayerIndex } from './duelModel';
+import { duelReducer, MAX_NAME_LENGTH, PLAYER_COUNTS, rematch, startDuel, visible, type DuelAction, type DuelState, type MatchLength, type PlayerCount, type PlayerIndex } from './duelModel';
 
-type Setup = { names: [string, string]; rounds: MatchLength };
+type Setup = { players: PlayerCount; names: string[]; rounds: MatchLength };
 type ScreenState = { kind: 'setup' } | { kind: 'match'; duel: DuelState };
 type ScreenAction = { type: 'start'; setup: Setup } | { type: 'rematch' } | { type: 'setup' } | DuelAction;
 
 function screenReducer(state: ScreenState, action: ScreenAction): ScreenState {
-  if (action.type === 'start') return { kind: 'match', duel: startDuel(action.setup) };
+  if (action.type === 'start') return { kind: 'match', duel: startDuel({ names: action.setup.names.slice(0, action.setup.players), rounds: action.setup.rounds }) };
   if (action.type === 'setup') return { kind: 'setup' };
   if (state.kind !== 'match') return state;
   if (action.type === 'rematch') return { kind: 'match', duel: rematch(state.duel) };
@@ -38,11 +39,12 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
   const { experience } = useAgeExperience();
   const large = experience === 'child';
   const [state, dispatch] = useReducer(screenReducer, { kind: 'setup' });
-  const [setup, setSetup] = useState<Setup>({ names: ['', ''], rounds: 3 });
-  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [setup, setSetup] = useState<Setup>({ players: 2, names: ['', '', '', ''], rounds: 3 });
+  /** Set while "Leave the duel?" is open: what leaving does (a held navigation, or plain back). */
+  const [leaving, setLeaving] = useState<{ proceed: () => void } | null>(null);
 
   const inMatch = state.kind === 'match' && state.duel.phase.kind !== 'final';
-  const nameOf = (player: PlayerIndex) => (state.kind === 'match' && state.duel.names[player]) || t(player === 0 ? 'duel.player1' : 'duel.player2');
+  const nameOf = (player: PlayerIndex) => (state.kind === 'match' && state.duel.names[player]) || t('duel.nameLabel', { number: player + 1 });
 
   // Leaving the phone (app to background) mid-turn hides the question again:
   // the next person to pick it up sees only "Pass the phone".
@@ -53,15 +55,19 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
     return () => subscription.remove();
   }, []);
 
-  // Android back during a match asks first (the match isn't saved).
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+  // Leaving an unfinished match asks first - header Back, Android back,
+  // browser Back and any other navigation that would remove this screen
+  // (the iOS swipe-back is off while a match runs). The match isn't saved.
+  const guard = useLeaveGuard({
+    active: inMatch,
+    onBlocked: (proceed) => setLeaving({ proceed }),
+    onHardwareBack: () => {
+      if (leaving) return true;
       if (!inMatch) return false;
-      setConfirmLeave(true);
+      setLeaving({ proceed: onPressBack });
       return true;
-    });
-    return () => subscription.remove();
-  }, [inMatch]);
+    },
+  });
 
   const view = state.kind === 'match' ? visible(state.duel) : null;
   useEffect(() => {
@@ -76,7 +82,7 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={() => (inMatch ? setConfirmLeave(true) : onPressBack())} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={() => (inMatch ? setLeaving({ proceed: onPressBack }) : onPressBack())} />
         <Text style={[styles.title, experience === 'adult' && styles.titleEditorial]} accessibilityRole="header" numberOfLines={1}>
           {t('duel.title')}
         </Text>
@@ -89,15 +95,28 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
             <View style={styles.card} testID="duel-rules">
               <Text style={[styles.body, large && styles.bodyLarge]}>{t('duel.rules')}</Text>
             </View>
+            <Text style={styles.heading}>{t('duel.playersTitle')}</Text>
+            <View style={styles.choices} accessibilityRole="radiogroup">
+              {PLAYER_COUNTS.map((players) => {
+                const selected = setup.players === players;
+                const label = players === 2 ? t('duel.twoPlayers') : t('duel.partyPlayers', { count: players });
+                return (
+                  <AnimatedPressable key={players} style={[styles.choice, large && styles.choiceLarge, selected && styles.choiceOn]} onPress={() => setSetup((current) => ({ ...current, players }))} accessibilityRole="radio" accessibilityState={{ checked: selected }} aria-checked={selected} accessibilityLabel={label} testID={`duel-players-${players}`}>
+                    {selected ? <Check size={16} color={colors.primary} strokeWidth={2.5} /> : null}
+                    <Text style={[styles.optionText, large && styles.bodyLarge]}>{label}</Text>
+                  </AnimatedPressable>
+                );
+              })}
+            </View>
             <Text style={styles.heading}>{t('duel.namesTitle')}</Text>
-            {([0, 1] as const).map((player) => (
+            {Array.from({ length: setup.players }, (_, player) => (
               <TextField
                 key={player}
                 testID={`duel-name-${player + 1}`}
                 label={t('duel.nameLabel', { number: player + 1 })}
                 value={setup.names[player]}
-                onChangeText={(value) => setSetup((current) => ({ ...current, names: (player === 0 ? [value.slice(0, MAX_NAME_LENGTH), current.names[1]] : [current.names[0], value.slice(0, MAX_NAME_LENGTH)]) as [string, string] }))}
-                placeholder={t(player === 0 ? 'duel.player1' : 'duel.player2')}
+                onChangeText={(value) => setSetup((current) => ({ ...current, names: current.names.map((name, index) => (index === player ? value.slice(0, MAX_NAME_LENGTH) : name)) }))}
+                placeholder={t('duel.nameLabel', { number: player + 1 })}
                 autoCapitalize="words"
               />
             ))}
@@ -137,7 +156,7 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
               {t('duel.passTo', { name: nameOf(view.player) })}
             </Text>
             <Text style={[styles.body, styles.centerText]}>{t('duel.onlyYou', { name: nameOf(view.player) })}</Text>
-            <Button label={t('duel.ready', { name: nameOf(view.player) })} size="lg" block onPress={() => dispatch({ type: 'ready' })} testID="duel-ready" />
+            <ReadyButton key={`${view.round}-${view.player}`} label={t('duel.ready', { name: nameOf(view.player) })} onPress={() => dispatch({ type: 'ready' })} />
           </View>
         ) : null}
 
@@ -147,7 +166,7 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
           <RevealView
             view={view}
             total={total}
-            names={[nameOf(0), nameOf(1)]}
+            names={state.kind === 'match' ? state.duel.names.map((_, player) => nameOf(player)) : []}
             large={large}
             optionName={optionName}
             onNext={() => dispatch({ type: 'next' })}
@@ -160,11 +179,23 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
               {t('duel.finalTitle')}
             </Text>
             <Text style={[styles.winner, large && styles.headingLarge]} testID="duel-outcome">
-              {view.outcome.kind === 'tie' ? t('duel.tie') : t('duel.winner', { name: nameOf(view.outcome.winner) })}
+              {view.outcome.kind === 'win' ? t('duel.winner', { name: nameOf(view.outcome.winner) }) : view.outcome.leaders.length === (state.kind === 'match' ? state.duel.names.length : 2) ? t('duel.tie') : t('duel.sharedFirst', { names: view.outcome.leaders.map(nameOf).join(', ') })}
             </Text>
-            <Text style={[styles.body, styles.bold]} testID="duel-final-score">
-              {t('duel.scoreLine', { first: nameOf(0), a: view.outcome.scores[0], b: view.outcome.scores[1], second: nameOf(1) })}
-            </Text>
+            {state.kind === 'match' && state.duel.names.length === 2 ? (
+              <Text style={[styles.body, styles.bold]} testID="duel-final-score">
+                {t('duel.scoreLine', { first: nameOf(0), a: view.outcome.scores[0], b: view.outcome.scores[1], second: nameOf(1) })}
+              </Text>
+            ) : (
+              <View style={styles.card} testID="duel-ranking">
+                {view.outcome.ranking.map((entry) => (
+                  <View key={entry.player} style={styles.rankRow} accessible accessibilityLabel={t('duel.rankA11y', { position: entry.position, name: nameOf(entry.player), count: entry.score })} testID={`duel-rank-${entry.player + 1}`}>
+                    <Text style={[styles.rankPosition, large && styles.bodyLarge]}>{entry.position}.</Text>
+                    <Text style={[styles.body, large && styles.bodyLarge, { flex: 1 }]}>{nameOf(entry.player)}</Text>
+                    <Text style={[styles.body, styles.bold]}>{t('duel.points', { count: entry.score })}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
             <Button label={t('duel.rematch')} size="lg" onPress={() => dispatch({ type: 'rematch' })} testID="duel-rematch" />
             <Button label={t('duel.newPlayers')} variant="secondary" onPress={() => dispatch({ type: 'setup' })} testID="duel-new-players" />
             <Button label={t('duel.back')} variant="text" onPress={onPressBack} />
@@ -173,18 +204,38 @@ export function DuelScreen({ onPressBack }: { onPressBack: () => void }) {
       </ScrollView>
 
       <ConfirmationModal
-        visible={confirmLeave}
+        visible={!!leaving}
         title={t('duel.leaveTitle')}
         message={t('duel.leaveBody')}
         confirmLabel={t('duel.leave')}
         cancelLabel={t('duel.stay')}
         destructive
         onConfirm={() => {
-          setConfirmLeave(false);
-          onPressBack();
+          const pending = leaving;
+          setLeaving(null);
+          guard.allowLeave();
+          pending?.proceed();
         }}
-        onCancel={() => setConfirmLeave(false)}
+        onCancel={() => setLeaving(null)}
       />
+    </View>
+  );
+}
+
+/** A press this soon after a handoff appears is the previous player's double tap - ignored. */
+export const HANDOFF_ARM_MS = 700;
+
+/** "I'm <name> - show my question": inactive for a moment so a double tap on an answer can't open the NEXT player's turn. */
+function ReadyButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setArmed(true), HANDOFF_ARM_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  // Looks normal (no dimmed flash); presses in the first moment are simply ignored.
+  return (
+    <View testID={armed ? 'duel-ready-armed' : undefined}>
+      <Button label={label} size="lg" block onPress={() => armed && onPress()} testID="duel-ready" />
     </View>
   );
 }
@@ -225,7 +276,7 @@ function TurnView({ name, round, total, questionId, options, large, optionName, 
   );
 }
 
-function RevealView({ view, total, names, large, optionName, onNext }: { view: Extract<ReturnType<typeof visible>, { kind: 'reveal' }>; total: number; names: [string, string]; large: boolean; optionName: (id: string) => string; onNext: () => void }) {
+function RevealView({ view, total, names, large, optionName, onNext }: { view: Extract<ReturnType<typeof visible>, { kind: 'reveal' }>; total: number; names: string[]; large: boolean; optionName: (id: string) => string; onNext: () => void }) {
   const { t } = useTranslation();
   const question = detectiveQuestion(view.question.questionId)!;
   const last = view.round + 1 >= total;
@@ -238,7 +289,7 @@ function RevealView({ view, total, names, large, optionName, onNext }: { view: E
       <Text style={[styles.body, styles.bold]} testID="duel-correct">
         {t('duel.itWas', { name: optionName(view.question.sourceId) })}
       </Text>
-      {([0, 1] as const).map((player) => (
+      {names.map((_, player) => (
         <View key={player} style={[styles.answerRow, view.correct[player] ? styles.answerRight : styles.answerWrong]} testID={`duel-answer-${player + 1}`} accessible accessibilityLabel={`${t('duel.answerOf', { name: names[player], answer: optionName(view.chosen[player]) })}, ${view.correct[player] ? t('duel.correctMark') : t('duel.wrongMark')}`}>
           {view.correct[player] ? <Check size={18} color={colors.primary} strokeWidth={2.5} /> : <X size={18} color={colors.accentTerracotta} strokeWidth={2.5} />}
           <Text style={[styles.body, large && styles.bodyLarge, { flex: 1 }]}>{t('duel.answerOf', { name: names[player], answer: optionName(view.chosen[player]) })}</Text>
@@ -250,7 +301,7 @@ function RevealView({ view, total, names, large, optionName, onNext }: { view: E
         <ChevronRight size={16} color={colors.primary} strokeWidth={2} />
       </AnimatedPressable>
       <Text style={styles.meta} testID="duel-score">
-        {t('duel.scoreLine', { first: names[0], a: view.scores[0], b: view.scores[1], second: names[1] })}
+        {names.length === 2 ? t('duel.scoreLine', { first: names[0], a: view.scores[0], b: view.scores[1], second: names[1] }) : names.map((name, player) => `${name} ${view.scores[player]}`).join(' · ')}
       </Text>
       <Button label={last ? t('duel.seeFinal') : t('duel.nextRound')} onPress={onNext} testID="duel-next" />
     </View>
@@ -305,6 +356,8 @@ const styles = StyleSheet.create({
   answerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1.5 },
   answerRight: { borderColor: colors.primary },
   answerWrong: { borderColor: colors.accentTerracotta },
+  rankRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44, flexWrap: 'wrap' },
+  rankPosition: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary, minWidth: 28 },
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, alignSelf: 'flex-start' },
   linkText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },
   entryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: 56, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },

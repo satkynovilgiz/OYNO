@@ -21,7 +21,7 @@ import { cardRadii, colors, editorial, fontFamily, spacing, textStyles } from '@
 import { baselineForNew } from './editor/editorDraft';
 import { LeaveEditorModal, RestoreDraftModal } from './editor/EditorDialogs';
 import { useEditorSession } from './editor/useEditorSession';
-import { useLeaveGuard } from './editor/useLeaveGuard';
+import { useLeaveGuard } from '@/hooks/useLeaveGuard';
 import { formatEntryDate, linkArtwork, linkRoute, shiftDate } from './journalDisplay';
 import { isValidJournalLink, JOURNAL_EXCERPT_MAX, JOURNAL_NOTE_MAX, JOURNAL_TITLE_MAX, shareExcerpt, validateDraft, type JournalLink } from './journalModel';
 import { showToast } from '@/components/ui/Toast';

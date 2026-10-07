@@ -4920,7 +4920,7 @@
     "title": "Culture Duel",
     "entryMeta": "Two players, one phone - who knows Kyrgyz culture better?",
     "intro": "Take turns on one phone. Each round you both get the same picture, clue and four answers.",
-    "rules": "1 point for each correct answer. Who goes first changes every round. Answers stay hidden until you have both answered - then they are shown together.",
+    "rules": "1 point for each correct answer. Who goes first rotates every round. Everyone's answers stay hidden until all players have answered - then they are shown together.",
     "namesTitle": "Nicknames (optional)",
     "namesNote": "Names stay in this match only - they are not saved or sent anywhere.",
     "nameLabel": "Player {{number}}",
@@ -4959,6 +4959,15 @@
     "leaveBody": "This match isn't saved - its score will be lost.",
     "leave": "Leave",
     "stay": "Keep playing",
-    "separateNote": "Duel results aren't saved and don't affect learning progress or official game records."
+    "separateNote": "Duel results aren't saved and don't affect learning progress or official game records.",
+    "playersTitle": "Players",
+    "twoPlayers": "2 players - duel",
+    "partyPlayers": "{{count}} players - party",
+    "rankA11y": "Place {{position}}: {{name}}, {{count}} points",
+    "points_one": "{{count}} point",
+    "points_other": "{{count}} points",
+    "sharedFirst": "Shared first place: {{names}}!",
+    "points_few": "{{count}} points",
+    "points_many": "{{count}} points"
   }
 }
