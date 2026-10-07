@@ -1781,6 +1781,20 @@
         "noInGroup": "No matches of this type",
         "noMatches": "No matches"
       }
+    },
+    "status": {
+      "loading": "Searching… still loading {{sources}}.",
+      "stillLoading": "Still loading {{sources}} - more results may appear.",
+      "failed": "{{sources}} couldn't load, so their results are missing.",
+      "offline": "{{sources}} can't be searched offline. Connect to include them.",
+      "retry": "Retry",
+      "retrying": "Retrying…",
+      "emptyIncompleteTitle": "No results for “{{query}}” so far",
+      "emptyIncompleteBody": "Part of OYNO couldn't be searched, so this may not be the full answer.",
+      "announceResults": "Results: {{count}}",
+      "announcePartial": "Results: {{count}}. {{sources}} couldn't be searched.",
+      "announceNone": "No results",
+      "announceNoneIncomplete": "No results so far. {{sources}} couldn't be searched."
     }
   },
   "collections": {

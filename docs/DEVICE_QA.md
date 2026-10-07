@@ -272,3 +272,37 @@ Still to check on a device (PENDING):
 | Signed in as A with an unsaved draft, sign out (synced), sign in as B: B is never offered A's draft; editor open during the switch closes with the account-changed message | PENDING (device) |
 | Sign out A while offline (state stashed), sign back in as A: A's draft is offered again | PENDING (device) |
 | VoiceOver / TalkBack: dialog title read first, three buttons named; "Unsaved changes restored" / "Changes discarded" announced once | PENDING (device) |
+
+## Global Search - loading, partial and offline states (2026-10-06)
+
+Automated: `e2e/tests/search-status.spec.ts` (slow catalogue = "still
+loading", never "No results"; failed culture items keep culture-category
+and local results; Retry keeps the query and the group filter; empty while
+a source failed is not final; "Available offline" ignores a listed download
+whose data is missing; clearing / rapid edits settle on the last query; RU
+status text) and `src/services/search/searchStatus.test.ts`.
+
+Rules: a catalogue with data is usable even if its refresh failed; "No
+results" is final only when every catalogue relevant to the current group
+filter answered; a failed one shows "couldn't load" + Retry (re-runs only
+the failed catalogue queries); offline (query paused) says it can't be
+searched offline. "Available offline" = manifest entry + not incomplete in
+the last check + its stored results present in the query cache; the
+filter runs the local "Check downloads" once if it never ran. Results are
+announced once they settle (900 ms), not per keystroke. Ranking and
+transliteration are unchanged.
+
+Known: a server 503 is retried by the Supabase client itself (up to 3x,
+with backoff) on top of react-query's 2 retries, so a 503 outage shows
+"still loading" for ~20-30 s before "couldn't load". Honest, but slow; the
+retry policy was left as it is.
+
+Still to check on a device (PENDING):
+
+| Check | Status |
+| --- | --- |
+| Airplane mode, cold start, search a downloaded article: found, "Available offline" keeps it; places / culture list say they can't be searched offline | PENDING (device) |
+| Delete one downloaded item's data (or interrupt a download), search with "Available offline": not listed | PENDING (device) |
+| Slow 3G: typing shows "still loading", results fill in without the list jumping back to "No results" | PENDING (device) |
+| VoiceOver / TalkBack: typing "komuz" quickly gives ONE results announcement; a failed source is mentioned once | PENDING (device) |
+| Change app language, return to Search: chips, status text and result titles in the new language | PENDING (device) |

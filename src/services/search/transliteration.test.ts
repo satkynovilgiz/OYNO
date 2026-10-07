@@ -116,7 +116,8 @@ describe('Search 3.0 - filters', () => {
   it('queries stay local: no analytics, no network in search code', () => {
     for (const file of ['globalSearch.ts', '../../features/search/SearchScreen.tsx', '../../features/search/SearchFilterBar.tsx']) {
       const code = fs.readFileSync(path.join(__dirname, file), 'utf8');
-      expect(code).not.toMatch(/track\(|supabase|fetch\(/);
+      // (Retry calls `refetch()` on the existing catalogue queries - not a new request path.)
+      expect(code).not.toMatch(/track\(|supabase|\bfetch\(/);
     }
     // Recent searches keep the query exactly as typed.
     expect(fs.readFileSync(path.join(__dirname, '../../features/search/SearchScreen.tsx'), 'utf8')).toMatch(/remember\(query\)/);

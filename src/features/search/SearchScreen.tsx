@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Gamepad2, Landmark, Mountain, Route, Search as SearchIcon, SearchX, X, type LucideIcon } from 'lucide-react-native';
+import { CloudOff, Gamepad2, Landmark, Mountain, Route, Search as SearchIcon, SearchX, X, type LucideIcon } from 'lucide-react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -7,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LibraryEmptyState } from '@/components/library/LibraryChrome';
 import { offlineKindFor } from '@/components/library/contentTypeMeta';
-import { AnimatedPressable, Button, FadeSlideIn, SectionHeader } from '@/components/ui';
+import { AnimatedPressable, Button, FadeSlideIn, SectionHeader, Skeleton } from '@/components/ui';
 import { collections } from '@/features/collections/collectionsData';
 import { mockGamesList } from '@/features/games/mockData';
 import { buildRecentlyExplored } from '@/features/home/homeRecommendation';
@@ -30,9 +31,11 @@ import {
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureCategories, useCultureMaterials } from '@/services/content/cultureService';
 import { useExploreRegions } from '@/services/content/exploreService';
+import { cachedResultChecker, isDownloadUsable } from '@/services/offline/offlineAvailability';
 import { downloadId } from '@/services/offline/offlineManifest';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { applySearchFilters, applyStateFilters, emptyReason, groupCounts, groupRankedResults, NO_FILTERS, rankSearchResults, type SearchFilters } from '@/services/search/globalSearch';
+import { searchStatus, sourceGroups, sourceState, type SearchSourceId, type SourceState } from '@/services/search/searchStatus';
 import { addRecentSearch, clearRecentSearches, getRecentSearches, saveRecentSearches } from '@/services/search/recentSearches';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useFavoritesStore } from '@/store/useFavoritesStore';
@@ -41,6 +44,7 @@ import { cardRadii, colors, elevation, spacing, textStyles } from '@/theme';
 
 import { SearchFilterBar } from './SearchFilterBar';
 import { SearchResultRow } from './SearchResultRow';
+import { useQueryCacheVersion, useSettledAnnouncement } from './searchHooks';
 
 type SearchScreenProps = {
   onPressBack: () => void;
@@ -88,15 +92,30 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
 
   useEffect(() => setExpanded([]), [deferredQuery]);
 
-  const { data: categories } = useCultureCategories();
-  const { data: materials } = useCultureMaterials();
-  const { data: items } = useAllCultureItems();
-  const { data: regions } = useExploreRegions();
+  const categoriesQuery = useCultureCategories();
+  const materialsQuery = useCultureMaterials();
+  const itemsQuery = useAllCultureItems();
+  const regionsQuery = useExploreRegions();
+  const { data: categories } = categoriesQuery;
+  const { data: materials } = materialsQuery;
+  const { data: items } = itemsQuery;
+  const { data: regions } = regionsQuery;
+  const sourceQueries: Record<SearchSourceId, { refetch: () => unknown } & Parameters<typeof sourceState>[0]> = {
+    places: regionsQuery,
+    cultureCategories: categoriesQuery,
+    cultureItems: itemsQuery,
+    cultureMaterials: materialsQuery,
+  };
+  const sources = Object.fromEntries(Object.entries(sourceQueries).map(([id, query]) => [id, sourceState(query)])) as Record<SearchSourceId, SourceState>;
   const trailSignals = useTrailSignals();
   const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
   const offlineEntries = useOfflineStore((state) => state.manifest.entries);
+  const offlineHealth = useOfflineStore((state) => state.health);
   const regionVisitDates = useProgressStore((state) => state.regionVisitDates);
   const dailyCompletions = useDailyDiscoveryStore((state) => state.completions);
+  const queryClient = useQueryClient();
+  // Downloads are re-seeded into the query cache at startup: re-check "usable offline" as that happens.
+  const cacheVersion = useQueryCacheVersion(queryClient);
 
   const catalog = useMemo<CatalogItem[]>(
     () => [
@@ -129,21 +148,55 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
   }, [regionVisitDates, dailyCompletions, catalog]);
 
   const isSaved = (item: CatalogItem) => favoriteIds.includes(`${item.contentType}:${item.id}`);
-  // "Available offline" = an explicit download in the offline manifest only.
+  // "Available offline" = an explicit download that is USABLE now: stored,
+  // not found incomplete by the last check, and its data in the cache the
+  // screen reads. A listed-but-broken download is never advertised.
+  const hasCachedResult = useMemo(() => cachedResultChecker(queryClient), [queryClient]);
   const isOffline = (item: CatalogItem) => {
     const kind = offlineKindFor(item.contentType);
-    return !!kind && !!offlineEntries[downloadId(kind, item.id)];
+    return !!kind && isDownloadUsable(offlineEntries[downloadId(kind, item.id)], offlineHealth, hasCachedResult);
   };
+  // The filter's answer must reflect what is really stored: check once (local reads only).
+  useEffect(() => {
+    if (filters.offlineOnly && !offlineHealth && Object.keys(offlineEntries).length > 0) void useOfflineStore.getState().checkDownloads();
+  }, [filters.offlineOnly, offlineHealth, offlineEntries]);
 
   // Filters narrow the CURRENT ranked results (same ranking, same groups).
   const results = useMemo(() => rankSearchResults(catalog, deferredQuery), [catalog, deferredQuery]);
-  const stateFiltered = useMemo(() => applyStateFilters(results, filters, isSaved, isOffline), [results, filters, favoriteIds, offlineEntries]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stateFiltered = useMemo(() => applyStateFilters(results, filters, isSaved, isOffline), [results, filters, favoriteIds, offlineEntries, offlineHealth, cacheVersion]); // eslint-disable-line react-hooks/exhaustive-deps
   const counts = useMemo(() => groupCounts(stateFiltered), [stateFiltered]);
   const activeGroup = filters.group !== 'all' && counts.some((entry) => entry.id === filters.group) ? filters.group : 'all';
-  const filtered = useMemo(() => applySearchFilters(results, { ...filters, group: activeGroup }, isSaved, isOffline), [results, filters, activeGroup, favoriteIds, offlineEntries]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filtered = useMemo(() => applySearchFilters(results, { ...filters, group: activeGroup }, isSaved, isOffline), [results, filters, activeGroup, favoriteIds, offlineEntries, offlineHealth, cacheVersion]); // eslint-disable-line react-hooks/exhaustive-deps
   const groups = useMemo(() => groupRankedResults(filtered), [filtered]);
-  const isTyping = deferredQuery.trim().length > 0;
+  // The FIELD decides whether we're searching: clearing it shows the start
+  // view at once, never the previous query's results under an empty field.
+  const isTyping = query.trim().length > 0;
+  // Results still belong to an earlier keystroke (rendered at lower priority).
+  const settling = deferredQuery !== query;
   const reason = emptyReason(results.length, filtered.length, filters);
+  const status = searchStatus({ query: deferredQuery, resultCount: results.length, sources, group: activeGroup });
+  const sourcesLabel = (ids: SearchSourceId[]) => sourceGroups(ids).map((group) => t(`search.groups.${group}`)).join(', ');
+  const unavailable = status.kind === 'results' || status.kind === 'emptyIncomplete' ? [...status.failed, ...status.offline] : [];
+  // Retry re-asks only the sources that failed; the query, filters and results stay.
+  const retry = () => unavailable.forEach((id) => void sourceQueries[id].refetch());
+  const retrying = unavailable.some((id) => sourceQueries[id].fetchStatus === 'fetching');
+
+  // One announcement once results settle - never per keystroke.
+  useSettledAnnouncement(
+    !isTyping || settling
+      ? null
+      : status.kind === 'results'
+        ? reason !== 'none'
+          ? t(`search.filters.empty.${reason}`)
+          : status.failed.length > 0 || status.offline.length > 0
+          ? t('search.status.announcePartial', { count: filtered.length, sources: sourcesLabel([...status.failed, ...status.offline]) })
+          : t('search.status.announceResults', { count: filtered.length })
+        : status.kind === 'empty'
+          ? t('search.status.announceNone')
+          : status.kind === 'emptyIncomplete'
+            ? t('search.status.announceNoneIncomplete', { sources: sourcesLabel([...status.failed, ...status.offline]) })
+            : null,
+  );
 
   const remember = (value: string) => {
     const next = addRecentSearch(recentSearches, value);
@@ -262,8 +315,15 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
               {categoryGrid}
             </FadeSlideIn>
           </>
-        ) : results.length > 0 ? (
-          <>
+        ) : status.kind === 'idle' ? null : status.kind === 'loading' ? (
+          <View style={styles.section} testID="search-loading">
+            <Text style={styles.statusText}>{t('search.status.loading', { sources: sourcesLabel(status.pending) })}</Text>
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} height={56} borderRadius={cardRadii.compact} />
+            ))}
+          </View>
+        ) : status.kind === 'results' ? (
+          <View style={[styles.results, settling && styles.settling]}>
             <SearchFilterBar
               counts={counts}
               total={stateFiltered.length}
@@ -273,15 +333,19 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
               showStateFilters={!large}
               onChange={setFilters}
             />
+            {status.pending.length > 0 ? (
+              <Text style={styles.statusText} testID="search-partial-loading">
+                {t('search.status.stillLoading', { sources: sourcesLabel(status.pending) })}
+              </Text>
+            ) : null}
+            {unavailable.length > 0 ? <SourceProblem failed={status.failed} offline={status.offline} label={sourcesLabel} retrying={retrying} onRetry={retry} /> : null}
             {reason !== 'none' ? (
               <View style={styles.filteredEmpty}>
-                <Text style={styles.filteredEmptyText} accessibilityLiveRegion="polite">
-                  {t(`search.filters.empty.${reason}`)}
-                </Text>
+                <Text style={styles.filteredEmptyText}>{t(`search.filters.empty.${reason}`)}</Text>
                 <Button label={t('search.filters.clear')} variant="secondary" size="sm" onPress={() => setFilters(NO_FILTERS)} />
               </View>
             ) : (
-              <Text style={styles.resultCount} accessibilityLiveRegion="polite">
+              <Text style={styles.resultCount} testID="search-result-count">
                 {t('search.v2.resultCount', { count: filtered.length })}
               </Text>
             )}
@@ -303,14 +367,32 @@ export function SearchScreen({ onPressBack, onPressResult }: SearchScreenProps) 
                 </View>
               );
             })}
-          </>
+          </View>
+        ) : status.kind === 'emptyIncomplete' ? (
+          <View style={[styles.results, settling && styles.settling]} testID="search-empty-incomplete">
+            <LibraryEmptyState icon={CloudOff} tone={colors.textSecondary} title={t('search.status.emptyIncompleteTitle', { query: deferredQuery.trim() })} description={t('search.status.emptyIncompleteBody')} />
+            <SourceProblem failed={status.failed} offline={status.offline} label={sourcesLabel} retrying={retrying} onRetry={retry} />
+            {categoryGrid}
+          </View>
         ) : (
-          <>
+          <View style={[styles.results, settling && styles.settling]} testID="search-empty">
             <LibraryEmptyState icon={SearchX} tone={colors.accentTerracotta} title={t('library.noResults', { query: deferredQuery.trim() })} description={t('search.v2.noResultsHint')} />
             {categoryGrid}
-          </>
+          </View>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+/** Which remote catalogues are missing from these results, and a Retry that keeps the search. */
+function SourceProblem({ failed, offline, label, retrying, onRetry }: { failed: SearchSourceId[]; offline: SearchSourceId[]; label: (ids: SearchSourceId[]) => string; retrying: boolean; onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.problem} testID="search-source-problem">
+      {failed.length > 0 ? <Text style={styles.problemText}>{t('search.status.failed', { sources: label(failed) })}</Text> : null}
+      {offline.length > 0 ? <Text style={styles.problemText}>{t('search.status.offline', { sources: label(offline) })}</Text> : null}
+      <Button label={retrying ? t('search.status.retrying') : t('search.status.retry')} variant="secondary" size="sm" onPress={onRetry} loading={retrying} testID="search-retry" />
     </View>
   );
 }
@@ -330,6 +412,12 @@ const styles = StyleSheet.create({
   filteredEmpty: { alignItems: 'flex-start', gap: spacing.sm, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
   filteredEmptyText: { ...textStyles.bodyMedium, color: colors.textSecondary },
   resultCount: { ...textStyles.caption, color: colors.textMuted, marginBottom: -spacing.sm },
+  results: { gap: spacing.lg },
+  // Results of an earlier keystroke, about to be replaced.
+  settling: { opacity: 0.6 },
+  statusText: { ...textStyles.caption, color: colors.textSecondary },
+  problem: { alignItems: 'flex-start', gap: spacing.xs, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
+  problemText: { ...textStyles.bodyMedium, color: colors.textSecondary },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   recentChip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36, maxWidth: '100%', paddingHorizontal: spacing.sm, borderRadius: cardRadii.chip, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   recentChipText: { ...textStyles.caption, fontWeight: '600', color: colors.textPrimary, flexShrink: 1 },

@@ -1,5 +1,27 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import type { HealthReport } from './offlineHealth';
+import type { OfflineManifestEntry } from './offlineManifest';
+
+/**
+ * Is this download USABLE offline right now - not merely listed? It must
+ * have stored results, must not have failed the last "Check downloads"
+ * (incomplete), and every result it needs must actually be in the query
+ * cache the screens read (downloads are re-seeded there at startup). A
+ * background refresh in progress doesn't matter: the existing copy stays.
+ */
+export function isDownloadUsable(entry: OfflineManifestEntry | undefined, health: HealthReport | null, hasCachedResult: (queryHash: string) => boolean): boolean {
+  if (!entry || entry.queryHashes.length === 0) return false;
+  if (health?.items[entry.id] === 'incomplete') return false;
+  return entry.queryHashes.every(hasCachedResult);
+}
+
+/** `hasCachedResult` for `isDownloadUsable`, from a live query client. */
+export function cachedResultChecker(queryClient: QueryClient): (queryHash: string) => boolean {
+  const cache = queryClient.getQueryCache();
+  return (hash) => cache.get(hash)?.state.data !== undefined;
+}
+
 /**
  * Can this route's EXISTING screen open with data already on the device?
  * Reads the react-query cache - which offline downloads re-seed at startup

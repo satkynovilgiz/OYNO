@@ -1781,6 +1781,20 @@
         "noInGroup": "Совпадений этого типа нет",
         "noMatches": "Совпадений нет"
       }
+    },
+    "status": {
+      "loading": "Поиск… ещё загружаются: {{sources}}.",
+      "stillLoading": "Ещё загружаются: {{sources}} - могут появиться новые результаты.",
+      "failed": "Не удалось загрузить: {{sources}}, поэтому их результатов нет.",
+      "offline": "Без интернета нельзя искать: {{sources}}. Подключитесь, чтобы включить их.",
+      "retry": "Повторить",
+      "retrying": "Повторяем…",
+      "emptyIncompleteTitle": "По запросу «{{query}}» пока ничего нет",
+      "emptyIncompleteBody": "Часть OYNO не удалось проверить, поэтому ответ может быть неполным.",
+      "announceResults": "Результаты: {{count}}",
+      "announcePartial": "Результаты: {{count}}. Не удалось проверить: {{sources}}.",
+      "announceNone": "Ничего не найдено",
+      "announceNoneIncomplete": "Пока ничего не найдено. Не удалось проверить: {{sources}}."
     }
   },
   "collections": {
