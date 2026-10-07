@@ -6,7 +6,7 @@ import { buildTables, readTable, Unsupported } from './postgrest';
 /** The web build is exported with this fake Supabase URL (npm run e2e:build). */
 export const FAKE_SUPABASE = 'https://oyno-e2e.test';
 
-export type LoggedRequest = { method: string; path: string; status: number };
+export type LoggedRequest = { method: string; path: string; status: number; body?: unknown; bytes?: number; contentType?: string };
 /** A request the registry does not allow - fails the test (see helpers.ts). */
 export type UnexpectedRequest = { kind: 'backend' | 'external' | 'websocket'; method: string; url: string; reason: string };
 export type BackendLog = { requests: LoggedRequest[]; unexpected: UnexpectedRequest[] };
@@ -27,13 +27,29 @@ export const DISCARDED_WRITES: Record<string, readonly string[]> = {
   analytics_events: ['POST'],
 };
 
-/** RPCs the guest journeys call, with their deterministic results. None today. */
-export const RPCS: Record<string, unknown> = {};
+/** RPCs the guest journeys call, with their deterministic results. */
+export const RPCS: Record<string, unknown> = {
+  // Beta feedback (src/services/feedback/feedbackQueue.ts): the request is recorded in the log.
+  submit_beta_feedback_v2: 'e2e-feedback-id',
+};
+
+/** Storage uploads that are allowed and recorded (nothing is stored): bucket -> object path pattern. */
+export const STORAGE_UPLOADS: Record<string, RegExp> = {
+  'beta-feedback': /^screenshots\/[0-9a-f-]{36}\.jpg$/,
+};
 
 /** Auth endpoints a signed-out (guest) client may call. */
 const AUTH_GET: Record<string, unknown> = {
   '/auth/v1/settings': { external: { google: false, apple: false, email: true } },
 };
+
+function safeJson(text: string | null): unknown {
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return text;
+  }
+}
 
 export async function installBackend(page: Page): Promise<BackendLog> {
   const log: BackendLog = { requests: [], unexpected: [] };
@@ -55,9 +71,22 @@ export async function installBackend(page: Page): Promise<BackendLog> {
       if (method === 'GET' && path in AUTH_GET) return respond(200, AUTH_GET[path]);
       return reject(`auth endpoint ${method} ${path} is not registered (guest journeys never sign in)`);
     }
+    if (path.startsWith('/storage/v1/object/') && method === 'POST') {
+      const [bucket, ...rest] = path.slice('/storage/v1/object/'.length).split('/');
+      const objectPath = rest.join('/');
+      if (STORAGE_UPLOADS[bucket]?.test(objectPath)) {
+        const body = request.postDataBuffer();
+        log.requests.push({ method, path, status: 200, bytes: body?.byteLength ?? 0, contentType: request.headers()['content-type'] });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ Key: `${bucket}/${objectPath}` }) });
+      }
+      return reject(`storage upload ${bucket}/${objectPath} is not allowed`);
+    }
     if (path.startsWith('/rest/v1/rpc/')) {
       const name = path.slice('/rest/v1/rpc/'.length);
-      if (name in RPCS) return respond(200, RPCS[name]);
+      if (name in RPCS) {
+        log.requests.push({ method, path, status: 200, body: safeJson(request.postData()) });
+        return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(RPCS[name]) });
+      }
       return reject(`RPC "${name}" is not registered - add it to RPCS in e2e/fixtures/backend.ts with a deterministic result`);
     }
     if (!path.startsWith('/rest/v1/')) return reject(`endpoint ${path} is not part of the fake backend (storage, realtime, functions are not served)`);

@@ -8,6 +8,7 @@ import { createUuid } from '@/services/storage/uuid';
 import { supabase } from '@/services/supabase/client';
 
 import { sanitizeDiagnostics, type FeedbackDiagnostics } from './diagnostics';
+import { isFreshWebImageSource, keepWebAttachment, readWebAttachment, removeWebAttachment, webAttachmentId, type AttachmentDurability } from './webAttachments';
 import { isValidReportUrl, legacyCategory, legacyMessage, MAX_CORRECTION_LENGTH, toServerContent, type ReportContent, type ReportContentType } from './reportContent';
 
 export const FEEDBACK_QUEUE_KEY = 'oyno.feedback.pending';
@@ -60,6 +61,18 @@ export type PendingFeedback = {
 
 export type SubmitResult = 'sent' | 'queued' | 'failed';
 
+/**
+ * What happened to the image the tester attached - so the sheet never
+ * shows an image as attached when it isn't:
+ *  none            no image was attached
+ *  kept            stored with the queued report (native file / web IndexedDB)
+ *  session_only    web without IndexedDB: kept only while this page is open
+ *  dropped         couldn't be stored - the report is queued without it
+ *  sent            uploaded with the report
+ *  not_sent        the report was sent without it (image missing or refused)
+ */
+export type AttachmentState = 'none' | 'kept' | 'session_only' | 'dropped' | 'sent' | 'not_sent';
+
 /** One id per report, created on the device (deduplicates retries). */
 export const createReportId = createUuid;
 
@@ -86,6 +99,8 @@ const MAX_QUEUED = 50;
  * without an image.
  */
 export function isFeedbackImageUri(uri: unknown): uri is string {
+  // Web: only OYNO's own reference to bytes it stored (see webAttachments.ts).
+  if (webAttachmentId(uri)) return true;
   if (typeof uri !== 'string' || uri.length > 1000 || !uri.startsWith('file://') || uri.includes('..') || uri.includes('/journal/')) return false;
   return /\/feedback\/[^/]+\.jpg$/i.test(uri) || /\/(Caches|cache|tmp)\//.test(uri);
 }
@@ -125,7 +140,8 @@ export function parseQueuedReport(raw: unknown): PendingFeedback | null {
     message: value.message.slice(0, MAX_FEEDBACK_LENGTH),
     diagnostics: sanitizeDiagnostics(value.diagnostics, { allowContactEmail: contactConsent !== false }),
     content: parseContent(value.content),
-    screenshotUri: isFeedbackImageUri(value.screenshotUri) ? value.screenshotUri : null,
+    // A web reference must name THIS report's own stored image.
+    screenshotUri: isFeedbackImageUri(value.screenshotUri) && (!webAttachmentId(value.screenshotUri) || webAttachmentId(value.screenshotUri) === clientReportId) ? value.screenshotUri : null,
     screenshotPath,
     accountId: typeof value.accountId === 'string' && ACCOUNT_ID.test(value.accountId) ? value.accountId : null,
     attempts: typeof value.attempts === 'number' && Number.isInteger(value.attempts) && value.attempts >= 0 ? Math.min(value.attempts, 1000) : 0,
@@ -201,7 +217,23 @@ export async function enqueueFeedback(input: {
   /** The tester ticked "include my email". Without it no email is stored or sent. */
   contactConsent?: boolean;
 }): Promise<PendingFeedback> {
+  return (await enqueueWithAttachment(input)).report;
+}
+
+async function enqueueWithAttachment(input: Parameters<typeof enqueueFeedback>[0]): Promise<{ report: PendingFeedback; attachment: AttachmentState }> {
   const clientReportId = createReportId();
+  let screenshotUri: string | null = null;
+  let attachment: AttachmentState = 'none';
+  if (input.screenshotUri && isFreshWebImageSource(input.screenshotUri)) {
+    // Web: a blob: URL dies with the page - keep the bytes instead.
+    const kept: { uri: string; durability: AttachmentDurability } | null = await keepWebAttachment(input.screenshotUri, clientReportId, FEEDBACK_IMAGE.maxBytes);
+    screenshotUri = kept?.uri ?? null;
+    attachment = !kept ? 'dropped' : kept.durability === 'durable' ? 'kept' : 'session_only';
+  } else if (input.screenshotUri) {
+    screenshotUri = await keepScreenshot(input.screenshotUri, clientReportId);
+    attachment = isFeedbackImageUri(screenshotUri) ? 'kept' : 'dropped';
+    if (attachment === 'dropped') screenshotUri = null;
+  }
   const report: PendingFeedback = {
     clientReportId,
     createdAt: new Date().toISOString(),
@@ -210,15 +242,15 @@ export async function enqueueFeedback(input: {
     diagnostics: sanitizeDiagnostics(input.diagnostics, { allowContactEmail: input.contactConsent === true }),
     contactConsent: input.contactConsent === true,
     content: parseContent(input.content),
-    screenshotUri: input.screenshotUri ? await keepScreenshot(input.screenshotUri, clientReportId) : null,
+    screenshotUri,
     screenshotPath: null,
     accountId: input.accountId,
     attempts: 0,
   };
   await serialized(async () => writeFeedbackQueue([...(await readFeedbackQueue()), report]));
   // The temp image is now in the queue's own storage.
-  if (input.screenshotUri && report.screenshotUri !== input.screenshotUri) deleteTempImage(input.screenshotUri);
-  return report;
+  if (input.screenshotUri && report.screenshotUri && report.screenshotUri !== input.screenshotUri) deleteTempImage(input.screenshotUri);
+  return { report, attachment };
 }
 
 type ErrorLike = { message?: string; status?: number; statusCode?: string | number; code?: string } | null | undefined;
@@ -267,11 +299,18 @@ async function uploadScreenshot(report: PendingFeedback): Promise<{ path: string
   if (!report.screenshotUri) return { path: null, state: 'none' };
   const path = `screenshots/${report.clientReportId}.jpg`;
   let bytes: ArrayBuffer;
-  try {
-    bytes = await (await fetch(report.screenshotUri)).arrayBuffer();
-  } catch {
-    // The local file is gone (cleared temp storage) - send without it.
-    return { path: null, state: 'skipped' };
+  if (webAttachmentId(report.screenshotUri)) {
+    // Web: the bytes stored with the report (gone after a reload without IndexedDB).
+    const stored = await readWebAttachment(report.screenshotUri);
+    if (!stored) return { path: null, state: 'skipped' };
+    bytes = stored;
+  } else {
+    try {
+      bytes = await (await fetch(report.screenshotUri)).arrayBuffer();
+    } catch {
+      // The local file is gone (cleared temp storage) - send without it.
+      return { path: null, state: 'skipped' };
+    }
   }
   // Over the bucket limit (3 MB): send the text without the image.
   if (bytes.byteLength > FEEDBACK_IMAGE.maxBytes) return { path: null, state: 'skipped' };
@@ -285,6 +324,9 @@ async function uploadScreenshot(report: PendingFeedback): Promise<{ path: string
     return shouldRetry(classifyFailure(error as ErrorLike), report.attempts + 1) ? { path: null, state: 'retry' } : { path: null, state: 'skipped' };
   }
 }
+
+/** How the last successful send of a report went for its image (this app run). */
+const sentImage = new Map<string, 'sent' | 'not_sent'>();
 
 async function sendOne(report: PendingFeedback, currentAccountId: string | null): Promise<{ outcome: SendOutcome; report: PendingFeedback }> {
   const upload = await uploadScreenshot(report);
@@ -306,7 +348,10 @@ async function sendOne(report: PendingFeedback, currentAccountId: string | null)
   if (error && isMissingFunction(error)) {
     ({ error } = await supabase.rpc('submit_beta_feedback', { ...common, p_category: legacyCategory(withPath.category), p_message: legacyMessage(withPath.message, withPath.content) }));
   }
-  if (!error) return { outcome: 'sent', report: withPath };
+  if (!error) {
+    if (report.screenshotUri || report.screenshotPath) sentImage.set(report.clientReportId, upload.state === 'uploaded' ? 'sent' : 'not_sent');
+    return { outcome: 'sent', report: withPath };
+  }
   const next = { ...withPath, attempts: withPath.attempts + 1 };
   if (shouldRetry(classifyFailure(error), next.attempts)) return { outcome: 'retry', report: next };
   return { outcome: 'failed', report: { ...next, status: 'failed', failureCode: failureCode(error) } };
@@ -318,6 +363,11 @@ function keepRecentFailures(items: PendingFeedback[]): PendingFeedback[] {
   const failed = items.filter((item) => item.status === 'failed');
   if (failed.length <= MAX_FAILED_KEPT) return items;
   const drop = new Set(failed.slice(0, failed.length - MAX_FAILED_KEPT).map((item) => item.clientReportId));
+  for (const item of items) {
+    if (!drop.has(item.clientReportId)) continue;
+    deleteLocalScreenshot(item.screenshotUri);
+    void removeWebAttachment(item.screenshotUri);
+  }
   return items.filter((item) => !drop.has(item.clientReportId));
 }
 
@@ -342,6 +392,7 @@ export function flushFeedbackQueue(currentAccountId: string | null): Promise<num
       });
       if (outcome === 'sent') {
         deleteLocalScreenshot(report.screenshotUri);
+        await removeWebAttachment(report.screenshotUri);
         sent += 1;
       }
       if (outcome === 'retry') break; // offline again - try the rest later
@@ -374,10 +425,11 @@ export async function retryFeedback(clientReportId: string, options: { online: b
 export async function sendFeedbackReport(
   input: Parameters<typeof enqueueFeedback>[0],
   options: { online: boolean; currentAccountId: string | null },
-): Promise<{ result: SubmitResult; clientReportId: string }> {
-  const report = await enqueueFeedback(input);
+): Promise<{ result: SubmitResult; clientReportId: string; attachment: AttachmentState }> {
+  const { report, attachment } = await enqueueWithAttachment(input);
   if (options.online) await flushFeedbackQueue(options.currentAccountId);
-  return { result: await feedbackStatus(report.clientReportId), clientReportId: report.clientReportId };
+  const result = await feedbackStatus(report.clientReportId);
+  return { result, clientReportId: report.clientReportId, attachment: result === 'sent' ? (sentImage.get(report.clientReportId) ?? attachment) : attachment };
 }
 
 /** Queue, then try to send right away. 'sent' only when the server has it. */

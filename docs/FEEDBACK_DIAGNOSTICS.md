@@ -64,9 +64,22 @@ All four use the same functions. None of them throws on bad input.
 ## Screenshots
 
 A queued report can only upload an image OYNO made for feedback: its kept
-copy (`documents/feedback/<id>.jpg`) or a temporary capture
-(cache / tmp). A path into the journal folder, a remote URL or a `..`
-path is dropped, and the report goes without an image. `screenshotPath`
+copy (`documents/feedback/<id>.jpg`), a temporary capture (cache / tmp),
+or - on web - `oyno-attachment:<its own report id>`, a reference to the
+JPEG bytes OYNO copied into IndexedDB when the report was queued
+(`webAttachments.ts`; the bytes must start with the JPEG marker). A web
+`blob:` URL is accepted only at the moment of sending a freshly chosen
+image, never from storage.
+
+Web offline / reload: with IndexedDB the image survives a reload and is
+sent with the report. Without IndexedDB (private mode, blocked storage)
+the bytes are kept in memory, the result screen says the image is kept
+only while the page is open, and after a reload the report is sent
+without it (`screenshot: not_uploaded`). If the image can't be stored at
+all, the result screen says the report was saved without it.
+
+A path into the journal folder, a remote URL, a `data:`/`blob:` URL or a `..`
+path read from storage is dropped, and the report goes without an image. `screenshotPath`
 must be `screenshots/<the report's id>.jpg`. Screen capture remains off on
 private screens (sign-in, account, settings data, admin, journal).
 

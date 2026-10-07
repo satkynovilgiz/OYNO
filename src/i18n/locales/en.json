@@ -2751,7 +2751,12 @@
     "charactersLeft": "{{count}} characters left",
     "accountLink": "You are signed in, so this report is linked to your account on our server (to prevent spam). Your email is included only if you turn it on.",
     "reportIssue": "Report an issue",
-    "reportIssueHint": "Tell the team if something here is incorrect, badly translated or shows the wrong image."
+    "reportIssueHint": "Tell the team if something here is incorrect, badly translated or shows the wrong image.",
+    "attachment": {
+      "session_only": "Your image is kept only while this page is open. If you reload or close it before the report is sent, the report goes without the image.",
+      "dropped": "Your image couldn't be saved with the report, so it was saved without it.",
+      "not_sent": "Your report was sent without the image - it was no longer available or couldn't be uploaded."
+    }
   },
   "journal": {
     "title": "My Journal",

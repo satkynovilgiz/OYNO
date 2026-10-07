@@ -20,7 +20,7 @@ import { AnimatedPressable, Button, IconButton, TextField, Toggle } from '@/comp
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { currentRoute, recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { buildDiagnostics, isSensitiveRoute } from '@/services/feedback/diagnostics';
-import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult } from '@/services/feedback/feedbackQueue';
+import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult, type AttachmentState } from '@/services/feedback/feedbackQueue';
 import { buildReportContent, CONTENT_CATEGORIES, isValidReportUrl, MAX_CORRECTION_LENGTH } from '@/services/feedback/reportContent';
 import { deleteTempImage, FEEDBACK_IMAGE, normalizeToJpeg, pickerOptionsForJpeg, type PickedImage } from '@/services/media/normalizeImage';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
@@ -70,6 +70,8 @@ export function FeedbackSheet() {
   const [showDetails, setShowDetails] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  /** What happened to the attached image - never shown as attached when it isn't. */
+  const [attachment, setAttachment] = useState<AttachmentState>('none');
   const [reportId, setReportId] = useState<string | null>(null);
   const [route, setRoute] = useState<string | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
@@ -97,6 +99,7 @@ export function FeedbackSheet() {
     setImageFailed(false);
     setShowDetails(false);
     setResult(null);
+    setAttachment('none');
     setReportId(null);
   }
 
@@ -181,6 +184,7 @@ export function FeedbackSheet() {
       );
       setReportId(outcome.clientReportId);
       setResult(outcome.result);
+      setAttachment(outcome.attachment);
     } finally {
       setSending(false);
     }
@@ -226,6 +230,11 @@ export function FeedbackSheet() {
             <View style={styles.result} accessibilityLiveRegion="polite">
               <Text style={styles.resultTitle}>{resultTitle}</Text>
               <Text style={styles.resultBody}>{resultBody}</Text>
+              {attachment === 'session_only' || attachment === 'dropped' || attachment === 'not_sent' ? (
+                <Text style={styles.note} testID="feedback-attachment-note">
+                  {t(`feedback.attachment.${attachment}`)}
+                </Text>
+              ) : null}
               {result === 'failed' ? <Button label={t('common.retry')} onPress={() => void retry()} loading={sending} /> : null}
               <Button label={result === 'failed' ? t('feedback.close') : t('feedback.done')} variant={result === 'failed' ? 'secondary' : 'primary'} onPress={dismiss} />
             </View>
@@ -282,6 +291,7 @@ export function FeedbackSheet() {
               ) : null}
 
               <TextField
+                testID="feedback-message"
                 label={t(`feedback.messageLabels.${category}`)}
                 value={message}
                 onChangeText={(value) => setMessage(value.slice(0, MAX_FEEDBACK_LENGTH))}
@@ -323,7 +333,7 @@ export function FeedbackSheet() {
               <Text style={styles.sectionLabel}>{t('feedback.imageLabel')}</Text>
               {screenshotUri ? (
                 <View style={styles.previewRow}>
-                  <Image source={{ uri: screenshotUri }} style={styles.preview} accessibilityLabel={t('feedback.imageAttached')} />
+                  <Image source={{ uri: screenshotUri }} style={styles.preview} accessibilityLabel={t('feedback.imageAttached')} testID="feedback-image-preview" />
                   <Button
                     label={t('feedback.removeImage')}
                     variant="secondary"
@@ -349,7 +359,7 @@ export function FeedbackSheet() {
                     </AnimatedPressable>
                   ) : null}
                   {canPick ? (
-                    <AnimatedPressable style={styles.imageButton} onPress={() => void chooseImage()} accessibilityRole="button" accessibilityLabel={t('feedback.chooseImage')}>
+                    <AnimatedPressable style={styles.imageButton} onPress={() => void chooseImage()} accessibilityRole="button" accessibilityLabel={t('feedback.chooseImage')} testID="feedback-choose-image">
                       <ImagePlus size={16} color={colors.primary} strokeWidth={2} />
                       <Text style={styles.imageButtonText}>{t('feedback.chooseImage')}</Text>
                     </AnimatedPressable>
@@ -393,7 +403,7 @@ export function FeedbackSheet() {
               ) : null}
 
               {isOffline ? <Text style={styles.note}>{t('feedback.offlineNote')}</Text> : null}
-              <Button label={t('feedback.send')} onPress={() => void send()} disabled={!message.trim()} loading={sending} />
+              <Button label={t('feedback.send')} onPress={() => void send()} disabled={!message.trim()} loading={sending} testID="feedback-send" />
             </ScrollView>
           )}
         </View>
