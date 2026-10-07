@@ -46,6 +46,8 @@ export const useListeningStore = create<State>((set, get) => {
     load: async () => {
       if (get().isLoaded) return;
       const raw = await AsyncStorage.getItem(LISTENING_KEY).catch(() => null);
+      // A load that finishes late never overwrites a store already loaded (and written) meanwhile.
+      if (get().isLoaded) return;
       const parsed = safeJsonParse<Saved>(raw, {});
       set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
     },

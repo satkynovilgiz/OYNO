@@ -50,24 +50,39 @@ The export format is unchanged by this audit (no migration was needed).
    file was chosen and when Import was confirmed - never an id in the file.
    An account change while reading the file, planning, or just before
    writing aborts with nothing written.
-6. **All or nothing in memory.** Writes are synchronous; a failing write
-   restores every domain already written ("couldn't be imported, nothing
-   changed"). If even the restore fails, the screen says the import stopped
-   partway.
-7. **Interruptions.** A marker (owner + a hash of the file, no contents) is
-   stored before writing and cleared after the stores have persisted. If
-   the app stops in between, the next visit says the last import may not
-   have finished; importing the same file again is safe and completes it.
-8. **Privacy.** Analytics get only `schema_version` and `domain_count`.
-   Nothing from the file is logged.
+6. **Applied in memory all-or-nothing; persisted with verification, not
+   atomically.** Each store saves itself (two with a 500 ms debounce) and
+   ignores its own write errors, so an atomic write to disk across stores
+   isn't possible without rewriting every store. The strategy is
+   *detect + recover*:
+   - every domain is merged in memory in one synchronous step; a failing
+     in-memory write restores every domain already written;
+   - a marker (owner + a hash of the file, no contents) is stored first;
+   - after the stores have had time to save, each written store's STORED
+     slice for that owner is read back and compared with memory (checked
+     twice). Any mismatch: the result is "stopped partway" (never
+     "imported") and the marker stays;
+   - recovery = import the same file again. After a restart, the plan
+     shows only what is missing. Without a restart, nothing is new but a
+     store whose storage is behind is written again ("Saved again"). The
+     merges are idempotent, so nothing is added or counted twice.
+7. **Stores still loading.** The import waits for every affected store to
+   load. A load that finishes late (e.g. the app-start one) can no longer
+   overwrite a store that was loaded and written meanwhile (fixed in all
+   ten stores).
+8. **Interruptions.** If the app stops before the check, the marker
+   remains; the next visit says the last import may not have finished.
+9. **Privacy.** Analytics get only `schema_version` and `domain_count`.
+   Nothing from the file is logged (checked in the failure tests).
 
 ## Limitations (not resolved here)
 
-- The stores persist with fire-and-forget writes (two with a 500 ms
-  debounce) and swallow storage errors. The import can't prove each store
-  reached disk; it waits 800 ms, then clears the marker. A storage write
-  that fails silently after that isn't detected. Recovery is the same:
-  import the file again.
+- Persistence is verified once, right after the import. If a store's
+  storage is damaged LATER by something else, that isn't the import's to
+  detect.
+- If storage keeps failing, every attempt reports "stopped partway" and
+  the data stays in memory for this run only; nothing is lost from what
+  was already stored.
 - A backup with private highlight notes must be imported with them (the
   confirmation is required); there is no "everything except notes" option.
   Stripping notes safely would need a per-record rule so a newer, note-less

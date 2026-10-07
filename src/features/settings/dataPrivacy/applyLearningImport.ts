@@ -40,6 +40,9 @@ export type ImportOutcome =
       cloud: ImportCloud;
       /** False when the data changed between preview and import (then `domains` is what actually happened). */
       matchesPreview: boolean;
+      /** Already merged on this device, but storage was behind (an earlier import that didn't
+       * fully persist): written again now. Counts are unaffected - nothing is added twice. */
+      repaired: PrivateDomain[];
     }
   | { ok: false; error: ImportFailure };
 
@@ -55,13 +58,27 @@ export type ImportDeps = {
   clearPending: () => Promise<void>;
   /** Resolves once the stores' own (debounced) writes have had time to run. */
   settle: () => Promise<void>;
+  /** Adapters whose STORED slice for `owner` differs from memory (not persisted yet, or a failed write). */
+  unpersisted: (adapters: readonly StoreAdapter[], owner: string) => Promise<StoreAdapter[]>;
 };
+
+/** Stored vs in-memory owner slice, per adapter (local reads only). */
+async function unpersistedSlices(adapters: readonly StoreAdapter[], owner: string): Promise<StoreAdapter[]> {
+  const keys = [...new Set(adapters.map((adapter) => adapter.persistence.key))];
+  const pairs: readonly (readonly [string, string | null])[] | null = await AsyncStorage.multiGet(keys).catch(() => null);
+  if (!pairs) return [...adapters];
+  const stored = new Map(pairs.map(([key, raw]) => [key, safeJsonParse<Record<string, unknown> | null>(raw, null)]));
+  return adapters.filter((adapter) => {
+    const onDisk = stored.get(adapter.persistence.key)?.[owner];
+    return JSON.stringify(onDisk ?? null) !== JSON.stringify(adapter.persistence.memorySlice(owner) ?? null);
+  });
+}
 
 export const PENDING_IMPORT_KEY = 'oyno.dataImport.pending';
 /** Longer than the longest store write debounce (reading / listening: 500 ms). */
 const SETTLE_MS = 800;
 
-const defaultDeps: ImportDeps = {
+export const defaultImportDeps: ImportDeps = {
   owner: currentRecordsOwner,
   adapters: STORE_ADAPTERS,
   deletedKeys: (owner) => knownDeletedKeys(owner).catch(() => ({})),
@@ -73,6 +90,7 @@ const defaultDeps: ImportDeps = {
   ),
   clearPending: () => AsyncStorage.removeItem(PENDING_IMPORT_KEY).catch(() => undefined),
   settle: () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS)),
+  unpersisted: unpersistedSlices,
 };
 
 /** An import for THIS owner that started and never confirmed it finished. */
@@ -82,7 +100,7 @@ export async function readPendingImport(owner: string): Promise<PendingImport | 
 }
 
 export async function dismissPendingImport(): Promise<void> {
-  await defaultDeps.clearPending();
+  await defaultImportDeps.clearPending();
 }
 
 /** A short, non-reversible id of the file's text (FNV-1a) - recognises a re-import, reveals nothing. */
@@ -119,7 +137,7 @@ const summary = ({ domain, added, updated, unchanged, skippedDeleted, kept }: Do
 const sameSummary = (a: readonly DomainSummary[], b: readonly DomainSummary[]) => JSON.stringify(a) === JSON.stringify(b);
 
 /** What importing would do for this owner right now (dry run - nothing is written). */
-export async function previewLearningImport(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps = defaultDeps): Promise<ImportPreview> {
+export async function previewLearningImport(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps = defaultImportDeps): Promise<ImportPreview> {
   const prepared = await prepare(backup, expectedOwner, deps);
   if (!prepared) return { ok: false, error: 'owner_changed' };
   return { ok: true, owner: prepared.owner, domains: prepared.plans.map(({ plan }) => summary(plan)) };
@@ -132,7 +150,7 @@ export function __resetImportLockForTests(): void {
   running = false;
 }
 
-export async function applyLearningImport(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps = defaultDeps, options: { preview?: readonly DomainSummary[]; fingerprint?: string } = {}): Promise<ImportOutcome> {
+export async function applyLearningImport(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps = defaultImportDeps, options: { preview?: readonly DomainSummary[]; fingerprint?: string } = {}): Promise<ImportOutcome> {
   // One import at a time: a second tap (or a second screen) never applies the file concurrently.
   if (running) return { ok: false, error: 'busy' };
   running = true;
@@ -148,8 +166,15 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
   if (!prepared) return { ok: false, error: 'owner_changed' };
   const { owner, plans } = prepared;
   const toWrite = plans.filter(({ plan }) => plan.added + plan.updated > 0);
+  // Recovery: a domain with nothing new whose STORAGE is behind memory (an
+  // earlier import - or anything else - that didn't persist) is written again.
+  const unchanged = plans.filter(({ plan }) => plan.added + plan.updated === 0);
+  const stale = new Set(await deps.unpersisted(unchanged.map(({ adapter }) => adapter), owner));
+  const toRepair = unchanged.filter(({ adapter }) => stale.has(adapter));
+  if (deps.owner() !== owner) return { ok: false, error: 'owner_changed' };
 
-  if (toWrite.length > 0 && !(await deps.markPending({ owner, fingerprint: options.fingerprint ?? 'unknown', startedAt: new Date().toISOString() }))) {
+  const changing = toWrite.length + toRepair.length > 0;
+  if (changing && !(await deps.markPending({ owner, fingerprint: options.fingerprint ?? 'unknown', startedAt: new Date().toISOString() }))) {
     // Can't even record that an import is starting: write nothing.
     return { ok: false, error: 'apply_failed' };
   }
@@ -159,13 +184,14 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
     return { ok: false, error: 'owner_changed' };
   }
 
-  // 3: write all (synchronously - no other code runs in between), or restore all.
+  // 3: write all IN MEMORY (synchronously - no other code runs in between), or restore all.
   const written: (typeof plans)[number][] = [];
   try {
     for (const entry of toWrite) {
       entry.adapter.write(owner, entry.plan.next);
       written.push(entry);
     }
+    for (const entry of toRepair) entry.adapter.write(owner, entry.adapter.read(owner));
   } catch {
     let restored = true;
     for (const entry of written.reverse()) {
@@ -182,8 +208,20 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
     return { ok: false, error: restored ? 'apply_failed' : 'apply_partial' };
   }
 
-  if (written.length > 0) {
+  // 4: the stores persist on their own (debounced, errors swallowed) - so
+  // CHECK what reached storage instead of assuming. Behind once: give the
+  // debounce another moment. Still behind: a storage write failed - the
+  // marker stays and the result says the import stopped partway; importing
+  // the same file again repairs it (step "Recovery" above).
+  if (changing) {
+    const touched = [...written, ...toRepair].map(({ adapter }) => adapter);
     await deps.settle();
+    let behind = await deps.unpersisted(touched, owner);
+    if (behind.length > 0) {
+      await deps.settle();
+      behind = await deps.unpersisted(behind, owner);
+    }
+    if (behind.length > 0) return { ok: false, error: 'apply_partial' };
     await deps.clearPending();
   }
   const cloud = deps.cloud(owner);
@@ -195,5 +233,6 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
     unchanged: all.filter((entry) => entry.added + entry.updated + entry.skippedDeleted === 0).map((entry) => entry.domain),
     cloud,
     matchesPreview: !options.preview || sameSummary(options.preview, all),
+    repaired: toRepair.map(({ adapter }) => adapter.domain),
   };
 }

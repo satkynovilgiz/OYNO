@@ -47,6 +47,8 @@ export const useGlossaryStudyStore = create<State>((set, get) => {
     load: async () => {
       if (get().isLoaded) return;
       const [raw, rawSessions] = await Promise.all([AsyncStorage.getItem(GLOSSARY_STUDY_KEY).catch(() => null), AsyncStorage.getItem(GLOSSARY_SESSIONS_KEY).catch(() => null)]);
+      // A load that finishes late never overwrites a store already loaded (and written) meanwhile.
+      if (get().isLoaded) return;
       const parsed = safeJsonParse<Saved>(raw, {});
       const sessions = safeJsonParse<Record<string, string[]>>(rawSessions, {});
       set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, sessions: sessions && typeof sessions === 'object' && !Array.isArray(sessions) ? sessions : {}, isLoaded: true });

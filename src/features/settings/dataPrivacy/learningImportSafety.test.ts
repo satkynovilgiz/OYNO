@@ -92,6 +92,7 @@ const deps = (owner: string | (() => string), over: Partial<ImportDeps> = {}): I
   },
   clearPending: () => AsyncStorage.removeItem(PENDING_IMPORT_KEY),
   settle: async () => {},
+  unpersisted: async () => [],
   ...over,
 });
 

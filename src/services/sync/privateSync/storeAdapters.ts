@@ -5,16 +5,16 @@
  */
 import type { MistakesData } from '@/features/challenges/mistakes/mistakesModel';
 import type { CollectionsData } from '@/features/myCollections/myCollectionsModel';
-import { EMPTY_RECORDS, officialRounds, type OwnerRecords, useGameRecordsStore } from '@/store/useGameRecordsStore';
-import { ownerMistakes, useChallengeMistakesStore } from '@/store/useChallengeMistakesStore';
-import { ownerStudy, useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
-import { ownerHighlights, useHighlightsStore } from '@/store/useHighlightsStore';
-import { ownerLibrary, useKomuzLibraryStore } from '@/store/useKomuzLibraryStore';
-import { ownerManualSteps, useLearningPathStore, type ManualSteps } from '@/store/useLearningPathStore';
-import { ownerListening, useListeningStore } from '@/store/useListeningStore';
-import { ownerCollections, useMyCollectionsStore } from '@/store/useMyCollectionsStore';
-import { ownerReading, useReadingStore } from '@/store/useReadingStore';
-import { ownerGoal, useWeeklyGoalStore } from '@/store/useWeeklyGoalStore';
+import { EMPTY_RECORDS, officialRounds, type OwnerRecords, useGameRecordsStore, GAME_RECORDS_KEY } from '@/store/useGameRecordsStore';
+import { ownerMistakes, useChallengeMistakesStore, CHALLENGE_MISTAKES_KEY } from '@/store/useChallengeMistakesStore';
+import { ownerStudy, useGlossaryStudyStore, GLOSSARY_SESSIONS_KEY, GLOSSARY_STUDY_KEY } from '@/store/useGlossaryStudyStore';
+import { ownerHighlights, useHighlightsStore, HIGHLIGHTS_KEY } from '@/store/useHighlightsStore';
+import { ownerLibrary, useKomuzLibraryStore, KOMUZ_LIBRARY_KEY } from '@/store/useKomuzLibraryStore';
+import { ownerManualSteps, useLearningPathStore, type ManualSteps, LEARNING_PATH_KEY } from '@/store/useLearningPathStore';
+import { ownerListening, useListeningStore, LISTENING_KEY } from '@/store/useListeningStore';
+import { ownerCollections, useMyCollectionsStore, MY_COLLECTIONS_KEY } from '@/store/useMyCollectionsStore';
+import { ownerReading, useReadingStore, READING_KEY } from '@/store/useReadingStore';
+import { ownerGoal, useWeeklyGoalStore, WEEKLY_GOAL_KEY } from '@/store/useWeeklyGoalStore';
 
 import {
   bookmarkRules,
@@ -49,13 +49,19 @@ export type StoreAdapter = {
   write: (owner: string, records: Records) => void;
   /** Removes the owner's slice from this device (sign-out after a clean sync). */
   forget: (owner: string) => void;
+  /** Where the store persists, and the owner's raw in-memory slice - lets
+   * an import check that what it wrote actually reached storage. */
+  persistence: { key: string; memorySlice: (owner: string) => unknown };
 };
 
+/** The store's state, for the persistence check (typed loosely on purpose). */
+const useStore = (store: { getState: () => unknown }) => store;
 const has = (saved: Record<string, unknown>, owner: string) => Object.prototype.hasOwnProperty.call(saved, owner);
 const rules = <P>(value: DomainRules<P>) => value as DomainRules<unknown>;
 
 const reading: StoreAdapter = {
   domain: 'reading',
+  persistence: { key: READING_KEY, memorySlice: (owner) => (useStore(useReadingStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(readingRules),
   load: () => useReadingStore.getState().load(),
   holds: (owner) => has(useReadingStore.getState().saved, owner),
@@ -66,6 +72,7 @@ const reading: StoreAdapter = {
 
 const highlights: StoreAdapter = {
   domain: 'highlights',
+  persistence: { key: HIGHLIGHTS_KEY, memorySlice: (owner) => (useStore(useHighlightsStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(highlightRules),
   load: () => useHighlightsStore.getState().load(),
   holds: (owner) => has(useHighlightsStore.getState().saved, owner),
@@ -76,6 +83,7 @@ const highlights: StoreAdapter = {
 
 const collections: StoreAdapter = {
   domain: 'collections',
+  persistence: { key: MY_COLLECTIONS_KEY, memorySlice: (owner) => (useStore(useMyCollectionsStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(collectionRules),
   load: () => useMyCollectionsStore.getState().load(),
   holds: (owner) => has(useMyCollectionsStore.getState().saved, owner),
@@ -106,6 +114,7 @@ const collections: StoreAdapter = {
 
 const mistakes: StoreAdapter = {
   domain: 'mistakes',
+  persistence: { key: CHALLENGE_MISTAKES_KEY, memorySlice: (owner) => (useStore(useChallengeMistakesStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(mistakeRules),
   load: () => useChallengeMistakesStore.getState().load(),
   holds: (owner) => has(useChallengeMistakesStore.getState().saved, owner),
@@ -130,6 +139,7 @@ const mistakes: StoreAdapter = {
 
 const glossaryStudy: StoreAdapter = {
   domain: 'glossary_study',
+  persistence: { key: GLOSSARY_STUDY_KEY, memorySlice: (owner) => (useStore(useGlossaryStudyStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(glossaryStudyRules),
   load: () => useGlossaryStudyStore.getState().load(),
   holds: (owner) => has(useGlossaryStudyStore.getState().saved, owner),
@@ -140,6 +150,7 @@ const glossaryStudy: StoreAdapter = {
 
 const glossarySessions: StoreAdapter = {
   domain: 'glossary_sessions',
+  persistence: { key: GLOSSARY_SESSIONS_KEY, memorySlice: (owner) => (useStore(useGlossaryStudyStore).getState() as Record<string, Record<string, unknown>>).sessions[owner] },
   rules: rules(glossarySessionRules),
   load: () => useGlossaryStudyStore.getState().load(),
   holds: (owner) => has(useGlossaryStudyStore.getState().sessions, owner),
@@ -160,6 +171,7 @@ const glossarySessions: StoreAdapter = {
 
 const gameRecords: StoreAdapter = {
   domain: 'game_records',
+  persistence: { key: GAME_RECORDS_KEY, memorySlice: (owner) => (useStore(useGameRecordsStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(gameRecordRules),
   load: () => useGameRecordsStore.getState().load(),
   holds: (owner) => has(useGameRecordsStore.getState().saved, owner),
@@ -187,6 +199,7 @@ const gameRecords: StoreAdapter = {
 
 const komuzFavorites: StoreAdapter = {
   domain: 'komuz_favorites',
+  persistence: { key: KOMUZ_LIBRARY_KEY, memorySlice: (owner) => (useStore(useKomuzLibraryStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(flagRules),
   load: () => useKomuzLibraryStore.getState().load(),
   holds: (owner) => has(useKomuzLibraryStore.getState().saved, owner),
@@ -203,6 +216,7 @@ const komuzFavorites: StoreAdapter = {
 const STEP_SEPARATOR = '|';
 const pathSteps: StoreAdapter = {
   domain: 'path_steps',
+  persistence: { key: LEARNING_PATH_KEY, memorySlice: (owner) => (useStore(useLearningPathStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(presenceRules),
   load: () => useLearningPathStore.getState().load(),
   holds: (owner) => has(useLearningPathStore.getState().saved, owner),
@@ -227,6 +241,7 @@ const pathSteps: StoreAdapter = {
 
 const listeningHistory: StoreAdapter = {
   domain: 'listening_history',
+  persistence: { key: LISTENING_KEY, memorySlice: (owner) => (useStore(useListeningStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(listeningHistoryRules),
   load: () => useListeningStore.getState().load(),
   holds: (owner) => has(useListeningStore.getState().saved, owner),
@@ -243,6 +258,7 @@ const listeningHistory: StoreAdapter = {
 
 const audioBookmarks: StoreAdapter = {
   domain: 'audio_bookmarks',
+  persistence: { key: LISTENING_KEY, memorySlice: (owner) => (useStore(useListeningStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(bookmarkRules),
   load: () => useListeningStore.getState().load(),
   holds: (owner) => has(useListeningStore.getState().saved, owner),
@@ -256,6 +272,7 @@ const audioBookmarks: StoreAdapter = {
 
 const weeklyGoal: StoreAdapter = {
   domain: 'weekly_goal',
+  persistence: { key: WEEKLY_GOAL_KEY, memorySlice: (owner) => (useStore(useWeeklyGoalStore).getState() as Record<string, Record<string, unknown>>).saved[owner] },
   rules: rules(weeklyGoalRules),
   load: () => useWeeklyGoalStore.getState().load(),
   holds: (owner) => has(useWeeklyGoalStore.getState().saved, owner),

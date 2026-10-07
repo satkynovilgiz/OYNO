@@ -122,6 +122,8 @@ export const useGameRecordsStore = create<State>((set, get) => {
     load: async () => {
       if (get().isLoaded) return;
       const raw = await AsyncStorage.getItem(GAME_RECORDS_KEY).catch(() => null);
+      // A load that finishes late never overwrites a store already loaded (and written) meanwhile.
+      if (get().isLoaded) return;
       let saved = safeJsonParse<Saved>(raw, {});
       if (!saved || typeof saved !== 'object' || Array.isArray(saved)) saved = {};
       if (raw === null) {
@@ -135,6 +137,7 @@ export const useGameRecordsStore = create<State>((set, get) => {
         }
         if (Object.keys(best).length > 0) saved = { [owner]: { ...EMPTY_RECORDS, best } };
       }
+      if (get().isLoaded) return; // loaded (and written) by another call meanwhile
       set({ saved, isLoaded: true });
       persist();
       if (raw === null) void AsyncStorage.multiRemove(LEGACY_GAMES.map((gameId) => `${LEGACY_BEST_PREFIX}${gameId}`)).catch(() => undefined);
