@@ -40,10 +40,13 @@ test('a chosen JPEG reaches the upload endpoint with the report', async ({ page,
   expectNoPageErrors(errors);
 });
 
-test('offline, then reload: the queued report still goes out WITH its image', async ({ page, context, backend, errors }) => {
+test('server unreachable, then reload: the queued report still goes out WITH its image', async ({ page, backend, errors }) => {
   await seed(page, { language: 'en', guest: true });
   await page.goto('/settings/help');
-  await context.setOffline(true);
+  // The connection to the backend is down (deterministic - not the app's own offline signal).
+  const down = (route: import('@playwright/test').Route) => route.abort('internetdisconnected');
+  await page.route('https://oyno-e2e.test/rest/v1/rpc/**', down);
+  await page.route('https://oyno-e2e.test/storage/**', down);
   await openSheetWithImage(page, 'Synthetic: offline report with image');
   await page.getByTestId('feedback-send').click();
   await expect(page.getByText('Saved')).toBeVisible();
@@ -52,9 +55,10 @@ test('offline, then reload: the queued report still goes out WITH its image', as
   const queue = await page.evaluate(() => localStorage.getItem('oyno.feedback.pending'));
   expect(queue).toContain('oyno-attachment:');
   expect(queue).not.toContain('blob:');
-  expect(uploads(backend)).toHaveLength(0);
+  expect(reports(backend)).toHaveLength(0);
 
-  await context.setOffline(false);
+  await page.unroute('https://oyno-e2e.test/rest/v1/rpc/**', down);
+  await page.unroute('https://oyno-e2e.test/storage/**', down);
   await page.reload(); // the blob: URL is gone; the app sends queued reports at start
   await expect.poll(() => uploads(backend).length, { timeout: 15_000 }).toBe(1);
   expect(uploads(backend)[0].bytes).toBe(JPEG.byteLength);
