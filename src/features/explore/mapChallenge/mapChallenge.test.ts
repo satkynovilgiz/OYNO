@@ -10,7 +10,7 @@ import { MAP_CHALLENGE_KEY, ownerMapChallenge, useMapChallengeStore } from '@/st
 
 import { ILLUSTRATED_MAP_ASPECT } from '../map/illustratedMap';
 import { LABEL_MASKS, MAP_QUESTIONS, markersFor, PLACE_MARKERS, REGION_MARKERS, targetRoute } from './mapChallengeData';
-import { buildMapSession, mapFinished, mapReducer, mapSummary, markerAt, SESSION_LENGTH, startMapSession, toPercent } from './mapChallengeModel';
+import { buildMapSession, mapFinished, mapReducer, mapSummary, markerAt, markerSizes, SESSION_LENGTH, startMapSession, toPercent } from './mapChallengeModel';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: {} }));
 
@@ -77,6 +77,25 @@ describe('selection is accurate on every screen size', () => {
       // Far from every marker: nothing is chosen.
       expect(markerAt(toPercent(width * 0.97, height * 0.95, width, height), markers, ILLUSTRATED_MAP_ASPECT)).toBeNull();
     }
+  });
+
+  it.each([288, 343, 382, 736])('touch boxes never overlap on a %ipx-wide map (close markers cannot steal taps)', (width) => {
+    const height = width / ILLUSTRATED_MAP_ASPECT;
+    for (const layer of ['regions', 'places'] as const) {
+      const markers = markersFor(layer);
+      const { hit } = markerSizes(markers, width, ILLUSTRATED_MAP_ASPECT);
+      for (const a of markers)
+        for (const b of markers) {
+          if (a === b) continue;
+          const dx = Math.abs(((a.at.xPercent - b.at.xPercent) / 100) * width);
+          const dy = Math.abs(((a.at.yPercent - b.at.yPercent) / 100) * height);
+          // Square boxes of side `hit` centred on each marker overlap only if BOTH axes are closer than `hit`.
+          expect([layer, a.id, b.id, dx >= hit || dy >= hit]).toEqual([layer, a.id, b.id, true]);
+        }
+      expect(hit).toBeLessThanOrEqual(44);
+    }
+    // Wide maps keep full 44 px targets.
+    expect(markerSizes(markersFor('regions'), 736, ILLUSTRATED_MAP_ASPECT).hit).toBe(44);
   });
 
   it('the same physical tap gives the same answer at every size', () => {

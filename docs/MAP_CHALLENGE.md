@@ -34,6 +34,12 @@ changes the Discovery Passport, region progress or official game records.
   marker within 6% of the map width, measured in the art's own percentages so
   the result is the same on every screen size; or choose from an
   alphabetical list.
+- Marker and touch-box sizes come from the real distance between markers on
+  the current screen, so boxes never overlap and a close neighbour can't
+  take the tap. That's 44 px where there's room. On the narrowest phones,
+  Suusamyr and Ala-Too are about 15 px apart, so those two targets are
+  small; tapping the map still picks the nearest marker, and the list is
+  the comfortable alternative.
 - Feedback marks the right marker with its name and restores the labels. A
   wrong pick is also marked. Two facts are shown, with a link to the Region
   Hub or the place page.

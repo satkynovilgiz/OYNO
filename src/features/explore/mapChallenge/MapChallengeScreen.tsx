@@ -15,7 +15,7 @@ import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@
 
 import { ILLUSTRATED_MAP_ASPECT, ILLUSTRATED_MAP_IMAGE } from '../map/illustratedMap';
 import { LABEL_MASKS, MAP_QUESTIONS, markersFor, targetRoute, type MapQuestion } from './mapChallengeData';
-import { buildMapSession, mapFinished, mapReducer, mapSummary, markerAt, startMapSession, toPercent, type MapAction, type MapSession } from './mapChallengeModel';
+import { buildMapSession, mapFinished, mapReducer, mapSummary, markerAt, markerSizes, startMapSession, toPercent, type MapAction, type MapSession } from './mapChallengeModel';
 
 const MARKER_SIZE = 30;
 /** The touch area around each marker (>= 44 pt). */
@@ -120,6 +120,8 @@ function QuestionView({ session, large, name, onChoose, onNext }: { session: Map
   const last = session.index === session.questions.length - 1;
   // Alphabetical in the current language: list order says nothing about the map.
   const listed = [...markers].sort((a, b) => name(a.id).localeCompare(name(b.id)));
+  // Sized from the real distance between markers on THIS screen (no overlapping touch boxes).
+  const sizes = markerSizes(markers, size.width || 300, ILLUSTRATED_MAP_ASPECT);
   const prompt = question.layer === 'regions' ? t('mapChallenge.findRegion', { name: name(question.targetId) }) : t('mapChallenge.findPlace', { name: name(question.targetId) });
 
   useEffect(() => {
@@ -141,7 +143,8 @@ function QuestionView({ session, large, name, onChoose, onNext }: { session: Map
       </Text>
       <View style={styles.mapFrame} onLayout={(event) => setSize({ width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height })} testID="map-challenge-map">
         <Pressable onPress={onTapMap} disabled={!!answer} accessible={false} style={StyleSheet.absoluteFill}>
-          <Image source={ILLUSTRATED_MAP_IMAGE} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityLabel={t('mapChallenge.mapA11y')} />
+          {/* Explicit size: the whole painting, exactly the frame (no crop on any width). */}
+          {size.width > 0 ? <Image source={ILLUSTRATED_MAP_IMAGE} style={{ width: size.width, height: size.height }} resizeMode="stretch" accessibilityLabel={t('mapChallenge.mapA11y')} /> : null}
         </Pressable>
         {/* Painted names would give the answer away: covered until it's answered. */}
         {!answer
@@ -155,17 +158,17 @@ function QuestionView({ session, large, name, onChoose, onNext }: { session: Map
               key={marker.id}
               onPress={() => onChoose(marker.id)}
               disabled={!!answer}
-              style={[styles.markerHit, { left: `${marker.at.xPercent}%`, top: `${marker.at.yPercent}%` }]}
+              style={[styles.markerHit, { left: `${marker.at.xPercent}%`, top: `${marker.at.yPercent}%`, width: sizes.hit, height: sizes.hit, marginLeft: -sizes.hit / 2, marginTop: -sizes.hit / 2 }]}
               accessibilityRole="button"
               // During a question a marker has a NUMBER, never a name.
               accessibilityLabel={answer ? t('mapChallenge.markerNamedA11y', { name: name(marker.id) }) : t('mapChallenge.markerA11y', { number: index + 1 })}
               testID={`map-challenge-marker-${marker.id}`}
             >
-              <View style={[styles.marker, isTarget && styles.markerTarget, isWrongChoice && styles.markerWrong]}>
+              <View style={[styles.marker, { width: sizes.dot, height: sizes.dot, borderRadius: sizes.dot / 2 }, isTarget && styles.markerTarget, isWrongChoice && styles.markerWrong]}>
                 {isTarget ? <Check size={16} color={colors.textOnPrimary} strokeWidth={3} /> : isWrongChoice ? <X size={16} color={colors.textOnPrimary} strokeWidth={3} /> : <Text style={styles.markerNumber}>{index + 1}</Text>}
               </View>
               {isTarget ? (
-                <Text style={styles.markerLabel} numberOfLines={1} testID="map-challenge-answer-label">
+                <Text style={[styles.markerLabel, { top: sizes.hit - 2 }]} numberOfLines={1} testID="map-challenge-answer-label">
                   {name(marker.id)}
                 </Text>
               ) : null}

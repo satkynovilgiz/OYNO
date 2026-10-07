@@ -68,3 +68,24 @@ export function mapSummary(state: MapSession) {
     mistakes: state.answers.filter((answer) => !answer.correct),
   };
 }
+
+/**
+ * Marker and touch-box size (px) for a map drawn `width` px wide: never
+ * larger than the distance to the nearest other marker, so touch boxes of
+ * close markers (Suusamyr / Ala-Too) can never overlap and steal each
+ * other's taps. 44 px where there is room; a tap between markers still
+ * goes to the nearest one (markerAt), and the list is always available.
+ */
+export function markerSizes(markers: readonly MapMarker[], width: number, aspect: number): { hit: number; dot: number } {
+  const height = width / aspect;
+  let nearest = Infinity;
+  for (const a of markers)
+    for (const b of markers) {
+      if (a === b) continue;
+      // Square touch boxes overlap unless the markers are far enough apart on at least one axis.
+      nearest = Math.min(nearest, Math.max(Math.abs(((a.at.xPercent - b.at.xPercent) / 100) * width), Math.abs(((a.at.yPercent - b.at.yPercent) / 100) * height)));
+    }
+  // Floor of 12 px: on the narrowest phones two place markers are only ~15 px apart; the list is the comfortable way there.
+  const hit = Math.max(12, Math.min(44, Math.floor(nearest)));
+  return { hit, dot: Math.max(12, Math.min(30, Math.floor(nearest * 0.9))) };
+}
