@@ -10,6 +10,7 @@ import { GAME_RECORDS_KEY } from '@/store/useGameRecordsStore';
 
 import { buildSession, CLUE_POINTS, isFinished, MAX_CLUES, scoreAnswer, seededRng, sessionReducer, SESSION_LENGTH, startSession, summarize, type SessionState } from './detectiveModel';
 import { DETECTIVE_QUESTIONS, questionArtwork, sourceRoute } from './detectiveQuestions';
+import { expedition, EXPEDITIONS, expeditionQuestions } from './expeditions';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: {} }));
 
@@ -167,5 +168,88 @@ describe('scores are kept apart', () => {
     useDetectiveStore.getState().recordSession('guest', { score: 4, missedIds: ['tunduk', 'shyrdak'], askedIds: ['tunduk', 'shyrdak', 'eer'], focus: false });
     useDetectiveStore.getState().recordSession('guest', { score: 4, missedIds: [], askedIds: ['tunduk'], focus: true });
     expect(ownerDetective(useDetectiveStore.getState().saved, 'guest').lastMissedIds).toEqual(['shyrdak']);
+  });
+});
+
+describe('expeditions', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    useDetectiveStore.setState({ saved: {}, isLoaded: true });
+  });
+
+  it('three themes, each built only from verified questions, at most five, never repeated', () => {
+    expect(EXPEDITIONS.map((item) => item.id)).toEqual(['yurt', 'horse', 'ornament']);
+    for (const item of EXPEDITIONS) {
+      expect(new Set(item.questionIds).size).toBe(item.questionIds.length);
+      expect(item.questionIds.length).toBeLessThanOrEqual(SESSION_LENGTH);
+      expect(expeditionQuestions(item).map((question) => question.id)).toEqual(item.questionIds);
+      for (const lang of [en, ru, kg]) {
+        const themes = (lang as unknown as { detective: { expeditions: { themes: Record<string, { title: string; topic: string }> } } }).detective.expeditions.themes;
+        expect(themes[item.id].title).toBeTruthy();
+        expect(themes[item.id].topic).toBeTruthy();
+      }
+      for (let seed = 1; seed <= 25; seed += 1) {
+        const session = buildSession(seededRng(seed), { onlyIds: item.questionIds, length: item.questionIds.length });
+        expect(session.map((question) => question.questionId).sort()).toEqual([...item.questionIds].sort());
+      }
+    }
+    // A shorter theme is shorter - nothing is invented to pad it.
+    expect(expedition('ornament')!.questionIds).toHaveLength(4);
+    expect(expedition('nope' as never)).toBeUndefined();
+  });
+
+  it('the learning round opens every clue, the challenge starts with none - and each scores its own way', () => {
+    const questions = buildSession(seededRng(3), { onlyIds: expedition('yurt')!.questionIds, length: 5 });
+    let learning = startSession(questions, { startRevealed: MAX_CLUES });
+    expect(learning.revealed).toBe(MAX_CLUES);
+    learning = sessionReducer(learning, { type: 'answer', optionId: questions[0].sourceId });
+    learning = sessionReducer(learning, { type: 'next' });
+    expect(learning.revealed).toBe(MAX_CLUES);
+    expect(learning.answers[0].points).toBe(CLUE_POINTS[MAX_CLUES]);
+    const challenge = startSession(questions);
+    expect(challenge.revealed).toBe(0);
+  });
+
+  it('learning and challenge are separate categories; practice touches neither; quick play is untouched', () => {
+    const store = useDetectiveStore.getState();
+    store.recordSession('guest', { score: 11, missedIds: ['eer'], askedIds: ['eer'], focus: false });
+    const asked = expedition('yurt')!.questionIds;
+    store.recordExpedition('guest', 'yurt', { round: 'learning', correct: 4, total: 5, score: 4, maxScore: 20, missedIds: ['tunduk'], askedIds: asked });
+    store.recordExpedition('guest', 'yurt', { round: 'challenge', correct: 3, total: 5, score: 9, maxScore: 20, missedIds: ['tunduk', 'karkas'], askedIds: asked });
+    let record = ownerDetective(useDetectiveStore.getState().saved, 'guest');
+    expect(record.expeditions.yurt).toEqual({ learning: { bestCorrect: 4, total: 5, rounds: 1 }, challenge: { bestScore: 9, maxScore: 20, rounds: 1 }, missedIds: ['tunduk', 'karkas'] });
+    store.recordExpedition('guest', 'yurt', { round: 'practice', correct: 1, total: 1, score: 1, maxScore: 4, missedIds: [], askedIds: ['tunduk'] });
+    record = ownerDetective(useDetectiveStore.getState().saved, 'guest');
+    expect(record.expeditions.yurt).toEqual({ learning: { bestCorrect: 4, total: 5, rounds: 1 }, challenge: { bestScore: 9, maxScore: 20, rounds: 1 }, missedIds: ['karkas'] });
+    expect(record).toMatchObject({ bestScore: 11, sessions: 1, lastMissedIds: ['eer'] });
+    // A quick-play session keeps the expedition history.
+    store.recordSession('guest', { score: 2, missedIds: [], askedIds: ['eer'], focus: true });
+    expect(ownerDetective(useDetectiveStore.getState().saved, 'guest').expeditions.yurt?.missedIds).toEqual(['karkas']);
+    // Missed ids from another theme are never stored in this one.
+    store.recordExpedition('guest', 'horse', { round: 'learning', correct: 0, total: 1, score: 0, maxScore: 4, missedIds: ['tunduk'], askedIds: ['tunduk'] });
+    expect(ownerDetective(useDetectiveStore.getState().saved, 'guest').expeditions.horse?.missedIds).toEqual([]);
+  });
+
+  it("one account's expeditions are never another's", () => {
+    useDetectiveStore.getState().recordExpedition('user-a', 'horse', { round: 'learning', correct: 5, total: 5, score: 5, maxScore: 20, missedIds: [], askedIds: expedition('horse')!.questionIds });
+    expect(ownerDetective(useDetectiveStore.getState().saved, 'user-b').expeditions).toEqual({});
+    expect(ownerDetective(useDetectiveStore.getState().saved, 'guest').expeditions).toEqual({});
+  });
+
+  it('history saved before Expeditions survives, and tampered expedition data is dropped', async () => {
+    await AsyncStorage.setItem(DETECTIVE_KEY, JSON.stringify({ guest: { bestScore: 9, sessions: 3, lastMissedIds: ['tunduk'], lastPlayedAt: '2026-10-01T10:00:00.000Z' }, 'user-a': { bestScore: 2, sessions: 1, lastMissedIds: [], lastPlayedAt: null, expeditions: { yurt: { learning: { bestCorrect: 3, total: 5, rounds: 2 }, challenge: 'x', missedIds: ['karkas', 'eer', 7] }, unknown: { learning: null } } } }));
+    useDetectiveStore.setState({ saved: {}, isLoaded: false });
+    await useDetectiveStore.getState().load();
+    const saved = useDetectiveStore.getState().saved;
+    expect(ownerDetective(saved, 'guest')).toEqual({ bestScore: 9, sessions: 3, lastMissedIds: ['tunduk'], lastPlayedAt: '2026-10-01T10:00:00.000Z', expeditions: {} });
+    expect(ownerDetective(saved, 'user-a').expeditions).toEqual({ yurt: { learning: { bestCorrect: 3, total: 5, rounds: 2 }, challenge: null, missedIds: ['karkas'] } });
+  });
+
+  it('the summary reports actual answers per round and links each object to its article', () => {
+    const screen = fs.readFileSync(path.join(__dirname, 'DetectiveScreen.tsx'), 'utf8');
+    expect(screen).toContain("find('learning', questionId)");
+    expect(screen).toContain("find('challenge', questionId)");
+    expect(screen).toContain('router.push(sourceRoute(question)');
+    expect(screen).not.toMatch(/useGameRecordsStore|useProgressStore|useChallengeStore/);
   });
 });

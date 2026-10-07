@@ -71,10 +71,13 @@ export type SessionState = {
   answers: Answer[];
   /** The current question is answered and its explanation is showing. */
   showingAnswer: boolean;
+  /** Clues already open on every question (Expedition learning round: all three). */
+  startRevealed: number;
 };
 
-export function startSession(questions: SessionQuestion[]): SessionState {
-  return { questions, index: 0, revealed: 0, answers: [], showingAnswer: false };
+export function startSession(questions: SessionQuestion[], options: { startRevealed?: number } = {}): SessionState {
+  const startRevealed = Math.max(0, Math.min(MAX_CLUES, options.startRevealed ?? 0));
+  return { questions, index: 0, revealed: startRevealed, answers: [], showingAnswer: false, startRevealed };
 }
 
 export type SessionAction = { type: 'reveal' } | { type: 'answer'; optionId: string } | { type: 'next' };
@@ -92,7 +95,7 @@ export function sessionReducer(state: SessionState, action: SessionAction): Sess
       return { ...state, answers: [...state.answers, scoreAnswer(question, action.optionId, state.revealed)], showingAnswer: true };
     case 'next':
       if (!state.showingAnswer) return state;
-      return { ...state, index: state.index + 1, revealed: 0, showingAnswer: false };
+      return { ...state, index: state.index + 1, revealed: state.startRevealed ?? 0, showingAnswer: false };
   }
 }
 

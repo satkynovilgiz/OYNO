@@ -13,10 +13,19 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { ownerDetective, useDetectiveStore } from '@/store/useDetectiveStore';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 
-import { buildSession, CLUE_POINTS, isFinished, MAX_CLUES, seededRng, sessionReducer, startSession, summarize, type SessionQuestion, type SessionState } from './detectiveModel';
+import { buildSession, CLUE_POINTS, isFinished, MAX_CLUES, seededRng, SESSION_LENGTH, sessionReducer, startSession, summarize, type Answer, type SessionQuestion, type SessionState } from './detectiveModel';
+import { expedition, EXPEDITIONS, type ExpeditionId } from './expeditions';
 import { detectiveQuestion, questionArtwork, sourceRoute } from './detectiveQuestions';
 
-type Mode = { kind: 'intro' } | { kind: 'playing'; focus: boolean } | { kind: 'results'; focus: boolean };
+type Round = 'learning' | 'challenge' | 'practice';
+type Mode =
+  | { kind: 'intro' }
+  | { kind: 'playing'; focus: boolean; expedition?: { id: ExpeditionId; round: Round } }
+  | { kind: 'results'; focus: boolean }
+  | { kind: 'expeditionIntro'; id: ExpeditionId }
+  /** Learning round done: the optional challenge or the summary. */
+  | { kind: 'expeditionBreak'; id: ExpeditionId }
+  | { kind: 'discovered'; id: ExpeditionId };
 
 /**
  * /culture/detective - identify a cultural object from its bundled picture
@@ -33,10 +42,12 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
   const record = useDetectiveStore((state) => ownerDetective(state.saved, owner));
   const [mode, setMode] = useState<Mode>({ kind: 'intro' });
   const [session, dispatch] = useReducer(
-    (state: SessionState, action: Parameters<typeof sessionReducer>[1] | { type: 'start'; questions: SessionQuestion[] }) => (action.type === 'start' ? startSession(action.questions) : sessionReducer(state, action)),
+    (state: SessionState, action: Parameters<typeof sessionReducer>[1] | { type: 'start'; questions: SessionQuestion[]; startRevealed?: number }) => (action.type === 'start' ? startSession(action.questions, { startRevealed: action.startRevealed }) : sessionReducer(state, action)),
     startSession([]),
   );
   const recorded = useRef(false);
+  /** What was actually answered in this visit's expedition rounds (for "What you discovered"). */
+  const [roundAnswers, setRoundAnswers] = useState<Partial<Record<Round, Answer[]>>>({});
 
   useEffect(() => {
     void useDetectiveStore.getState().load();
@@ -48,6 +59,16 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
     setMode({ kind: 'playing', focus: !!focusIds });
   }
 
+  /** An expedition round: its own questions only (never repeated); learning and practice open every clue. */
+  function beginExpedition(id: ExpeditionId, round: Round, onlyIds?: string[]) {
+    const item = expedition(id)!;
+    const ids = onlyIds ?? item.questionIds;
+    recorded.current = false;
+    if (round !== 'practice') setRoundAnswers((current) => (round === 'learning' ? {} : { ...current, challenge: undefined }));
+    dispatch({ type: 'start', questions: buildSession(seededRng(Date.now()), { onlyIds: ids, length: ids.length }), startRevealed: round === 'challenge' ? 0 : MAX_CLUES });
+    setMode({ kind: 'playing', focus: false, expedition: { id, round } });
+  }
+
   const finished = mode.kind === 'playing' && session.questions.length > 0 && isFinished(session);
   const summary = useMemo(() => summarize(session), [session]);
 
@@ -55,6 +76,14 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
   useEffect(() => {
     if (!finished || recorded.current) return;
     recorded.current = true;
+    if (mode.kind === 'playing' && mode.expedition) {
+      const { id, round } = mode.expedition;
+      useDetectiveStore.getState().recordExpedition(owner, id, { round, correct: summary.correct, total: summary.total, score: summary.score, maxScore: summary.maxScore, missedIds: summary.missedIds, askedIds: session.questions.map((question) => question.questionId) });
+      setRoundAnswers((current) => ({ ...current, [round]: session.answers }));
+      setMode(round === 'learning' ? { kind: 'expeditionBreak', id } : { kind: 'discovered', id });
+      announce(round === 'challenge' ? t('detective.expeditions.challengeScore', { score: summary.score, max: summary.maxScore }) : t('detective.expeditions.learningScore', { correct: summary.correct, total: summary.total }));
+      return;
+    }
     useDetectiveStore.getState().recordSession(owner, { score: summary.score, missedIds: summary.missedIds, askedIds: session.questions.map((question) => question.questionId), focus: mode.kind === 'playing' && mode.focus });
     setMode({ kind: 'results', focus: mode.kind === 'playing' && mode.focus });
     announce(t('detective.score', { score: summary.score, max: summary.maxScore }));
@@ -80,11 +109,69 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
             <Button label={t('detective.start')} size="lg" onPress={() => begin()} testID="detective-start" />
             {record.lastMissedIds.length > 0 ? <Button label={t('detective.focusMissed')} variant="secondary" onPress={() => begin(record.lastMissedIds)} testID="detective-focus" /> : null}
             <Text style={styles.meta}>{t('detective.separateNote')}</Text>
+
+            <Text style={styles.heading} accessibilityRole="header">
+              {t('detective.expeditions.expeditionsTitle')}
+            </Text>
+            <Text style={styles.meta}>{t('detective.expeditions.expeditionsIntro')}</Text>
+            {EXPEDITIONS.map((item) => {
+              const history = record.expeditions?.[item.id];
+              const status = [history?.learning ? t('detective.expeditions.bestLearning', { correct: history.learning.bestCorrect, total: history.learning.total }) : null, history?.challenge ? t('detective.expeditions.bestChallenge', { score: history.challenge.bestScore, max: history.challenge.maxScore }) : null].filter(Boolean).join(' · ') || t('detective.expeditions.notStarted');
+              return (
+                <AnimatedPressable key={item.id} style={styles.card} onPress={() => setMode({ kind: 'expeditionIntro', id: item.id })} accessibilityRole="button" accessibilityLabel={`${t(`detective.expeditions.themes.${item.id}.title`)}. ${t(`detective.expeditions.themes.${item.id}.topic`)}. ${t('detective.expeditions.questionCount', { count: item.questionIds.length })}. ${status}`} testID={`expedition-${item.id}`}>
+                  <Text style={styles.cardTitle}>{t(`detective.expeditions.themes.${item.id}.title`)}</Text>
+                  <Text style={styles.body}>{t(`detective.expeditions.themes.${item.id}.topic`)}</Text>
+                  <Text style={styles.meta}>
+                    {t('detective.expeditions.questionCount', { count: item.questionIds.length })} · {status}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
           </View>
         ) : null}
 
+        {mode.kind === 'expeditionIntro' ? (
+          <View style={styles.stack} testID="expedition-intro">
+            <Text style={styles.heading} accessibilityRole="header">
+              {t(`detective.expeditions.themes.${mode.id}.title`)}
+            </Text>
+            <Text style={[styles.body, large && styles.bodyLarge]}>{t(`detective.expeditions.themes.${mode.id}.topic`)}</Text>
+            <Text style={[styles.body, styles.bold]} testID="expedition-count">
+              {t('detective.expeditions.questionCount', { count: expedition(mode.id)!.questionIds.length })}
+            </Text>
+            {expedition(mode.id)!.questionIds.length < SESSION_LENGTH ? <Text style={styles.meta}>{t('detective.expeditions.shorterNote')}</Text> : null}
+            <Text style={styles.meta}>{t('detective.expeditions.expeditionsIntro')}</Text>
+            <Button label={t('detective.expeditions.startLearning')} size="lg" onPress={() => beginExpedition(mode.id, 'learning')} testID="expedition-start" />
+            {(record.expeditions?.[mode.id]?.missedIds.length ?? 0) > 0 ? <Button label={t('detective.expeditions.practiseExpedition')} variant="secondary" onPress={() => beginExpedition(mode.id, 'practice', record.expeditions![mode.id]!.missedIds)} testID="expedition-practise" /> : null}
+            <Button label={t('detective.expeditions.backToExpeditions')} variant="text" onPress={() => setMode({ kind: 'intro' })} />
+          </View>
+        ) : null}
+
+        {mode.kind === 'expeditionBreak' ? (
+          <View style={styles.stack} testID="expedition-break">
+            <Text style={styles.heading} accessibilityRole="header">
+              {t('detective.expeditions.learningDone')}
+            </Text>
+            <Text style={[styles.body, styles.bold]} testID="expedition-learning-score">
+              {t('detective.expeditions.learningScore', { correct: summary.correct, total: summary.total })}
+            </Text>
+            <Button label={t('detective.expeditions.takeChallenge')} size="lg" onPress={() => beginExpedition(mode.id, 'challenge')} testID="expedition-challenge" />
+            <Button label={t('detective.expeditions.skipChallenge')} variant="secondary" onPress={() => setMode({ kind: 'discovered', id: mode.id })} testID="expedition-skip" />
+          </View>
+        ) : null}
+
+        {mode.kind === 'discovered' ? (
+          <DiscoveredView
+            id={mode.id}
+            answers={roundAnswers}
+            name={name}
+            onPractise={(ids) => beginExpedition(mode.id, 'practice', ids)}
+            onBack={() => setMode({ kind: 'intro' })}
+          />
+        ) : null}
+
         {mode.kind === 'playing' && !finished && session.questions[session.index] ? (
-          <QuestionView key={session.index} state={session} large={large} name={name} onReveal={() => dispatch({ type: 'reveal' })} onAnswer={(optionId) => dispatch({ type: 'answer', optionId })} onNext={() => dispatch({ type: 'next' })} />
+          <QuestionView key={session.index} state={session} large={large} learning={mode.kind === 'playing' && !!mode.expedition && mode.expedition.round !== 'challenge'} name={name} onReveal={() => dispatch({ type: 'reveal' })} onAnswer={(optionId) => dispatch({ type: 'answer', optionId })} onNext={() => dispatch({ type: 'next' })} />
         ) : null}
 
         {mode.kind === 'results' ? (
@@ -125,7 +212,7 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
   );
 }
 
-function QuestionView({ state, large, name, onReveal, onAnswer, onNext }: { state: SessionState; large: boolean; name: (sourceId: string) => string; onReveal: () => void; onAnswer: (optionId: string) => void; onNext: () => void }) {
+function QuestionView({ state, large, learning = false, name, onReveal, onAnswer, onNext }: { state: SessionState; large: boolean; learning?: boolean; name: (sourceId: string) => string; onReveal: () => void; onAnswer: (optionId: string) => void; onNext: () => void }) {
   const { t } = useTranslation();
   const current = state.questions[state.index];
   const question = detectiveQuestion(current.questionId)!;
@@ -161,7 +248,8 @@ function QuestionView({ state, large, name, onReveal, onAnswer, onNext }: { stat
           </View>
         </View>
       ))}
-      {!answer ? (
+      {learning ? <Text style={styles.meta} testID="detective-learning-label">{t('detective.expeditions.learningRound')}</Text> : null}
+      {!answer && !learning ? (
         <View style={styles.revealRow}>
           <Button label={state.revealed >= MAX_CLUES ? t('detective.noMoreClues') : t('detective.revealClue')} variant="secondary" size="sm" onPress={onReveal} disabled={state.revealed >= MAX_CLUES} testID="detective-reveal" />
           <Text style={styles.meta}>{t('detective.pointsIfCorrect', { points: CLUE_POINTS[state.revealed] })}</Text>
@@ -198,7 +286,7 @@ function QuestionView({ state, large, name, onReveal, onAnswer, onNext }: { stat
           <Text style={styles.cardTitle}>{answer.correct ? t('detective.correct') : t('detective.notQuite')}</Text>
           <Text style={styles.body}>{t('detective.itWas', { name: name(current.sourceId) })}</Text>
           {!answer.correct ? <Text style={styles.meta}>{t('detective.yourAnswer', { name: name(answer.chosen) })}</Text> : null}
-          <Text style={styles.meta}>{t('detective.pointsEarned', { points: answer.points })}</Text>
+          {!learning ? <Text style={styles.meta}>{t('detective.pointsEarned', { points: answer.points })}</Text> : null}
           <Text style={[styles.body, large && styles.bodyLarge]}>{t(`detective.questions.${question.id}.explanation`)}</Text>
           <AnimatedPressable style={styles.link} onPress={() => router.push(sourceRoute(question) as never)} accessibilityRole="link" accessibilityLabel={`${t('detective.readArticle')}: ${name(current.sourceId)}`} testID="detective-read-article">
             <Text style={styles.linkText}>{t('detective.readArticle')}</Text>
@@ -207,6 +295,48 @@ function QuestionView({ state, large, name, onReveal, onAnswer, onNext }: { stat
           <Button label={last ? t('detective.seeResults') : t('detective.next')} onPress={onNext} testID="detective-next" />
         </View>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * "What you discovered": each object of the expedition with what was
+ * ACTUALLY answered in this visit's rounds (learning, and the challenge if
+ * taken) and a link to its article. It reports answers - it never claims
+ * mastery.
+ */
+function DiscoveredView({ id, answers, name, onPractise, onBack }: { id: ExpeditionId; answers: Partial<Record<Round, Answer[]>>; name: (sourceId: string) => string; onPractise: (ids: string[]) => void; onBack: () => void }) {
+  const { t } = useTranslation();
+  const item = expedition(id)!;
+  const find = (round: Round, questionId: string) => answers[round]?.find((answer) => answer.questionId === questionId) ?? null;
+  const challenge = answers.challenge ?? null;
+  const practice = answers.practice ?? null;
+  const missed = item.questionIds.filter((questionId) => {
+    const last = find('practice', questionId) ?? find('challenge', questionId) ?? find('learning', questionId);
+    return !!last && !last.correct;
+  });
+  return (
+    <View style={styles.stack} testID="expedition-discovered">
+      <Text style={styles.heading} accessibilityRole="header">
+        {t('detective.expeditions.discoveredTitle')}
+      </Text>
+      <Text style={styles.meta}>{t('detective.expeditions.discoveredIntro')}</Text>
+      {challenge ? <Text style={[styles.body, styles.bold]}>{t('detective.expeditions.challengeScore', { score: challenge.reduce((sum, answer) => sum + answer.points, 0), max: challenge.length * CLUE_POINTS[0] })}</Text> : null}
+      {item.questionIds.map((questionId) => {
+        const question = detectiveQuestion(questionId)!;
+        const learned = find('learning', questionId) ?? (practice ? find('practice', questionId) : null);
+        const tried = find('challenge', questionId);
+        return (
+          <AnimatedPressable key={questionId} style={styles.card} onPress={() => router.push(sourceRoute(question) as never)} accessibilityRole="link" accessibilityLabel={`${name(question.sourceId)}. ${t('detective.readArticle')}`} testID={`discovered-${questionId}`}>
+            <Text style={styles.cardTitle}>{name(question.sourceId)}</Text>
+            {learned ? <Text style={styles.meta}>{learned.correct ? t('detective.expeditions.learnedRight') : t('detective.expeditions.learnedWrong')}</Text> : null}
+            {tried ? <Text style={styles.meta}>{tried.correct ? t('detective.expeditions.challengeRight', { count: tried.cluesRevealed, points: tried.points }) : t('detective.expeditions.challengeWrong')}</Text> : null}
+            <Text style={styles.linkText}>{t('detective.readArticle')}</Text>
+          </AnimatedPressable>
+        );
+      })}
+      {missed.length > 0 ? <Button label={t('detective.expeditions.practiseExpedition')} variant="secondary" onPress={() => onPractise(missed)} testID="discovered-practise" /> : null}
+      <Button label={t('detective.expeditions.backToExpeditions')} variant="text" onPress={onBack} />
     </View>
   );
 }

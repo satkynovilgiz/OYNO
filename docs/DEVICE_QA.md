@@ -457,3 +457,20 @@ card. Tests: `museum.test.ts`, `e2e/tests/mini-museum.spec.ts`.
 | Airplane mode: present a collection of downloaded articles - images and titles show; others say unavailable | PENDING (device) |
 | Sign out A, sign in B on the same phone: B's Mini Museum shows none of A's captions | PENDING (device) |
 | VoiceOver / TalkBack: exhibit order buttons named, slides announce "Exhibit n of m" | PENDING (device) |
+
+## Culture Detective Expeditions (2026-10-07)
+
+PENDING (not performed on a device):
+
+- [ ] iOS / Android: open an expedition and play the learning round. All three
+  clues are visible, and there is no reveal button and no points.
+- [ ] Take the challenge. Clues start closed. "What you discovered" lists all
+  five objects with both rounds, and each opens its article.
+- [ ] Skip the challenge: the summary shows only the learning results.
+- [ ] Practise the missed ones: only that expedition's missed questions are
+  asked.
+- [ ] Sign out and in as another account: the expedition results are not
+  shown.
+- [ ] Airplane mode on a fresh install: an expedition still plays.
+- [ ] VoiceOver / TalkBack and the largest text size: the clues are read before
+  the answers, and the answers stay on screen.

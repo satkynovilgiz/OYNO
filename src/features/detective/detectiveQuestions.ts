@@ -39,6 +39,9 @@ export const DETECTIVE_QUESTIONS: DetectiveQuestion[] = [
   { id: 'shyrdak', sourceId: 'shyrdak-craft', clueFields: ['origin', 'traditional_method', 'history'], explanationField: 'fun_facts', optionIds: ['shyrdak-craft', 'boz-uy-kiyiz-jabuu', 'oymo-kochkor-muyuz', 'boz-uy-ichki-jasalga'] },
   { id: 'umai-ene', sourceId: 'oymo-umai-ene', clueFields: ['origin', 'cultural_meaning', 'fun_facts'], explanationField: 'fun_facts', optionIds: ['oymo-umai-ene', 'oymo-kochkor-muyuz', 'shyrdak-craft', 'boz-uy-tunduk'] },
   { id: 'kochkor-muyuz', sourceId: 'oymo-kochkor-muyuz', clueFields: ['cultural_meaning', 'cultural_meaning', 'cultural_meaning'], explanationField: 'cultural_meaning', optionIds: ['oymo-kochkor-muyuz', 'oymo-umai-ene', 'shyrdak-craft', 'boz-uy-ichki-jasalga'] },
+  // Added for Expeditions (same sourcing rules).
+  { id: 'boz-uy', sourceId: 'boz-uy-overview', clueFields: ['origin', 'history', 'traditional_method'], explanationField: 'cultural_meaning', optionIds: ['boz-uy-overview', 'boz-uy-karkas', 'boz-uy-kiyiz-jabuu', 'horse-eer'] },
+  { id: 'shyrdak-colors', sourceId: 'shyrdak-tustor', clueFields: ['fun_facts', 'cultural_meaning', 'cultural_meaning'], explanationField: 'cultural_meaning', optionIds: ['shyrdak-tustor', 'shyrdak-craft', 'oymo-kochkor-muyuz', 'boz-uy-kiyiz-jabuu'] },
 ];
 
 export function detectiveQuestion(id: string): DetectiveQuestion | undefined {

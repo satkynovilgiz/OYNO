@@ -39,10 +39,12 @@ nothing. `src/features/detective/detective.test.ts` checks:
 | shyrdak | `shyrdak-craft` | origin, traditional_method, history | fun_facts |
 | umai-ene | `oymo-umai-ene` | origin, cultural_meaning, fun_facts | fun_facts |
 | kochkor-muyuz | `oymo-kochkor-muyuz` | cultural_meaning, cultural_meaning, cultural_meaning | cultural_meaning |
+| boz-uy | `boz-uy-overview` | origin, history, traditional_method | cultural_meaning |
+| shyrdak-colors | `shyrdak-tustor` | fun_facts, cultural_meaning, cultural_meaning | cultural_meaning |
 
 ## Rules
 
-- 5 different questions per session (12 in the pool); the four answers are
+- 5 different questions per session (14 in the pool); the four answers are
   shuffled each session.
 - Points for a correct answer after revealing 0 / 1 / 2 / 3 clues: 4 / 3 / 2 / 1.
   A wrong answer scores 0 and shows the answer and the explanation.
@@ -59,3 +61,39 @@ nothing. `src/features/detective/detective.test.ts` checks:
 Device checks (PENDING): VoiceOver / TalkBack read clues, answers and
 feedback in order; largest Dynamic Type keeps the answers on screen;
 airplane mode on a fresh install still plays a full session.
+
+## Expeditions (2026-10-07)
+
+Themed sets built only from the questions above (`src/features/detective/expeditions.ts`).
+Each question appears at most once per round. A theme with fewer sourced
+questions is simply shorter. The intro screen says so, and nothing is
+invented to pad it.
+
+| Expedition | Topic | Questions |
+| --- | --- | --- |
+| yurt | The yurt, its frame, felts and the life inside | boz-uy, karkas, kiyiz-jabuu, tunduk, ichki-jasalga (5) |
+| horse | Horse games, the saddle and racing | eer, kok-boru, kyz-kuumai, at-chabysh, oodarysh (5) |
+| ornament | Shyrdak, its colours and oymo motifs | shyrdak, shyrdak-colors, kochkor-muyuz, umai-ene (4) |
+
+Flow:
+
+1. **Learning round.** All three clues are shown and there are no points. Its
+   result is "correct of total".
+2. **Optional challenge.** Clues start closed and use the normal clue points.
+3. **What you discovered.** Each object, with what was actually answered in
+   each round, and a link to its source article.
+
+"Practise the missed ones" repeats only that expedition's missed questions.
+
+Records are stored in `oyno.detective.v1` under
+`<owner>.expeditions.<id> = { learning, challenge, missedIds }`.
+
+- Learning and challenge are separate categories and are never added together.
+- Practice only clears the missed questions it got right.
+- Quick-play fields (`bestScore`, `sessions`, `lastMissedIds`) are unchanged.
+- Records saved before Expeditions load with `expeditions: {}`.
+- Nothing is written to official game records, progress, achievements or
+  learning completion.
+
+Device checks (PENDING): VoiceOver / TalkBack read a learning round, with the
+three clues open, before the answers.

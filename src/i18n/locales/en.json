@@ -4839,7 +4839,9 @@
       "horse-oodarysh": "Oodarysh",
       "shyrdak-craft": "Shyrdak",
       "oymo-umai-ene": "Umai Ene",
-      "oymo-kochkor-muyuz": "Kochkor müyüz"
+      "oymo-kochkor-muyuz": "Kochkor müyüz",
+      "boz-uy-overview": "Boz üy",
+      "shyrdak-tustor": "The meaning of colours in a shyrdak"
     },
     "questions": {
       "tunduk": {
@@ -4913,7 +4915,61 @@
         "clue2": "No pattern is made without it.",
         "clue3": "It is the element that sets Kyrgyz ornament apart from that of other peoples.",
         "explanation": "Kochkor müyüz stands for livestock; no pattern is made without it, and it sets Kyrgyz ornament apart."
+      },
+      "boz-uy": {
+        "clue1": "A dwelling that grew out of ancient nomadic life: quick to put up and take down, and carried on pack animals.",
+        "clue2": "A nomadic home with a wooden frame covered in felt; its form has stayed unchanged for centuries.",
+        "clue3": "It is built in order: kerege first, then the uuk, then the tunduk is raised, then the chiy, felt covers and door.",
+        "explanation": "Its tunduk is a symbol of Kyrgyz national identity - it appears on the state flag of Kyrgyzstan."
+      },
+      "shyrdak-colors": {
+        "clue1": "Craftswomen chose them not at random but with symbolic intent: each combination reflected a season or a stage of life.",
+        "clue2": "White is a sign of purity, holiness and happiness; blue is Tengri's sacred colour - the sky and the cosmos.",
+        "clue3": "Red stands for life in full bloom (around the age of 40); green stands for youth and summer.",
+        "explanation": "Yellow is not used on its own - it is mostly used to mark the edge of a pattern, because it is also linked with illness and withering."
       }
+    },
+    "expeditions": {
+      "expeditionsTitle": "Expeditions",
+      "expeditionsIntro": "A themed set: first a learning round with all clues shown, then an optional challenge.",
+      "questionCount_one": "{{count}} question",
+      "questionCount_other": "{{count}} questions",
+      "shorterNote": "This expedition has fewer questions - only sourced questions are used, none are repeated.",
+      "startLearning": "Start the learning round",
+      "learningRound": "Learning round - all clues shown",
+      "challengeRound": "Challenge - reveal clues only if you need them",
+      "learningDone": "Learning round finished",
+      "learningScore": "Answered correctly: {{correct}} of {{total}}",
+      "takeChallenge": "Take the optional challenge",
+      "skipChallenge": "See what you discovered",
+      "discoveredTitle": "What you discovered",
+      "discoveredIntro": "Each object below, with what you answered. Open any article to read more.",
+      "learnedRight": "Learning round: answered correctly",
+      "learnedWrong": "Learning round: not this time",
+      "challengeRight": "Challenge: correct, {{count}} clue(s), {{points}} points",
+      "challengeWrong": "Challenge: not this time",
+      "challengeScore": "Challenge score: {{score}} of {{max}}",
+      "practiseExpedition": "Practise the missed ones",
+      "backToExpeditions": "Back to Culture Detective",
+      "bestLearning": "Learning: best {{correct}} of {{total}}",
+      "bestChallenge": "Challenge: best {{score}} of {{max}}",
+      "notStarted": "Not started yet",
+      "themes": {
+        "yurt": {
+          "title": "Building the boz üy",
+          "topic": "The yurt, its frame, felts and the life inside"
+        },
+        "horse": {
+          "title": "Horse traditions",
+          "topic": "Horse games, the saddle and racing"
+        },
+        "ornament": {
+          "title": "Ornament and felt craft",
+          "topic": "Shyrdak, its colours and oymo motifs"
+        }
+      },
+      "questionCount_few": "{{count}} questions",
+      "questionCount_many": "{{count}} questions"
     }
   },
   "duel": {
