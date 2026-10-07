@@ -72,7 +72,7 @@ export function narrationChunks(parts: readonly NarrationPart[]): string[] {
 export type ListenState = {
   /** This content's narration session is the active one. */
   active: boolean;
-  status: 'idle' | 'playing' | 'paused' | 'finished' | 'error';
+  status: 'idle' | 'loading' | 'playing' | 'paused' | 'finished' | 'error';
   /** Device speech chunk; null for recorded audio. */
   chunk: number | null;
   /** True for recorded audio (seekable, no authored timestamps). */

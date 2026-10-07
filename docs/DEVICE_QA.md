@@ -306,3 +306,52 @@ Still to check on a device (PENDING):
 | Slow 3G: typing shows "still loading", results fill in without the list jumping back to "No results" | PENDING (device) |
 | VoiceOver / TalkBack: typing "komuz" quickly gives ONE results announcement; a failed source is mentioned once | PENDING (device) |
 | Change app language, return to Search: chips, status text and result titles in the new language | PENDING (device) |
+
+## Audio guide - lifecycle hardening (2026-10-06)
+
+Automated with controlled player / speech mocks:
+`src/services/audioGuide/audioLifecycle.test.ts` - a released player's
+late or synchronous updates never touch the next session; stopped speech
+callbacks are ignored; a seek that resolves after switching never plays
+the old track; one engine at a time; resume = load -> seek -> play;
+rejected seeks / throwing play-pause handled (no unhandled rejections);
+load timeout (15 s) and player errors become a recoverable error; Try
+again builds a NEW engine at the same position / section; paused while
+loading never starts by itself; language change and account change stop
+the session and no listening is written for the next account; full and
+mini player share one status line; reduced motion kept.
+
+Policy unchanged: backgrounding pauses; returning never auto-resumes.
+New visible states: "Loading audio…", "Try again" (play button becomes a
+retry icon) with a recording / device-speech specific message, and a
+quiet note instead of nothing when the device has no speech engine or no
+voice for the language.
+
+NOT performed on hardware - every row below is PENDING:
+
+iOS
+
+| Check | Status |
+| --- | --- |
+| Recording playing, incoming phone call: shows Paused; after the call it stays paused until Play | PENDING (device) |
+| Speech (TTS) playing, incoming call: stops at the sentence, shows Paused, Resume re-reads that sentence | PENDING (device) |
+| Unplug wired / disconnect Bluetooth headphones while playing: playback pauses, UI shows Paused (not Playing) | PENDING (device) |
+| Swipe home while playing, return after 30 s: Paused at the same position, no auto-resume | PENDING (device) |
+| Lock screen while playing: paused on return (no background playback) | PENDING (device) |
+| Silent switch on: recording audibility as designed; speech still audible or clearly silent - note which | PENDING (device) |
+| Resume from history / bookmark at 1:30: playback starts at 1:30, not 0:00 | PENDING (device) |
+| Tap A then B quickly 5x: B's title, progress and audio only | PENDING (device) |
+| No Kyrgyz voice installed: "no voice for this language" note; installing one makes Listen appear (after restart) | PENDING (device) |
+
+Android
+
+| Check | Status |
+| --- | --- |
+| Incoming call during recording / speech: paused, stays paused after the call | PENDING (device) |
+| Headphones unplugged / Bluetooth off (becoming-noisy): pauses, UI shows Paused | PENDING (device) |
+| Home / recent apps while playing, return: Paused at the same position | PENDING (device) |
+| Another app takes audio focus (music app): ours pauses, UI agrees | PENDING (device) |
+| Hardware Back from the screen while playing: mini player continues with the same title | PENDING (device) |
+| No TTS engine (or disabled): "isn't available on this device" note, no Play button | PENDING (device) |
+| TTS engine killed mid-sentence (Settings -> force stop): error with Try again; Try again re-reads the section | PENDING (device) |
+| Resume from bookmark: starts at the saved second after load | PENDING (device) |

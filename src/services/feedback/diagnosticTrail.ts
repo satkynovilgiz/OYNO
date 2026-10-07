@@ -4,7 +4,7 @@
  * of the user: no taps, no text, no content, never persisted, never sent
  * anywhere unless the tester submits a report. Capped, oldest dropped.
  */
-export type DiagnosticEventType = 'route' | 'offline' | 'online' | 'native_unavailable' | 'screen_error' | 'sync_failed';
+export type DiagnosticEventType = 'route' | 'offline' | 'online' | 'native_unavailable' | 'screen_error' | 'sync_failed' | 'playback_error';
 
 export type DiagnosticEvent = { at: string; type: DiagnosticEventType; detail?: string };
 

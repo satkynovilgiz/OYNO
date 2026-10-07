@@ -9,8 +9,10 @@ import type { ListeningRecord } from './listeningModel';
 const POSITION_INTERVAL_MS = 5000;
 let installed = false;
 
-function write(input: Omit<ListeningRecord, 'key' | 'lastListenedAt'>) {
-  const owner = currentRecordsOwner();
+/** `owner`: whose listening this is - the person who STARTED the session. */
+function write(input: Omit<ListeningRecord, 'key' | 'lastListenedAt'>, owner = currentRecordsOwner()) {
+  // The account changed since: this belongs to someone else - write nothing.
+  if (owner !== currentRecordsOwner()) return;
   const store = useListeningStore.getState();
   const apply = () => useListeningStore.getState().record(owner, { ...input, at: new Date().toISOString() });
   if (store.isLoaded) apply();
@@ -32,9 +34,17 @@ export function installListeningTracker(): void {
   installed = true;
 
   let guideWrittenAt = 0;
+  let guideSession: string | null = null;
+  let guideOwner = currentRecordsOwner();
   useAudioGuideStore.subscribe((state, previous) => {
+    if (!state.sessionKey) guideSession = null; // stopped: the next start is a new session
     if (!state.sessionKey || !state.meta?.route) return;
-    if (state.status === 'idle' || state.status === 'error') return;
+    // A new session belongs to whoever is signed in when it starts.
+    if (state.sessionKey !== guideSession) {
+      guideSession = state.sessionKey;
+      guideOwner = currentRecordsOwner();
+    }
+    if (state.status === 'idle' || state.status === 'error' || state.status === 'loading') return;
     const statusChanged = state.status !== previous.status || state.sessionKey !== previous.sessionKey;
     const now = Date.now();
     if (!statusChanged && now - guideWrittenAt < POSITION_INTERVAL_MS) return;
@@ -50,7 +60,7 @@ export function installListeningTracker(): void {
       positionType: position === null ? null : positionType,
       position,
       completed: state.status === 'finished',
-    });
+    }, guideOwner);
   });
 
   let komuzWrittenAt = 0;

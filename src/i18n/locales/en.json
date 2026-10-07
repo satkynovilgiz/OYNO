@@ -1995,7 +1995,12 @@
     "percent": "{{percent}}% listened",
     "progress": "Listening progress",
     "miniPlayer": "Audio guide player",
-    "openContent": "Opens the page you are listening to"
+    "openContent": "Opens the page you are listening to",
+    "loading": "Loading audio…",
+    "retry": "Try again",
+    "errorSpeech": "Device speech stopped. Try again, or read the text.",
+    "unavailableNoEngine": "Listening isn't available on this device. You can read the text instead.",
+    "unavailableNoVoice": "This device has no voice for this language, so listening isn't available. You can read the text instead."
   },
   "offline": {
     "banner": "Offline mode",

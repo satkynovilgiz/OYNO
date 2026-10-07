@@ -16,6 +16,8 @@ import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { useListeningStore } from '@/store/useListeningStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
+import { audioStateLabel } from './audioStateLabel';
+
 type AudioGuidePlayerProps = {
   /** `<contentType>:<id>` - also the key into `contentAudio` recordings. */
   contentKey: string;
@@ -71,6 +73,7 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
   const rate = useAudioGuideStore((state) => state.rate);
   const canSeek = useAudioGuideStore((state) => state.canSeek);
   const chunk = useAudioGuideStore((state) => state.chunk);
+  const errorKind = useAudioGuideStore((state) => state.errorKind);
   const [bookmarked, setBookmarked] = useState(false);
   const resume = parseResumeParam(useGlobalSearchParams<{ resumeAudio?: string }>().resumeAudio);
   const spokenAt = (seconds: number) => t('listening.at', { minutes: Math.floor(seconds / 60), seconds: seconds % 60 });
@@ -78,7 +81,20 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
   // While this screen shows the full player, the mini player stays hidden.
   useEffect(() => useAudioGuideStore.getState().registerHost(sessionKey), [sessionKey]);
 
-  if (!plan || plan.kind === 'unavailable') return null;
+  if (!plan) return null;
+  if (plan.kind === 'unavailable') {
+    // No speech engine / no voice for this language: say so once, quietly -
+    // never a dead Play button. (Other reasons - no text in this language -
+    // simply have no audio.)
+    if (plan.reason !== 'noEngine' && plan.reason !== 'noVoice') return null;
+    const message = t(plan.reason === 'noEngine' ? 'audioGuide.unavailableNoEngine' : 'audioGuide.unavailableNoVoice');
+    return (
+      <View style={styles.offline} accessible accessibilityLabel={message} testID="audio-unavailable">
+        <Headphones size={15} color={colors.textMuted} strokeWidth={2} />
+        <Text style={styles.offlineText}>{message}</Text>
+      </View>
+    );
+  }
 
   const availability = offlineAvailabilityFor(plan);
   if (!active && !isPlayableNow(availability, isOffline)) {
@@ -136,22 +152,23 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
     );
   }
 
-  const isPlaying = status === 'playing';
-  const toggleLabel = isPlaying ? t('audioGuide.pause') : status === 'paused' ? t('audioGuide.resume') : t('audioGuide.play');
+  const isPlaying = status === 'playing' || status === 'loading';
+  const toggleLabel = status === 'error' ? t('audioGuide.retry') : isPlaying ? t('audioGuide.pause') : status === 'paused' ? t('audioGuide.resume') : t('audioGuide.play');
+  const stateLabel = audioStateLabel(t, status, errorKind);
   const progressText = duration ? t('audioGuide.timeOf', { elapsed: formatAudioTime(elapsed ?? 0), duration: formatAudioTime(duration) }) : t('audioGuide.percent', { percent: Math.round(progress * 100) });
 
   return (
     <View style={styles.player}>
       <View style={styles.row}>
-        <AnimatedPressable style={styles.playButton} onPress={store.toggle} press="strong" haptic="light" accessibilityRole="button" accessibilityLabel={toggleLabel}>
-          {isPlaying ? <Pause size={18} color={colors.accentGold} strokeWidth={2.5} /> : <Play size={18} color={colors.accentGold} strokeWidth={2.5} />}
+        <AnimatedPressable style={styles.playButton} onPress={store.toggle} press="strong" haptic="light" accessibilityRole="button" accessibilityLabel={toggleLabel} testID="audio-toggle">
+          {status === 'error' ? <RotateCcw size={18} color={colors.accentGold} strokeWidth={2.5} /> : isPlaying ? <Pause size={18} color={colors.accentGold} strokeWidth={2.5} /> : <Play size={18} color={colors.accentGold} strokeWidth={2.5} />}
         </AnimatedPressable>
 
         <View style={styles.track}>
           <View style={styles.trackHeader}>
             <OymoOrnament size={9} color={colors.accentGoldPressed} strokeWidth={1.75} />
-            <Text style={styles.trackLabel} numberOfLines={1}>
-              {status === 'error' ? t('audioGuide.error') : status === 'finished' ? t('audioGuide.finished') : t('audioGuide.title')}
+            <Text style={styles.trackLabel} numberOfLines={2} testID="audio-state" accessibilityLiveRegion={status === 'error' ? 'polite' : 'none'}>
+              {stateLabel}
             </Text>
             {duration ? (
               <Text style={styles.time}>

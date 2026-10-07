@@ -1,5 +1,5 @@
 import { router, usePathname } from 'expo-router';
-import { Headphones, Pause, Play, X } from 'lucide-react-native';
+import { Headphones, Pause, Play, RotateCcw, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
@@ -11,6 +11,7 @@ import { useAudioGuideStore } from '@/services/audioGuide/useAudioGuideStore';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, elevation, radii, spacing, typography } from '@/theme';
 
+import { audioStateLabel } from './audioStateLabel';
 import { miniPlayerPlacement } from './miniPlayerPlacement';
 
 /**
@@ -31,13 +32,14 @@ export function AudioMiniPlayer() {
   const meta = useAudioGuideStore((state) => state.meta);
   const status = useAudioGuideStore((state) => state.status);
   const progress = useAudioGuideStore((state) => state.progress);
+  const errorKind = useAudioGuideStore((state) => state.errorKind);
   const hosted = useAudioGuideStore((state) => (state.sessionKey ? (state.hosts[state.sessionKey] ?? 0) > 0 : false));
 
   const placement = miniPlayerPlacement(pathname);
   if (!sessionKey || !meta || hosted || !placement || status === 'idle') return null;
 
   const store = useAudioGuideStore.getState();
-  const isPlaying = status === 'playing';
+  const isPlaying = status === 'playing' || status === 'loading';
   const bottom = (placement === 'aboveTabBar' ? tabBarHeight : 0) + insets.bottom + spacing.xs;
 
   return (
@@ -60,8 +62,8 @@ export function AudioMiniPlayer() {
           <Text style={styles.title} numberOfLines={1}>
             {meta.title}
           </Text>
-          <Text style={styles.state} numberOfLines={1}>
-            {status === 'finished' ? t('audioGuide.finished') : status === 'error' ? t('audioGuide.error') : isPlaying ? t('audioGuide.title') : t('audioGuide.paused')}
+          <Text style={styles.state} numberOfLines={1} testID="mini-audio-state">
+            {audioStateLabel(t, status, errorKind)}
           </Text>
         </View>
       </AnimatedPressable>
@@ -71,9 +73,10 @@ export function AudioMiniPlayer() {
         press="strong"
         haptic="light"
         accessibilityRole="button"
-        accessibilityLabel={isPlaying ? t('audioGuide.pause') : status === 'paused' ? t('audioGuide.resume') : t('audioGuide.play')}
+        accessibilityLabel={status === 'error' ? t('audioGuide.retry') : isPlaying ? t('audioGuide.pause') : status === 'paused' ? t('audioGuide.resume') : t('audioGuide.play')}
+        testID="mini-audio-toggle"
       >
-        {isPlaying ? <Pause size={16} color={colors.accentGold} strokeWidth={2.5} /> : <Play size={16} color={colors.accentGold} strokeWidth={2.5} />}
+        {status === 'error' ? <RotateCcw size={16} color={colors.accentGold} strokeWidth={2.5} /> : isPlaying ? <Pause size={16} color={colors.accentGold} strokeWidth={2.5} /> : <Play size={16} color={colors.accentGold} strokeWidth={2.5} />}
       </AnimatedPressable>
       <AnimatedPressable style={styles.close} onPress={() => store.stop()} hitSlop={6} press="strong" accessibilityRole="button" accessibilityLabel={t('audioGuide.stop')}>
         <X size={16} color={colors.textOnDarkSecondary} strokeWidth={2.25} />
