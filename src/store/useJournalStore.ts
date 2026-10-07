@@ -6,6 +6,7 @@ import { deleteTempImage } from '@/services/media/normalizeImage';
 import { adoptLocalPhoto, deleteAllLocalPhotos, deleteLocalPhoto, GUEST_PHOTO_OWNER, keepLocalPhoto } from '@/services/journal/journalPhotos';
 import { safeJsonParse } from '@/services/storage/safeJson';
 import { createUuid } from '@/services/storage/uuid';
+import { captureAccountGeneration, isAccountGenerationCurrent, type AccountGenerationToken } from '@/services/sync/accountGeneration';
 import { registerAccountBoundKeys, registerAccountClearHandler } from '@/services/sync/accountScope';
 import { currentAccountId, currentEditOrigin, requestAccountSync } from '@/services/sync/syncTrigger';
 
@@ -20,13 +21,28 @@ export function currentPhotoOwner(): string {
   return currentAccountId() ?? GUEST_PHOTO_OWNER;
 }
 
+/** Why a save did not happen. Nothing was changed when this is thrown. */
+export class JournalSaveError extends Error {
+  constructor(readonly reason: 'photo' | 'storage' | 'account_changed') {
+    super(`JOURNAL_SAVE_${reason.toUpperCase()}`);
+    this.name = 'JournalSaveError';
+  }
+}
+
 type JournalState = {
   isLoaded: boolean;
   /** Includes tombstones (deletedAt) - use `visibleEntries` for display. */
   entries: JournalEntry[];
   load: () => Promise<void>;
-  /** Returns the new entry, or null if the draft isn't valid. */
-  create: (draft: JournalDraft) => Promise<JournalEntry | null>;
+  /**
+   * Returns the new entry, or null if the draft isn't valid. `id` lets the
+   * editor pre-allocate the id: creating the same id again UPDATES that
+   * entry, so a retried or restored draft can never make a duplicate.
+   * Throws `JournalSaveError` (with nothing changed) if the photo can't be
+   * kept, the device can't store the journal, or the account changed.
+   */
+  create: (draft: JournalDraft, options?: { id?: string }) => Promise<JournalEntry | null>;
+  /** Same contract as `create`. */
   update: (id: string, draft: JournalDraft) => Promise<JournalEntry | null>;
   remove: (id: string) => Promise<void>;
   /** Sync layer only. */
@@ -39,9 +55,14 @@ type JournalState = {
   adoptPhotos: (owner: string) => Promise<void>;
 };
 
-async function persist(entries: JournalEntry[]) {
-  await AsyncStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries)).catch(() => {});
+async function persist(entries: JournalEntry[]): Promise<boolean> {
+  return AsyncStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries)).then(
+    () => true,
+    () => false,
+  );
 }
+
+const ENTRY_ID_RE = /^[A-Za-z0-9-]{1,80}$/;
 
 /** "Newest version wins" needs every edit to be strictly newer than the
  * version it replaces - even two edits within the same millisecond. */
@@ -67,23 +88,67 @@ export const useJournalStore = create<JournalState>((set, get) => {
     requestAccountSync('local_change');
   }
 
-  async function resolvePhoto(entryId: string, previous: JournalEntry['photo'], photoUri: string | null): Promise<JournalEntry['photo']> {
-    const owner = currentPhotoOwner();
-    if (!photoUri) {
-      deleteLocalPhoto(previous?.localUri, owner);
-      return null;
+  /**
+   * A user save. If the device can't store it, or the account changed
+   * meanwhile, the journal is put back as it was and the save throws - the
+   * editor then keeps the person's work. `cleanup` undoes a photo copy.
+   */
+  async function commitSave(token: AccountGenerationToken, saved: JournalEntry, previous: JournalEntry | undefined, cleanup: () => void) {
+    if (!isAccountGenerationCurrent(token)) {
+      cleanup();
+      throw new JournalSaveError('account_changed');
     }
-    if (previous?.localUri === photoUri) return previous;
+    const apply = (entries: JournalEntry[]) => (previous ? entries.map((entry) => (entry.id === saved.id ? saved : entry)) : [saved, ...entries]);
+    const revert = (entries: JournalEntry[]) => (previous ? entries.map((entry) => (entry.id === saved.id && entry === saved ? previous : entry)) : entries.filter((entry) => entry !== saved));
+    set({ entries: apply(get().entries) });
+    const stored = await persist(get().entries);
+    if (!isAccountGenerationCurrent(token)) {
+      // The session ended while writing: the account clean-up has reset the
+      // journal. Make sure storage holds the NEW session's journal, not this one.
+      if (stored) await persist(get().entries);
+      cleanup();
+      throw new JournalSaveError('account_changed');
+    }
+    if (!stored) {
+      set({ entries: revert(get().entries) });
+      cleanup();
+      throw new JournalSaveError('storage');
+    }
+    requestAccountSync('local_change');
+  }
+
+  /** The photo the saved version will reference. A new picture is copied
+   * into the owner's folder; if that fails the save fails (never a silent
+   * "saved" without the photo the person chose). */
+  async function resolvePhoto(entryId: string, previous: JournalEntry['photo'], photoUri: string | null, owner: string): Promise<{ photo: JournalEntry['photo']; copied: string | null }> {
+    if (!photoUri) return { photo: null, copied: null };
+    if (previous?.localUri === photoUri) return { photo: previous, copied: null };
     // A new picture is a NEW immutable version: it gets its own cloud
     // object on the next sync; the previous version is never overwritten.
     const versionId = createUuid();
     const localUri = await keepLocalPhoto(photoUri, entryId, owner, versionId);
-    // Copy failed: the previous photo (and its file) stay exactly as they were.
-    if (!localUri) return previous;
-    deleteLocalPhoto(previous?.localUri, owner);
+    if (!localUri) throw new JournalSaveError('photo');
+    return { photo: { localUri, remotePath: null, versionId }, copied: localUri };
+  }
+
+  /** After a successful save: the replaced photo file and the temp copy go. */
+  function finishPhoto(previous: JournalEntry['photo'], next: JournalEntry['photo'], photoUri: string | null, owner: string) {
+    if (previous?.localUri && previous.localUri !== next?.localUri) deleteLocalPhoto(previous.localUri, owner);
     // The normalized temp file is now safely copied into the journal folder.
-    deleteTempImage(photoUri);
-    return { localUri, remotePath: null, versionId };
+    if (photoUri && next?.localUri !== photoUri) deleteTempImage(photoUri);
+  }
+
+  async function save(id: string, existing: JournalEntry | undefined, draft: JournalDraft): Promise<JournalEntry> {
+    const token = captureAccountGeneration();
+    const owner = currentPhotoOwner();
+    const { photo, copied } = await resolvePhoto(id, existing?.photo ?? null, draft.photoUri, owner);
+    const now = new Date().toISOString();
+    const saved: JournalEntry = existing
+      ? { ...existing, title: draft.title.trim(), note: draft.note, date: draft.date, photo, link: draft.link, updatedAt: nextTimestamp(existing.updatedAt) }
+      : { id, title: draft.title.trim(), note: draft.note, date: draft.date, photo, link: draft.link, createdAt: now, updatedAt: now, deletedAt: null };
+    await commitSave(token, saved, existing, () => deleteLocalPhoto(copied, owner));
+    finishPhoto(existing?.photo ?? null, photo, draft.photoUri, owner);
+    return saved;
   }
 
   return {
@@ -95,39 +160,23 @@ export const useJournalStore = create<JournalState>((set, get) => {
       set({ entries: Array.isArray(parsed) ? parsed.filter(isEntry) : [], isLoaded: true });
     },
 
-    create: async (draft) => {
+    create: async (draft, options) => {
       if (validateDraft(draft).length > 0) return null;
-      const now = new Date().toISOString();
-      const id = createUuid();
-      const entry: JournalEntry = {
-        id,
-        title: draft.title.trim(),
-        note: draft.note,
-        date: draft.date,
-        photo: await resolvePhoto(id, null, draft.photoUri),
-        link: draft.link,
-        createdAt: now,
-        updatedAt: now,
-        deletedAt: null,
-      };
-      await commit([entry, ...get().entries]);
-      return entry;
+      const wanted = options?.id && ENTRY_ID_RE.test(options.id) ? options.id : null;
+      if (wanted) {
+        const existing = get().entries.find((entry) => entry.id === wanted);
+        // Already saved (a retry, or a restored draft): this is an edit.
+        if (existing && !existing.deletedAt) return get().update(wanted, draft);
+        // Saved and since deleted: a fresh memory, never a resurrection.
+        if (existing) return save(createUuid(), undefined, draft);
+      }
+      return save(wanted ?? createUuid(), undefined, draft);
     },
 
     update: async (id, draft) => {
       const existing = get().entries.find((entry) => entry.id === id && !entry.deletedAt);
       if (!existing || validateDraft(draft).length > 0) return null;
-      const updated: JournalEntry = {
-        ...existing,
-        title: draft.title.trim(),
-        note: draft.note,
-        date: draft.date,
-        photo: await resolvePhoto(id, existing.photo, draft.photoUri),
-        link: draft.link,
-        updatedAt: nextTimestamp(existing.updatedAt),
-      };
-      await commit(get().entries.map((entry) => (entry.id === id ? updated : entry)));
-      return updated;
+      return save(id, existing, draft);
     },
 
     remove: async (id) => {

@@ -22,6 +22,8 @@ import { useListeningStore } from '@/store/useListeningStore';
 import { usePracticeMissionsStore } from '@/store/usePracticeMissionsStore';
 import { useAchievementShowcaseStore } from '@/store/useAchievementShowcaseStore';
 import { JOURNAL_STORAGE_KEY, mergeJournalStash, useJournalStore } from '@/store/useJournalStore';
+// Unfinished Journal writing: per owner; dropped with that owner's journal files.
+import { useJournalDraftStore } from '@/store/useJournalDraftStore';
 import { useWallpaperFavoritesStore, WALLPAPER_FAVORITE_PREFIX } from '@/store/useWallpaperFavoritesStore';
 
 import {
@@ -198,6 +200,8 @@ export async function onAccountSignedIn(userId: string): Promise<SyncReport> {
     usePracticeMissionsStore.getState().adoptGuest(userId);
     await useAchievementShowcaseStore.getState().load();
     useAchievementShowcaseStore.getState().adoptGuest(userId);
+    // The guest's unfinished Journal writing follows their entries.
+    await useJournalDraftStore.getState().adoptGuest(userId);
   }
   if (!signedInAs(userId)) return SKIPPED;
 

@@ -229,3 +229,46 @@ Still to check on a device (PENDING):
 | Sign out A, sign in B on the same device: B sees none of A's path progress; A's returns after signing back in | PENDING (device) |
 | Airplane mode, open a path with unsaved articles: notes and Continue choose a saved step; Retry row when titles cannot load | PENDING (device) |
 | VoiceOver / TalkBack: loading state read as "Loading…", removed step read as unavailable and dimmed | PENDING (device) |
+
+## Journal editor - unsaved changes & draft recovery (2026-10-06)
+
+Automated: `e2e/tests/journal-editor.spec.ts` (web: leave unchanged without a
+warning, Save / Discard / Keep editing, browser back held, restore after a
+reload = restart, one entry after restoring, Discard keeps the saved
+version) and `src/features/journal/editor/journalDrafts.test.ts` (dirty
+rules, stored-draft validation, owner scoping and account clean-up, guest
+-> account adoption, temp-photo references, idempotent create, failed
+saves change nothing, account switch mid-save).
+
+How it works: a dirty editor (title, note, date, photo or link differs from
+the saved entry / the blank form) writes a draft 600 ms after typing
+pauses, at once when the app goes to the background, and on unmount.
+Drafts live in `oyno.journal.drafts.v1`, per owner (`guest` / user id) and
+target (`new` / entry id); never synced. They are dropped exactly when that
+owner's journal files are (synced sign-out, account deleted, another
+account's leftovers) and kept while the owner's unsynced state is stashed
+for them. A new memory's id is pre-allocated in the draft, so saving a
+restored draft twice updates one entry.
+
+Behaviour changes worth knowing:
+- A photo that cannot be copied into the journal folder now FAILS the save
+  (before: the entry was saved without it and "Saved" was shown).
+- A storage write failure now fails the save and rolls the journal back
+  (before: ignored, "Saved" was shown).
+- Web: on browser Back the address bar changes before the dialog appears
+  (react-navigation web behaviour); the screen itself stays until the
+  person chooses. Keep editing leaves the URL showing the previous page.
+
+Still to check on a device (PENDING):
+
+| Check | Status |
+| --- | --- |
+| Android hardware Back on a dirty new memory / edit: Save, Discard, Keep editing dialog; Back inside the dialog = Keep editing | PENDING (device) |
+| iOS: swipe-back is disabled while there are unsaved changes, works again after Save / Discard | PENDING (device) |
+| Type a note, force-quit within 1 s (no pause): reopen offers Restore with the text (background write) | PENDING (device) |
+| Pick a photo, force-quit, reopen: Restore brings back the photo; after the OS clears the cache, Restore says the photo is gone and keeps the text | PENDING (device) |
+| Restore a new memory with a photo, Save: one entry, photo shown; temp file gone from cache | PENDING (device) |
+| Storage full (or photo copy failure): "Couldn't save…" shown, text and photo stay, draft still offered after restart | PENDING (device) |
+| Signed in as A with an unsaved draft, sign out (synced), sign in as B: B is never offered A's draft; editor open during the switch closes with the account-changed message | PENDING (device) |
+| Sign out A while offline (state stashed), sign back in as A: A's draft is offered again | PENDING (device) |
+| VoiceOver / TalkBack: dialog title read first, three buttons named; "Unsaved changes restored" / "Changes discarded" announced once | PENDING (device) |

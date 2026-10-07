@@ -87,6 +87,17 @@ export async function keepLocalPhoto(sourceUri: string, entryId: string, owner: 
   }
 }
 
+/** Whether a local photo file (e.g. a draft's temp picture) is still on the device. */
+export function localPhotoExists(uri: string): boolean {
+  if (!journalPhotosSupported()) return false;
+  try {
+    const { File } = fileSystem();
+    return new File(uri).exists;
+  } catch {
+    return false;
+  }
+}
+
 /** Deletes a photo file - only if it lives in THIS owner's folder. */
 export function deleteLocalPhoto(uri: string | null | undefined, owner: string): void {
   if (!isInOwnerFolder(uri, owner)) return;

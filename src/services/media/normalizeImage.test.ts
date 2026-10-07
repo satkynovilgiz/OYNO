@@ -196,11 +196,12 @@ describe('journal photos after normalization', () => {
     expect(updated.photo!.localUri).toMatch(/\/journal\/user-a\//);
   });
 
-  it("a photo that can't be stored leaves the existing photo and its file untouched", async () => {
+  it("a photo that can't be stored fails the save and leaves the existing photo and its file untouched", async () => {
     const first = await normalizeToJpeg({ uri: sourceFile('jpg', { width: 800, height: 600, format: 'jpeg' }), mimeType: 'image/jpeg' }, JOURNAL_IMAGE);
     const entry = (await useJournalStore.getState().create({ ...baseDraft, photoUri: first.uri }))!;
-    const updated = (await useJournalStore.getState().update(entry.id, { ...baseDraft, photoUri: 'file:///mock/cache/gone.jpg' }))!;
-    expect(updated.photo).toEqual(entry.photo);
+    // Never a "saved" without the photo the person chose: the editor keeps their work instead.
+    await expect(useJournalStore.getState().update(entry.id, { ...baseDraft, note: 'changed', photoUri: 'file:///mock/cache/gone.jpg' })).rejects.toMatchObject({ reason: 'photo' });
+    expect(useJournalStore.getState().entries.find((item) => item.id === entry.id)).toEqual(entry);
     expect(new File(entry.photo!.localUri!).exists).toBe(true);
   });
 });

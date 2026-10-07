@@ -9,14 +9,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NotFoundState } from '@/components/system/NotFoundState';
 import { AnimatedPressable, Button, ConfirmationModal, IconButton, MediaImage, TextField } from '@/components/ui';
 import type { SupportedLanguage } from '@/i18n';
+import { announce } from '@/services/a11y/announce';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { journalPhotosSupported } from '@/services/journal/journalPhotos';
 import { deleteTempImage, JOURNAL_IMAGE, normalizeToJpeg, pickerOptionsForJpeg } from '@/services/media/normalizeImage';
 import { useShareCard } from '@/services/share/useShareCard';
-import { useJournalStore } from '@/store/useJournalStore';
+import { JournalSaveError, useJournalStore } from '@/store/useJournalStore';
 import { cardRadii, colors, editorial, fontFamily, spacing, textStyles } from '@/theme';
 
+import { baselineForNew } from './editor/editorDraft';
+import { LeaveEditorModal, RestoreDraftModal } from './editor/EditorDialogs';
+import { useEditorSession } from './editor/useEditorSession';
+import { useLeaveGuard } from './editor/useLeaveGuard';
 import { formatEntryDate, linkArtwork, linkRoute, shiftDate } from './journalDisplay';
 import { isValidJournalLink, JOURNAL_EXCERPT_MAX, JOURNAL_NOTE_MAX, JOURNAL_TITLE_MAX, shareExcerpt, validateDraft, type JournalLink } from './journalModel';
 import { showToast } from '@/components/ui/Toast';
@@ -55,11 +60,18 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
   const isLoaded = useJournalStore((state) => state.isLoaded);
   const entry = useJournalStore((state) => (entryId ? state.entries.find((item) => item.id === entryId && !item.deletedAt) : undefined));
 
-  const [title, setTitle] = useState('');
-  const [note, setNote] = useState('');
-  const [date, setDate] = useState(() => (initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) && initialDate <= localDateKey() ? initialDate : localDateKey()));
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [link, setLink] = useState<JournalLink | null>(isValidJournalLink(initialLink) ? initialLink : null);
+  const [newBaseline] = useState(() =>
+    baselineForNew(initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) && initialDate <= localDateKey() ? initialDate : localDateKey(), isValidJournalLink(initialLink) ? initialLink : null),
+  );
+  const session = useEditorSession({ entryId, entry, journalLoaded: isLoaded, newBaseline });
+  const { fields, setFields, dirty } = session;
+  const { title, note, date, photoUri, link } = fields;
+  const setTitle = (value: string) => setFields((current) => ({ ...current, title: value }));
+  const setNote = (value: string) => setFields((current) => ({ ...current, note: value }));
+  const setDate = (value: string) => setFields((current) => ({ ...current, date: value }));
+  const setPhotoUri = (value: string | null) => setFields((current) => ({ ...current, photoUri: value }));
+  const setLink = (value: JournalLink | null) => setFields((current) => ({ ...current, link: value }));
+
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -68,8 +80,9 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const [excerpt, setExcerpt] = useState('');
-  const [hydratedId, setHydratedId] = useState<string | null>(null);
   const [promptHidden, setPromptHidden] = useState(false);
+  /** Where to go once the person picks Save / Discard in the leave dialog. */
+  const [leaving, setLeaving] = useState<{ proceed: () => void } | null>(null);
   const prompt = !entryId && !promptHidden ? getPrompt(promptId) : null;
   const { share, shareHost } = useShareCard();
 
@@ -77,22 +90,51 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
     if (!useJournalStore.getState().isLoaded) void useJournalStore.getState().load();
   }, []);
 
-  // Fill the form once from the stored entry.
-  useEffect(() => {
-    if (!entry || hydratedId === entry.id) return;
-    setTitle(entry.title);
-    setNote(entry.note);
-    setDate(entry.date);
-    setPhotoUri(entry.photo?.localUri ?? null);
-    setLink(entry.link);
-    setHydratedId(entry.id);
-  }, [entry, hydratedId]);
-
   const today = localDateKey();
   const canUsePhotos = journalPhotosSupported() && imagePickerAvailable();
   const artwork = useMemo(() => linkArtwork(link), [link]);
+  const unsaved = editing && dirty && !session.ownerChanged;
+  /** Back from the form: an edit returns to its detail view; a new memory leaves. */
+  const backFromForm = editing && entryId ? () => setEditing(false) : onPressBack;
 
+  const guard = useLeaveGuard({
+    active: unsaved,
+    onBlocked: (proceed) => setLeaving({ proceed }),
+    onHardwareBack: () => {
+      if (leaving || session.phase === 'offer') return true;
+      if (unsaved) {
+        setLeaving({ proceed: backFromForm });
+        return true;
+      }
+      if (editing && entryId) {
+        setEditing(false);
+        return true;
+      }
+      return false;
+    },
+  });
+
+  // The signed-in account changed while this editor was open: its writing
+  // belongs to the previous owner - it leaves the screen (and memory) now.
+  // Where to go next is the auth flow's job; this screen only closes.
+  useEffect(() => {
+    if (!session.ownerChanged) return;
+    setFields(newBaseline);
+    setExcerpt('');
+    setLeaving(null);
+    setConfirmDelete(false);
+    setShareOpen(false);
+    guard.allowLeave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.ownerChanged]);
+
+  if (session.ownerChanged) return <NotFoundState message={t('journal.draft.accountChanged')} onPressBack={() => router.replace('/journal' as never)} />;
   if (entryId && isLoaded && !entry) return <NotFoundState message={t('journal.notFound')} onPressBack={onPressBack} />;
+
+  function requestLeave(proceed: () => void) {
+    if (unsaved) setLeaving({ proceed });
+    else proceed();
+  }
 
   // The picked image (HEIC/PNG/JPEG) becomes a real, resized JPEG before
   // it's shown or saved; if that fails the current photo stays as it was.
@@ -110,9 +152,10 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
     }
     try {
       const normalized = await normalizeToJpeg(picked, JOURNAL_IMAGE);
-      // A previous not-yet-saved pick is no longer needed.
-      if (photoUri !== entry?.photo?.localUri) deleteTempImage(photoUri);
       if (normalized.uri !== picked.uri) deleteTempImage(picked.uri);
+      // The previous pick is NOT deleted here: a stored draft may still point
+      // at it. Temp photos are released once nothing references them.
+      session.trackTemp(normalized.uri);
       setPhotoUri(normalized.uri);
       setError(null);
     } catch {
@@ -120,31 +163,83 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
     }
   }
 
-  async function save() {
+  /** Saves; true on success. A failure keeps the form and the draft as they are. */
+  async function save(): Promise<boolean> {
     const draft = { title, note, date, photoUri, link };
     if (validateDraft(draft).length > 0) {
       setError(t('journal.emptyError'));
-      return;
+      return false;
     }
     setSaving(true);
+    session.pause();
     try {
-      const saved = entryId ? await useJournalStore.getState().update(entryId, draft) : await useJournalStore.getState().create(draft);
+      const saved = entryId ? await useJournalStore.getState().update(entryId, draft) : await useJournalStore.getState().create(draft, { id: session.newEntryId });
       if (!saved) {
-        setError(t('journal.emptyError'));
-        return;
+        setError(t(entryId ? 'journal.notFound' : 'journal.emptyError'));
+        session.resume();
+        await session.flush();
+        return false;
       }
       setError(null);
+      await session.finish({ keepEditing: !!entryId });
       showToast(t('toast.journalSaved'), { haptic: true });
-      if (entryId) setEditing(false);
-      else router.replace(`/journal/${saved.id}` as never);
+      return true;
+    } catch (failure) {
+      const reason = failure instanceof JournalSaveError ? failure.reason : 'storage';
+      if (reason === 'account_changed') return false;
+      setError(t(reason === 'photo' ? 'journal.draft.savePhotoFailed' : 'journal.draft.saveFailed'));
+      session.resume();
+      // The person's work survives the failure - also an app restart.
+      await session.flush();
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
+  async function saveAndStay() {
+    if (!(await save())) return;
+    if (entryId) setEditing(false);
+    else {
+      guard.allowLeave();
+      router.replace(`/journal/${session.newEntryId}` as never);
+    }
+  }
+
+  async function leaveWithSave() {
+    const pending = leaving;
+    if (!(await save())) {
+      // The error is shown on the form; the person stays to fix or retry.
+      setLeaving(null);
+      return;
+    }
+    setLeaving(null);
+    guard.allowLeave();
+    pending?.proceed();
+  }
+
+  async function leaveWithDiscard() {
+    const pending = leaving;
+    setLeaving(null);
+    await session.finish({ resetTo: session.baseline, keepEditing: !!entryId });
+    setError(null);
+    announce(t('journal.draft.discarded'));
+    guard.allowLeave();
+    pending?.proceed();
+  }
+
+  function restoreDraft() {
+    const { photoLost } = session.restore();
+    if (entryId) setEditing(true);
+    announce(t('journal.draft.restored'));
+    if (photoLost) setError(t('journal.draft.photoLost'));
+  }
+
   async function remove() {
     if (!entryId) return;
     setConfirmDelete(false);
+    await session.finish();
+    guard.allowLeave();
     await useJournalStore.getState().remove(entryId);
     onPressBack();
   }
@@ -174,7 +269,7 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.xs }]}>
-        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} onPress={editing && entryId ? () => setEditing(false) : onPressBack} />
+        <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('common.back')} testID="journal-back" onPress={() => requestLeave(backFromForm)} />
         <Text style={[styles.title, isAdult && styles.editorial]} accessibilityRole="header" numberOfLines={1}>
           {showDetail ? '' : entryId ? t('journal.editorEditTitle') : isChild ? t('journal.childNew') : t('journal.editorNewTitle')}
         </Text>
@@ -218,7 +313,7 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
         </ScrollView>
       ) : (
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled">
-          <TextField label={t('journal.titleLabel')} value={title} onChangeText={(value) => setTitle(value.slice(0, JOURNAL_TITLE_MAX))} placeholder={t('journal.titlePlaceholder')} autoCapitalize="sentences" />
+          <TextField testID="journal-title" label={t('journal.titleLabel')} value={title} onChangeText={(value) => setTitle(value.slice(0, JOURNAL_TITLE_MAX))} placeholder={t('journal.titlePlaceholder')} autoCapitalize="sentences" />
 
           {/* Photo: preview + Change / Remove, or one dashed "Add a photo". */}
           {photoUri ? (
@@ -250,6 +345,7 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
             </View>
           ) : null}
           <TextField
+            testID="journal-note"
             label={t('journal.noteLabel')}
             value={note}
             onChangeText={(value) => setNote(value.slice(0, JOURNAL_NOTE_MAX))}
@@ -313,7 +409,7 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
               {error}
             </Text>
           ) : null}
-          <Button label={t('journal.save')} variant="accent" size="lg" block onPress={() => void save()} loading={saving} />
+          <Button label={t('journal.save')} variant="accent" size="lg" block onPress={() => void saveAndStay()} loading={saving} testID="journal-save" />
         </ScrollView>
       )}
 
@@ -352,6 +448,8 @@ export function JournalEntryScreen({ entryId, initialLink = null, initialDate = 
           autoCapitalize="sentences"
         />
       </ConfirmationModal>
+      <LeaveEditorModal visible={!!leaving} saving={saving} onSave={() => void leaveWithSave()} onDiscard={() => void leaveWithDiscard()} onKeepEditing={() => setLeaving(null)} />
+      <RestoreDraftModal visible={session.phase === 'offer' && !!session.offer} isNew={!entryId} entryChangedSince={!!session.offer?.entryChangedSince} onRestore={restoreDraft} onDiscard={() => void session.discardOffer()} />
       {shareHost}
     </KeyboardAvoidingView>
   );

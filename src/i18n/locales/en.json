@@ -2820,6 +2820,25 @@
       "saveFailed": "We couldn't save to Photos.",
       "savePermission": "OYNO has no permission to save to Photos.",
       "privateNote": "Private note - never shared"
+    },
+    "draft": {
+      "restoreTitle": "Unsaved writing found",
+      "restoreBody": "You left this memory before saving. Restore your unsaved changes or discard them?",
+      "restoreBodyNew": "You started a new memory and didn't save it. Restore it or discard it?",
+      "restoreChangedBody": "You have unsaved changes, but this memory was updated after you made them (maybe on another device). If you restore and save, your changes replace the updated version.",
+      "restore": "Restore",
+      "discard": "Discard",
+      "restored": "Unsaved changes restored",
+      "photoLost": "The draft's photo is no longer on this device. Your text was restored.",
+      "leaveTitle": "Save your changes?",
+      "leaveBody": "You have changes that aren't saved yet.",
+      "save": "Save",
+      "discardChanges": "Discard changes",
+      "keepEditing": "Keep editing",
+      "discarded": "Changes discarded",
+      "saveFailed": "Couldn't save right now. Your writing is kept on this device - try again.",
+      "savePhotoFailed": "Couldn't keep the photo, so nothing was saved. Your writing is kept - try again or remove the photo.",
+      "accountChanged": "The account on this device changed, so this editor was closed. Nothing from it is shown."
     }
   },
   "library": {

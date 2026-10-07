@@ -84,7 +84,9 @@ describe('Journal prompts - editor, privacy, offline', () => {
   });
 
   it('the prompt is never written into the note or stored with the entry', () => {
-    expect(editor).toContain('const [note, setNote] = useState(\'\');');
+    // A new memory starts from the blank form; the prompt is not part of it.
+    expect(editor).toContain('baselineForNew(');
+    expect(read('src/features/journal/editor/editorDraft.ts')).toContain("return { title: '', note: '', date, photoUri: null, link };");
     expect(editor).not.toMatch(/setNote\([^)]*prompt/);
     const save = editor.slice(editor.indexOf('async function save()'), editor.indexOf('async function remove()'));
     expect(save).toContain('const draft = { title, note, date, photoUri, link };');
