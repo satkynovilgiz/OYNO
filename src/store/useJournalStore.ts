@@ -16,6 +16,28 @@ export const JOURNAL_STORAGE_KEY = 'oyno.journal.v1';
 registerAccountBoundKeys([JOURNAL_STORAGE_KEY]);
 registerAccountClearHandler((owner) => deleteAllLocalPhotos(owner));
 
+type EntryRemovedListener = (entryId: string, owner: string) => void;
+const entryRemovedListeners = new Set<EntryRemovedListener>();
+
+/** Told when an entry is deleted - here, or by a sync tombstone (e.g. unfinished drafts of it go too). */
+export function registerEntryRemovedListener(listener: EntryRemovedListener): () => void {
+  entryRemovedListeners.add(listener);
+  return () => entryRemovedListeners.delete(listener);
+}
+
+function notifyRemoved(entryIds: string[]) {
+  if (entryIds.length === 0) return;
+  const owner = currentPhotoOwner();
+  for (const id of entryIds)
+    for (const listener of entryRemovedListeners) {
+      try {
+        listener(id, owner);
+      } catch {
+        // A listener never blocks a delete.
+      }
+    }
+}
+
 /** Whose folder new local photos go into right now. */
 export function currentPhotoOwner(): string {
   return currentAccountId() ?? GUEST_PHOTO_OWNER;
@@ -195,11 +217,15 @@ export const useJournalStore = create<JournalState>((set, get) => {
                 : entry,
             );
       await commit(next);
+      notifyRemoved([id]);
     },
 
     replaceAll: async (entries) => {
+      const wasVisible = new Set(get().entries.filter((entry) => !entry.deletedAt).map((entry) => entry.id));
       set({ entries, isLoaded: true });
       await persist(entries);
+      // Deleted on another device: the tombstone arrived with the sync.
+      notifyRemoved(entries.filter((entry) => entry.deletedAt && wasVisible.has(entry.id)).map((entry) => entry.id));
     },
 
     reset: () => set({ entries: [], isLoaded: true }),

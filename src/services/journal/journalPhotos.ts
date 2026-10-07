@@ -87,6 +87,19 @@ export async function keepLocalPhoto(sourceUri: string, entryId: string, owner: 
   }
 }
 
+const DRAFT_PREFIX = 'draft-';
+
+/** A draft's own photo copy: in THIS owner's folder, named draft-<target>-<version>.jpg. */
+export function isDraftPhoto(uri: string | null | undefined, owner: string): boolean {
+  if (!uri || !isInOwnerFolder(uri, owner)) return false;
+  return uri.slice(uri.lastIndexOf('/') + 1).startsWith(DRAFT_PREFIX);
+}
+
+/** Copies an unsaved pick into the owner's folder for a draft (cleared with that owner). */
+export function keepDraftPhoto(sourceUri: string, owner: string, target: string, versionId: string): Promise<string | null> {
+  return keepLocalPhoto(sourceUri, `${DRAFT_PREFIX}${target}`, owner, versionId);
+}
+
 /** Whether a local photo file (e.g. a draft's temp picture) is still on the device. */
 export function localPhotoExists(uri: string): boolean {
   if (!journalPhotosSupported()) return false;

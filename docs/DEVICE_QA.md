@@ -355,3 +355,27 @@ Android
 | No TTS engine (or disabled): "isn't available on this device" note, no Play button | PENDING (device) |
 | TTS engine killed mid-sentence (Settings -> force stop): error with Try again; Try again re-reads the section | PENDING (device) |
 | Resume from bookmark: starts at the saved second after load | PENDING (device) |
+
+## Journal drafts - writing-and-photo recovery review (2026-10-06)
+
+Automated (`src/features/journal/editor/journalDraftPhotos.test.ts`, on the
+in-memory file system):
+
+| # | Scenario | Result |
+| --- | --- | --- |
+| 1 | New draft + photo, restart, restore | **Defect fixed.** The draft only pointed at the temp cache file, so an OS cache purge lost the photo. A draft now owns a copy (`journal/<owner>/draft-<target>-<v>.jpg`), reused for repeated writes; after restore + save the draft copy is removed and the entry keeps its own file. |
+| 2 | Edit, replace photo, discard | OK. Saved fields and photo come back; only the replacement temp file and draft copy are deleted; an edit draft that keeps the entry's photo never deletes it. |
+| 3 | Failed save, leave, recover | OK. Nothing saved, a useful error, and the draft (text + photo) is there after a restart; the failed save's own photo copy is cleaned up. |
+| 4 | Account switch with a write / photo copy pending | **Defect fixed.** A draft write still in flight when an account was cleared could store that account's draft again afterwards. Each owner now has a drop generation; a stale write (or a copy that finishes late) stores nothing and deletes its file. A guest's draft photo now moves into the account's folder on sign-in. |
+| 5 | Delete an entry that has a draft | **Defect fixed.** Deleting from elsewhere, or by a sync tombstone, left the draft (text + photo) behind. The journal store now tells the draft store about every removal; a draft for an entry that hasn't synced yet is kept. |
+| 6 | Restore with the temp photo missing | OK. The text is restored, the photo falls back to the saved one, and the editor says the photo was lost. |
+
+Still to check on a device (PENDING):
+
+| Check | Status |
+| --- | --- |
+| Pick a photo in a new memory, force-quit within 1 s, reopen: Restore shows the photo | PENDING (device) |
+| Same, then free storage / clear the app cache: Restore still shows the photo (the draft's own copy) | PENDING (device) |
+| Edit with a replaced photo, Discard: the saved photo shows; the Files/Storage size drops back | PENDING (device) |
+| Delete a memory on phone A that has an unsaved edit on phone B: after B syncs, B offers no restore | PENDING (device) |
+| Guest draft with photo, sign in: the draft and photo are offered under the account | PENDING (device) |

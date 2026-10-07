@@ -28,6 +28,10 @@ export type EditorDraft = {
    * tells the restore prompt that the memory changed since. */
   baseUpdatedAt: string | null;
   savedAt: string;
+  /** When `fields.photoUri` is the draft's OWN copy (in the owner's journal
+   * folder): the editor's temporary file it was copied from, so the next
+   * write of the same pick reuses the copy instead of copying again. */
+  photoSource?: string | null;
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -91,6 +95,7 @@ export function parseStoredDraft(value: unknown, expectedTarget: string): Editor
     fields: { title: fields.title.slice(0, JOURNAL_TITLE_MAX), note: fields.note.slice(0, JOURNAL_NOTE_MAX), date: fields.date, photoUri, link },
     baseUpdatedAt: typeof raw.baseUpdatedAt === 'string' ? raw.baseUpdatedAt : null,
     savedAt: raw.savedAt,
+    photoSource: photoUri && typeof raw.photoSource === 'string' && LOCAL_URI_RE.test(raw.photoSource) && !raw.photoSource.includes('..') ? raw.photoSource : null,
   };
 }
 
