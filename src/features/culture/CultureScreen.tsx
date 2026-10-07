@@ -18,6 +18,7 @@ import { CalendarEntryRow } from '@/features/culture/calendar/CulturalCalendarSc
 import { TimelineEntryRow } from '@/features/culture/timeline/CultureTimelineScreen';
 import { TopicQuizzesEntryRow } from '@/features/challenges/topics/TopicQuizzesScreen';
 import { DetectiveEntryRow } from '@/features/detective/DetectiveScreen';
+import { DuelEntryRow } from '@/features/duel/DuelScreen';
 import { GalleryEntryRow } from './gallery/GalleryEntryRow';
 import { GlossaryEntryRow } from './glossary/GlossaryEntryRow';
 import { ContinueReadingSection } from './reading/ContinueReadingSection';
@@ -191,6 +192,7 @@ export function CultureScreen() {
               <TimelineEntryRow />
               <TopicQuizzesEntryRow />
               <DetectiveEntryRow />
+              <DuelEntryRow />
               <StudyQueueEntryRow />
               <CultureLearningPaths experience={experience} />
             </View>

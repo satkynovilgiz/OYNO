@@ -379,3 +379,34 @@ Still to check on a device (PENDING):
 | Edit with a replaced photo, Discard: the saved photo shows; the Files/Storage size drops back | PENDING (device) |
 | Delete a memory on phone A that has an unsaved edit on phone B: after B syncs, B offers no restore | PENDING (device) |
 | Guest draft with photo, sign in: the draft and photo are offered under the account | PENDING (device) |
+
+## Culture Detective and Culture Duel (2026-10-07)
+
+Automated: `src/features/detective/detective.test.ts`,
+`src/features/duel/duel.test.ts`, `e2e/tests/culture-detective.spec.ts`,
+`e2e/tests/culture-duel.spec.ts` (full sessions, replay / focus round,
+duel turns with concealed handoffs, reveal timing, tie / win, rematch,
+leave confirmation, axe, KG/RU). Content sources: `docs/CULTURE_DETECTIVE.md`.
+
+Culture Duel rules: same question, picture, clue and answer order for both
+players; 1 point per correct answer; who answers first alternates; nothing
+about either answer (or the correct one) shows until both answered; scores
+are derived from answers and only count revealed rounds. Backgrounding
+mid-turn returns to "Pass the phone" (nothing recorded). Nicknames and
+results are never stored or sent; nothing counts as learning progress or
+official game records.
+
+Known: on web, the browser's own Back during a duel leaves without the
+"Leave the duel?" prompt (the header Back and Android back ask first).
+
+Still to check on a device (PENDING):
+
+| Check | Status |
+| --- | --- |
+| Duel: lock the phone / switch apps during a turn, come back: "Pass the phone" shows, not the question | PENDING (device) |
+| Duel: iOS app switcher snapshot during a turn - note whether the question is visible in the snapshot (OS-level, not hidden by the app) | PENDING (device) |
+| Duel: Android hardware Back mid-match asks "Leave the duel?" | PENDING (device) |
+| Duel and Detective: largest Dynamic Type / font scale - answers and buttons stay reachable without overlap | PENDING (device) |
+| VoiceOver / TalkBack: handoff announced; answers read as a radio group; reveal reads both players' answers | PENDING (device) |
+| Reduce Motion on: no motion beyond press feedback in either mode | PENDING (device) |
+| Airplane mode, fresh install: a full Detective session and a full Duel work offline | PENDING (device) |
