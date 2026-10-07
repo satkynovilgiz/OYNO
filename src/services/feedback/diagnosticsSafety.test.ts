@@ -66,7 +66,7 @@ describe('routes keep their shape, never private values', () => {
     ['token-like segment', `/open/${TOKEN}`, '/open/:id'],
     ['my collection id', '/profile/my-collections/uc_lx9k2_3_a8f2', '/profile/my-collections/:id'],
     ['long number', '/admin/996555123456', '/admin/:id'],
-    ['random-looking id', '/reports/a8f3k2j9x7q1w4e5r6', '/reports/:id'],
+    ['random-looking id', '/learn/a8f3k2j9x7q1w4e5r6', '/learn/:id'],
     ['mixed-case private text', '/search/MySecretQuery', '/search/:id'],
     ['path traversal / matrix params (everything after ; is dropped)', '/culture/..;jsessionid=abc/item', '/culture/:id'],
   ])('%s', (_label, input, expected) => {

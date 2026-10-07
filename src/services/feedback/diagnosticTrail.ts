@@ -14,45 +14,98 @@ const trail: DiagnosticEvent[] = [];
 
 const MAX_ROUTE_LENGTH = 80;
 const MAX_ROUTE_SEGMENTS = 8;
+/** The placeholder for a removed value. It survives re-sanitizing unchanged. */
+export const ROUTE_PLACEHOLDER = ':id';
 /** A public content slug or a fixed route word: "culture", "boz-uy-tunduk", "game-records". */
 const PUBLIC_SEGMENT = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** True when a path segment could identify a person or a private record. */
-function isPrivateSegment(segment: string): boolean {
+/**
+ * The app's top-level routes (src/app). A first segment that isn't one of
+ * these (a mistyped or crafted URL) could be anything the person typed, so
+ * it is replaced. Kept in step with the route files by a test.
+ */
+export const KNOWN_TOP_LEVEL_ROUTES = [
+  'achievements', 'admin', 'age-group', 'appearance', 'auth-callback', 'avatar-editor', 'challenges', 'character-select', 'collection', 'collections',
+  'culture', 'daily', 'explore', 'forgot-password', 'games', 'home', 'journal', 'journey', 'language', 'learn', 'notifications', 'offline', 'onboarding',
+  'open', 'profile', 'profile-setup', 'quests', 'reset-password', 'saved', 'search', 'settings', 'sign-in', 'sign-up', 'study', 'trails', 'verify-email',
+  'verify-reset-code', 'whats-new',
+] as const;
+const TOP_LEVEL = new Set<string>(KNOWN_TOP_LEVEL_ROUTES);
+/** Deep-link types (services/links/contentLinks.ts CONTENT_LINK_TYPES) - public content only. */
+const OPEN_TYPES = new Set(['culture_item', 'culture_material', 'glossary', 'game', 'learning_path', 'komuz_track', 'calendar_event']);
+const JOURNAL_STATIC = new Set(['book', 'calendar', 'collage', 'new']);
+/** Auth screens never have meaningful extra segments - anything after them could be a token. */
+const AUTH_ROUTES = new Set(['auth-callback', 'reset-password', 'verify-email', 'verify-reset-code', 'forgot-password', 'sign-in', 'sign-up']);
+
+/** True when a path segment could identify a person or a private record by its SHAPE. */
+function looksPrivate(segment: string): boolean {
   if (!PUBLIC_SEGMENT.test(segment) || segment.length > 48) return true; // tokens, emails, encoded values, mixed case
-  if (UUID.test(segment) || /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)) return true; // journal entries, users
+  if (UUID.test(segment) || /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)) return true;
   if (/\d{5,}/.test(segment)) return true; // long numbers (ids, phone numbers, timestamps)
-  if (/^uc_/.test(segment)) return true; // My Collections ids (per person)
-  // Random-looking: many digits mixed into letters ("a8f3k2j9...").
-  return segment.length >= 16 && (segment.match(/\d/g)?.length ?? 0) >= 4;
+  if (/^uc_/.test(segment)) return true; // My Collections ids
+  return segment.length >= 16 && (segment.match(/\d/g)?.length ?? 0) >= 4; // random-looking
 }
 
 /**
- * Route paths keep their shape but lose everything that isn't a public
- * route word or content slug: query strings, fragments, credentials
- * ("user:pass@"), scheme/host, ids of private records and anything
- * token-like become ":id". Always starts with "/".
+ * Positions that hold a PRIVATE value by the route's STRUCTURE - whatever
+ * the value looks like (a short lowercase id can look like a public slug):
+ *   /journal/<entry>                 (not book / calendar / collage / new)
+ *   /profile/my-collections/<id>
+ *   /open/<type>/<id>                unknown type -> both replaced
+ *   /<auth screen>/<anything>
+ *   /<unknown top-level route>/...   the whole path is unknown text
+ */
+function privateByStructure(segments: string[], index: number): boolean {
+  const [first, second] = segments;
+  if (index === 0) return !TOP_LEVEL.has(first);
+  if (!TOP_LEVEL.has(first)) return true;
+  if (AUTH_ROUTES.has(first)) return true;
+  if (first === 'journal') return index > 1 || !JOURNAL_STATIC.has(second);
+  if (first === 'profile' && second === 'my-collections') return index >= 2;
+  if (first === 'open') return index === 1 ? !OPEN_TYPES.has(second) : !OPEN_TYPES.has(second) || index > 2;
+  return false;
+}
+
+/**
+ * Route paths keep their public shape and lose every private value:
+ *  - scheme, host and credentials go (http/https); for app links
+ *    (oyno://open/...) the "host" is the first path segment;
+ *  - query strings, fragments and ;params go;
+ *  - each segment is decoded once (malformed encoding -> ":id");
+ *  - "." segments and empty segments go; ".." -> ":id";
+ *  - private values by route structure, then by shape -> ":id";
+ *  - at most 8 segments / 80 characters, cut at whole segments only.
+ * Idempotent: sanitizeRoute(sanitizeRoute(x)) === sanitizeRoute(x).
  */
 export function sanitizeRoute(pathname: string): string {
-  const raw = String(pathname ?? '');
-  // Never keep a scheme, host or credentials - only the path.
-  const withoutOrigin = raw.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]*/i, '');
-  const path = withoutOrigin.split('?')[0].split('#')[0].split(';')[0];
-  const segments = path
+  let raw = String(pathname ?? '').replace(/\\/g, '/');
+  const scheme = raw.match(/^([a-z][a-z0-9+.-]*):\/\/([^/?#]*)/i);
+  if (scheme) {
+    const host = scheme[2].replace(/^.*@/, ''); // never credentials
+    raw = /^https?$/i.test(scheme[1]) ? raw.slice(scheme[0].length) : `/${host}${raw.slice(scheme[0].length)}`;
+  }
+  const path = raw.split(/[?#;]/)[0];
+  const decoded = path
     .split('/')
-    .filter((segment) => segment.length > 0)
-    .slice(0, MAX_ROUTE_SEGMENTS)
+    .filter((segment) => segment.length > 0 && segment !== '.')
     .map((segment) => {
-      let decoded = segment;
+      if (segment === ROUTE_PLACEHOLDER) return segment;
       try {
-        decoded = decodeURIComponent(segment);
+        return decodeURIComponent(segment);
       } catch {
-        return ':id';
+        return ROUTE_PLACEHOLDER;
       }
-      return isPrivateSegment(decoded) ? ':id' : decoded;
     });
-  return `/${segments.join('/')}`.slice(0, MAX_ROUTE_LENGTH);
+  const segments = decoded.map((segment, index) =>
+    segment === ROUTE_PLACEHOLDER || segment === '..' || privateByStructure(decoded, index) || looksPrivate(segment) ? ROUTE_PLACEHOLDER : segment,
+  );
+  let out = '';
+  for (const segment of segments.slice(0, MAX_ROUTE_SEGMENTS)) {
+    if (out.length + 1 + segment.length > MAX_ROUTE_LENGTH) break;
+    out += `/${segment}`;
+  }
+  return out || '/';
 }
 
 const IDENTIFIER = /^[a-z][a-z0-9_]{0,31}$/;

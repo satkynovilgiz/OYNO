@@ -34,11 +34,26 @@ All four use the same functions. None of them throws on bad input.
 
 ## Sanitized
 
-- **Routes**: scheme, host and credentials removed; query string,
-  fragment and `;params` removed; max 8 segments / 80 characters. Only
-  public route words and content slugs (`boz-uy-tunduk`) survive. UUIDs,
-  numbers with 5+ digits, `uc_` collection ids, mixed-case or encoded
-  text, emails, tokens and random-looking ids become `:id`.
+- **Routes** (`sanitizeRoute`, idempotent - running it again changes
+  nothing, so the four validation points agree):
+  - `http(s)://user:pass@host` is removed; for app links
+    (`oyno://open/...`) the host is the first route segment, credentials
+    removed. Query strings, fragments and `;params` go; `\` counts as `/`;
+    empty and `.` segments go; each segment is decoded once (malformed
+    encoding -> `:id`).
+  - By ROUTE STRUCTURE (whatever the value looks like, even a short
+    lowercase id): `/journal/<entry>` (except book / calendar / collage /
+    new), `/profile/my-collections/<id>`, anything after an auth screen,
+    `/open/<unknown type>/...`, anything after `/open/<type>/<id>`, and a
+    whole path whose first segment isn't an app route -> `:id`. The route
+    table is checked against `src/app` by a test.
+  - By SHAPE everywhere else: UUIDs, 5+ digit numbers, `uc_` ids,
+    mixed-case / encoded / non-slug text, and random-looking values -> `:id`.
+  - At most 8 segments / 80 characters, cut at whole segments. `:id` is
+    kept as it is.
+  - Limit: in PUBLIC content routes (e.g. `/culture/item/<slug>`), a
+    lowercase slug-shaped value is kept even if someone typed private
+    words there by hand; real links only ever put public content ids there.
 - **Trail events**: must have a valid time and a known type
   (`route`, `offline`, `online`, `native_unavailable`, `screen_error`,
   `sync_failed`, `playback_error`). Per type: `route` -> sanitized
