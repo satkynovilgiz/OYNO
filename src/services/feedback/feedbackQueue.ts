@@ -8,7 +8,7 @@ import { createUuid } from '@/services/storage/uuid';
 import { supabase } from '@/services/supabase/client';
 
 import { sanitizeDiagnostics, type FeedbackDiagnostics } from './diagnostics';
-import { legacyCategory, legacyMessage, toServerContent, type ReportContent } from './reportContent';
+import { isValidReportUrl, legacyCategory, legacyMessage, MAX_CORRECTION_LENGTH, toServerContent, type ReportContent, type ReportContentType } from './reportContent';
 
 export const FEEDBACK_QUEUE_KEY = 'oyno.feedback.pending';
 
@@ -43,6 +43,10 @@ export type PendingFeedback = {
   /** Local file of an image the tester chose to attach (never automatic). */
   screenshotUri: string | null;
   screenshotPath: string | null;
+  /** The tester's explicit "include my email" choice when writing it.
+   * false = contactEmail is never sent. Absent = queued by an older version,
+   * where an email was only ever stored after that same opt-in. */
+  contactConsent?: boolean;
   /** Who wrote it (null = guest). If a different person is signed in
    * when it finally sends, it is sent unlinked rather than attributed to them. */
   accountId: string | null;
@@ -66,10 +70,90 @@ function serialized<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
+const REPORT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Same shape as an owner id everywhere else (journalPhotos.sanitizeOwner). */
+const ACCOUNT_ID = /^[A-Za-z0-9-]{1,64}$/;
+const ALL_CATEGORIES: readonly string[] = [...FEEDBACK_CATEGORIES, 'ui', 'content', 'performance'];
+const CONTENT_TYPES: readonly ReportContentType[] = ['culture_item', 'culture_material', 'explore_region', 'discovery', 'collection', 'trail', 'game'];
+const CONTENT_ID = /^[a-z0-9][a-z0-9_-]{0,119}$/;
+const MAX_QUEUED = 50;
+
+/**
+ * An image a report may upload: only one OYNO made for feedback - its own
+ * kept copy (documents/feedback/<id>.jpg) or a temp capture in the cache.
+ * Anything else read back from storage (a journal photo, another app's
+ * file, a remote URL, a path with "..") is dropped: the report goes
+ * without an image.
+ */
+export function isFeedbackImageUri(uri: unknown): uri is string {
+  if (typeof uri !== 'string' || uri.length > 1000 || !uri.startsWith('file://') || uri.includes('..') || uri.includes('/journal/')) return false;
+  return /\/feedback\/[^/]+\.jpg$/i.test(uri) || /\/(Caches|cache|tmp)\//.test(uri);
+}
+
+function parseContent(raw: unknown): ReportContent | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const value = raw as Record<string, unknown>;
+  if (!CONTENT_TYPES.includes(value.contentType as ReportContentType) || typeof value.contentId !== 'string' || !CONTENT_ID.test(value.contentId)) return null;
+  const content: ReportContent = { contentType: value.contentType as ReportContentType, contentId: value.contentId, language: value.language === 'ru' || value.language === 'en' ? value.language : 'kg' };
+  if (typeof value.suggestedCorrection === 'string' && value.suggestedCorrection.trim()) content.suggestedCorrection = value.suggestedCorrection.slice(0, MAX_CORRECTION_LENGTH);
+  if (typeof value.sourceUrl === 'string' && isValidReportUrl(value.sourceUrl)) content.sourceUrl = value.sourceUrl.trim();
+  return content;
+}
+
+const isIso = (value: unknown): value is string => typeof value === 'string' && value.length <= 40 && !Number.isNaN(Date.parse(value));
+
+/**
+ * One queued report read back from storage, re-validated as if it were
+ * new (old versions, interrupted writes or tampering): null when it can't
+ * be a real report (no valid id / category / message), otherwise rebuilt
+ * from validated fields only - unknown fields are dropped and diagnostics
+ * are re-sanitized with the report's own email consent.
+ */
+export function parseQueuedReport(raw: unknown): PendingFeedback | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const value = raw as Record<string, unknown>;
+  if (typeof value.clientReportId !== 'string' || !REPORT_ID.test(value.clientReportId)) return null;
+  if (typeof value.category !== 'string' || !ALL_CATEGORIES.includes(value.category)) return null;
+  if (typeof value.message !== 'string' || !value.message.trim()) return null;
+  const clientReportId = value.clientReportId;
+  const contactConsent = typeof value.contactConsent === 'boolean' ? value.contactConsent : undefined;
+  const screenshotPath = value.screenshotPath === `screenshots/${clientReportId}.jpg` ? value.screenshotPath : null;
+  const report: PendingFeedback = {
+    clientReportId,
+    createdAt: isIso(value.createdAt) ? value.createdAt : new Date(0).toISOString(),
+    category: value.category as PendingFeedback['category'],
+    message: value.message.slice(0, MAX_FEEDBACK_LENGTH),
+    diagnostics: sanitizeDiagnostics(value.diagnostics, { allowContactEmail: contactConsent !== false }),
+    content: parseContent(value.content),
+    screenshotUri: isFeedbackImageUri(value.screenshotUri) ? value.screenshotUri : null,
+    screenshotPath,
+    accountId: typeof value.accountId === 'string' && ACCOUNT_ID.test(value.accountId) ? value.accountId : null,
+    attempts: typeof value.attempts === 'number' && Number.isInteger(value.attempts) && value.attempts >= 0 ? Math.min(value.attempts, 1000) : 0,
+  };
+  if (contactConsent !== undefined) report.contactConsent = contactConsent;
+  if (value.status === 'failed') report.status = 'failed';
+  if (typeof value.failureCode === 'string' && /^[A-Za-z0-9_]{1,16}$/.test(value.failureCode)) report.failureCode = value.failureCode;
+  return report;
+}
+
 export async function readFeedbackQueue(): Promise<PendingFeedback[]> {
   const parsed = safeJsonParse<unknown>(await AsyncStorage.getItem(FEEDBACK_QUEUE_KEY).catch(() => null), []);
   if (!Array.isArray(parsed)) return [];
-  return parsed.filter((item): item is PendingFeedback => !!item && typeof item === 'object' && typeof (item as PendingFeedback).clientReportId === 'string');
+  const seen = new Set<string>();
+  const reports: PendingFeedback[] = [];
+  for (const item of parsed.slice(-MAX_QUEUED)) {
+    let report: PendingFeedback | null = null;
+    try {
+      report = parseQueuedReport(item);
+    } catch {
+      report = null; // never let one stored value stop the queue
+    }
+    if (report && !seen.has(report.clientReportId)) {
+      seen.add(report.clientReportId);
+      reports.push(report);
+    }
+  }
+  return reports;
 }
 
 async function writeFeedbackQueue(items: PendingFeedback[]): Promise<void> {
@@ -114,6 +198,8 @@ export async function enqueueFeedback(input: {
   content?: ReportContent | null;
   screenshotUri: string | null;
   accountId: string | null;
+  /** The tester ticked "include my email". Without it no email is stored or sent. */
+  contactConsent?: boolean;
 }): Promise<PendingFeedback> {
   const clientReportId = createReportId();
   const report: PendingFeedback = {
@@ -121,8 +207,9 @@ export async function enqueueFeedback(input: {
     createdAt: new Date().toISOString(),
     category: input.category,
     message: input.message.trim().slice(0, MAX_FEEDBACK_LENGTH),
-    diagnostics: sanitizeDiagnostics(input.diagnostics),
-    content: input.content ?? null,
+    diagnostics: sanitizeDiagnostics(input.diagnostics, { allowContactEmail: input.contactConsent === true }),
+    contactConsent: input.contactConsent === true,
+    content: parseContent(input.content),
     screenshotUri: input.screenshotUri ? await keepScreenshot(input.screenshotUri, clientReportId) : null,
     screenshotPath: null,
     accountId: input.accountId,
@@ -207,7 +294,8 @@ async function sendOne(report: PendingFeedback, currentAccountId: string | null)
   const common = {
     p_client_report_id: withPath.clientReportId,
     // An optional screenshot that couldn't be uploaded never sinks the report.
-    p_diagnostics: { ...sanitizeDiagnostics(withPath.diagnostics), ...(upload.state === 'skipped' ? { screenshot: 'not_uploaded' } : {}) },
+    // The final boundary: re-checked again right before it leaves the device.
+    p_diagnostics: { ...sanitizeDiagnostics(withPath.diagnostics, { allowContactEmail: withPath.contactConsent !== false }), ...(upload.state === 'skipped' ? { screenshot: 'not_uploaded' } : {}) },
     p_screenshot_path: withPath.screenshotPath,
     // Linked to an account only if the person who wrote it is the one signed in.
     p_link_account: withPath.accountId !== null && withPath.accountId === currentAccountId,

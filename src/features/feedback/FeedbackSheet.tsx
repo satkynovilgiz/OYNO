@@ -176,7 +176,7 @@ export function FeedbackSheet() {
     setSending(true);
     try {
       const outcome = await sendFeedbackReport(
-        { category, message, diagnostics, content, screenshotUri, accountId: user?.id ?? null },
+        { category, message, diagnostics, content, screenshotUri, accountId: user?.id ?? null, contactConsent: includeEmail },
         { online: !isOffline, currentAccountId: user?.id ?? null },
       );
       setReportId(outcome.clientReportId);

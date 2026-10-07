@@ -171,7 +171,11 @@ describe('sensitive metadata exclusion', () => {
 
   it('strips anything else that sneaks into stored diagnostics', () => {
     const dirty = { platform: 'ios', accessToken: 'secret', email: 'a@b.c', deviceName: "Aibek's iPhone", location: { lat: 1 } };
-    expect(Object.keys(sanitizeDiagnostics(dirty))).toEqual(['platform']);
+    const clean = sanitizeDiagnostics(dirty);
+    // Rebuilt from the allow-list only (missing values become null / defaults).
+    expect(Object.keys(clean).every((key) => (DIAGNOSTIC_KEYS as string[]).includes(key))).toBe(true);
+    expect(clean.platform).toBe('ios');
+    expect(JSON.stringify(clean)).not.toMatch(/secret|a@b\.c|Aibek|"lat"|location|accessToken/);
   });
 
   it('crash fingerprints never contain the error message', () => {
