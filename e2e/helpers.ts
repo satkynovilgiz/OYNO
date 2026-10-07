@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test as base, type Page } from '@playwright/test';
 
 import en from '../src/i18n/locales/en.json';
@@ -135,4 +136,14 @@ export async function nextOnboardingSlide(page: Page, slide: number, total = 3) 
   await expectNextAvailable(page, `Next should be available before moving to slide ${slide} / ${total}`);
   await next.click();
   await expect(page.getByRole('progressbar'), `one Next tap should land on slide ${slide} / ${total}`).toHaveAttribute('aria-label', `${slide} / ${total}`, { timeout: 5_000 });
+}
+
+/** No serious / critical axe violations (WCAG 2.1 A/AA + best practice; 'region' off - see docs/ACCESSIBILITY.md). */
+export async function expectNoSeriousViolations(page: Page, label: string) {
+  const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice']).disableRules(['region']).analyze();
+  const serious = result.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
+  expect(
+    serious.map((violation) => `${violation.impact} ${violation.id}: ${violation.help} -> ${violation.nodes.map((node) => node.target.join(' ')).slice(0, 3).join(' | ')}`),
+    `axe on ${label}`,
+  ).toEqual([]);
 }

@@ -1,7 +1,6 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
-import { expect, expectNoHorizontalOverflow, expectNoPageErrors, seed, test } from '../helpers';
+import { expect, expectNoHorizontalOverflow, expectNoPageErrors, expectNoSeriousViolations, seed, test } from '../helpers';
 
 /**
  * Accessibility of the main journeys on WEB (Chromium): automated axe
@@ -28,15 +27,6 @@ const STORAGE = {
  * navigator; screens are reached through headings (h1 on every audited
  * screen) instead. Documented in docs/ACCESSIBILITY.md.
  */
-async function expectNoSeriousViolations(page: Page, label: string) {
-  const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice']).disableRules(['region']).analyze();
-  const serious = result.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
-  expect(
-    serious.map((violation) => `${violation.impact} ${violation.id}: ${violation.help} -> ${violation.nodes.map((node) => node.target.join(' ')).slice(0, 3).join(' | ')}`),
-    `axe on ${label}`,
-  ).toEqual([]);
-}
-
 /** The focused element shows a visible focus indicator. */
 async function expectVisibleFocus(page: Page) {
   const focus = await page.evaluate(() => {

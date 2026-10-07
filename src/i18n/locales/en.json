@@ -4792,5 +4792,128 @@
     "nextRemoved": "Step {{index}} is no longer available. You can continue with {{other}}.",
     "nextRemovedNone": "Step {{index}} is no longer available.",
     "loadFailed": "Some step titles couldn't be loaded."
+  },
+  "detective": {
+    "title": "Culture Detective",
+    "entryMeta": "Identify a cultural object from up to three clues",
+    "intro": "Look at the object, reveal clues if you need them, and pick its name. Fewer clues, more points - there's no timer.",
+    "scoring": "Correct with 0 clues: 4 points · 1 clue: 3 · 2 clues: 2 · 3 clues: 1. A wrong answer gives 0 and shows what it is.",
+    "start": "Start investigating",
+    "questionOf": "Object {{current}} of {{total}}",
+    "question": "What is this?",
+    "revealClue": "Reveal a clue",
+    "clueLabel": "Clue {{number}}",
+    "noMoreClues": "All clues revealed",
+    "pointsIfCorrect": "Worth {{points}} points now",
+    "correct": "Well spotted!",
+    "notQuite": "Not this time - now you know.",
+    "itWas": "It is: {{name}}",
+    "yourAnswer": "Your answer: {{name}}",
+    "pointsEarned": "+{{points}} points",
+    "readArticle": "Read the full article",
+    "next": "Next object",
+    "seeResults": "See results",
+    "resultsTitle": "Case closed",
+    "score": "Score: {{score}} of {{max}}",
+    "correctCount": "Identified: {{correct}} of {{total}}",
+    "cluesUsed": "Clues used: {{count}}",
+    "best": "Your best: {{score}}",
+    "missedTitle": "Worth another look",
+    "allFound": "You identified every object.",
+    "replay": "Play again",
+    "focusMissed": "Practise the missed ones",
+    "back": "Back to Culture",
+    "noImage": "No picture available - the clues still work.",
+    "artworkA11y": "Picture of the object to identify",
+    "optionA11y": "Answer: {{name}}",
+    "separateNote": "Detective scores are kept on this device and don't affect your official game records.",
+    "names": {
+      "boz-uy-tunduk": "Tunduk",
+      "boz-uy-karkas": "The wooden frame",
+      "boz-uy-kiyiz-jabuu": "The felt covers",
+      "boz-uy-ichki-jasalga": "The interior",
+      "horse-eer": "Saddle and horse gear",
+      "horse-kok-boru": "Kok Boru",
+      "horse-kyz-kuumai": "Kyz Kuumai",
+      "horse-at-chabysh": "At chabysh",
+      "horse-oodarysh": "Oodarysh",
+      "shyrdak-craft": "Shyrdak",
+      "oymo-umai-ene": "Umai Ene",
+      "oymo-kochkor-muyuz": "Kochkor müyüz"
+    },
+    "questions": {
+      "tunduk": {
+        "clue1": "The round smoke opening at the top of the boz üy's roof - the most sacred part of the home.",
+        "clue2": "It has two parts: the alkak (the outer ring) and the chamgarak (the crossed lattice inside it).",
+        "clue3": "It is shown at the centre of the state flag of Kyrgyzstan.",
+        "explanation": "A blessing has survived: \"may the smoke from your tunduk never stop\" - may your family go on for ever."
+      },
+      "karkas": {
+        "clue1": "It has three main parts; one of them is a lattice that serves as the wall.",
+        "clue2": "Its parts: kerege (wall frame), uuk (roof poles), tunduk and bosogo (door frame).",
+        "clue3": "Experienced craftsmen built it in about 25 days.",
+        "explanation": "Experienced craftsmen built the wooden frame in about 25 days; a finished frame can serve for about 25 years despite constant moving."
+      },
+      "kiyiz-jabuu": {
+        "clue1": "Used when moving camp - each time the home is rebuilt at a new site.",
+        "clue2": "Made of felt pressed from sheep's wool.",
+        "clue3": "The tuurduk and the üzük are among its parts.",
+        "explanation": "Covering the frame with felt takes the combined strength of several people - most often it was done by women."
+      },
+      "ichki-jasalga": {
+        "clue1": "Every boz üy has the same frame, but this is unique to each family.",
+        "clue2": "Tush kiyiz, carpets, shyrdak and ala kiyiz are part of it.",
+        "clue3": "It is divided by strict rules into a men's side, a women's side and the hearth in the centre.",
+        "explanation": "The most honoured place behind the hearth is called the tör and is kept for the head of the family or a respected guest."
+      },
+      "eer": {
+        "clue1": "In nomadic life it was needed every day, so each part of it developed as a craft of its own.",
+        "clue2": "It shows its owner's standing and taste; decorated ones were brought out for weddings and races.",
+        "clue3": "Its frame is carved from wood, covered with leather and decorated with silver or copper.",
+        "explanation": "A decorated saddle with full gear was once also given as part of a bride's dowry."
+      },
+      "kok-boru": {
+        "clue1": "A symbol of courage, endurance and team unity.",
+        "clue2": "Played on a 200×70 m field with a round goal called the \"tai kazan\" at each end.",
+        "clue3": "Its modern unified rules were developed in 1996 by the film director Bolot Shamshiev.",
+        "explanation": "According to the ethnographer G. N. Simakov, the game took shape from riders playfully snatching a hunted wolf's body from one another."
+      },
+      "kyz-kuumai": {
+        "clue1": "A horse game that grew out of the tradition of young people meeting and competing.",
+        "clue2": "It needs two horses and a whip (kamchy).",
+        "clue3": "One rider goes ahead and the other tries to catch up.",
+        "explanation": "It also shows a girl's riding skill: a Kyrgyz girl was expected to be as good a rider as any young man."
+      },
+      "at-chabysh": {
+        "clue1": "The most ancient race of nomadic life, testing a horse's strength and endurance.",
+        "clue2": "A matter of family and clan honour - the winner's owner and rider are celebrated.",
+        "clue3": "Distances range from 1,200 metres to 50 kilometres; riders are usually light boys aged 8-14.",
+        "explanation": "Spending months preparing a horse for a race is called \"at tapka keltirüü\" - valued as an art of its own."
+      },
+      "oodarysh": {
+        "clue1": "It tests not only strength but the unity of horse and rider and their balance.",
+        "clue2": "It is thought to come from military training.",
+        "clue3": "Two mounted riders wrestle, each trying to pull the other out of the saddle.",
+        "explanation": "Part of the national sports classification and of the World Nomad Games programme."
+      },
+      "shyrdak": {
+        "clue1": "One of the felt items with the most complex making process.",
+        "clue2": "Two layers of felt in contrasting colours are cut together, swapped and sewn, giving a positive-negative design.",
+        "clue3": "In 2012 the art of making it was added to UNESCO's Intangible Cultural Heritage list.",
+        "explanation": "Its edges always finish in white and black - the snowy peaks of the Kyrgyz mountains."
+      },
+      "umai-ene": {
+        "clue1": "In the ancient beliefs of the Turkic peoples, the protector of children and of women in childbirth.",
+        "clue2": "As a pattern it stands for the feminine principle, a mother's nobility and the protection of the home.",
+        "clue3": "It was embroidered on children's clothes and hats, in the belief that it protected them.",
+        "explanation": "There is a belief that a baby smiling in its sleep means Umai Ene is near."
+      },
+      "kochkor-muyuz": {
+        "clue1": "It stands for the livestock of the owner and of the people on the jailoo.",
+        "clue2": "No pattern is made without it.",
+        "clue3": "It is the element that sets Kyrgyz ornament apart from that of other peoples.",
+        "explanation": "Kochkor müyüz stands for livestock; no pattern is made without it, and it sets Kyrgyz ornament apart."
+      }
+    }
   }
 }
