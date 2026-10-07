@@ -433,3 +433,27 @@ Still to check on a device (PENDING):
 | VoiceOver / TalkBack: handoff announced; answers read as a radio group; reveal reads both players' answers | PENDING (device) |
 | Reduce Motion on: no motion beyond press feedback in either mode | PENDING (device) |
 | Airplane mode, fresh install: a full Detective session and a full Duel work offline | PENDING (device) |
+
+## Mini Museum (2026-10-07)
+
+`/profile/my-collections/museum?collection=<id>`, opened from a collection's
+header. It presents an EXISTING private collection: an exhibition title, an
+optional introduction, up to 8 of the collection's items in the owner's
+order, and private captions. These are stored as an owner-scoped slice of the
+My Collections store (`oyno.myCollections.museums.v1`). They are removed with
+their collection, forgotten with their owner, and follow a guest into their
+account. Exhibitions are re-checked against the collection on every read,
+so removed items drop out. A slide whose content was removed from OYNO says
+so, and a missing image says it's unavailable. The sourced title, type and
+artwork are shown apart from "Your caption". The cover card shares only the
+title, the exhibit count and one picture, plus the introduction if switched
+on (off by default). Captions, the private description, journal text, notes
+and photos are never inputs. The existing share sheet previews exactly that
+card. Tests: `museum.test.ts`, `e2e/tests/mini-museum.spec.ts`.
+
+| Check | Status |
+| --- | --- |
+| Share the cover to Messages / Telegram: the received image matches the preview | PENDING (device) |
+| Airplane mode: present a collection of downloaded articles - images and titles show; others say unavailable | PENDING (device) |
+| Sign out A, sign in B on the same phone: B's Mini Museum shows none of A's captions | PENDING (device) |
+| VoiceOver / TalkBack: exhibit order buttons named, slides announce "Exhibit n of m" | PENDING (device) |

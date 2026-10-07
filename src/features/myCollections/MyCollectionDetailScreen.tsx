@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowDown, ArrowUp, ChevronLeft, Pencil, Share2, Trash2, X } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, ChevronLeft, Landmark, Pencil, Share2, Trash2, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, TextInput, View, type ImageSourcePropType } from 'react-native';
@@ -75,6 +75,7 @@ export function MyCollectionDetailScreen({ collectionId, onPressBack }: { collec
           accessibilityLabel={t('myCollections.share')}
           onPress={() => void share(buildMyCollectionShareCard({ name: collection.name, itemCountLabel: t('myCollections.itemCount', { count: entries.length }), label: t('myCollections.title'), cover: coverFor(entries) as ImageSourcePropType | null }), collection.name)}
         />
+        <IconButton icon={Landmark} shape="roundedSquare" accessibilityLabel={t('museum.open')} onPress={() => router.push({ pathname: '/profile/my-collections/museum', params: { collection: collection.id } } as never)} testID="museum-entry" />
         <IconButton icon={Pencil} shape="roundedSquare" accessibilityLabel={t('myCollections.edit')} onPress={startEdit} />
       </View>
 

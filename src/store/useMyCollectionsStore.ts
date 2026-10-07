@@ -14,17 +14,24 @@ import {
   type CollectionsData,
   type UserCollection,
 } from '@/features/myCollections/myCollectionsModel';
+import type { Exhibition } from '@/features/myCollections/museum/museumModel';
 import { safeJsonParse } from '@/services/storage/safeJson';
 
 export const MY_COLLECTIONS_KEY = 'oyno.myCollections.v1';
+/** Mini Museum presentations: owner -> collection id -> exhibition (private captions included). */
+export const MY_MUSEUMS_KEY = 'oyno.myCollections.museums.v1';
 
 /** owner ('guest' or account id) -> that owner's collections. */
 type Saved = Record<string, CollectionsData>;
+type Museums = Record<string, Record<string, Exhibition>>;
 
 type State = {
   isLoaded: boolean;
   saved: Saved;
+  /** Mini Museum presentations, per owner and collection - never shown for another owner. */
+  museums: Museums;
   load: () => Promise<void>;
+  saveExhibition: (owner: string, collectionId: string, exhibition: Exhibition) => void;
   create: (owner: string, input: { name: string; description?: string | null }) => UserCollection;
   edit: (owner: string, id: string, input: { name: string; description: string | null }) => void;
   remove: (owner: string, id: string) => void;
@@ -48,6 +55,7 @@ export function ownerCollections(saved: Saved, owner: string): CollectionsData {
  */
 export const useMyCollectionsStore = create<State>((set, get) => {
   const persist = () => void AsyncStorage.setItem(MY_COLLECTIONS_KEY, JSON.stringify(get().saved)).catch(() => undefined);
+  const persistMuseums = () => void AsyncStorage.setItem(MY_MUSEUMS_KEY, JSON.stringify(get().museums)).catch(() => undefined);
   const update = (owner: string, change: (data: CollectionsData) => CollectionsData) => {
     set({ saved: { ...get().saved, [owner]: change(ownerCollections(get().saved, owner)) } });
     persist();
@@ -55,13 +63,21 @@ export const useMyCollectionsStore = create<State>((set, get) => {
   return {
     isLoaded: false,
     saved: {},
+    museums: {},
     load: async () => {
       if (get().isLoaded) return;
-      const raw = await AsyncStorage.getItem(MY_COLLECTIONS_KEY).catch(() => null);
+      const [raw, rawMuseums] = await Promise.all([AsyncStorage.getItem(MY_COLLECTIONS_KEY).catch(() => null), AsyncStorage.getItem(MY_MUSEUMS_KEY).catch(() => null)]);
       // A load that finishes late never overwrites a store already loaded (and written) meanwhile.
       if (get().isLoaded) return;
       const parsed = safeJsonParse<Saved>(raw, {});
-      set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
+      const museums = safeJsonParse<Museums>(rawMuseums, {});
+      // Exhibitions are re-checked against their collection on every read (museumModel.normalizeExhibition).
+      set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, museums: museums && typeof museums === 'object' && !Array.isArray(museums) ? museums : {}, isLoaded: true });
+    },
+    saveExhibition: (owner, collectionId, exhibition) => {
+      if (!ownerCollections(get().saved, owner).collections.some((collection) => collection.id === collectionId)) return;
+      set({ museums: { ...get().museums, [owner]: { ...get().museums[owner], [collectionId]: exhibition } } });
+      persistMuseums();
     },
     create: (owner, input) => {
       const { data, collection } = createCollection(ownerCollections(get().saved, owner), input);
@@ -69,7 +85,16 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       return collection;
     },
     edit: (owner, id, input) => update(owner, (data) => editCollection(data, id, input)),
-    remove: (owner, id) => update(owner, (data) => deleteCollection(data, id)),
+    remove: (owner, id) => {
+      update(owner, (data) => deleteCollection(data, id));
+      // Its presentation (and private captions) go with it.
+      if (get().museums[owner]?.[id]) {
+        const mine = { ...get().museums[owner] };
+        delete mine[id];
+        set({ museums: { ...get().museums, [owner]: mine } });
+        persistMuseums();
+      }
+    },
     add: (owner, collectionId, contentType, contentId) => update(owner, (data) => addItem(data, collectionId, contentType, contentId)),
     removeItem: (owner, collectionId, contentType, contentId) => update(owner, (data) => removeItem(data, collectionId, contentType, contentId)),
     move: (owner, collectionId, index, delta) => update(owner, (data) => moveItem(data, collectionId, index, delta)),
@@ -79,6 +104,13 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       else delete saved[owner];
       set({ saved });
       persist();
+      // Forgetting an owner on this device forgets their presentations too.
+      if (!data && get().museums[owner]) {
+        const museums = { ...get().museums };
+        delete museums[owner];
+        set({ museums });
+        persistMuseums();
+      }
     },
     adoptGuest: (userId) => {
       const guest = get().saved.guest;
@@ -87,6 +119,19 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       delete saved.guest;
       set({ saved });
       persist();
+      // The guest's presentations follow their collections (the account's own win).
+      const guestMuseums = get().museums.guest;
+      if (guestMuseums) {
+        const museums = { ...get().museums, [userId]: { ...guestMuseums, ...get().museums[userId] } };
+        delete museums.guest;
+        set({ museums });
+        persistMuseums();
+      }
     },
   };
 });
+
+/** The owner's exhibition for one collection (raw - normalize before showing). */
+export function ownerExhibition(museums: Museums, owner: string, collectionId: string): Exhibition | null {
+  return museums[owner]?.[collectionId] ?? null;
+}
