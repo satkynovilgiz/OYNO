@@ -67,6 +67,10 @@ const META_KEYS = new Set(['format', 'schema', 'version', 'exportedAt', 'domains
 
 export type ImportError = 'too_large' | 'malformed' | 'wrong_schema' | 'newer_version' | 'invalid' | 'empty';
 
+/** An export can't come from the future; a little clock skew is fine. A
+ * far-future date would otherwise win "newest choice" merges (weekly goal) forever. */
+const MAX_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
+
 /** Records per private domain, in the sync record shape (validated by the domain's own rules). */
 export type DomainRecords = Partial<Record<PrivateDomain, Record<string, unknown>>>;
 
@@ -115,11 +119,12 @@ function checkTree(value: unknown, depth = 0): void {
 export type ParseResult = { ok: true; backup: ParsedBackup } | { ok: false; error: ImportError };
 
 /** Stage 1: parse + validate. Pure; never mutates any state. */
-export function parseLearningBackup(text: string, sizeBytes = text.length): ParseResult {
+export function parseLearningBackup(text: string, sizeBytes = text.length, now = new Date()): ParseResult {
   if (sizeBytes > MAX_FILE_BYTES || text.length > MAX_FILE_BYTES) return { ok: false, error: 'too_large' };
   let raw: unknown;
   try {
-    raw = JSON.parse(text);
+    // Some editors save JSON with a byte-order mark; it is not part of the data.
+    raw = JSON.parse(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text);
   } catch {
     return { ok: false, error: 'malformed' };
   }
@@ -128,6 +133,7 @@ export function parseLearningBackup(text: string, sizeBytes = text.length): Pars
   if (version === null) return { ok: false, error: 'wrong_schema' };
   if (!(SUPPORTED_VERSIONS as readonly number[]).includes(version)) return { ok: false, error: version > LEARNING_EXPORT_VERSION ? 'newer_version' : 'wrong_schema' };
   if (!iso(raw.exportedAt)) return { ok: false, error: 'wrong_schema' };
+  if (Date.parse(raw.exportedAt) > now.getTime() + MAX_CLOCK_SKEW_MS) return { ok: false, error: 'invalid' };
   try {
     checkTree(raw);
     const ignoredKeys: string[] = [];
@@ -268,7 +274,20 @@ export const DOMAIN_RULES: Record<PrivateDomain, DomainRules<unknown>> = {
   weekly_goal: weeklyGoalRules as DomainRules<unknown>,
 };
 
-export type DomainPlan = { domain: PrivateDomain; next: Record<string, unknown>; added: number; updated: number; skippedDeleted: number };
+export type DomainPlan = {
+  domain: PrivateDomain;
+  next: Record<string, unknown>;
+  /** In the backup, not here: added. */
+  added: number;
+  /** In both, and the merge changes what is here. */
+  updated: number;
+  /** In both, and what is here already covers it. */
+  unchanged: number;
+  /** Deleted on this account earlier: not brought back. */
+  skippedDeleted: number;
+  /** Here, not in the backup: kept exactly as it is. */
+  kept: number;
+};
 
 /**
  * One domain: current owner's records + the backup's -> merged records.
@@ -284,6 +303,7 @@ export function planDomain(domain: PrivateDomain, current: Record<string, unknow
   const next: Record<string, unknown> = { ...current };
   let added = 0;
   let updated = 0;
+  let unchanged = 0;
   let skippedDeleted = 0;
   const incoming = domain === 'collections' ? alignCollections(current as Record<string, CollectionRecord>, imported as Record<string, CollectionRecord>) : imported;
   for (const [key, value] of Object.entries(incoming)) {
@@ -298,13 +318,25 @@ export function planDomain(domain: PrivateDomain, current: Record<string, unknow
       added += 1;
       continue;
     }
-    const merged = rules.merge(domain === 'collections' ? null : value, local, value, key);
+    let merged = rules.merge(domain === 'collections' ? null : value, local, value, key);
+    // Reading: the export only keeps the furthest point. When the backup is
+    // not newer than what is here, the current resume position stays.
+    if (domain === 'reading') merged = keepLocalResume(merged, local, value);
     if (!samePayload(merged, local)) {
       next[key] = merged;
       updated += 1;
-    }
+    } else unchanged += 1;
   }
-  return { domain, next, added, updated, skippedDeleted };
+  const kept = Object.keys(current).filter((key) => !Object.prototype.hasOwnProperty.call(incoming, key)).length;
+  return { domain, next, added, updated, unchanged, skippedDeleted, kept };
+}
+
+type ReadingLike = { progress: number; lastReadAt: string };
+function keepLocalResume(merged: unknown, local: unknown, imported: unknown): unknown {
+  const m = merged as ReadingLike;
+  const l = local as ReadingLike;
+  if ((imported as ReadingLike).lastReadAt > l.lastReadAt) return merged;
+  return { ...m, progress: l.progress, lastReadAt: l.lastReadAt };
 }
 
 /** Maps imported collections onto existing ones with the same identity (name + created). */

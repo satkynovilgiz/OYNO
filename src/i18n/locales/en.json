@@ -4407,7 +4407,7 @@
     "ownerAccount": "The backup is added to the account you are signed in with now - never to an account named inside the file.",
     "neverImported": "Sign-in details, passwords, tokens and account IDs are never imported, even if a file contains them.",
     "choose": "Choose backup file",
-    "previewTitle": "This backup contains",
+    "previewTitle": "What importing will do",
     "exportedAt": "Exported on {{date}}",
     "included": "Included",
     "ignored": "Some entries in this file were ignored - sign-in or account details are never imported.",
@@ -4436,7 +4436,10 @@
       "invalid": "This backup has damaged or unexpected data, so nothing was imported.",
       "empty": "This backup has no learning data to import.",
       "unsupported": "Choosing a file isn't available in this version of the app.",
-      "failed": "The backup couldn't be imported. Nothing was changed."
+      "failed": "The backup couldn't be imported. Nothing was changed.",
+      "owner_changed": "The signed-in account changed, so nothing was imported. Choose the file again.",
+      "busy": "An import is already running. Wait for it to finish.",
+      "apply_partial": "The import stopped partway, so some data may have been added. Importing the same file again is safe - it completes the import and counts nothing twice."
     },
     "domains": {
       "reading": "Reading progress",
@@ -4466,7 +4469,16 @@
       "weekly_goal": "Weekly goal"
     },
     "skippedDeleted_few": "{{count}} deleted earlier, not restored",
-    "skippedDeleted_many": "{{count}} deleted earlier, not restored"
+    "skippedDeleted_many": "{{count}} deleted earlier, not restored",
+    "checking": "Checking the file…",
+    "planRow": "{{added}} new · {{updated}} updated · {{unchanged}} already here",
+    "nothingToChange": "Everything in this backup is already here - importing changes nothing.",
+    "retainRule": "Where you have the same item, the fuller version is kept: the furthest reading point, the best score, the newest weekly goal. Counters are never added twice.",
+    "kept": "Records you have that aren't in the backup stay exactly as they are ({{count}}).",
+    "ignoredCount": "Not imported: sign-in or account fields found in the file ({{count}}).",
+    "interrupted": "Your last import may not have finished - the app closed while saving. Importing the same file again is safe: it completes the import and counts nothing twice.",
+    "interruptedDismiss": "Dismiss",
+    "changedSincePreview": "Your data changed while importing, so the result differs a little from the preview. The numbers above are what actually happened."
   },
   "readerNavigator": {
     "contents": "Contents",
