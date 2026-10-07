@@ -14,7 +14,7 @@ import { ownerCollections, useMyCollectionsStore } from '@/store/useMyCollection
 import { ownerReading, useReadingStore } from '@/store/useReadingStore';
 import { ownerGoal, useWeeklyGoalStore } from '@/store/useWeeklyGoalStore';
 
-import { __resetImportLockForTests, applyLearningImport, backupFingerprint, PENDING_IMPORT_KEY, previewLearningImport, readPendingImport, type ImportDeps } from './applyLearningImport';
+import { __resetImportLockForTests, applyLearningImport, defaultImportDeps, backupFingerprint, PENDING_IMPORT_KEY, previewLearningImport, readPendingImport, type ImportDeps } from './applyLearningImport';
 import { buildLearningExport, type LearningExportInput } from './learningExport';
 import { parseLearningBackup, type ParsedBackup } from './learningImport';
 
@@ -87,10 +87,10 @@ const deps = (owner: string | (() => string), over: Partial<ImportDeps> = {}): I
   requestSync: jest.fn(),
   markPending: async (pending) => {
     pendingWrites.push(JSON.stringify(pending));
-    await AsyncStorage.setItem(PENDING_IMPORT_KEY, JSON.stringify(pending));
-    return true;
+    return defaultImportDeps.markPending(pending);
   },
-  clearPending: () => AsyncStorage.removeItem(PENDING_IMPORT_KEY),
+  clearPending: defaultImportDeps.clearPending,
+  hasPending: defaultImportDeps.hasPending,
   settle: async () => {},
   unpersisted: async () => [],
   ...over,

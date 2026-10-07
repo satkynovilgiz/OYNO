@@ -17,7 +17,7 @@ import { ownerCollections, useMyCollectionsStore } from '@/store/useMyCollection
 import { ownerReading, READING_KEY, useReadingStore } from '@/store/useReadingStore';
 import { useWeeklyGoalStore } from '@/store/useWeeklyGoalStore';
 
-import { __resetImportLockForTests, applyLearningImport, defaultImportDeps, previewLearningImport, readPendingImport, type ImportDeps } from './applyLearningImport';
+import { __resetImportLockForTests, applyLearningImport, backupFingerprint, defaultImportDeps, PENDING_IMPORT_KEY, previewLearningImport, readPendingImport, type ImportDeps, type PendingImport } from './applyLearningImport';
 import { buildLearningExport, type LearningExportInput } from './learningExport';
 import { parseLearningBackup, type ParsedBackup } from './learningImport';
 
@@ -206,4 +206,85 @@ describe('owner binding', () => {
     expect(useKomuzLibraryStore.getState().saved['user-b']).toBeUndefined();
     expect(useMyCollectionsStore.getState().saved['user-b']).toBeUndefined();
   }, 15000);
+});
+
+describe('interrupted AFTER the data persisted, BEFORE the marker was removed', () => {
+  const FILE = JSON.stringify(buildLearningExport(input(), NOW));
+  const FP = backupFingerprint(FILE);
+  const unrelated: PendingImport[] = [
+    { owner: 'user-b', fingerprint: FP, startedAt: T1 }, // another account, same file
+    { owner: 'guest', fingerprint: 'other-backup-9', startedAt: T1 }, // same owner, another file
+  ];
+  const markers = async () => JSON.parse((await AsyncStorage.getItem(PENDING_IMPORT_KEY)) ?? '[]') as PendingImport[];
+
+  /** Runs an import that dies exactly in the window: verified on disk, marker removal never happens. */
+  async function importAndDieBeforeMarkerRemoval() {
+    let reachedRemoval!: () => void;
+    const reached = new Promise<void>((resolve) => (reachedRemoval = resolve));
+    void applyLearningImport(backup(), 'guest', deps({ clearPending: () => (reachedRemoval(), new Promise<boolean>(() => undefined)) }), { fingerprint: FP });
+    await reached;
+    __resetImportLockForTests(); // the process is gone
+    await restart();
+  }
+
+  it('re-importing the same file clears its warning, adds nothing twice, and keeps unrelated markers', async () => {
+    await AsyncStorage.setItem(PENDING_IMPORT_KEY, JSON.stringify(unrelated));
+    await importAndDieBeforeMarkerRemoval();
+    // Precondition of the bug: everything persisted, and the warning is still there.
+    expect(ownerRecords(useGameRecordsStore.getState().saved, 'guest').sessions.jaa_atuu).toBe(4);
+    expect(await readPendingImport('guest')).toMatchObject({ fingerprint: FP });
+
+    const outcome = await applyLearningImport(backup(), 'guest', deps(), { fingerprint: FP });
+    expect(outcome).toMatchObject({ ok: true, domains: [], repaired: [], markerRemains: false });
+    expect((await markers()).filter((marker) => marker.owner === 'guest' && marker.fingerprint === FP)).toEqual([]);
+    expect(await markers()).toEqual(unrelated);
+
+    await restart();
+    expect(ownerCollections(useMyCollectionsStore.getState().saved, 'guest').collections).toHaveLength(1);
+    expect(ownerRecords(useGameRecordsStore.getState().saved, 'guest').sessions.jaa_atuu).toBe(4);
+    expect(ownerStudy(useGlossaryStudyStore.getState().saved, 'guest').tunduk.seenCount).toBe(3);
+    expect(useGlossaryStudyStore.getState().sessions.guest).toHaveLength(1);
+  }, 20000);
+
+  it('a DIFFERENT backup does not clear this file\'s warning', async () => {
+    await importAndDieBeforeMarkerRemoval();
+    const other = input();
+    other.komuzFavorites = ['ak-maral-min', 'kambarkan'];
+    const otherFile = JSON.stringify(buildLearningExport(other, NOW));
+    const parsed = parseLearningBackup(otherFile, undefined, NOW);
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect((await applyLearningImport(parsed.backup, 'guest', deps(), { fingerprint: backupFingerprint(otherFile) })).ok).toBe(true);
+    expect((await markers()).some((marker) => marker.owner === 'guest' && marker.fingerprint === FP)).toBe(true);
+  }, 20000);
+
+  it('verification failing: the warning stays', async () => {
+    await importAndDieBeforeMarkerRemoval();
+    // Storage was damaged meanwhile and keeps failing.
+    await AsyncStorage.removeItem(READING_KEY);
+    failingKeys.add(READING_KEY);
+    expect(await applyLearningImport(backup(), 'guest', deps(), { fingerprint: FP })).toEqual({ ok: false, error: 'apply_partial' });
+    expect(await readPendingImport('guest')).toMatchObject({ fingerprint: FP });
+  }, 20000);
+
+  it('the marker cannot be removed: the data is fine and the result says the warning may remain', async () => {
+    await importAndDieBeforeMarkerRemoval();
+    failingKeys.add(PENDING_IMPORT_KEY);
+    const removeItem = AsyncStorage.removeItem as jest.Mock;
+    const realRemove = removeItem.getMockImplementation()!;
+    removeItem.mockImplementation((key: string) => (failingKeys.has(key) ? Promise.reject(new Error('disk full')) : realRemove(key)));
+    const outcome = await applyLearningImport(backup(), 'guest', deps(), { fingerprint: FP }).finally(() => removeItem.mockImplementation(realRemove));
+    expect(outcome).toMatchObject({ ok: true, markerRemains: true });
+    failingKeys.clear();
+    expect(await readPendingImport('guest')).not.toBeNull();
+  }, 20000);
+
+  it('reads a marker written by the previous version (a single object)', async () => {
+    await AsyncStorage.setItem(PENDING_IMPORT_KEY, JSON.stringify({ owner: 'guest', fingerprint: FP, startedAt: T1 }));
+    expect(await readPendingImport('guest')).toMatchObject({ fingerprint: FP });
+    // Data already here and verified -> the old marker is cleared too.
+    await applyLearningImport(backup(), 'guest', deps(), { fingerprint: FP });
+    __resetImportLockForTests();
+    expect((await applyLearningImport(backup(), 'guest', deps(), { fingerprint: FP })).ok).toBe(true);
+    expect(await readPendingImport('guest')).toBeNull();
+  }, 20000);
 });

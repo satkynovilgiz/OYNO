@@ -116,7 +116,7 @@ export function ImportBackupScreen({ onPressBack }: { onPressBack: () => void })
         {interrupted && (phase.kind === 'idle' || phase.kind === 'error') ? (
           <View style={styles.notes} testID="import-interrupted">
             <Text style={styles.meta}>{t('dataImport.interrupted')}</Text>
-            <Button label={t('dataImport.interruptedDismiss')} variant="secondary" size="sm" onPress={() => void dismissPendingImport().then(() => setInterrupted(false))} />
+            <Button label={t('dataImport.interruptedDismiss')} variant="secondary" size="sm" onPress={() => void dismissPendingImport(owner).then((cleared) => cleared && setInterrupted(false))} />
           </View>
         ) : null}
 
@@ -187,6 +187,7 @@ export function ImportBackupScreen({ onPressBack }: { onPressBack: () => void })
               {phase.outcome.domains.length === 0 ? <Text style={[styles.meta, { padding: spacing.md }]}>{t('dataImport.nothingNew')}</Text> : null}
             </View>
             {!phase.outcome.matchesPreview ? <Text style={styles.meta}>{t('dataImport.changedSincePreview')}</Text> : null}
+            {phase.outcome.markerRemains ? <Text style={styles.meta}>{t('dataImport.markerRemains')}</Text> : null}
             {phase.outcome.repaired.length > 0 ? <Text style={styles.meta}>{t('dataImport.repaired', { list: phase.outcome.repaired.map((domain) => t(`dataImport.syncDomains.${domain}`)).join(', ') })}</Text> : null}
             {phase.outcome.unchanged.length > 0 ? <Text style={styles.meta}>{t('dataImport.unchanged', { list: phase.outcome.unchanged.map((domain) => t(`dataImport.syncDomains.${domain}`)).join(', ') })}</Text> : null}
             <Text style={styles.meta}>{t(`dataImport.cloud.${phase.outcome.cloud}`)}</Text>

@@ -70,8 +70,17 @@ The export format is unchanged by this audit (no migration was needed).
    load. A load that finishes late (e.g. the app-start one) can no longer
    overwrite a store that was loaded and written meanwhile (fixed in all
    ten stores).
-8. **Interruptions.** If the app stops before the check, the marker
-   remains; the next visit says the last import may not have finished.
+8. **Interruptions.** Markers are a list keyed by owner + backup
+   fingerprint (a marker from the previous single-object format is still
+   read). If the app stops before an import confirms, its marker remains
+   and the next visit says the last import may not have finished.
+   Re-importing the SAME file verifies every domain in storage. That holds
+   even when nothing needs writing, e.g. when the app closed after the data
+   persisted but before the marker was removed. Only then is that file's
+   marker removed for that owner. Other accounts' markers and other
+   backups' markers are kept. Failed verification keeps the marker. If
+   the marker can't be removed, the result says the note may still show.
+   "Dismiss" removes only the signed-in owner's markers.
 9. **Privacy.** Analytics get only `schema_version` and `domain_count`.
    Nothing from the file is logged (checked in the failure tests).
 

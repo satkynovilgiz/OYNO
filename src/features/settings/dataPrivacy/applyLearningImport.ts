@@ -43,6 +43,9 @@ export type ImportOutcome =
       /** Already merged on this device, but storage was behind (an earlier import that didn't
        * fully persist): written again now. Counts are unaffected - nothing is added twice. */
       repaired: PrivateDomain[];
+      /** The data is verified, but this import's "may not have finished" marker
+       * couldn't be removed from storage - the warning may still show. */
+      markerRemains: boolean;
     }
   | { ok: false; error: ImportFailure };
 
@@ -54,8 +57,12 @@ export type ImportDeps = {
   deletedKeys: (owner: string) => Promise<Partial<Record<PrivateDomain, Set<string>>>>;
   cloud: (owner: string) => ImportCloud;
   requestSync: () => void;
+  /** Adds this import's marker (other owners' / other backups' markers are kept). */
   markPending: (pending: PendingImport) => Promise<boolean>;
-  clearPending: () => Promise<void>;
+  /** Removes ONLY the marker for this owner + backup fingerprint. false = couldn't (storage error). */
+  clearPending: (owner: string, fingerprint: string) => Promise<boolean>;
+  /** Is there a marker for this owner + backup fingerprint (an earlier, unconfirmed import of the same file)? */
+  hasPending: (owner: string, fingerprint: string) => Promise<boolean>;
   /** Resolves once the stores' own (debounced) writes have had time to run. */
   settle: () => Promise<void>;
   /** Adapters whose STORED slice for `owner` differs from memory (not persisted yet, or a failed write). */
@@ -78,29 +85,78 @@ export const PENDING_IMPORT_KEY = 'oyno.dataImport.pending';
 /** Longer than the longest store write debounce (reading / listening: 500 ms). */
 const SETTLE_MS = 800;
 
+const isMarker = (value: unknown): value is PendingImport => {
+  const marker = value as PendingImport | null;
+  return !!marker && typeof marker === 'object' && typeof marker.owner === 'string' && typeof marker.fingerprint === 'string' && marker.fingerprint.length <= 64 && typeof marker.startedAt === 'string';
+};
+
+/** Every stored marker (a list; a single object written by the previous version is read too). null = storage unreadable. */
+async function readMarkers(): Promise<PendingImport[] | null> {
+  let raw: string | null;
+  try {
+    raw = await AsyncStorage.getItem(PENDING_IMPORT_KEY);
+  } catch {
+    return null;
+  }
+  const parsed = safeJsonParse<unknown>(raw, []);
+  return (Array.isArray(parsed) ? parsed : [parsed]).filter(isMarker);
+}
+
+async function writeMarkers(markers: PendingImport[]): Promise<boolean> {
+  const write = markers.length === 0 ? AsyncStorage.removeItem(PENDING_IMPORT_KEY) : AsyncStorage.setItem(PENDING_IMPORT_KEY, JSON.stringify(markers.slice(-20)));
+  return write.then(
+    () => true,
+    () => false,
+  );
+}
+
+const sameImport = (marker: PendingImport, owner: string, fingerprint: string) => marker.owner === owner && marker.fingerprint === fingerprint;
+
+/** Marker writes never interleave (read-modify-write of one key). */
+let markerQueue: Promise<unknown> = Promise.resolve();
+function serializedMarkers<T>(task: () => Promise<T>): Promise<T> {
+  const next = markerQueue.then(task, task);
+  markerQueue = next.catch(() => undefined);
+  return next;
+}
+
 export const defaultImportDeps: ImportDeps = {
   owner: currentRecordsOwner,
   adapters: STORE_ADAPTERS,
   deletedKeys: (owner) => knownDeletedKeys(owner).catch(() => ({})),
   cloud: (owner) => (owner === 'guest' ? 'device_only_guest' : usePrivateSyncStatus.getState().backend === 'available' ? 'will_sync' : 'cloud_unavailable'),
   requestSync: () => requestAccountSync('local_change'),
-  markPending: (pending) => AsyncStorage.setItem(PENDING_IMPORT_KEY, JSON.stringify(pending)).then(
-    () => true,
-    () => false,
-  ),
-  clearPending: () => AsyncStorage.removeItem(PENDING_IMPORT_KEY).catch(() => undefined),
+  markPending: (pending) =>
+    serializedMarkers(async () => {
+      const markers = await readMarkers();
+      if (!markers) return false;
+      return writeMarkers([...markers.filter((marker) => !sameImport(marker, pending.owner, pending.fingerprint)), pending]);
+    }),
+  clearPending: (owner, fingerprint) =>
+    serializedMarkers(async () => {
+      const markers = await readMarkers();
+      if (!markers) return false;
+      const kept = markers.filter((marker) => !sameImport(marker, owner, fingerprint));
+      return kept.length === markers.length ? true : writeMarkers(kept);
+    }),
+  hasPending: async (owner, fingerprint) => ((await readMarkers()) ?? []).some((marker) => sameImport(marker, owner, fingerprint)),
   settle: () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS)),
   unpersisted: unpersistedSlices,
 };
 
-/** An import for THIS owner that started and never confirmed it finished. */
+/** An import for THIS owner that started and never confirmed it finished (the newest one). */
 export async function readPendingImport(owner: string): Promise<PendingImport | null> {
-  const pending = safeJsonParse<PendingImport | null>(await AsyncStorage.getItem(PENDING_IMPORT_KEY).catch(() => null), null);
-  return pending && typeof pending === 'object' && pending.owner === owner && typeof pending.fingerprint === 'string' ? pending : null;
+  return ((await readMarkers()) ?? []).filter((marker) => marker.owner === owner).at(-1) ?? null;
 }
 
-export async function dismissPendingImport(): Promise<void> {
-  await defaultImportDeps.clearPending();
+/** "Dismiss" on the warning: this owner's markers only - never another account's. */
+export function dismissPendingImport(owner: string): Promise<boolean> {
+  return serializedMarkers(async () => {
+    const markers = await readMarkers();
+    if (!markers) return false;
+    const kept = markers.filter((marker) => marker.owner !== owner);
+    return kept.length === markers.length ? true : writeMarkers(kept);
+  });
 }
 
 /** A short, non-reversible id of the file's text (FNV-1a) - recognises a re-import, reveals nothing. */
@@ -165,6 +221,9 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
   const prepared = await prepare(backup, expectedOwner, deps);
   if (!prepared) return { ok: false, error: 'owner_changed' };
   const { owner, plans } = prepared;
+  const fingerprint = options.fingerprint ?? 'unknown';
+  // An earlier import of this SAME file for this owner never confirmed it finished.
+  const recovering = await deps.hasPending(owner, fingerprint);
   const toWrite = plans.filter(({ plan }) => plan.added + plan.updated > 0);
   // Recovery: a domain with nothing new whose STORAGE is behind memory (an
   // earlier import - or anything else - that didn't persist) is written again.
@@ -174,13 +233,14 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
   if (deps.owner() !== owner) return { ok: false, error: 'owner_changed' };
 
   const changing = toWrite.length + toRepair.length > 0;
-  if (changing && !(await deps.markPending({ owner, fingerprint: options.fingerprint ?? 'unknown', startedAt: new Date().toISOString() }))) {
+  if (changing && !(await deps.markPending({ owner, fingerprint, startedAt: new Date().toISOString() }))) {
     // Can't even record that an import is starting: write nothing.
     return { ok: false, error: 'apply_failed' };
   }
   // The marker write was the last await before writing: re-check the owner.
   if (deps.owner() !== owner) {
-    await deps.clearPending();
+    // Nothing was written: remove the marker just added - but an earlier one for this file stays.
+    if (changing && !recovering) await deps.clearPending(owner, fingerprint);
     return { ok: false, error: 'owner_changed' };
   }
 
@@ -203,7 +263,8 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
       }
     }
     await deps.settle();
-    if (restored) await deps.clearPending();
+    // Restored = this attempt left no trace; an EARLIER unconfirmed import of this file still might have.
+    if (restored && !recovering) await deps.clearPending(owner, fingerprint);
     // Not restored: the marker stays, so the next visit says so too.
     return { ok: false, error: restored ? 'apply_failed' : 'apply_partial' };
   }
@@ -222,8 +283,12 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
       behind = await deps.unpersisted(behind, owner);
     }
     if (behind.length > 0) return { ok: false, error: 'apply_partial' };
-    await deps.clearPending();
   }
+  // Every domain of this backup is now verified in storage (written ones
+  // above; the rest were compared with storage before writing and found
+  // current) - so this file's marker can go, even when nothing was written
+  // (the app closed after the data persisted but before the marker was removed).
+  const markerRemains = changing || recovering ? !(await deps.clearPending(owner, fingerprint)) : false;
   const cloud = deps.cloud(owner);
   if (written.length > 0 && cloud === 'will_sync') deps.requestSync();
   const all = plans.map(({ plan }) => summary(plan));
@@ -234,5 +299,6 @@ async function run(backup: ParsedBackup, expectedOwner: string, deps: ImportDeps
     cloud,
     matchesPreview: !options.preview || sameSummary(options.preview, all),
     repaired: toRepair.map(({ adapter }) => adapter.domain),
+    markerRemains,
   };
 }

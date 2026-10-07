@@ -4493,7 +4493,8 @@
     "interrupted": "Your last import may not have finished - the app closed while saving. Importing the same file again is safe: it completes the import and counts nothing twice.",
     "interruptedDismiss": "Dismiss",
     "changedSincePreview": "Your data changed while importing, so the result differs a little from the preview. The numbers above are what actually happened.",
-    "repaired": "Saved again on this device (an earlier import hadn't fully saved): {{list}}. Nothing was added twice."
+    "repaired": "Saved again on this device (an earlier import hadn't fully saved): {{list}}. Nothing was added twice.",
+    "markerRemains": "Everything is saved, but the note about an unfinished import couldn't be removed. You can dismiss it next time."
   },
   "readerNavigator": {
     "contents": "Contents",
