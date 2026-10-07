@@ -12,6 +12,17 @@ import { isFreshWebImageSource, keepWebAttachment, readWebAttachment, removeWebA
 import { isValidReportUrl, legacyCategory, legacyMessage, MAX_CORRECTION_LENGTH, toServerContent, type ReportContent, type ReportContentType } from './reportContent';
 
 export const FEEDBACK_QUEUE_KEY = 'oyno.feedback.pending';
+/** Ids (only) of reports the server CONFIRMED - proof for "sent". */
+export const FEEDBACK_DELIVERED_KEY = 'oyno.feedback.delivered';
+/** How many confirmations are remembered (oldest forgotten first). */
+const MAX_DELIVERED_KEPT = 200;
+/**
+ * Queue capacity, enforced when ADDING a report: a new report is refused
+ * (visibly - 'queue_full') rather than pushing an older one out. Reports
+ * already stored are never dropped to make room, even when an older app
+ * version left more than this.
+ */
+export const MAX_QUEUED_REPORTS = 50;
 
 /** What a reporter can pick. */
 export type FeedbackCategory = 'bug' | 'translation' | 'culture_correction' | 'image' | 'suggestion' | 'other';
@@ -59,7 +70,15 @@ export type PendingFeedback = {
   failureCode?: string;
 };
 
-export type SubmitResult = 'sent' | 'queued' | 'failed';
+/**
+ * sent        the server confirmed it (recorded on this device)
+ * queued      stored here, waiting to be sent
+ * failed      the server refused it; kept for an explicit Retry
+ * queue_full  NOT stored: too many reports are waiting (nothing else changed)
+ * not_saved   NOT stored: the device couldn't write it (nothing else changed)
+ * unknown     not in the queue and no confirmation recorded - never claimed as sent
+ */
+export type SubmitResult = 'sent' | 'queued' | 'failed' | 'queue_full' | 'not_saved' | 'unknown';
 
 /**
  * What happened to the image the tester attached - so the sheet never
@@ -89,7 +108,6 @@ const ACCOUNT_ID = /^[A-Za-z0-9-]{1,64}$/;
 const ALL_CATEGORIES: readonly string[] = [...FEEDBACK_CATEGORIES, 'ui', 'content', 'performance'];
 const CONTENT_TYPES: readonly ReportContentType[] = ['culture_item', 'culture_material', 'explore_region', 'discovery', 'collection', 'trail', 'game'];
 const CONTENT_ID = /^[a-z0-9][a-z0-9_-]{0,119}$/;
-const MAX_QUEUED = 50;
 
 /**
  * An image a report may upload: only one OYNO made for feedback - its own
@@ -157,7 +175,8 @@ export async function readFeedbackQueue(): Promise<PendingFeedback[]> {
   if (!Array.isArray(parsed)) return [];
   const seen = new Set<string>();
   const reports: PendingFeedback[] = [];
-  for (const item of parsed.slice(-MAX_QUEUED)) {
+  // Every valid stored report - none is cut off to fit a limit.
+  for (const item of parsed) {
     let report: PendingFeedback | null = null;
     try {
       report = parseQueuedReport(item);
@@ -172,8 +191,23 @@ export async function readFeedbackQueue(): Promise<PendingFeedback[]> {
   return reports;
 }
 
-async function writeFeedbackQueue(items: PendingFeedback[]): Promise<void> {
-  await AsyncStorage.setItem(FEEDBACK_QUEUE_KEY, JSON.stringify(items)).catch(() => {});
+/** false = not stored (the queue on disk is unchanged). */
+async function writeFeedbackQueue(items: PendingFeedback[]): Promise<boolean> {
+  return AsyncStorage.setItem(FEEDBACK_QUEUE_KEY, JSON.stringify(items)).then(
+    () => true,
+    () => false,
+  );
+}
+
+async function readDelivered(): Promise<string[]> {
+  const parsed = safeJsonParse<unknown>(await AsyncStorage.getItem(FEEDBACK_DELIVERED_KEY).catch(() => null), []);
+  return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string' && REPORT_ID.test(id)) : [];
+}
+
+async function recordDelivered(clientReportId: string): Promise<void> {
+  const delivered = (await readDelivered()).filter((id) => id !== clientReportId);
+  delivered.push(clientReportId);
+  await AsyncStorage.setItem(FEEDBACK_DELIVERED_KEY, JSON.stringify(delivered.slice(-MAX_DELIVERED_KEPT))).catch(() => undefined);
 }
 
 function fileSystemAvailable(): boolean {
@@ -220,6 +254,14 @@ export async function enqueueFeedback(input: {
   return (await enqueueWithAttachment(input)).report;
 }
 
+/** The report was NOT added to the queue. Nothing already queued changed. */
+export class FeedbackQueueError extends Error {
+  constructor(readonly reason: 'queue_full' | 'storage_failed') {
+    super(reason);
+    this.name = 'FeedbackQueueError';
+  }
+}
+
 async function enqueueWithAttachment(input: Parameters<typeof enqueueFeedback>[0]): Promise<{ report: PendingFeedback; attachment: AttachmentState }> {
   const clientReportId = createReportId();
   let screenshotUri: string | null = null;
@@ -247,7 +289,19 @@ async function enqueueWithAttachment(input: Parameters<typeof enqueueFeedback>[0
     accountId: input.accountId,
     attempts: 0,
   };
-  await serialized(async () => writeFeedbackQueue([...(await readFeedbackQueue()), report]));
+  const stored = await serialized(async () => {
+    const current = await readFeedbackQueue();
+    // Capacity is checked against what is REALLY stored, inside the same
+    // serialized step as the write - two reports at once can't both squeeze in.
+    if (current.length >= MAX_QUEUED_REPORTS) return 'full' as const;
+    return (await writeFeedbackQueue([...current, report])) ? ('ok' as const) : ('failed' as const);
+  });
+  if (stored !== 'ok') {
+    // Not queued: whatever was copied for it goes; the tester's text stays in the sheet.
+    deleteLocalScreenshot(report.screenshotUri);
+    await removeWebAttachment(report.screenshotUri);
+    throw new FeedbackQueueError(stored === 'full' ? 'queue_full' : 'storage_failed');
+  }
   // The temp image is now in the queue's own storage.
   if (input.screenshotUri && report.screenshotUri && report.screenshotUri !== input.screenshotUri) deleteTempImage(input.screenshotUri);
   return { report, attachment };
@@ -357,7 +411,8 @@ async function sendOne(report: PendingFeedback, currentAccountId: string | null)
   return { outcome: 'failed', report: { ...next, status: 'failed', failureCode: failureCode(error) } };
 }
 
-let flushing: Promise<number> | null = null;
+let running: Promise<number> | null = null;
+let queued: Promise<number> | null = null;
 
 function keepRecentFailures(items: PendingFeedback[]): PendingFeedback[] {
   const failed = items.filter((item) => item.status === 'failed');
@@ -371,44 +426,67 @@ function keepRecentFailures(items: PendingFeedback[]): PendingFeedback[] {
   return items.filter((item) => !drop.has(item.clientReportId));
 }
 
-/**
- * Sends every PENDING report, oldest first. Single-flight: overlapping
- * calls (reconnect + submit at the same moment) share one run, so a report
- * is never sent twice in parallel. A report is removed ONLY after the
- * server accepted it; a permanently refused one is marked 'failed' (kept,
- * not auto-retried). Returns how many were sent.
- */
-export function flushFeedbackQueue(currentAccountId: string | null): Promise<number> {
-  if (flushing) return flushing;
-  flushing = (async () => {
-    let sent = 0;
-    for (const report of await readFeedbackQueue()) {
-      if (report.status === 'failed') continue;
-      const { outcome, report: updated } = await sendOne(report, currentAccountId);
-      await serialized(async () => {
-        const current = await readFeedbackQueue();
-        const next = outcome === 'sent' ? current.filter((item) => item.clientReportId !== report.clientReportId) : current.map((item) => (item.clientReportId === report.clientReportId ? updated : item));
-        await writeFeedbackQueue(keepRecentFailures(next));
-      });
-      if (outcome === 'sent') {
-        deleteLocalScreenshot(report.screenshotUri);
-        await removeWebAttachment(report.screenshotUri);
-        sent += 1;
-      }
-      if (outcome === 'retry') break; // offline again - try the rest later
+async function runFlush(currentAccountId: string | null): Promise<number> {
+  let sent = 0;
+  for (const report of await readFeedbackQueue()) {
+    if (report.status === 'failed') continue;
+    const { outcome, report: updated } = await sendOne(report, currentAccountId);
+    await serialized(async () => {
+      // Proof first: "sent" is only ever answered from this record.
+      if (outcome === 'sent') await recordDelivered(report.clientReportId);
+      // Re-read: reports added, retried or changed meanwhile are kept as they are now.
+      const current = await readFeedbackQueue();
+      const next =
+        outcome === 'sent'
+          ? current.filter((item) => item.clientReportId !== report.clientReportId)
+          : current.map((item) => (item.clientReportId === report.clientReportId && item.status !== 'failed' ? { ...updated, attempts: Math.max(updated.attempts, item.attempts) } : item));
+      await writeFeedbackQueue(keepRecentFailures(next));
+    });
+    if (outcome === 'sent') {
+      deleteLocalScreenshot(report.screenshotUri);
+      await removeWebAttachment(report.screenshotUri);
+      sent += 1;
     }
-    return sent;
-  })().finally(() => {
-    flushing = null;
-  });
-  return flushing;
+    if (outcome === 'retry') break; // offline again - try the rest later
+  }
+  return sent;
 }
 
-/** Where a report stands now: gone from the queue means the server has it. */
+/**
+ * Sends every PENDING report, oldest first. At most ONE run at a time, so
+ * a report is never sent twice in parallel; a call that arrives during a
+ * run gets ONE follow-up run (shared by every such caller), so a report
+ * queued or retried meanwhile is not left waiting. A report is removed
+ * ONLY after the server accepted it (and that is recorded); a permanently
+ * refused one is marked 'failed' (kept, not auto-retried). The server
+ * stores each client report id once, so a retry after an interrupted
+ * send is harmless. Returns how many this call's run(s) sent.
+ */
+export function flushFeedbackQueue(currentAccountId: string | null): Promise<number> {
+  if (!running) {
+    running = runFlush(currentAccountId).finally(() => {
+      running = null;
+    });
+    return running;
+  }
+  if (!queued) {
+    const previous = running;
+    queued = previous
+      .catch(() => 0)
+      .then(() => {
+        queued = null;
+        return flushFeedbackQueue(currentAccountId);
+      });
+  }
+  return queued;
+}
+
+/** Where a report stands now. 'sent' only with a recorded server confirmation. */
 export async function feedbackStatus(clientReportId: string): Promise<SubmitResult> {
   const report = (await readFeedbackQueue()).find((item) => item.clientReportId === clientReportId);
-  if (!report) return 'sent';
-  return report.status === 'failed' ? 'failed' : 'queued';
+  if (report) return report.status === 'failed' ? 'failed' : 'queued';
+  // Gone from the queue is NOT proof: only a recorded server confirmation is.
+  return (await readDelivered()).includes(clientReportId) ? 'sent' : 'unknown';
 }
 
 /** Explicit Retry of a failed report (from the failure screen). */
@@ -425,8 +503,16 @@ export async function retryFeedback(clientReportId: string, options: { online: b
 export async function sendFeedbackReport(
   input: Parameters<typeof enqueueFeedback>[0],
   options: { online: boolean; currentAccountId: string | null },
-): Promise<{ result: SubmitResult; clientReportId: string; attachment: AttachmentState }> {
-  const { report, attachment } = await enqueueWithAttachment(input);
+): Promise<{ result: SubmitResult; clientReportId: string | null; attachment: AttachmentState }> {
+  let enqueued: Awaited<ReturnType<typeof enqueueWithAttachment>>;
+  try {
+    enqueued = await enqueueWithAttachment(input);
+  } catch (error) {
+    // Not stored at all: say so - never 'sent' or 'queued'. The queue is unchanged.
+    if (error instanceof FeedbackQueueError) return { result: error.reason === 'queue_full' ? 'queue_full' : 'not_saved', clientReportId: null, attachment: 'none' };
+    throw error;
+  }
+  const { report, attachment } = enqueued;
   if (options.online) await flushFeedbackQueue(options.currentAccountId);
   const result = await feedbackStatus(report.clientReportId);
   return { result, clientReportId: report.clientReportId, attachment: result === 'sent' ? (sentImage.get(report.clientReportId) ?? attachment) : attachment };

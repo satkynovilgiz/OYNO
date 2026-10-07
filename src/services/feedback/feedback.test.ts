@@ -244,7 +244,7 @@ describe('delivery states', () => {
     mockServer.failNextWith = { message: 'INVALID_INPUT' };
     const { result, clientReportId } = await sendFeedbackReport({ ...baseInput, accountId: null }, { online: true, currentAccountId: null });
     expect(result).toBe('failed');
-    expect(await retryFeedback(clientReportId, { online: true, currentAccountId: null })).toBe('sent');
+    expect(await retryFeedback(clientReportId!, { online: true, currentAccountId: null })).toBe('sent');
     expect([...mockServer.reports.keys()]).toEqual([clientReportId]);
     expect(await readFeedbackQueue()).toEqual([]);
   });

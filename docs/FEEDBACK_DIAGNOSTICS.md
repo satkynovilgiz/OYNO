@@ -59,7 +59,29 @@ All four use the same functions. None of them throws on bad input.
   later. Reports queued before this field existed keep their email only
   if it is a valid address; the old code only stored one after the opt-in.
 - Stored reports that can't be real (no valid id, category or message) are
-  dropped. Duplicates are dropped. At most 50 are read.
+  dropped, and so are duplicates. Every VALID stored report is read; none
+  is cut off to fit a limit.
+
+## Queue capacity and delivery status
+
+- Capacity (50) is enforced when a report is ADDED, inside the same
+  serialized step as the write: the new report is refused with
+  `queue_full` (the sheet keeps the text and says why) and the stored
+  queue is untouched. A queue left larger by an older version is kept
+  whole and drains normally.
+- A write that fails is `not_saved`, never `queued`.
+- `sent` is answered only from a device-side record of SERVER
+  CONFIRMATIONS (`oyno.feedback.delivered`, report ids only, last 200),
+  written before the report leaves the queue. A report that is neither
+  queued nor confirmed is `unknown` ("not confirmed"), never `sent`.
+- Flushes: one run at a time. A call during a run gets one shared
+  follow-up run, so a report added or retried meanwhile isn't left
+  waiting. Queue writes re-read the current queue, so concurrent adds,
+  retries and failures don't overwrite each other.
+- The server stores each `client_report_id` once, so re-sending after an
+  interruption is harmless.
+- Permanently refused (`failed`) reports: the newest 5 are kept for Retry;
+  older refused ones are removed. They aren't pending, but they are gone.
 
 ## Screenshots
 

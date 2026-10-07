@@ -20,7 +20,7 @@ import { AnimatedPressable, Button, IconButton, TextField, Toggle } from '@/comp
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { currentRoute, recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { buildDiagnostics, isSensitiveRoute } from '@/services/feedback/diagnostics';
-import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult, type AttachmentState } from '@/services/feedback/feedbackQueue';
+import { FEEDBACK_CATEGORIES, MAX_FEEDBACK_LENGTH, MAX_QUEUED_REPORTS, retryFeedback, sendFeedbackReport, type FeedbackCategory, type SubmitResult, type AttachmentState } from '@/services/feedback/feedbackQueue';
 import { buildReportContent, CONTENT_CATEGORIES, isValidReportUrl, MAX_CORRECTION_LENGTH } from '@/services/feedback/reportContent';
 import { deleteTempImage, FEEDBACK_IMAGE, normalizeToJpeg, pickerOptionsForJpeg, type PickedImage } from '@/services/media/normalizeImage';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
@@ -63,6 +63,8 @@ export function FeedbackSheet() {
   const [suggestedCorrection, setSuggestedCorrection] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [sourceError, setSourceError] = useState<string | null>(null);
+  /** The report was NOT stored (queue full / storage) - the form and its text stay. */
+  const [notStored, setNotStored] = useState<'queue_full' | 'not_saved' | null>(null);
   const [contentLanguage, setContentLanguage] = useState<'kg' | 'ru' | 'en'>('kg');
   const [includeEmail, setIncludeEmail] = useState(false);
   const [screenshotUri, setScreenshotUri] = useState<string | null>(null);
@@ -93,6 +95,7 @@ export function FeedbackSheet() {
     setSuggestedCorrection('');
     setSourceUrl('');
     setSourceError(null);
+    setNotStored(null);
     setIncludeEmail(false);
     deleteTempImage(screenshotUri);
     setScreenshotUri(null);
@@ -182,6 +185,12 @@ export function FeedbackSheet() {
         { category, message, diagnostics, content, screenshotUri, accountId: user?.id ?? null, contactConsent: includeEmail },
         { online: !isOffline, currentAccountId: user?.id ?? null },
       );
+      if (outcome.result === 'queue_full' || outcome.result === 'not_saved') {
+        // Nothing was stored: stay on the form (the text and image are kept here).
+        setNotStored(outcome.result);
+        return;
+      }
+      setNotStored(null);
       setReportId(outcome.clientReportId);
       setResult(outcome.result);
       setAttachment(outcome.attachment);
@@ -200,8 +209,8 @@ export function FeedbackSheet() {
     }
   }
 
-  const resultTitle = result === 'sent' ? t('feedback.sentTitle') : result === 'failed' ? t('feedback.failedTitle') : t('feedback.queuedTitle');
-  const resultBody = result === 'sent' ? t('feedback.sentBody') : result === 'failed' ? t('feedback.failedBody') : t('feedback.queuedBody');
+  const resultTitle = result === 'sent' ? t('feedback.sentTitle') : result === 'failed' ? t('feedback.failedTitle') : result === 'unknown' ? t('feedback.unknownTitle') : t('feedback.queuedTitle');
+  const resultBody = result === 'sent' ? t('feedback.sentBody') : result === 'failed' ? t('feedback.failedBody') : result === 'unknown' ? t('feedback.unknownBody') : t('feedback.queuedBody');
 
   const detailRows: [string, string][] = [
     [t('feedback.details.app'), `${diagnostics.appVersion ?? '?'} (${diagnostics.buildNumber ?? '?'})`],
@@ -403,6 +412,11 @@ export function FeedbackSheet() {
               ) : null}
 
               {isOffline ? <Text style={styles.note}>{t('feedback.offlineNote')}</Text> : null}
+              {notStored ? (
+                <Text style={styles.error} accessibilityRole="alert" testID="feedback-not-stored">
+                  {t(notStored === 'queue_full' ? 'feedback.queueFull' : 'feedback.notSaved', { count: MAX_QUEUED_REPORTS })}
+                </Text>
+              ) : null}
               <Button label={t('feedback.send')} onPress={() => void send()} disabled={!message.trim()} loading={sending} testID="feedback-send" />
             </ScrollView>
           )}
@@ -433,6 +447,7 @@ const styles = StyleSheet.create({
   previewRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   preview: { width: 64, height: 110, borderRadius: radii.md, backgroundColor: colors.surfaceAlt },
   note: { ...typography.small, fontWeight: '500', color: colors.textMuted },
+  error: { ...typography.small, fontWeight: '600', color: colors.accentTerracotta },
   about: { gap: 2, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surface },
   aboutLabel: { ...typography.overline, color: colors.textSecondary },
   aboutTitle: { ...typography.bodyBold, color: colors.textPrimary },

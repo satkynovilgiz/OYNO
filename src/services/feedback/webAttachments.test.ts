@@ -71,7 +71,7 @@ describe('web: a selected JPEG reaches the upload endpoint', () => {
     expect(outcome).toMatchObject({ result: 'queued', attachment: 'kept' });
     // What the queue stores: an internal reference, never the blob URL.
     const stored = await AsyncStorage.getItem(FEEDBACK_QUEUE_KEY);
-    expect(stored).toContain(webAttachmentUri(outcome.clientReportId));
+    expect(stored).toContain(webAttachmentUri(outcome.clientReportId!));
     expect(stored).not.toContain('blob:');
     // Reload: the blob URL is dead, in-memory state gone; IndexedDB stays.
     sources.clear();

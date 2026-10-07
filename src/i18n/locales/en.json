@@ -2756,7 +2756,11 @@
       "session_only": "Your image is kept only while this page is open. If you reload or close it before the report is sent, the report goes without the image.",
       "dropped": "Your image couldn't be saved with the report, so it was saved without it.",
       "not_sent": "Your report was sent without the image - it was no longer available or couldn't be uploaded."
-    }
+    },
+    "queueFull": "{{count}} reports are already waiting to be sent from this device, so this one wasn't saved. Connect to the internet so they can go out, then send this again - your text is still here.",
+    "notSaved": "This report couldn't be saved on this device, so it wasn't sent. Your text is still here - try again.",
+    "unknownTitle": "Not confirmed",
+    "unknownBody": "We couldn't confirm that this report reached the OYNO team. If it matters, please send it again."
   },
   "journal": {
     "title": "My Journal",
