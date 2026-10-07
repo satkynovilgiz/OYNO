@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { ChevronLeft, Layers, Palette, Redo2, Shapes, Share2, Undo2, Wand2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,7 @@ import {
   type OymoEditorState,
 } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
+import { takeCreatorHandoff } from '@/services/culture/oymoHandoff';
 import { useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -55,14 +57,16 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   const isGuest = useAuthStore((state) => state.status === 'guest');
   const { share, shareHost } = useShareCard();
 
-  const [history, setHistory] = useState<OymoEditorState[]>([EMPTY_OYMO_STATE]);
+  // A composition handed over (e.g. a solved Restore puzzle) opens as a new, unsaved design.
+  const [handoff] = useState(() => takeCreatorHandoff());
+  const [history, setHistory] = useState<OymoEditorState[]>([handoff ?? EMPTY_OYMO_STATE]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const editorState = history[historyIndex];
 
   const [selectedMotifId, setSelectedMotifId] = useState<OymoMotifId>(OYMO_MOTIFS[0].id);
   const [selectedColor, setSelectedColor] = useState<string>(colors.primary);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
-  const [symmetryMode, setSymmetryMode] = useState<SymmetryMode>('fourWay');
+  const [symmetryMode, setSymmetryMode] = useState<SymmetryMode>(handoff ? 'none' : 'fourWay');
   const [activeTab, setActiveTab] = useState<PanelTab>('motif');
   const [showBackgroundColors, setShowBackgroundColors] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -236,6 +240,18 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
         <LabAboutNote lab="oymo" />
+        {handoff ? (
+          <Text style={styles.handoffNote} testID="oymo-handoff-note">
+            {t('restorePattern.openedCopy')}
+          </Text>
+        ) : null}
+        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
+          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.restoreTitle}>{t('restorePattern.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('restorePattern.entryMeta')}</Text>
+          </View>
+        </AnimatedPressable>
         <View style={isTablet ? styles.tabletRow : undefined}>
           {isTablet && panel}
 
@@ -348,6 +364,9 @@ function TabButton({ icon: Icon, label, active, onPress }: { icon: typeof Shapes
 }
 
 const styles = StyleSheet.create({
+  handoffNote: { ...typography.small, color: colors.textSecondary, marginBottom: spacing.sm },
+  restoreEntry: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.sm, marginBottom: spacing.md, borderRadius: radii.lg, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
+  restoreTitle: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
   root: {
     flex: 1,
     backgroundColor: colors.background,

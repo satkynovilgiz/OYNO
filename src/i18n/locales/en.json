@@ -5040,5 +5040,50 @@
         "fact1": "Some of its walnut trees are more than a thousand years old."
       }
     }
+  },
+  "restorePattern": {
+    "title": "Restore the Pattern",
+    "entryMeta": "Put the motifs back where they belong",
+    "intro": "Copy the target pattern: pick a piece, then tap the place it belongs. Turn pieces until they match.",
+    "target": "Target pattern",
+    "board": "Your board",
+    "puzzleOf": "Puzzle {{current}} of {{total}}",
+    "pieces": "Pieces",
+    "trayEmpty": "All pieces are on the board.",
+    "slotA11y": "Row {{row}}, column {{column}}: {{content}}",
+    "empty": "empty",
+    "pieceA11y": "{{motif}}, {{color}}, turned {{rotation}}°",
+    "fixedA11y": "{{content}} (already in place)",
+    "selected": "Selected: {{piece}}",
+    "turn": "Turn 90°",
+    "toTray": "Back to tray",
+    "undo": "Undo",
+    "reset": "Reset",
+    "hint": "Hint",
+    "hintsUsed_one": "{{count}} hint used",
+    "hintsUsed_other": "{{count}} hints used",
+    "progress": "{{correct}} of {{total}} pieces in place",
+    "solved": "Pattern restored!",
+    "solvedBody": "Every motif is in its place.",
+    "openInCreator": "Open in Creator",
+    "openedCopy": "A copy from Restore the Pattern - it isn't saved yet. Save it to keep it.",
+    "nextPuzzle": "Next puzzle",
+    "choosePuzzle": "Choose a puzzle",
+    "puzzleName": "Puzzle {{number}}",
+    "solvedMark": "solved",
+    "aboutMotifs": "Motifs in this pattern",
+    "readAbout": "Read about {{motif}}",
+    "colors": {
+      "green": "green",
+      "gold": "gold",
+      "brown": "brown"
+    },
+    "hintsUsed_few": "{{count}} hints used",
+    "hintsUsed_many": "{{count}} hints used",
+    "descriptions": {
+      "kochkorMuyuz": "It stands for the livestock of the owner and of the people living on the jailoo. No pattern is made without the kochkor müyüz. It is this element that sets Kyrgyz ornament apart from that of other peoples.",
+      "umaiEne": "The Umai Ene pattern is a sacred sign of the Turkic peoples that carries the image of the ancient goddess. Among the Kyrgyz and other nomadic peoples of Central Asia it stands for the feminine principle, a mother's nobility, and the protection of children and the home.",
+      "kazMoyun": "A pattern shaped like a goose's neck."
+    }
   }
 }
