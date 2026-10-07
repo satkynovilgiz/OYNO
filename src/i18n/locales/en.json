@@ -4969,7 +4969,9 @@
         }
       },
       "questionCount_few": "{{count}} questions",
-      "questionCount_many": "{{count}} questions"
+      "questionCount_many": "{{count}} questions",
+      "practiceRight": "Practice: answered correctly",
+      "practiceWrong": "Practice: not this time"
     }
   },
   "duel": {

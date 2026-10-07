@@ -85,6 +85,17 @@ Flow:
 
 "Practise the missed ones" repeats only that expedition's missed questions.
 
+The summary shows only the current visit: one owner, one expedition
+(`expeditionVisit.ts`).
+
+- Starting a round in another expedition starts a new visit, and so does a
+  new learning round.
+- Practice answers are merged by question, keeping the latest, and are
+  labelled apart from the learning and challenge results.
+- Its "Practise" button offers exactly the misses the store still holds.
+- Switching accounts drops the active round, which is not saved for anyone,
+  and the visit.
+
 Records are stored in `oyno.detective.v1` under
 `<owner>.expeditions.<id> = { learning, challenge, missedIds }`.
 

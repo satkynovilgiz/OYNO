@@ -4969,7 +4969,9 @@
         }
       },
       "questionCount_few": "{{count}} суроо",
-      "questionCount_many": "{{count}} суроо"
+      "questionCount_many": "{{count}} суроо",
+      "practiceRight": "Машыгуу: туура",
+      "practiceWrong": "Машыгуу: бул жолу эмес"
     }
   },
   "duel": {

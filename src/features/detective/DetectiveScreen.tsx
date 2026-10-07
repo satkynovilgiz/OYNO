@@ -13,14 +13,16 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { ownerDetective, useDetectiveStore } from '@/store/useDetectiveStore';
 import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
 
-import { buildSession, CLUE_POINTS, isFinished, MAX_CLUES, seededRng, SESSION_LENGTH, sessionReducer, startSession, summarize, type Answer, type SessionQuestion, type SessionState } from './detectiveModel';
+import { buildSession, CLUE_POINTS, isFinished, MAX_CLUES, seededRng, SESSION_LENGTH, sessionReducer, startSession, summarize, type SessionQuestion, type SessionState } from './detectiveModel';
+import { challengeTotal, recordRound, summaryRows, visitFor, type ExpeditionVisit } from './expeditionVisit';
 import { expedition, EXPEDITIONS, type ExpeditionId } from './expeditions';
 import { detectiveQuestion, questionArtwork, sourceRoute } from './detectiveQuestions';
 
 type Round = 'learning' | 'challenge' | 'practice';
 type Mode =
   | { kind: 'intro' }
-  | { kind: 'playing'; focus: boolean; expedition?: { id: ExpeditionId; round: Round } }
+  /** `owner` = whose round this is; a round is never saved for anyone else. */
+  | { kind: 'playing'; owner: string; focus: boolean; expedition?: { id: ExpeditionId; round: Round } }
   | { kind: 'results'; focus: boolean }
   | { kind: 'expeditionIntro'; id: ExpeditionId }
   /** Learning round done: the optional challenge or the summary. */
@@ -46,8 +48,19 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
     startSession([]),
   );
   const recorded = useRef(false);
-  /** What was actually answered in this visit's expedition rounds (for "What you discovered"). */
-  const [roundAnswers, setRoundAnswers] = useState<Partial<Record<Round, Answer[]>>>({});
+  /** What was actually answered in this visit to one expedition (for "What you discovered"). */
+  const [visit, setVisit] = useState<ExpeditionVisit | null>(null);
+
+  // Another account: drop the active round and this visit's answers - they are neither shown nor saved for the new owner.
+  const shownOwner = useRef(owner);
+  useEffect(() => {
+    if (shownOwner.current === owner) return;
+    shownOwner.current = owner;
+    recorded.current = true;
+    dispatch({ type: 'start', questions: [] });
+    setVisit(null);
+    setMode({ kind: 'intro' });
+  }, [owner]);
 
   useEffect(() => {
     void useDetectiveStore.getState().load();
@@ -56,7 +69,7 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
   function begin(focusIds?: string[]) {
     recorded.current = false;
     dispatch({ type: 'start', questions: buildSession(seededRng(Date.now()), focusIds ? { onlyIds: focusIds } : {}) });
-    setMode({ kind: 'playing', focus: !!focusIds });
+    setMode({ kind: 'playing', owner, focus: !!focusIds });
   }
 
   /** An expedition round: its own questions only (never repeated); learning and practice open every clue. */
@@ -64,9 +77,8 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
     const item = expedition(id)!;
     const ids = onlyIds ?? item.questionIds;
     recorded.current = false;
-    if (round !== 'practice') setRoundAnswers((current) => (round === 'learning' ? {} : { ...current, challenge: undefined }));
     dispatch({ type: 'start', questions: buildSession(seededRng(Date.now()), { onlyIds: ids, length: ids.length }), startRevealed: round === 'challenge' ? 0 : MAX_CLUES });
-    setMode({ kind: 'playing', focus: false, expedition: { id, round } });
+    setMode({ kind: 'playing', owner, focus: false, expedition: { id, round } });
   }
 
   const finished = mode.kind === 'playing' && session.questions.length > 0 && isFinished(session);
@@ -76,10 +88,11 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
   useEffect(() => {
     if (!finished || recorded.current) return;
     recorded.current = true;
+    if (mode.kind !== 'playing' || mode.owner !== owner) return;
     if (mode.kind === 'playing' && mode.expedition) {
       const { id, round } = mode.expedition;
       useDetectiveStore.getState().recordExpedition(owner, id, { round, correct: summary.correct, total: summary.total, score: summary.score, maxScore: summary.maxScore, missedIds: summary.missedIds, askedIds: session.questions.map((question) => question.questionId) });
-      setRoundAnswers((current) => ({ ...current, [round]: session.answers }));
+      setVisit((current) => recordRound(current, owner, id, round, session.answers));
       setMode(round === 'learning' ? { kind: 'expeditionBreak', id } : { kind: 'discovered', id });
       announce(round === 'challenge' ? t('detective.expeditions.challengeScore', { score: summary.score, max: summary.maxScore }) : t('detective.expeditions.learningScore', { correct: summary.correct, total: summary.total }));
       return;
@@ -163,7 +176,8 @@ export function DetectiveScreen({ onPressBack }: { onPressBack: () => void }) {
         {mode.kind === 'discovered' ? (
           <DiscoveredView
             id={mode.id}
-            answers={roundAnswers}
+            visit={visitFor(visit, owner, mode.id)}
+            remainingMissed={record.expeditions?.[mode.id]?.missedIds ?? []}
             name={name}
             onPractise={(ids) => beginExpedition(mode.id, 'practice', ids)}
             onBack={() => setMode({ kind: 'intro' })}
@@ -301,42 +315,38 @@ function QuestionView({ state, large, learning = false, name, onReveal, onAnswer
 
 /**
  * "What you discovered": each object of the expedition with what was
- * ACTUALLY answered in this visit's rounds (learning, and the challenge if
- * taken) and a link to its article. It reports answers - it never claims
- * mastery.
+ * ACTUALLY answered in this visit (learning, challenge, latest practice -
+ * each labelled as such) and a link to its article. "Practise" offers
+ * exactly the misses the store still holds for this expedition.
  */
-function DiscoveredView({ id, answers, name, onPractise, onBack }: { id: ExpeditionId; answers: Partial<Record<Round, Answer[]>>; name: (sourceId: string) => string; onPractise: (ids: string[]) => void; onBack: () => void }) {
+function DiscoveredView({ id, visit, remainingMissed, name, onPractise, onBack }: { id: ExpeditionId; visit: ExpeditionVisit | null; remainingMissed: string[]; name: (sourceId: string) => string; onPractise: (ids: string[]) => void; onBack: () => void }) {
   const { t } = useTranslation();
-  const item = expedition(id)!;
-  const find = (round: Round, questionId: string) => answers[round]?.find((answer) => answer.questionId === questionId) ?? null;
-  const challenge = answers.challenge ?? null;
-  const practice = answers.practice ?? null;
-  const missed = item.questionIds.filter((questionId) => {
-    const last = find('practice', questionId) ?? find('challenge', questionId) ?? find('learning', questionId);
-    return !!last && !last.correct;
-  });
+  const challenge = challengeTotal(visit, CLUE_POINTS[0]);
   return (
     <View style={styles.stack} testID="expedition-discovered">
       <Text style={styles.heading} accessibilityRole="header">
         {t('detective.expeditions.discoveredTitle')}
       </Text>
       <Text style={styles.meta}>{t('detective.expeditions.discoveredIntro')}</Text>
-      {challenge ? <Text style={[styles.body, styles.bold]}>{t('detective.expeditions.challengeScore', { score: challenge.reduce((sum, answer) => sum + answer.points, 0), max: challenge.length * CLUE_POINTS[0] })}</Text> : null}
-      {item.questionIds.map((questionId) => {
+      {challenge ? (
+        <Text style={[styles.body, styles.bold]} testID="discovered-challenge-score">
+          {t('detective.expeditions.challengeScore', { score: challenge.score, max: challenge.max })}
+        </Text>
+      ) : null}
+      {summaryRows(visit, expedition(id)!).map(({ questionId, learning, challenge: tried, practice }) => {
         const question = detectiveQuestion(questionId)!;
-        const learned = find('learning', questionId) ?? (practice ? find('practice', questionId) : null);
-        const tried = find('challenge', questionId);
         return (
           <AnimatedPressable key={questionId} style={styles.card} onPress={() => router.push(sourceRoute(question) as never)} accessibilityRole="link" accessibilityLabel={`${name(question.sourceId)}. ${t('detective.readArticle')}`} testID={`discovered-${questionId}`}>
             <Text style={styles.cardTitle}>{name(question.sourceId)}</Text>
-            {learned ? <Text style={styles.meta}>{learned.correct ? t('detective.expeditions.learnedRight') : t('detective.expeditions.learnedWrong')}</Text> : null}
+            {learning ? <Text style={styles.meta}>{learning.correct ? t('detective.expeditions.learnedRight') : t('detective.expeditions.learnedWrong')}</Text> : null}
             {tried ? <Text style={styles.meta}>{tried.correct ? t('detective.expeditions.challengeRight', { count: tried.cluesRevealed, points: tried.points }) : t('detective.expeditions.challengeWrong')}</Text> : null}
+            {practice ? <Text style={styles.meta}>{practice.correct ? t('detective.expeditions.practiceRight') : t('detective.expeditions.practiceWrong')}</Text> : null}
             <Text style={styles.linkText}>{t('detective.readArticle')}</Text>
           </AnimatedPressable>
         );
       })}
-      {missed.length > 0 ? <Button label={t('detective.expeditions.practiseExpedition')} variant="secondary" onPress={() => onPractise(missed)} testID="discovered-practise" /> : null}
-      <Button label={t('detective.expeditions.backToExpeditions')} variant="text" onPress={onBack} />
+      {remainingMissed.length > 0 ? <Button label={t('detective.expeditions.practiseExpedition')} variant="secondary" onPress={() => onPractise(remainingMissed)} testID="discovered-practise" /> : null}
+      <Button label={t('detective.expeditions.backToExpeditions')} variant="text" onPress={onBack} testID="discovered-back" />
     </View>
   );
 }

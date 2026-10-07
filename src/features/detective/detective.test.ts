@@ -247,8 +247,8 @@ describe('expeditions', () => {
 
   it('the summary reports actual answers per round and links each object to its article', () => {
     const screen = fs.readFileSync(path.join(__dirname, 'DetectiveScreen.tsx'), 'utf8');
-    expect(screen).toContain("find('learning', questionId)");
-    expect(screen).toContain("find('challenge', questionId)");
+    expect(screen).toContain('summaryRows(visit, expedition(id)!)');
+    expect(screen).toContain('visitFor(visit, owner, mode.id)');
     expect(screen).toContain('router.push(sourceRoute(question)');
     expect(screen).not.toMatch(/useGameRecordsStore|useProgressStore|useChallengeStore/);
   });
