@@ -9,6 +9,11 @@ import { colors, editorial, spacing, textStyles } from '@/theme';
 export const SHARE_CARD_WIDTH = 360;
 export const SHARE_CARD_HEIGHT = 450;
 
+/** Logical size of this card: 360 x 450, or a postcard's own size. */
+export function shareCardSize(content: Pick<ShareCardContent, 'variant' | 'cardSize'>): { width: number; height: number } {
+  return content.variant === 'postcard' && content.cardSize ? content.cardSize : { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT };
+}
+
 /**
  * One OYNO share family, three layouts:
  *   story    content card (place, culture item, collection, trail, Daily)
@@ -20,12 +25,15 @@ export const SHARE_CARD_HEIGHT = 450;
  *            forest green, its title - no rank, no rarity, no user data
  *   creation a design the user made in a Culture Lab (oymo, shyrdak):
  *            the live artwork, the lab it came from - nothing else
+ *   postcard a card the user composed themselves (Oymo postcard): the
+ *            `artwork` IS the whole card, at `cardSize` - no wordmark,
+ *            label or title is added, so only what they chose is shown
  *   summary  a short list of REAL counts the user chose to share (Learning
  *            Portfolio, Game Stats) + featured titles - never a rank,
  *            score total or anything about the person
  * All share the wordmark, cream/forest/gold and a small oymo rule.
  */
-export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge' | 'creation' | 'summary';
+export type ShareCardVariant = 'story' | 'score' | 'journal' | 'badge' | 'creation' | 'summary' | 'postcard';
 
 export type ShareCardContent = {
   title: string;
@@ -51,6 +59,9 @@ export type ShareCardContent = {
    * its natural size so the card can scale it to fit. */
   artwork?: ReactNode;
   artworkSize?: { width: number; height: number };
+  /** `postcard` variant: the card's own logical size (default 360 x 450);
+   * exported at 3x. */
+  cardSize?: { width: number; height: number };
   /** `summary` variant: up to 4 real figure lines ("3 Learning Paths"). */
   lines?: string[];
   /** `summary` variant: up to 3 featured content titles. */
@@ -71,6 +82,14 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
   if (variant === 'badge') return <BadgeCard ref={ref} {...props} />;
   if (variant === 'creation') return <CreationCard ref={ref} {...props} />;
   if (variant === 'summary') return <SummaryCard ref={ref} {...props} />;
+  if (variant === 'postcard') {
+    const size = shareCardSize(props);
+    return (
+      <View ref={ref} collapsable={false} style={{ width: size.width, height: size.height, overflow: 'hidden' }}>
+        {props.artwork}
+      </View>
+    );
+  }
   return <PhotoCard ref={ref} {...props} variant={variant} />;
 });
 

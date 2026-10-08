@@ -484,3 +484,13 @@ PENDING (not performed on a device). See docs/REPEAT_THE_RHYTHM.md for:
 - silent switch;
 - backgrounding and calls mid-round;
 - VoiceOver / TalkBack and the largest text size.
+
+## Oymo postcard (2026-10-07)
+
+PENDING (not performed on a device). See docs/OYMO_POSTCARD.md for:
+
+- native share and save in both formats;
+- permission denied;
+- temporary-file count after repeated exports;
+- KG/RU/EN glyphs in the exported JPEG;
+- screen readers.

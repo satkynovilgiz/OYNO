@@ -74,6 +74,8 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [pendingDeleteCreation, setPendingDeleteCreation] = useState<OymoCreationRow | null>(null);
+  /** The saved pattern open in the editor, while it is unchanged - the postcard is made from the SAVED copy. */
+  const [openedCreationId, setOpenedCreationId] = useState<string | null>(null);
 
   useEffect(() => {
     track('oymo_creator_open');
@@ -82,6 +84,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
   function applyMutation(mutate: (state: OymoEditorState) => OymoEditorState) {
     const next = mutate(editorState);
+    setOpenedCreationId(null);
     const truncated = history.slice(0, historyIndex + 1);
     setHistory([...truncated, next]);
     setHistoryIndex(truncated.length);
@@ -116,6 +119,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
     setHistoryIndex(0);
     setSelectedLayerId(null);
     setShowResetConfirm(false);
+    setOpenedCreationId(null);
   }
 
   function loadCreation(creation: OymoCreationRow) {
@@ -128,6 +132,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
     setHistoryIndex(0);
     setSymmetryMode(creation.symmetry_mode);
     setSelectedLayerId(null);
+    setOpenedCreationId(creation.id);
   }
 
   // Shares only the design itself (rendered live), the lab's name and OYNO
@@ -303,6 +308,10 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
             {panel}
           </>
         )}
+
+        {openedCreationId && creations?.some((creation) => creation.id === openedCreationId) ? (
+          <Button label={t('postcard.entry')} variant="secondary" onPress={() => router.push(`/culture/oymo/postcard?pattern=${encodeURIComponent(openedCreationId)}` as never)} accessibilityHint={t('postcard.entryHint')} testID="oymo-create-postcard" />
+        ) : null}
 
         <SavedPatternsGallery
           creations={creations ?? []}

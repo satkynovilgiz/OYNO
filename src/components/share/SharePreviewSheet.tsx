@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type ImageSourcePropType } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Chip } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { cardRadii, colors, elevation, spacing, textStyles } from '@/theme';
 
-import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH, ShareCard, type ShareCardContent } from './ShareCard';
+import { ShareCard, shareCardSize, type ShareCardContent } from './ShareCard';
 
 export type ShareImageChoice = { key: string; label: string; image: ImageSourcePropType | null };
 
@@ -46,20 +46,22 @@ export function SharePreviewSheet({
   const card: ShareCardContent = chosen ? { ...content, imageSource: chosen.image } : content;
 
   // Preview size: fits the sheet at 375-430 pt without dominating it.
-  const previewWidth = Math.min(width - spacing.xxl * 2, 280, (height * 0.46 * SHARE_CARD_WIDTH) / SHARE_CARD_HEIGHT);
-  const scale = previewWidth / SHARE_CARD_WIDTH;
+  const size = shareCardSize(card);
+  const previewWidth = Math.min(width - spacing.xxl * 2, 280, (height * 0.46 * size.width) / size.height);
+  const scale = previewWidth / size.width;
 
   return (
-    <Modal visible transparent animationType={reducedMotion ? 'none' : 'slide'} onRequestClose={onCancel} statusBarTranslucent>
+    <Modal visible transparent animationType={reducedMotion ? 'none' : 'slide'} onRequestClose={onCancel} statusBarTranslucent {...(Platform.OS === 'web' ? ({ 'aria-label': t('journal.v2.previewTitle') } as object) : null)}>
       <Pressable style={styles.backdrop} onPress={onCancel} accessibilityRole="button" accessibilityLabel={t('journal.cancel')} />
-      <View style={[styles.sheet, elevation.floating, { paddingBottom: insets.bottom + spacing.md }]} accessibilityViewIsModal>
+      {/* iOS: keep VoiceOver inside the sheet. On web the Modal is already the dialog; aria-modal without a role is invalid there. */}
+      <View style={[styles.sheet, elevation.floating, { paddingBottom: insets.bottom + spacing.md }]} accessibilityViewIsModal={Platform.OS !== 'web'}>
         <View style={styles.handle} />
         <Text style={styles.title} accessibilityRole="header">
           {t('journal.v2.previewTitle')}
         </Text>
         <ScrollView contentContainerStyle={styles.body} bounces={false}>
-          <View style={[styles.previewBox, { width: previewWidth, height: previewWidth * (SHARE_CARD_HEIGHT / SHARE_CARD_WIDTH) }]} accessible accessibilityLabel={`${card.label}. ${card.title}`}>
-            <View style={{ transform: [{ scale }], transformOrigin: 'top left' as never, width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT }}>
+          <View style={[styles.previewBox, { width: previewWidth, height: previewWidth * (size.height / size.width) }]} accessible accessibilityLabel={`${card.label}. ${card.title}`} testID="share-preview-card">
+            <View style={{ transform: [{ scale }], transformOrigin: 'top left' as never, width: size.width, height: size.height }}>
               <ShareCard {...card} />
             </View>
           </View>

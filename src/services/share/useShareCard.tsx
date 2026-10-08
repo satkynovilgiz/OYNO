@@ -3,16 +3,19 @@ import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeModules, PixelRatio, Platform, Share, StyleSheet, TurboModuleRegistry, View } from 'react-native';
 
-import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH, ShareCard, type ShareCardContent } from '@/components/share/ShareCard';
+import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH, ShareCard, shareCardSize, type ShareCardContent } from '@/components/share/ShareCard';
 import { SharePreviewSheet, type ShareImageChoice } from '@/components/share/SharePreviewSheet';
 import { showToast } from '@/components/ui/Toast';
 import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
 import { buildOYNODeepLink } from '@/services/links/contentLinks';
 import { shareContentLink, type ShareableLink } from '@/services/links/shareContentLink';
 
-/** Target export size - a 4:5 social post. */
+import { discardPreviousExport, releaseExport, trackExport } from './exportFiles';
+
+/** Target export size - a 4:5 social post (a postcard: its own size, 3x). */
 export const SHARE_IMAGE_WIDTH = 1080;
 export const SHARE_IMAGE_HEIGHT = 1350;
+const EXPORT_SCALE = SHARE_IMAGE_WIDTH / SHARE_CARD_WIDTH;
 
 const IMAGE_WAIT_MS = 3000;
 
@@ -91,6 +94,7 @@ export function useShareCard(): {
       readyRef.current = resolve;
       setTimeout(resolve, IMAGE_WAIT_MS);
     });
+    discardPreviousExport();
     setCapturing(content);
     if (!content.imageSource) setTimeout(() => readyRef.current?.(), 50);
     try {
@@ -100,7 +104,10 @@ export function useShareCard(): {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { captureRef } = require('react-native-view-shot') as typeof import('react-native-view-shot');
       const scale = PixelRatio.get();
-      return await captureRef(cardRef, { format: 'jpg', quality: 0.92, result: 'tmpfile', width: SHARE_IMAGE_WIDTH / scale, height: SHARE_IMAGE_HEIGHT / scale });
+      const size = shareCardSize(content);
+      const uri = await captureRef(cardRef, { format: 'jpg', quality: 0.92, result: 'tmpfile', width: (size.width * EXPORT_SCALE) / scale, height: (size.height * EXPORT_SCALE) / scale });
+      trackExport(uri);
+      return uri;
     } finally {
       readyRef.current = null;
       setCapturing(null);
@@ -117,13 +124,15 @@ export function useShareCard(): {
       return;
     }
     setBusy('share');
+    let uri: string | null = null;
     try {
-      const uri = await capture(content);
+      uri = await capture(content);
       setPreview(null);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing') as typeof import('expo-sharing');
       await Sharing.shareAsync(uri, { mimeType: 'image/jpeg', UTI: 'public.jpeg', dialogTitle: content.title });
     } catch {
+      if (uri) releaseExport(uri);
       recordDiagnostic('screen_error', 'share_capture');
       showToast(t('journal.v2.shareFailed'), { tone: 'info' });
     } finally {
@@ -133,8 +142,9 @@ export function useShareCard(): {
 
   async function confirmSave(content: ShareCardContent) {
     setBusy('save');
+    let uri: string | null = null;
     try {
-      const uri = await capture(content);
+      uri = await capture(content);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const MediaLibrary = require('expo-media-library') as typeof import('expo-media-library');
       // Write-only permission: OYNO never reads the photo library for this.
@@ -149,6 +159,8 @@ export function useShareCard(): {
     } catch {
       showToast(t('journal.v2.saveFailed'), { tone: 'info' });
     } finally {
+      // Photos keeps its own copy; the temporary file is never needed again.
+      if (uri) releaseExport(uri);
       setBusy(null);
     }
   }
@@ -176,7 +188,7 @@ export function useShareCard(): {
         />
       ) : null}
       {capturing ? (
-        <View style={styles.offscreen} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <View style={[styles.offscreen, shareCardSize(capturing)]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <ShareCard ref={cardRef} {...capturing} onImageReady={() => readyRef.current?.()} />
         </View>
       ) : null}

@@ -5255,5 +5255,56 @@
     "practiceNote": "Practice results stay on this device and are not game records.",
     "noteA11y": "Note {{n}} of {{total}}",
     "howScored": "How it's scored: each note is compared with your own steady tempo, so slow and fast playing count the same. Within about an eighth of a beat is on time, within a quarter is close."
+  },
+  "postcard": {
+    "title": "Create a postcard",
+    "entry": "Create postcard",
+    "entryHint": "Make a postcard from this saved pattern",
+    "copyNote": "The postcard uses a copy of your pattern. The saved pattern stays exactly as it is.",
+    "onlyChosen": "Only what you choose here appears on the card: the pattern, the background and your greeting.",
+    "loading": "Loading your pattern…",
+    "notFound": "This saved pattern isn't available. It may have been deleted, or you may be offline.",
+    "preview": "Preview",
+    "previewA11y": "Postcard preview",
+    "format": "Format",
+    "formats": {
+      "portrait": "Portrait",
+      "square": "Square"
+    },
+    "layout": "Layout",
+    "layouts": {
+      "classic": "Classic",
+      "banner": "Banner",
+      "border": "Border"
+    },
+    "greeting": "Greeting (optional)",
+    "greetingHint": "Up to {{max}} characters. Long greetings get smaller text so they stay on the card.",
+    "greetingPlaceholder": "e.g. Happy holidays!",
+    "greetingCount": "{{count}} / {{max}}",
+    "greetingFull": "That's the {{max}}-character limit.",
+    "size": "Pattern size",
+    "sizes": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "position": "Pattern position",
+    "positions": {
+      "top": "Top",
+      "center": "Centre",
+      "bottom": "Bottom"
+    },
+    "background": "Background",
+    "backgrounds": {
+      "pattern": "Pattern colour",
+      "cream": "Cream",
+      "forest": "Forest",
+      "gold": "Gold"
+    },
+    "shareOrSave": "Preview, then share or save",
+    "label": "Oymo postcard",
+    "defaultTitle": "Oymo postcard",
+    "webNote": "Saving or sharing the image works in the iOS and Android app. On the web, only the greeting can be shared, as text.",
+    "back": "Back to the Creator"
   }
 }
