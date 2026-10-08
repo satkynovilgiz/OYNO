@@ -26,6 +26,9 @@ import {
 } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
 import { takeCreatorHandoff } from '@/services/culture/oymoHandoff';
+import { useRecordsOwner } from '@/features/games/records/useGameRecords';
+import { fitRecipe, recipeFromHistory, setSessionRecipe, type HistoryEntry, type StepLabel } from '@/features/culture/oymo/recipe/recipeModel';
+import { recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
 import { useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -59,14 +62,17 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
   // A composition handed over (e.g. a solved Restore puzzle) opens as a new, unsaved design.
   const [handoff] = useState(() => takeCreatorHandoff());
-  const [history, setHistory] = useState<OymoEditorState[]>([handoff?.state ?? EMPTY_OYMO_STATE]);
+  // Each undo step also records the symmetry in force and what produced it - the Pattern Recipe is this history.
+  const [history, setHistory] = useState<HistoryEntry[]>([{ state: handoff?.state ?? EMPTY_OYMO_STATE, symmetry: handoff ? handoff.symmetry : 'fourWay', label: handoff ? 'copy' : 'start' }]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const editorState = history[historyIndex];
+  const editorState = history[historyIndex].state;
+  const symmetryMode = history[historyIndex].symmetry;
+  const owner = useRecordsOwner();
+  const [includeRecipe, setIncludeRecipe] = useState(false);
 
   const [selectedMotifId, setSelectedMotifId] = useState<OymoMotifId>(OYMO_MOTIFS[0].id);
   const [selectedColor, setSelectedColor] = useState<string>(colors.primary);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
-  const [symmetryMode, setSymmetryMode] = useState<SymmetryMode>(handoff ? handoff.symmetry : 'fourWay');
   const [activeTab, setActiveTab] = useState<PanelTab>('motif');
   const [showBackgroundColors, setShowBackgroundColors] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -78,16 +84,34 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   const [openedCreationId, setOpenedCreationId] = useState<string | null>(null);
 
   useEffect(() => {
+    void useOymoRecipeStore.getState().load();
     track('oymo_creator_open');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function applyMutation(mutate: (state: OymoEditorState) => OymoEditorState) {
-    const next = mutate(editorState);
+  function pushEntry(entry: HistoryEntry) {
     setOpenedCreationId(null);
     const truncated = history.slice(0, historyIndex + 1);
-    setHistory([...truncated, next]);
+    setHistory([...truncated, entry]);
     setHistoryIndex(truncated.length);
+  }
+
+  function applyMutation(mutate: (state: OymoEditorState) => OymoEditorState, label: StepLabel, motifId?: string) {
+    const next = mutate(editorState);
+    if (next === editorState) return;
+    pushEntry({ state: next, symmetry: symmetryMode, label, ...(motifId ? { motifId } : {}) });
+  }
+
+  /** A symmetry change is an undoable step of its own (and part of the recipe). */
+  function setSymmetryMode(mode: SymmetryMode) {
+    if (mode === symmetryMode) return;
+    pushEntry({ state: editorState, symmetry: mode, label: 'symmetry' });
+  }
+
+  /** Replay the CURRENT design (saved or not) in the recipe player. */
+  function openSessionRecipe() {
+    setSessionRecipe(recipeFromHistory(history, historyIndex));
+    router.push('/culture/oymo/recipe?source=session' as never);
   }
 
   function handleUndo() {
@@ -103,7 +127,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   }
 
   function handlePlace(point: { x: number; y: number }) {
-    applyMutation((state) => addLayer(state, point, selectedMotifId, selectedColor));
+    applyMutation((state) => addLayer(state, point, selectedMotifId, selectedColor), 'place', selectedMotifId);
   }
 
   function handlePlaceAtCenter() {
@@ -115,7 +139,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   }
 
   function handleReset() {
-    setHistory([EMPTY_OYMO_STATE]);
+    setHistory([{ state: EMPTY_OYMO_STATE, symmetry: symmetryMode, label: 'start' }]);
     setHistoryIndex(0);
     setSelectedLayerId(null);
     setShowResetConfirm(false);
@@ -128,9 +152,8 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
       backgroundColor: creation.background_color,
       nextId: creation.layers.length,
     };
-    setHistory([loaded]);
+    setHistory([{ state: loaded, symmetry: creation.symmetry_mode, label: 'load' }]);
     setHistoryIndex(0);
-    setSymmetryMode(creation.symmetry_mode);
     setSelectedLayerId(null);
     setOpenedCreationId(creation.id);
   }
@@ -161,6 +184,10 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
       symmetryMode,
     });
     setIsSaving(false);
+    if (success && includeRecipe) {
+      // Optional: kept on this device for this account, matched to the saved creation by its content.
+      useOymoRecipeStore.getState().saveRecipe(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }, recipeFromHistory(history, historyIndex));
+    }
     if (success) {
       queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
       setShowSaveModal(false);
@@ -172,11 +199,22 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   async function handleConfirmDelete() {
     if (!pendingDeleteCreation) return;
     const success = await useProgressStore.getState().deleteOymoCreation(pendingDeleteCreation.id);
-    if (success) queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
+    if (success) {
+      useOymoRecipeStore.getState().removeFor(owner, { layers: pendingDeleteCreation.layers, backgroundColor: pendingDeleteCreation.background_color, symmetry: pendingDeleteCreation.symmetry_mode });
+      queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
+    }
     setPendingDeleteCreation(null);
   }
 
   const selectedLayer = editorState.layers.find((l) => l.id === selectedLayerId) ?? null;
+  const recipes = useOymoRecipeStore((state) => state.saved);
+  const openedCreation = creations?.find((creation) => creation.id === openedCreationId) ?? null;
+  const openedHasRecipe = !!openedCreation && !!recipeFor(recipes, owner, { layers: openedCreation.layers, backgroundColor: openedCreation.background_color, symmetry: openedCreation.symmetry_mode });
+  const recipeFitInfo = (() => {
+    const full = recipeFromHistory(history, historyIndex);
+    const fitted = fitRecipe(full);
+    return { steps: full.steps.length, kept: fitted.steps.length };
+  })();
 
   const panel = (
     <View style={styles.panel}>
@@ -206,15 +244,15 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
             selectedLayerId={selectedLayerId}
             backgroundColor={editorState.backgroundColor}
             onSelectLayer={handleSelectLayer}
-            onToggleVisibility={(id) => applyMutation((state) => toggleLayerVisibility(state, id))}
-            onReorder={(id, direction) => applyMutation((state) => reorderLayer(state, id, direction))}
+            onToggleVisibility={(id) => applyMutation((state) => toggleLayerVisibility(state, id), 'visibility')}
+            onReorder={(id, direction) => applyMutation((state) => reorderLayer(state, id, direction), 'reorder')}
             onSelectBackground={() => setShowBackgroundColors((v) => !v)}
           />
           {showBackgroundColors && (
             <View style={styles.backgroundPicker}>
               <ColorSwatches
                 selectedColor={editorState.backgroundColor}
-                onSelectColor={(color) => applyMutation((state) => setBackgroundColor(state, color))}
+                onSelectColor={(color) => applyMutation((state) => setBackgroundColor(state, color), 'background')}
               />
             </View>
           )}
@@ -247,7 +285,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -286,12 +324,12 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
             {selectedLayer && (
               <TransformToolbar
-                onRotate={() => applyMutation((state) => rotateLayer(state, selectedLayer.id))}
-                onScaleUp={() => applyMutation((state) => scaleLayer(state, selectedLayer.id))}
-                onScaleDown={() => applyMutation((state) => scaleLayer(state, selectedLayer.id, -0.15))}
-                onDuplicate={() => applyMutation((state) => duplicateLayer(state, selectedLayer.id))}
+                onRotate={() => applyMutation((state) => rotateLayer(state, selectedLayer.id), 'rotate')}
+                onScaleUp={() => applyMutation((state) => scaleLayer(state, selectedLayer.id), 'scale')}
+                onScaleDown={() => applyMutation((state) => scaleLayer(state, selectedLayer.id, -0.15), 'scale')}
+                onDuplicate={() => applyMutation((state) => duplicateLayer(state, selectedLayer.id), 'duplicate')}
                 onDelete={() => {
-                  applyMutation((state) => removeLayer(state, selectedLayer.id));
+                  applyMutation((state) => removeLayer(state, selectedLayer.id), 'remove');
                   setSelectedLayerId(null);
                 }}
               />
@@ -316,6 +354,9 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           </>
         )}
 
+        {/* Pattern Recipe: replay how this design was built (this session), or a saved creation's recipe. */}
+        {history.length > 1 || historyIndex > 0 ? <Button label={t('culture.oymo.recipe.replayThis')} variant="secondary" onPress={openSessionRecipe} accessibilityHint={t('culture.oymo.recipe.replayThisHint')} testID="oymo-replay-session" /> : null}
+        {openedCreationId && openedHasRecipe ? <Button label={t('culture.oymo.recipe.replaySaved')} variant="secondary" onPress={() => router.push(`/culture/oymo/recipe?creation=${encodeURIComponent(openedCreationId)}` as never)} testID="oymo-replay-saved" /> : null}
         {openedCreationId && creations?.some((creation) => creation.id === openedCreationId) ? (
           <Button label={t('postcard.entry')} variant="secondary" onPress={() => router.push(`/culture/oymo/postcard?pattern=${encodeURIComponent(openedCreationId)}` as never)} accessibilityHint={t('postcard.entryHint')} testID="oymo-create-postcard" />
         ) : null}
@@ -329,6 +370,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
       </ScrollView>
 
       <SaveModal
+        recipe={{ include: includeRecipe, onChange: setIncludeRecipe, ...recipeFitInfo }}
         visible={showSaveModal}
         defaultName={t('culture.oymo.save.defaultName', { count: (creations?.length ?? 0) + 1 })}
         isSaving={isSaving}

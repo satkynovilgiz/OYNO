@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 
-import { Button, TextField } from '@/components/ui';
+import { Button, TextField, Toggle } from '@/components/ui';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type SaveModalProps = {
@@ -13,6 +13,8 @@ type SaveModalProps = {
   hasError: boolean;
   onSave: (name: string) => void;
   onCancel: () => void;
+  /** Optional Pattern Recipe: save how the design was built (steps = the whole history, kept = what fits the limits). */
+  recipe?: { include: boolean; onChange: (include: boolean) => void; steps: number; kept: number };
 };
 
 /** Save can fail two distinct ways - a guest with no account (expected,
@@ -21,7 +23,7 @@ type SaveModalProps = {
  * silently stayed open with no explanation, which is exactly the kind of
  * dead-end interaction the task calls out - each now gets its own message
  * instead of a silent no-op. */
-export function SaveModal({ visible, defaultName, isSaving, isGuest, hasError, onSave, onCancel }: SaveModalProps) {
+export function SaveModal({ visible, defaultName, isSaving, isGuest, hasError, onSave, onCancel, recipe }: SaveModalProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(defaultName);
 
@@ -31,6 +33,20 @@ export function SaveModal({ visible, defaultName, isSaving, isGuest, hasError, o
         <View style={styles.sheet}>
           <Text style={styles.title}>{t('culture.oymo.save.title')}</Text>
           <TextField label={t('culture.oymo.save.nameLabel')} value={name} onChangeText={setName} />
+          {recipe && !isGuest ? (
+            <View style={styles.recipe}>
+              <View style={styles.recipeRow}>
+                <Text style={[styles.hint, styles.recipeLabel]}>{t('culture.oymo.recipe.saveToggle', { count: recipe.steps })}</Text>
+                <Toggle value={recipe.include} onValueChange={recipe.onChange} accessibilityLabel={t('culture.oymo.recipe.saveToggle', { count: recipe.steps })} />
+              </View>
+              <Text style={styles.hint}>{t('culture.oymo.recipe.saveNote')}</Text>
+              {recipe.include && recipe.kept < recipe.steps ? (
+                <Text style={styles.hint} testID="recipe-trim-note">
+                  {t('culture.oymo.recipe.trimNote', { kept: recipe.kept, total: recipe.steps })}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
           {isGuest && <Text style={styles.hint}>{t('culture.oymo.save.guestHint')}</Text>}
           {!isGuest && hasError && <Text style={styles.error}>{t('culture.oymo.save.error')}</Text>}
           <View style={styles.actions}>
@@ -64,6 +80,9 @@ const styles = StyleSheet.create({
     ...typography.h1,
     color: colors.textPrimary,
   },
+  recipe: { gap: 4, paddingVertical: spacing.xs },
+  recipeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  recipeLabel: { flex: 1, color: colors.textPrimary },
   hint: {
     ...typography.small,
     color: colors.textSecondary,
