@@ -147,7 +147,9 @@ describe('puzzle -> Creator handoff', () => {
     expect(creator.layers.every((layer) => /^layer\d+$/.test(layer.id) && layer.visible)).toBe(true);
     expect(creator).not.toHaveProperty('id');
     handOffToCreator(creator);
-    const taken = takeCreatorHandoff()!;
+    const handoff = takeCreatorHandoff()!;
+    expect(handoff).toMatchObject({ symmetry: 'none', source: 'restore' });
+    const taken = handoff.state;
     expect(taken).toEqual(creator);
     taken.layers[0].rotation = 45; // editing the copy...
     expect(creator.layers[0].rotation).not.toBe(45); // ...changes nothing else

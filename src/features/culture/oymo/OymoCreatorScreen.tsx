@@ -59,14 +59,14 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
   // A composition handed over (e.g. a solved Restore puzzle) opens as a new, unsaved design.
   const [handoff] = useState(() => takeCreatorHandoff());
-  const [history, setHistory] = useState<OymoEditorState[]>([handoff ?? EMPTY_OYMO_STATE]);
+  const [history, setHistory] = useState<OymoEditorState[]>([handoff?.state ?? EMPTY_OYMO_STATE]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const editorState = history[historyIndex];
 
   const [selectedMotifId, setSelectedMotifId] = useState<OymoMotifId>(OYMO_MOTIFS[0].id);
   const [selectedColor, setSelectedColor] = useState<string>(colors.primary);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
-  const [symmetryMode, setSymmetryMode] = useState<SymmetryMode>(handoff ? 'none' : 'fourWay');
+  const [symmetryMode, setSymmetryMode] = useState<SymmetryMode>(handoff ? handoff.symmetry : 'fourWay');
   const [activeTab, setActiveTab] = useState<PanelTab>('motif');
   const [showBackgroundColors, setShowBackgroundColors] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -247,7 +247,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -255,6 +255,13 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('restorePattern.title')}</Text>
             <Text style={styles.headerSubtitle}>{t('restorePattern.entryMeta')}</Text>
+          </View>
+        </AnimatedPressable>
+        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/symmetry' as never)} accessibilityRole="button" accessibilityLabel={`${t('symmetryPlayground.title')}. ${t('symmetryPlayground.entryMeta')}`} testID="symmetry-entry">
+          <Wand2 size={18} color={colors.primary} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.restoreTitle}>{t('symmetryPlayground.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('symmetryPlayground.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <View style={isTablet ? styles.tabletRow : undefined}>

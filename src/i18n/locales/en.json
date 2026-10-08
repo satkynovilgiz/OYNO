@@ -5533,5 +5533,59 @@
         "description": "A first lesson about the komuz, with a short quiz."
       }
     }
+  },
+  "symmetryPlayground": {
+    "title": "Symmetry Playground",
+    "entryMeta": "See how a symmetry rule changes a pattern",
+    "intro": "Place a few motifs on the small grid. The result shows what the Creator's symmetry rule makes of them.",
+    "sourceTitle": "Your design",
+    "resultTitle": "Result: {{mode}}",
+    "targetTitle": "Target",
+    "modeTitle": "Symmetry rule",
+    "motifTitle": "Motif to place",
+    "showGuides": "Show the guide lines",
+    "cellA11y": "Row {{row}}, column {{col}}: {{content}}",
+    "empty": "empty",
+    "copy": "{{name}} (copy)",
+    "selectedA11y": "{{name}}, picked up",
+    "tapHint": "Tap an empty square to place the motif. Tap a placed motif to pick it up, then tap a square to move it there - or drag it.",
+    "movingHint": "Moving {{name}}: tap an empty square, or remove it.",
+    "remove": "Remove",
+    "cancelMove": "Put it back",
+    "undo": "Undo",
+    "reset": "Reset",
+    "mathLabel": "The rule (geometry)",
+    "rules": {
+      "none": "None: no copies - the result is exactly your design.",
+      "mirror": "Mirror: every motif gets a copy reflected across the vertical centre line. Columns 1 and 5 swap, 2 and 4 swap, column 3 stays where it is.",
+      "fourWay": "Four-way: every motif is reflected across the vertical AND the horizontal centre lines, so it appears in all four quarters. Doing both reflections is the same as turning the position half a turn about the centre."
+    },
+    "orientationNote": "As in the Creator, only positions are reflected: each motif keeps its own direction.",
+    "cultureLabel": "About the motifs",
+    "cultureNote": "This playground only explains geometry. It does not say what any motif means - for that, read OYNO's articles about oymo and their sources.",
+    "readOymo": "Read about oymo",
+    "challengesTitle": "Challenges",
+    "freePlay": "Free play",
+    "tryIt": "Try it",
+    "challenge": {
+      "twins": {
+        "title": "Twin horns",
+        "task": "Make the target with the Mirror rule."
+      },
+      "corners": {
+        "title": "Four corners",
+        "task": "Make the target with the Four-way rule."
+      },
+      "whichRule": {
+        "title": "Which rule?",
+        "task": "Make the target - choose the rule yourself."
+      }
+    },
+    "ruleFixed": "Rule for this challenge: {{mode}}",
+    "solved": "Solved - your result matches the target exactly.",
+    "progress": "Still missing: {{missing}} · Extra: {{extra}}",
+    "openInCreator": "Open in Creator (unsaved copy)",
+    "openInCreatorHint": "Opens your design as a new design. Nothing saved is changed.",
+    "openedCopy": "A copy from the Symmetry Playground - it isn't saved yet. Save it to keep it."
   }
 }
