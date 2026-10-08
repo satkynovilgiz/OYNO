@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { ChevronLeft, HelpCircle, PartyPopper, RotateCcw } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -69,6 +70,7 @@ export function BozUyBuilderScreen({ onPressBack }: BozUyBuilderScreenProps) {
           <UserAvatar characterId={characterId} avatarConfig={avatarConfig} size="large" />
           <Text style={styles.completionReward}>{t('culture.bozUy.completion.reward', { xp: BOZ_UY_REWARD.xp })}</Text>
           <Button label={t('culture.bozUy.completion.continue')} onPress={onPressBack} />
+          <Button label={t('culture.bozUy.memory.entry')} variant="secondary" accessibilityHint={t('culture.bozUy.memory.entryHint')} onPress={() => router.push('/culture/boz-uy/memory' as never)} testID="memory-entry-done" />
         </ScrollView>
       </View>
     );
@@ -94,6 +96,7 @@ export function BozUyBuilderScreen({ onPressBack }: BozUyBuilderScreenProps) {
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
         <LabAboutNote lab="bozUy" />
+        <Button label={t('culture.bozUy.memory.entry')} variant="text" accessibilityHint={t('culture.bozUy.memory.entryHint')} onPress={() => router.push('/culture/boz-uy/memory' as never)} testID="memory-entry" />
         <StepIndicator stepCount={BOZ_UY_STEPS.length} currentStepIndex={stepIndex} />
 
         <View style={isTablet ? styles.tabletRow : undefined}>
