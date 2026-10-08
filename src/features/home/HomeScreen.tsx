@@ -29,6 +29,7 @@ import {
   TodayDiscoveryEntryCard,
 } from './components';
 import { ContinueRegionCard } from './components/ContinueRegionCard';
+import { ActivityChooserEntry } from './chooser/ActivityChooserScreen';
 import { ForYouSection } from './forYou/ForYouCard';
 import { HomeLearningPathCard } from '@/features/learn/LearningPathCard';
 import { visibleSections } from './homeLayout';
@@ -177,6 +178,7 @@ export function HomeScreen() {
         return (
           <View key={id} style={styles.horizontalPad}>
             <ForYouSection experience={experience} heroRoute={recommendation.route} />
+            <ActivityChooserEntry />
           </View>
         );
       case 'paths':

@@ -5306,5 +5306,144 @@
     "defaultTitle": "Oymo postcard",
     "webNote": "Saving or sharing the image works in the iOS and Android app. On the web, only the greeting can be shared, as text.",
     "back": "Back to the Creator"
+  },
+  "activityChooser": {
+    "title": "Find something to do",
+    "entryTitle": "Got a few minutes?",
+    "entryBody": "Pick your time and what you feel like - get up to three things to do.",
+    "entryButton": "Find something to do",
+    "intro": "Choose how much time you have and what you feel like. Times are estimates.",
+    "privacy": "Your choices stay on this device and aren't saved or sent anywhere.",
+    "timeTitle": "How much time?",
+    "time": {
+      "2": "2 minutes",
+      "5": "5 minutes",
+      "10": "10 minutes"
+    },
+    "interestTitle": "What do you feel like?",
+    "interests": {
+      "discover": "Discover",
+      "play": "Play",
+      "create": "Create",
+      "listen": "Listen"
+    },
+    "suggestionsTitle": "Try one of these",
+    "estimate": "About {{minutes}} min (estimate: {{basis}})",
+    "open": "Open",
+    "showOthers": "Show others",
+    "noOthers": "These are all the matches for now.",
+    "pageOf": "Set {{page}} of {{pages}}",
+    "reason": {
+      "continuePath": "Next in your learning path: {{path}}",
+      "new": "You haven't tried this yet",
+      "again": "You've done this before - try it again"
+    },
+    "worksOffline": "Works offline",
+    "together": "For 2-4 players on one phone",
+    "empty": {
+      "needsMoreTime": "Nothing fits in {{minutes}} minutes for this choice. The shortest is {{title}}, about {{shortest}} min.",
+      "offline": "No matching activity can open offline right now. Connect to the internet, or choose something else.",
+      "allDone": "You've finished everything that matches. Try another choice."
+    },
+    "showShortest": "Show {{title}}",
+    "explain": {
+      "discover": {
+        "quick": "A quick look at something new.",
+        "short": "A short discovery.",
+        "longer": "A longer discovery."
+      },
+      "play": {
+        "quick": "A quick game.",
+        "short": "A short game.",
+        "longer": "A longer game."
+      },
+      "create": {
+        "quick": "A quick creative activity.",
+        "short": "A short creative activity.",
+        "longer": "A longer creative activity."
+      },
+      "listen": {
+        "quick": "A quick listen.",
+        "short": "A short listening activity.",
+        "longer": "A longer listening activity."
+      }
+    },
+    "basis": {
+      "oneArticle": "one short article",
+      "detective": "5 questions",
+      "mapChallenge": "6 places on the map",
+      "jaaAtuu": "one round of 5 arrows",
+      "kyzKuumai": "one race of at most 90 seconds",
+      "kokBoru": "one 2-minute match",
+      "duel": "3 or 5 questions each",
+      "restore": "one small puzzle",
+      "bozUy": "4 building steps",
+      "shyrdak": "colours, a pattern and a border",
+      "openEnded": "open-ended - take as long as you like",
+      "komuzTracks": "one track, 1-5 min long",
+      "repeatRhythm": "5 short rounds",
+      "komuzLesson": "4 lesson steps with a short quiz"
+    },
+    "items": {
+      "daily": {
+        "title": "Today's Daily OYNO",
+        "description": "Read today's short piece about Kyrgyz culture."
+      },
+      "detective": {
+        "title": "Culture Detective",
+        "description": "Guess the cultural object from its picture and clues."
+      },
+      "mapChallenge": {
+        "title": "Map Challenge",
+        "description": "Find regions and places on the illustrated map."
+      },
+      "pathStep": {
+        "description": "The next reading in a learning path you started."
+      },
+      "jaaAtuu": {
+        "title": "Jaa Atuu",
+        "description": "Archery: shoot five arrows at the target."
+      },
+      "kyzKuumai": {
+        "title": "Kyz Kuumai",
+        "description": "The horseback chase game - one race."
+      },
+      "kokBoru": {
+        "title": "Kok Boru",
+        "description": "One short match of the horseback team game."
+      },
+      "duel": {
+        "title": "Culture Duel",
+        "description": "A culture quiz to play with friends, passing the phone."
+      },
+      "restore": {
+        "title": "Restore the Pattern",
+        "description": "Put an oymo ornament back together."
+      },
+      "bozUy": {
+        "title": "Build a boz üy",
+        "description": "Put up a yurt, step by step."
+      },
+      "shyrdak": {
+        "title": "Shyrdak Creator",
+        "description": "Design your own felt carpet."
+      },
+      "oymo": {
+        "title": "Oymo Creator",
+        "description": "Make your own ornament from traditional motifs."
+      },
+      "komuzListen": {
+        "title": "Komuz Listening Room",
+        "description": "Listen to a komuz track."
+      },
+      "repeatRhythm": {
+        "title": "Repeat the Rhythm",
+        "description": "Hear a short pattern, then tap it back."
+      },
+      "komuzLesson": {
+        "title": "Komuz lesson",
+        "description": "A first lesson about the komuz, with a short quiz."
+      }
+    }
   }
 }

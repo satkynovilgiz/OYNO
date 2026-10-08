@@ -74,6 +74,7 @@ export const TABLE_SCHEMA = {
   region_intros: ['region_id', 'language', 'intro', 'updated_at'],
   // 20260901000001_culture_v2_creations.sql - RLS: a guest reads none (fixture: no rows)
   oymo_creations: ['id', 'user_id', 'name', 'layers', 'background_color', 'symmetry_mode', 'created_at', 'updated_at'],
+  shyrdak_creations: ['user_id', 'base_color', 'secondary_color', 'pattern_id', 'border_enabled', 'symmetry_mode', 'updated_at'],
   // 20260824000001_content.sql
   quests: ['id', 'character_id', 'title', 'subtitle', 'total_count', 'cta_label'],
   // 20260901000002_explore_v2.sql
