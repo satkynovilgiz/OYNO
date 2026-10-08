@@ -45,6 +45,7 @@ export function CultureCompareListScreen({ onPressBack }: { onPressBack: () => v
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
         <Text style={styles.intro}>{t('compare.intro')}</Text>
+        <Button label={t('compare.free.chooseYourOwn')} variant="secondary" onPress={() => router.push('/culture/compare/pick' as never)} testID="compare-choose-own" />
         {!items ? <ActivityIndicator color={colors.primary} /> : null}
         {available.map((pair) => (
           <AnimatedPressable

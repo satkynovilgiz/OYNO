@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddToJournalButton } from '@/components/journal/AddToJournalButton';
 import { AudioGuidePlayer } from '@/components/audio/AudioGuidePlayer';
 import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
-import { HeroEntrance, IconButton, MediaImage } from '@/components/ui';
+import { Button, HeroEntrance, IconButton, MediaImage } from '@/components/ui';
 import type { KomuzTrack } from '@/features/culture/audioData';
 import { challengeCollectionFor, KomuzPlaylist, OymoDivider, RelatedItemsRail, TestKnowledgeLink, TopicQuizLink } from '@/features/culture/components';
 import { getQuestion } from '@/features/challenges/questionBank';
@@ -29,6 +29,7 @@ import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
 import { KeyTermsSection } from '@/features/culture/glossary/KeyTermsSection';
 import { GlossaryText, InlineGlossaryProvider } from '@/features/culture/glossary/inline/InlineGlossary';
+import { freeCompareRoute } from '@/features/culture/compare/freeCompare';
 import { ConnectionsSection } from '@/features/culture/connections/ConnectionsSection';
 import { ThenAndNowSection } from '@/features/culture/thenNow/ThenAndNowSection';
 import { thenNowRoute } from '@/features/culture/thenNow/thenAndNow';
@@ -346,6 +347,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
             {/* Connections: curated cross-topic relationships (explicit, sourced; not same-category browsing). */}
             {reader.focusMode ? null : <ConnectionsSection type="culture_item" id={item.id} experience={experience} />}
+            {reader.focusMode ? null : <Button label={t('compare.free.fromArticle')} variant="secondary" onPress={() => router.push(freeCompareRoute({ left: item.id, right: null }) as never)} testID="compare-from-article" />}
 
             {/* 5. Relevant images. */}
             {/* Focus mode: the decorative gallery and related rail step back;

@@ -3687,7 +3687,32 @@
     "unavailable": "This comparison isn't available right now.",
     "allPairs": "All comparisons",
     "entryMeta_few": "{{count}} curated pairs",
-    "entryMeta_many": "{{count}} curated pairs"
+    "entryMeta_many": "{{count}} curated pairs",
+    "free": {
+      "title": "Compare two items",
+      "fromArticle": "Compare with another item",
+      "chooseYourOwn": "Choose your own pair",
+      "intro": "Pick any two culture items. Each side shows only its own authored text - where an article says nothing, you'll see \"Not provided\".",
+      "left": "First item",
+      "right": "Second item",
+      "choose": "Choose",
+      "replace": "Replace",
+      "swap": "Swap sides",
+      "pickTitle": "Choose the {{side}}",
+      "searchLabel": "Search by name",
+      "noMatches": "No items match.",
+      "cancel": "Cancel",
+      "notProvided": "Not provided",
+      "neitherNote": "Neither article covers: {{fields}}.",
+      "connectionsTitle": "Linked in OYNO's articles",
+      "noConnection": "OYNO's curated connections don't link these two.",
+      "missing": "This article isn't available - it may have been removed, or it isn't on this device yet.",
+      "pickBoth": "Choose two items to compare them.",
+      "sideA11y": "{{title}} - {{field}}: {{text}}",
+      "slotA11y": "{{side}}: {{title}}",
+      "empty": "none chosen",
+      "sourcesTitle": "Sources: {{title}}"
+    }
   },
   "contentLinks": {
     "shareLink": "Share link",
