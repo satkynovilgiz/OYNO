@@ -150,3 +150,56 @@ test('visitor tour accessible (welcome, exhibit, closing)', async ({ page, error
   await expectNoSeriousViolations(page, 'tour closing');
   expectNoPageErrors(errors);
 });
+
+test('Look Closely: create clues, play, reveal, open the source and come back', async ({ page, errors }) => {
+  await seed(page, { language: 'en', guest: true, storage: { 'oyno.myCollections.v1': collections } });
+  await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+  // The removed exhibit can't join the game.
+  await expect(page.getByTestId('look-pick-culture_item:removed-from-oyno')).toBeDisabled();
+  for (const key of ['culture_item:boz-uy-overview', 'culture_item:boz-uy-tunduk', 'culture_item:boz-uy-karkas']) await page.getByTestId(`look-pick-${key}`).click();
+  await page.getByTestId('look-add-clue').click();
+  await page.getByTestId('look-clue-text-0').fill('Find the round opening at the very top.');
+  await page.getByTestId('look-target-0-culture_item:boz-uy-tunduk').click();
+  // Saved with the exhibition: survives a reload.
+  await page.reload();
+  await expect(page.getByTestId('look-clue-text-0')).toHaveValue('Find the round opening at the very top.');
+  await page.getByTestId('look-play').click();
+
+  await expect(page.getByTestId('look-play-view')).toContainText("Curator's clue - written by the curator, not a verified OYNO fact");
+  await expect(page.getByTestId('look-clue')).toHaveText('Find the round opening at the very top.');
+  await expect(page.locator('body')).not.toContainText('Private description');
+  // A wrong answer: no penalty, just look again.
+  await page.getByTestId('look-answer-culture_item:boz-uy-karkas').click();
+  await expect(page.getByTestId('look-try-again')).toContainText('No points and no score');
+  await page.getByTestId('look-answer-culture_item:boz-uy-tunduk').click();
+  await expect(page.getByTestId('look-reveal')).toContainText('The answer: Түндүк');
+  await expect(page.getByTestId('look-reveal')).toContainText('Find the round opening at the very top.');
+
+  await page.getByTestId('look-open-source').click();
+  await expect(page).toHaveURL(/\/culture\/item\/boz-uy-tunduk$/);
+  await page.goBack();
+  // Back in the game, where we were.
+  await expect(page.getByTestId('look-reveal')).toBeVisible();
+  await page.getByTestId('look-next').click();
+  await expect(page.getByTestId('look-done')).toContainText('Found 1 of 1');
+  // Nothing about the game was stored as learning or quiz results.
+  const stored = await page.evaluate(() => Object.keys(localStorage).filter((key) => /challenge|quiz|progress|learning/i.test(key) && !['{}', null].includes(localStorage.getItem(key))));
+  expect(stored).toEqual([]);
+  await page.getByTestId('look-restart').click();
+  await expect(page.getByTestId('look-progress')).toHaveText('Clue 1 of 1');
+  await expectNoExposedKeys(page);
+  expectNoPageErrors(errors);
+});
+
+test('Look Closely: translated and accessible', async ({ page, errors }) => {
+  const look = { exhibits: ['culture_item:boz-uy-overview', 'culture_item:boz-uy-tunduk'], clues: [{ id: 'c1', target: 'culture_item:boz-uy-tunduk', text: 'Synthetic clue 4r' }] };
+  const museums = { guest: { [ID]: { title: 'Yurt', intro: '', exhibits: ['culture_item:boz-uy-overview', 'culture_item:boz-uy-tunduk'], captions: {}, lookClosely: look, updatedAt: AT } } };
+  await seed(page, { language: 'ru', guest: true, storage: { 'oyno.myCollections.v1': collections, 'oyno.myCollections.museums.v1': museums } });
+  await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+  await expectNoSeriousViolations(page, 'look closely setup');
+  await page.getByTestId('look-play').click();
+  await page.getByTestId('look-answer-culture_item:boz-uy-overview').click();
+  await expectNoExposedKeys(page);
+  await expectNoSeriousViolations(page, 'look closely play');
+  expectNoPageErrors(errors);
+});

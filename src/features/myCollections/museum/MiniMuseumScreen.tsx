@@ -18,9 +18,11 @@ import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { useContentResolver, useMyCollections } from '../useMyCollections';
 import { buildExhibitionCover, CAPTION_MAX, emptyExhibition, exhibitKey, INTRO_MAX, MAX_EXHIBITS, moveExhibit, normalizeExhibition, REFLECTION_PROMPTS, setCaption, setReflection, slidesFor, TITLE_MAX, toggleExhibit, type Exhibition, type ReflectionPromptId } from './museumModel';
+import { LookCloselyPlay, LookCloselySetup } from './LookClosely';
+import { endLookSession, resumeLookSession } from './lookCloselyModel';
 import { VisitorTour } from './VisitorTour';
 
-type Mode = 'setup' | 'present' | 'visit';
+type Mode = 'setup' | 'present' | 'visit' | 'look';
 
 /**
  * /profile/my-collections/museum?collection=<id> - present an existing
@@ -39,7 +41,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   const { resolve, ready } = useContentResolver();
   const { share, shareHost } = useShareCard();
   const { isOffline } = useNetworkStatus();
-  const [mode, setMode] = useState<Mode>('setup');
+  // A Look Closely game in progress (in memory) resumes when the screen is re-created, e.g. after opening a source.
+  const [mode, setMode] = useState<Mode>(() => (resumeLookSession(owner, collectionId) ? 'look' : 'setup'));
   const [slide, setSlide] = useState(0);
   const [includeIntro, setIncludeIntro] = useState(false);
   const collection = data.collections.find((candidate) => candidate.id === collectionId) ?? null;
@@ -52,7 +55,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
 
   useEffect(() => {
     // Another owner signed in: nothing of the previous presentation stays on screen.
-    setMode('setup');
+    if (!resumeLookSession(owner, collectionId)) setMode('setup');
     setSlide(0);
     setIncludeIntro(false);
   }, [owner]);
@@ -80,7 +83,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={mode === 'setup' ? onPressBack : () => setMode('setup')} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={mode === 'setup' ? onPressBack : () => { endLookSession(); setMode('setup'); }} />
         <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
           {mode === 'setup' ? t('museum.title') : exhibitionTitle}
         </Text>
@@ -140,6 +143,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
             <Button label={t('museum.visit.startTour')} variant="secondary" accessibilityHint={t('museum.visit.startTourHint')} onPress={() => setMode('visit')} disabled={exhibition.exhibits.length === 0} testID="museum-visit" />
             <Text style={styles.meta}>{t('museum.visit.startTourHint')}</Text>
 
+            <LookCloselySetup exhibition={exhibition} slides={slides} titleOf={titleOf} onChange={(lookClosely) => save({ ...exhibition, lookClosely })} onPlay={() => { endLookSession(); setMode('look'); }} />
+
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{t('museum.shareTitle')}</Text>
               <Text style={styles.meta}>{t('museum.shareBody')}</Text>
@@ -151,6 +156,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
             </View>
           </View>
         ) : null}
+
+        {mode === 'look' ? <LookCloselyPlay exhibition={exhibition} slides={slides} owner={owner} collectionId={collectionId} onEnd={() => setMode('setup')} /> : null}
 
         {mode === 'visit' ? <VisitorTour exhibition={exhibition} title={exhibitionTitle} slides={slides} isOffline={isOffline} large={large} onEnd={() => setMode('setup')} /> : null}
 

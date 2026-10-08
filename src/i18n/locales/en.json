@@ -5256,6 +5256,38 @@
         "learnMore": "What would you like to find out next about it?",
         "share": "Who would you show this to, and why?"
       }
+    },
+    "look": {
+      "sectionTitle": "Look Closely (optional)",
+      "sectionHint": "A small observation game for someone viewing your museum on this phone: pick up to 3 exhibits, then write clues that point to one of them.",
+      "pickTitle": "Exhibits in the game ({{count}} of {{max}})",
+      "unavailableExhibit": "can't be shown right now",
+      "clueLabel": "Clue {{n}}",
+      "cluePlaceholder": "e.g. Find the one with a round opening at the top.",
+      "clueTarget": "This clue points to:",
+      "addClue": "Add a clue",
+      "removeClue": "Remove this clue",
+      "clueLimit": "{{count}} / {{max}}",
+      "needMore": "Choose at least 2 exhibits and write a clue to play.",
+      "play": "Play Look Closely",
+      "curatorClue": "Curator's clue - written by the curator, not a verified OYNO fact",
+      "clueOf": "Clue {{current}} of {{total}}",
+      "pickPrompt": "Which exhibit is it?",
+      "answerA11y": "{{title}}{{state}}",
+      "triedSuffix": ", not this one",
+      "tryAgain": "Not this one - look again.",
+      "noPenalty": "No points and no score - take another look.",
+      "found": "You found it!",
+      "targetIs": "The answer: {{title}}",
+      "openSource": "Open the source: {{title}}",
+      "nextClue": "Next clue",
+      "previousClue": "Previous clue",
+      "unavailableClue": "This clue's exhibit isn't available right now. Skip to the next one.",
+      "done": "That's all the clues.",
+      "foundCount": "Found {{found}} of {{total}}",
+      "restart": "Play again",
+      "back": "Back to the museum",
+      "notLearning": "This game isn't counted as learning or quiz results, and answers aren't saved."
     }
   },
   "rhythmRepeat": {

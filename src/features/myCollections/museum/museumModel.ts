@@ -1,6 +1,8 @@
 import type { ShareCardContent } from '@/components/share/ShareCard';
 import { colors } from '@/theme';
 
+import { normalizeLook, type LookClosely } from './lookCloselyModel';
+
 import type { CollectionsData, ResolvedContent, UserCollection } from '../myCollectionsModel';
 
 /**
@@ -33,6 +35,8 @@ export type Exhibition = {
   captions: Record<ExhibitKey, string>;
   /** Visitor tour: a reflection prompt after selected exhibits (added later; older exhibitions have none). */
   reflections?: Record<ExhibitKey, ReflectionPromptId>;
+  /** Optional "Look Closely" activity (lookCloselyModel.ts); older exhibitions have none. */
+  lookClosely?: LookClosely;
   updatedAt: string;
 };
 
@@ -72,6 +76,7 @@ export function normalizeExhibition(raw: unknown, data: CollectionsData, collect
   }
   return {
     reflections,
+    lookClosely: normalizeLook(value.lookClosely, { exhibits }),
     title: typeof value.title === 'string' ? clean(value.title, TITLE_MAX) : '',
     intro: typeof value.intro === 'string' ? clean(value.intro, INTRO_MAX) : '',
     exhibits,
