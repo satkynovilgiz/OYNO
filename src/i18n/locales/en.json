@@ -5394,6 +5394,40 @@
       "restart": "Play again",
       "back": "Back to the museum",
       "notLearning": "This game isn't counted as learning or quiz results, and answers aren't saved."
+    },
+    "story": {
+      "sectionTitle": "Story Cards (optional)",
+      "sectionHint": "Arrange 3 to 6 exhibits into a short story with a beginning, a middle and an ending.",
+      "pickTitle": "Cards ({{count}} of {{max}})",
+      "addTitle": "Add exhibits",
+      "unavailable": "can't be shown right now",
+      "cardLabel": "Card {{n}} · {{part}}",
+      "parts": {
+        "beginning": "Beginning",
+        "middle": "Middle",
+        "ending": "Ending"
+      },
+      "titleLabel": "Card title (yours, optional)",
+      "textLabel": "Your words (optional)",
+      "limit": "{{count}} / {{max}}",
+      "moveUp": "Move {{name}} earlier",
+      "moveDown": "Move {{name}} later",
+      "remove": "Remove card",
+      "needMore": "Add at least {{min}} cards to tell the story.",
+      "present": "Present the story",
+      "cardOf": "Card {{current}} of {{total}}",
+      "curatorWords": "Curator's words",
+      "removedCard": "This exhibit is no longer available - the story carries on.",
+      "asList": "Show as a list",
+      "asCards": "One card at a time",
+      "previous": "Previous",
+      "next": "Next",
+      "exportCard": "Preview and share this card",
+      "exportNote": "Shares this one card as an image: its title, your words for it, and the exhibit's name and picture - nothing else.",
+      "webNote": "On the web the card can be previewed, but it can only be shared as text; saving the image needs the iOS or Android app.",
+      "label": "Story card",
+      "endStory": "Back to the museum",
+      "storyFallback": "A story"
     }
   },
   "rhythmRepeat": {

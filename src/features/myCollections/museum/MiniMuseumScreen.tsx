@@ -19,10 +19,12 @@ import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 import { useContentResolver, useMyCollections } from '../useMyCollections';
 import { buildExhibitionCover, CAPTION_MAX, emptyExhibition, exhibitKey, INTRO_MAX, MAX_EXHIBITS, moveExhibit, normalizeExhibition, REFLECTION_PROMPTS, setCaption, setReflection, slidesFor, TITLE_MAX, toggleExhibit, type Exhibition, type ReflectionPromptId } from './museumModel';
 import { LookCloselyPlay, LookCloselySetup } from './LookClosely';
+import { StoryPresent, StorySetup } from './StoryCards';
+import { endStoryPlace, resumeStoryPlace } from './storyModel';
 import { endLookSession, resumeLookSession } from './lookCloselyModel';
 import { VisitorTour } from './VisitorTour';
 
-type Mode = 'setup' | 'present' | 'visit' | 'look';
+type Mode = 'setup' | 'present' | 'visit' | 'look' | 'story';
 
 /**
  * /profile/my-collections/museum?collection=<id> - present an existing
@@ -42,7 +44,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   const { share, shareHost } = useShareCard();
   const { isOffline } = useNetworkStatus();
   // A Look Closely game in progress (in memory) resumes when the screen is re-created, e.g. after opening a source.
-  const [mode, setMode] = useState<Mode>(() => (resumeLookSession(owner, collectionId) ? 'look' : 'setup'));
+  const [mode, setMode] = useState<Mode>(() => (resumeLookSession(owner, collectionId) ? 'look' : resumeStoryPlace(owner, collectionId) ? 'story' : 'setup'));
   const [slide, setSlide] = useState(0);
   const [includeIntro, setIncludeIntro] = useState(false);
   const collection = data.collections.find((candidate) => candidate.id === collectionId) ?? null;
@@ -55,7 +57,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
 
   useEffect(() => {
     // Another owner signed in: nothing of the previous presentation stays on screen.
-    if (!resumeLookSession(owner, collectionId)) setMode('setup');
+    if (!resumeLookSession(owner, collectionId) && !resumeStoryPlace(owner, collectionId)) setMode('setup');
     setSlide(0);
     setIncludeIntro(false);
   }, [owner]);
@@ -83,7 +85,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={mode === 'setup' ? onPressBack : () => { endLookSession(); setMode('setup'); }} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={mode === 'setup' ? onPressBack : () => { endLookSession(); endStoryPlace(); setMode('setup'); }} />
         <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
           {mode === 'setup' ? t('museum.title') : exhibitionTitle}
         </Text>
@@ -143,6 +145,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
             <Button label={t('museum.visit.startTour')} variant="secondary" accessibilityHint={t('museum.visit.startTourHint')} onPress={() => setMode('visit')} disabled={exhibition.exhibits.length === 0} testID="museum-visit" />
             <Text style={styles.meta}>{t('museum.visit.startTourHint')}</Text>
 
+            <StorySetup exhibition={exhibition} slides={slides} titleOf={titleOf} onChange={(story) => save({ ...exhibition, story })} onPresent={() => { endStoryPlace(); setMode('story'); }} />
+
             <LookCloselySetup exhibition={exhibition} slides={slides} titleOf={titleOf} onChange={(lookClosely) => save({ ...exhibition, lookClosely })} onPlay={() => { endLookSession(); setMode('look'); }} />
 
             <View style={styles.card}>
@@ -156,6 +160,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
             </View>
           </View>
         ) : null}
+
+        {mode === 'story' ? <StoryPresent exhibition={exhibition} slides={slides} owner={owner} collectionId={collectionId} storyTitle={exhibitionTitle} large={large} onShare={(content, fallback) => void share(content, fallback)} onEnd={() => setMode('setup')} /> : null}
 
         {mode === 'look' ? <LookCloselyPlay exhibition={exhibition} slides={slides} owner={owner} collectionId={collectionId} onEnd={() => setMode('setup')} /> : null}
 

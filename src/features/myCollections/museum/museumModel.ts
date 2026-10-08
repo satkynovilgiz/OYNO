@@ -2,6 +2,7 @@ import type { ShareCardContent } from '@/components/share/ShareCard';
 import { colors } from '@/theme';
 
 import { normalizeLook, type LookClosely } from './lookCloselyModel';
+import { normalizeStory, type Story } from './storyModel';
 
 import type { CollectionsData, ResolvedContent, UserCollection } from '../myCollectionsModel';
 
@@ -37,6 +38,8 @@ export type Exhibition = {
   reflections?: Record<ExhibitKey, ReflectionPromptId>;
   /** Optional "Look Closely" activity (lookCloselyModel.ts); older exhibitions have none. */
   lookClosely?: LookClosely;
+  /** Optional "Story Cards" (storyModel.ts); older exhibitions have none. */
+  story?: Story;
   updatedAt: string;
 };
 
@@ -77,6 +80,7 @@ export function normalizeExhibition(raw: unknown, data: CollectionsData, collect
   return {
     reflections,
     lookClosely: normalizeLook(value.lookClosely, { exhibits }),
+    story: normalizeStory(value.story, { exhibits }),
     title: typeof value.title === 'string' ? clean(value.title, TITLE_MAX) : '',
     intro: typeof value.intro === 'string' ? clean(value.intro, INTRO_MAX) : '',
     exhibits,

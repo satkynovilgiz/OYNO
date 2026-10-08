@@ -203,3 +203,70 @@ test('Look Closely: translated and accessible', async ({ page, errors }) => {
   await expectNoSeriousViolations(page, 'look closely play');
   expectNoPageErrors(errors);
 });
+
+test('Story Cards: author, present, open a source and return, preview one card for export', async ({ page, errors }) => {
+  await seed(page, { language: 'en', guest: true, storage: { 'oyno.myCollections.v1': collections } });
+  await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+  await expect(page.getByTestId('story-add-culture_item:removed-from-oyno')).toBeDisabled();
+  for (const key of ['culture_item:boz-uy-overview', 'culture_item:boz-uy-karkas', 'culture_item:boz-uy-tunduk']) await page.getByTestId(`story-add-${key}`).click();
+  await page.getByTestId('story-title-2').fill('The crown on top');
+  await page.getByTestId('story-text-2').fill('Synthetic story words 9p');
+  // Reorder: the frame before the yurt overview.
+  await page.getByTestId('story-down-0').click();
+  await expect(page.getByTestId('story-card-0')).toContainText('Жыгач каркас');
+  await expect(page.getByTestId('story-card-0')).toContainText('Beginning');
+  await page.reload();
+  await expect(page.getByTestId('story-title-2')).toHaveValue('The crown on top');
+
+  await page.getByTestId('story-present').click();
+  await expect(page.getByTestId('story-progress')).toHaveText('Card 1 of 3');
+  await expect(page.getByTestId('story-exhibit-0')).toHaveText('Жыгач каркас');
+  await page.getByTestId('story-next').click();
+  await page.getByTestId('story-next').click();
+  await expect(page.getByTestId('story-words-2')).toContainText("Curator's wordsThe crown on top");
+  await expect(page.locator('body')).not.toContainText('Private description');
+
+  // Source and back: still on card 3.
+  await page.getByTestId('story-source-2').click();
+  await expect(page).toHaveURL(/\/culture\/item\/boz-uy-tunduk$/);
+  await page.goBack();
+  await expect(page.getByTestId('story-progress')).toHaveText('Card 3 of 3');
+
+  // The list alternative shows the whole story.
+  await page.getByTestId('story-toggle-list').click();
+  await expect(page.getByTestId('story-slide-0')).toBeVisible();
+  await expect(page.getByTestId('story-slide-2')).toBeVisible();
+  await page.getByTestId('story-toggle-list').click();
+
+  // Export: the preview is exactly this card - its part, title, words, exhibit - and nothing private.
+  await expect(page.getByText('saving the image needs the iOS or Android app')).toBeVisible();
+  await page.getByTestId('story-export').click();
+  const sheet = page.getByTestId('share-preview-card');
+  await expect(sheet).toContainText('Ending');
+  await expect(sheet).toContainText('The crown on top');
+  await expect(sheet).toContainText('Synthetic story words 9p');
+  await expect(sheet).toContainText('Түндүк');
+  await expect(sheet).not.toContainText('Private description');
+  await expect(sheet).not.toContainText('Жыгач каркас');
+  await page.getByRole('button', { name: 'Cancel' }).last().click();
+  await expect(page.getByTestId('story-progress')).toHaveText('Card 3 of 3');
+  await expectNoExposedKeys(page);
+  expectNoPageErrors(errors);
+});
+
+test('Story Cards: translated and accessible', async ({ page, errors }) => {
+  const story = { cards: [{ key: 'culture_item:boz-uy-overview', title: 'A', text: '' }, { key: 'culture_item:removed-from-oyno', title: 'Gone', text: '' }, { key: 'culture_item:boz-uy-tunduk', title: 'C', text: 'w' }] };
+  const museums = { guest: { [ID]: { title: 'Yurt', intro: '', exhibits: ['culture_item:boz-uy-overview', 'culture_item:removed-from-oyno', 'culture_item:boz-uy-tunduk'], captions: {}, story, updatedAt: AT } } };
+  await seed(page, { language: 'kg', guest: true, storage: { 'oyno.myCollections.v1': collections, 'oyno.myCollections.museums.v1': museums } });
+  await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+  await expectNoSeriousViolations(page, 'story setup');
+  await page.getByTestId('story-present').click();
+  await page.getByTestId('story-next').click();
+  // The missing exhibit is a clear card, and the story goes on.
+  await expect(page.getByTestId('story-removed-1')).toBeVisible();
+  await page.getByTestId('story-next').click();
+  await expect(page.getByTestId('story-exhibit-2')).toBeVisible();
+  await expectNoExposedKeys(page);
+  await expectNoSeriousViolations(page, 'story present');
+  expectNoPageErrors(errors);
+});
