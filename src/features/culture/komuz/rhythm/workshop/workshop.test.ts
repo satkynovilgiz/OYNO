@@ -8,7 +8,7 @@ import ru from '@/i18n/locales/ru.json';
 
 import { LEAD_IN_MS } from '../repeat/repeatAudio';
 import { beatMs, DOUBLE_TAP_MS } from '../repeat/repeatModel';
-import { EMPTY_COMPOSITION, EXAMPLES, MAX_NOTES, onsetsOf, playbackTimes, START_WORKSHOP, STEPS, toggleStep, validateComposition, visibleSteps, workshopReducer, type Composition, type WorkshopState } from './workshopModel';
+import { ABANDON_MS, attemptTimeoutMs, EMPTY_COMPOSITION, EXAMPLES, TEMPOS, MAX_NOTES, onsetsOf, playbackTimes, START_WORKSHOP, STEPS, toggleStep, validateComposition, visibleSteps, workshopReducer, type Composition, type WorkshopState } from './workshopModel';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: { auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } } }) } } }));
 const mockAudio = { plays: 0, disposed: 0 };
@@ -195,6 +195,68 @@ describe('the real screen: playback is cancelled; the handoff shows no answer', 
     expect(mockAudio.disposed).toBe(1);
   });
 
+  const status = () => String(screen.root.findAll((node) => node.props.testID === 'ws-status')[0]?.props.children ?? '');
+  const has = (testID: string) => screen.root.findAll((node) => node.props.testID === testID).length > 0;
+  const tap = () => act(() => screen.root.findAll((node) => node.props.testID === 'ws-pad' && typeof node.props.onPressIn === 'function')[0].props.onPressIn());
+  /** Compose [0, 15] at 70 BPM, hand over and sit through the demonstration. */
+  function longRest() {
+    press('ws-step-0');
+    press('ws-step-15');
+    press('ws-tempo-70');
+    press('ws-hand-over');
+    press('ws-player-ready');
+    act(() => jest.advanceTimersByTime(LEAD_IN_MS + 6430 + 600));
+    expect(status()).toBe('rhythmWorkshop.yourTurn');
+  }
+
+  it('a 6.43 s rest (steps 0 and 15 at 70 BPM) does not end the attempt early; the second tap completes it', () => {
+    longRest();
+    tap();
+    act(() => jest.advanceTimersByTime(6000)); // the old timer gave up after ~2.1 s
+    expect(has('ws-feedback')).toBe(false);
+    expect(status()).toBe('rhythmWorkshop.tapped');
+    act(() => jest.advanceTimersByTime(430));
+    tap();
+    expect(has('ws-feedback')).toBe(true);
+    act(() => screen.unmount());
+  });
+
+  it('played slower than the demonstration it still waits; an abandoned attempt ends within the bound; Done ends it at once', () => {
+    longRest();
+    tap();
+    act(() => jest.advanceTimersByTime(9500)); // ~1.5x slower than the rest
+    expect(has('ws-feedback')).toBe(false);
+    act(() => jest.advanceTimersByTime(ABANDON_MS));
+    expect(has('ws-feedback')).toBe(true);
+    press('ws-try-again');
+    press('ws-player-ready');
+    act(() => jest.advanceTimersByTime(LEAD_IN_MS + 6430 + 600));
+    tap();
+    press('ws-done');
+    expect(has('ws-feedback')).toBe(true);
+    act(() => screen.unmount());
+  });
+
+  it('replay, backgrounding and leaving cancel the pending timeout', () => {
+    longRest();
+    tap();
+    press('ws-replay');
+    act(() => jest.advanceTimersByTime(LEAD_IN_MS + 6430 + 600));
+    expect(status()).toBe('rhythmWorkshop.yourTurn'); // back to ready, not ended by the old timer
+    act(() => jest.advanceTimersByTime(ABANDON_MS * 2));
+    expect(has('ws-feedback')).toBe(false);
+    tap();
+    act(() => appStateListeners.forEach((listener) => listener('background')));
+    act(() => jest.advanceTimersByTime(ABANDON_MS * 2));
+    expect(has('ws-handoff')).toBe(true);
+    expect(has('ws-feedback')).toBe(false);
+    press('ws-player-ready');
+    act(() => jest.advanceTimersByTime(LEAD_IN_MS + 6430 + 600));
+    tap();
+    act(() => screen.unmount());
+    expect(() => act(() => jest.advanceTimersByTime(ABANDON_MS * 2))).not.toThrow();
+  });
+
   it('after handing over, nothing on screen reveals the rhythm (no grid) until it is revealed', () => {
     press('ws-example-hop');
     press('ws-hand-over');
@@ -205,6 +267,31 @@ describe('the real screen: playback is cancelled; the handoff shows no answer', 
     act(() => jest.advanceTimersByTime(LEAD_IN_MS + 5));
     expect(screen.root.findAll((node) => node.props.testID === 'ws-grid' || node.props.testID === 'ws-grid-revealed')).toHaveLength(0);
     act(() => screen.unmount());
+  });
+});
+
+describe('attempts wait for the rhythm itself', () => {
+  it('every accepted gap, at every tempo, gets more time than the gap - even played up to 1.5x slower - and never more than the bound', () => {
+    for (const tempo of TEMPOS) {
+      for (let last = 1; last < STEPS; last += 1) {
+        const locked: Composition = { steps: [0, last], tempo };
+        const gapMs = last * 0.5 * beatMs(tempo);
+        expect(attemptTimeoutMs(locked, [1000])).toBeGreaterThan(gapMs * 1.5);
+        expect(attemptTimeoutMs(locked, [1000])).toBeLessThanOrEqual(ABANDON_MS);
+      }
+    }
+    // The review's example: steps [0, 15] at 70 BPM is a 6.43 s rest.
+    expect(attemptTimeoutMs({ steps: [0, 15], tempo: 70 }, [0])).toBeGreaterThan(6430 * 1.5);
+  });
+
+  it("follows the player's own (slower) tempo for later gaps, capped", () => {
+    const locked: Composition = { steps: [0, 2, 4, 14], tempo: 100 }; // 600 ms beats; then a 5-beat rest
+    const demoPace = attemptTimeoutMs(locked, [0, 600, 1200]);
+    const slowPace = attemptTimeoutMs(locked, [0, 1100, 2200]); // player at ~1100 ms a beat
+    expect(slowPace).toBeGreaterThan(demoPace);
+    // A very slow player: at most twice the demonstration's beat (5 beats x 1200 ms x 1.75 + 1.5 s), within the bound.
+    expect(attemptTimeoutMs(locked, [0, 9000, 18000])).toBe(12000);
+    expect(attemptTimeoutMs({ steps: [0, 15], tempo: 70 }, [0, 0])).toBeLessThanOrEqual(ABANDON_MS);
   });
 });
 

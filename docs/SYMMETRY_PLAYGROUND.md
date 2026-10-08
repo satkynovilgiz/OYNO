@@ -28,8 +28,13 @@
   originals, and the guide lines are the REAL axes: a vertical line for
   Mirror, vertical and horizontal lines for Four-way. A switch hides the
   guides.
-- **Undo** steps back one change (up to 50); **Reset** clears the design and
-  can itself be undone.
+- **Undo** steps back one change (up to 50); **Reset** returns to the
+  session's start and can itself be undone.
+- Each challenge, and free play, is its own session with its own history
+  (`begin`). Undo can never bring back motifs or a rule from another
+  session.
+- A challenge's fixed rule is locked in the model, so no action or Undo can
+  change it.
 - **The rule (geometry):** a plain explanation of the selected rule, for
   example "Columns 1 and 5 swap…" or "two reflections = half a turn".
 - **About the motifs** is a separate, dashed section. The playground explains

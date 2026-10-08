@@ -136,3 +136,27 @@ export function visibleSteps(state: WorkshopState): number[] | null {
   if (state.phase === 'feedback' && state.revealed && state.locked) return state.locked.steps;
   return null;
 }
+
+/**
+ * How long to wait for the NEXT tap before treating the attempt as over.
+ * It follows the rhythm itself: the gap to the next note, at the player's
+ * OWN tempo so far (never faster than the demonstration; up to twice as
+ * slow is allowed), with generous slack - so a long rest in any accepted
+ * composition never cuts an attempt short. Bounded, so an abandoned
+ * attempt still ends. Scoring is unchanged (relative timing).
+ */
+export const MIN_WAIT_MS = 2000;
+export const ABANDON_MS = 20000;
+const SLACK = 1.75;
+const EXTRA_MS = 1500;
+const SLOWEST = 2;
+export function attemptTimeoutMs(locked: Composition, taps: readonly number[]): number {
+  const onsets = onsetsOf(locked);
+  const next = taps.length;
+  if (next === 0 || next >= onsets.length) return MIN_WAIT_MS;
+  const demo = beatMs(locked.tempo);
+  const own = next >= 2 && onsets[next - 1] > onsets[0] ? (taps[next - 1] - taps[0]) / (onsets[next - 1] - onsets[0]) : demo;
+  const perBeat = Math.min(Math.max(own, demo), demo * SLOWEST);
+  const gap = onsets[next] - onsets[next - 1];
+  return Math.round(Math.min(ABANDON_MS, Math.max(MIN_WAIT_MS, gap * perBeat * SLACK + EXTRA_MS)));
+}

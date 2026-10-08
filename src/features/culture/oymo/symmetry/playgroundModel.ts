@@ -23,7 +23,8 @@ export const HISTORY_MAX = 50;
 export type Cell = { col: number; row: number };
 export type Piece = { id: string; motifId: string; cell: Cell };
 export type Design = { pieces: Piece[]; mode: SymmetryMode };
-export type PlaygroundState = { design: Design; history: Design[]; nextId: number };
+/** `lockedMode`: a challenge's fixed rule - no action (or undo) can leave it. */
+export type PlaygroundState = { design: Design; history: Design[]; nextId: number; lockedMode: SymmetryMode | null; /** Where Reset returns to in this session. */ start: Design };
 
 export const cellKey = (cell: Cell) => `${cell.col},${cell.row}`;
 export const centre = (cell: Cell) => ({ x: (cell.col + 0.5) * CELL, y: (cell.row + 0.5) * CELL });
@@ -31,9 +32,15 @@ const toCell = (point: { x: number; y: number }): Cell => ({ col: Math.floor(poi
 const inGrid = (cell: Cell) => Number.isInteger(cell.col) && Number.isInteger(cell.row) && cell.col >= 0 && cell.row >= 0 && cell.col < GRID && cell.row < GRID;
 
 export const EMPTY_DESIGN: Design = { pieces: [], mode: 'mirror' };
-export function startPlayground(design: Design = EMPTY_DESIGN): PlaygroundState {
-  return { design: { mode: design.mode, pieces: design.pieces.map((piece) => ({ ...piece, cell: { ...piece.cell } })) }, history: [], nextId: design.pieces.length };
+/** A fresh session with its OWN history: entering a challenge, switching, or returning to free play. */
+export function startPlayground(design: Design = EMPTY_DESIGN, lockedMode: SymmetryMode | null = null): PlaygroundState {
+  const mode = lockedMode ?? design.mode;
+  const copy = (): Design => ({ mode, pieces: design.pieces.map((piece) => ({ ...piece, cell: { ...piece.cell } })) });
+  return { design: copy(), history: [], nextId: design.pieces.length, lockedMode, start: copy() };
 }
+
+/** The starting design of a challenge (or of free play). */
+export const challengeStart = (challenge: Challenge | null): Design => (challenge ? { pieces: [], mode: challenge.mode ?? 'none' } : EMPTY_DESIGN);
 
 /** Where a source cell's copies land under a mode (the source cell included). */
 export function mirroredCells(cell: Cell, mode: SymmetryMode): Cell[] {
@@ -64,10 +71,12 @@ export type PlaygroundAction =
   | { type: 'move'; id: string; cell: Cell }
   | { type: 'mode'; mode: SymmetryMode }
   | { type: 'undo' }
-  | { type: 'reset'; to?: Design };
+  | { type: 'reset' }
+  /** Enter a challenge (or free play with null): a NEW history; nothing from before can be undone into it. */
+  | { type: 'begin'; challenge: Challenge | null };
 
 function commit(state: PlaygroundState, design: Design, nextId = state.nextId): PlaygroundState {
-  return { design, history: [...state.history, state.design].slice(-HISTORY_MAX), nextId };
+  return { ...state, design, history: [...state.history, state.design].slice(-HISTORY_MAX), nextId };
 }
 
 /** One piece per source cell; anything invalid changes nothing (and adds no undo step). */
@@ -87,16 +96,19 @@ export function playgroundReducer(state: PlaygroundState, action: PlaygroundActi
       return commit(state, { ...design, pieces: design.pieces.map((entry) => (entry.id === action.id ? { ...entry, cell: { ...action.cell } } : entry)) });
     }
     case 'mode':
-      if (action.mode === design.mode || !MODES.includes(action.mode)) return state;
+      if (action.mode === design.mode || !MODES.includes(action.mode) || state.lockedMode) return state;
       return commit(state, { ...design, mode: action.mode });
     case 'undo':
       if (state.history.length === 0) return state;
       return { ...state, design: state.history[state.history.length - 1], history: state.history.slice(0, -1) };
     case 'reset': {
-      const to = action.to ?? EMPTY_DESIGN;
+      // Back to this session's start (empty, in the challenge's rule) - undoable within the session.
+      const to: Design = { mode: state.lockedMode ?? state.start.mode, pieces: state.start.pieces.map((piece) => ({ ...piece, cell: { ...piece.cell } })) };
       if (JSON.stringify(to) === JSON.stringify(design)) return state;
-      return commit(state, { mode: to.mode, pieces: to.pieces.map((piece) => ({ ...piece, cell: { ...piece.cell } })) });
+      return commit(state, to);
     }
+    case 'begin':
+      return startPlayground(challengeStart(action.challenge), action.challenge?.mode ?? null);
   }
 }
 

@@ -13,7 +13,7 @@ import type { SymmetryMode } from '@/services/culture/symmetry';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { getMotifShape } from '../motifs';
-import { CHALLENGES, compareToTarget, EMPTY_DESIGN, GRID, isSolved, MODES, playgroundReducer, resultOf, startPlayground, toCreatorCopy, cellKey, type Cell, type Challenge, type Piece } from './playgroundModel';
+import { CHALLENGES, compareToTarget, GRID, isSolved, MODES, playgroundReducer, resultOf, startPlayground, toCreatorCopy, cellKey, type Cell, type Challenge, type Piece } from './playgroundModel';
 
 const FREE_MOTIFS = ['muyuz', 'gul', 'kochkorMuyuz', 'tortKulak', 'bulak', 'jalbyrak'];
 const INK = colors.primary;
@@ -59,16 +59,12 @@ export function SymmetryPlaygroundScreen({ onPressBack }: { onPressBack: () => v
     } else act({ type: 'place', cell, motifId: motif });
   };
 
+  // Entering, switching or leaving a challenge starts a separate history (and fixes the challenge's rule).
   const startChallenge = (next: Challenge | null) => {
     setChallenge(next);
     setSelected(null);
-    if (next) {
-      setMotif(next.motifs[0]);
-      act({ type: 'reset', to: { pieces: [], mode: next.mode ?? 'none' } });
-    } else {
-      setMotif(FREE_MOTIFS[0]);
-      act({ type: 'reset', to: EMPTY_DESIGN });
-    }
+    setMotif(next ? next.motifs[0] : FREE_MOTIFS[0]);
+    act({ type: 'begin', challenge: next });
   };
 
   const openInCreator = () => {
@@ -117,7 +113,7 @@ export function SymmetryPlaygroundScreen({ onPressBack }: { onPressBack: () => v
           </View>
         ) : null}
 
-        {radio(t('symmetryPlayground.modeTitle'), MODES, design.mode, modeName, (mode) => act({ type: 'mode', mode }), 'mode', !!challenge?.mode)}
+        {radio(t('symmetryPlayground.modeTitle'), MODES, design.mode, modeName, (mode) => act({ type: 'mode', mode }), 'mode', !!state.lockedMode)}
         {radio(t('symmetryPlayground.motifTitle'), motifs, motif, name, setMotif, 'motif')}
 
         <View style={styles.toggleRow}>
@@ -165,7 +161,7 @@ export function SymmetryPlaygroundScreen({ onPressBack }: { onPressBack: () => v
 
         <View style={styles.row}>
           <Button label={t('symmetryPlayground.undo')} variant="secondary" disabled={state.history.length === 0} onPress={() => act({ type: 'undo' })} testID="sym-undo" />
-          <Button label={t('symmetryPlayground.reset')} variant="secondary" onPress={() => { setSelected(null); act({ type: 'reset', to: challenge ? { pieces: [], mode: challenge.mode ?? 'none' } : EMPTY_DESIGN }); }} testID="sym-reset" />
+          <Button label={t('symmetryPlayground.reset')} variant="secondary" onPress={() => { setSelected(null); act({ type: 'reset' }); }} testID="sym-reset" />
         </View>
 
         {/* Geometry, kept apart from culture. */}

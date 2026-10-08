@@ -53,6 +53,22 @@
 5. Then: "Show the rhythm", "Try again" (back to the hidden handoff) or
    "Back to the composer".
 
+## When an attempt ends (2026-10-08)
+
+- Tapping a note for every note, or **Done**, ends the attempt at once.
+- Otherwise the wait for the next tap follows the rhythm itself
+  (`attemptTimeoutMs`): the gap to the next note at the player's OWN pace so
+  far (never faster than the demonstration, at most twice as slow) × 1.75,
+  plus 1.5 s.
+- The wait is never shorter than 2 s and never longer than the 20 s
+  abandoned-attempt bound.
+- This means every accepted composition fits. For example, steps [0, 15] at
+  70 BPM have a 6.43 s rest, and the wait is about 12.8 s; the old fixed
+  timer was about 2.1 s.
+- Scoring is unchanged: it is still relative timing.
+- Done, replay, backgrounding and leaving all clear the pending timer
+  (screen-level fake-timer tests).
+
 ## Lifecycle and privacy
 
 - Stop, leaving the screen (focus lost), backgrounding (AppState) and

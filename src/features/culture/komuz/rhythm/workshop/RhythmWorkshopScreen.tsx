@@ -14,11 +14,7 @@ import { cardRadii, colors, radii, spacing, textStyles, typography } from '@/the
 
 import { useKomuzPlayerStore } from '../../listening/useKomuzPlayerStore';
 import { createRepeatAudio, playExample } from '../repeat/repeatAudio';
-import { beatMs } from '../repeat/repeatModel';
-import { EXAMPLES, MAX_NOTES, MIN_NOTES, playbackTimes, START_WORKSHOP, STEPS, TEMPOS, validateComposition, visibleSteps, workshopReducer, type Composition } from './workshopModel';
-
-/** No tap for this long (or 2.5 beats, if longer) ends the attempt. */
-const SILENCE_MS = 2000;
+import { attemptTimeoutMs, EXAMPLES, MAX_NOTES, MIN_NOTES, playbackTimes, START_WORKSHOP, STEPS, TEMPOS, validateComposition, visibleSteps, workshopReducer, type Composition } from './workshopModel';
 
 /**
  * /culture/komuz/workshop - compose a rhythm, hand the phone over, and the
@@ -108,12 +104,14 @@ export function RhythmWorkshopScreen({ onPressBack }: { onPressBack: () => void 
     if (state.phase === 'feedback' && state.result) announce(t('rhythmWorkshop.feedbackScore', { points: state.result.points, max: state.result.maxPoints }));
   }, [state.phase, state.result, t]);
 
-  // Silence ends the attempt.
+  // A long silence ends the attempt - long enough for the rhythm's own rests (attemptTimeoutMs).
+  // Any phase change (Done, replay, backgrounding -> handoff, leaving) clears the pending timer.
   const tapCount = state.taps.length;
   useEffect(() => {
     if (state.phase !== 'tapping' || !state.locked) return;
-    const timer = setTimeout(() => dispatch({ type: 'finish' }), Math.max(SILENCE_MS, 2.5 * beatMs(state.locked.tempo)));
+    const timer = setTimeout(() => dispatch({ type: 'finish' }), attemptTimeoutMs(state.locked, state.taps));
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, tapCount, state.locked]);
 
   const leave = () => {
