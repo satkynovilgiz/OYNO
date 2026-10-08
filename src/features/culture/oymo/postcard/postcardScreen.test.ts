@@ -20,6 +20,7 @@ jest.mock('@/components/ui', () => {
     AnimatedPressable: (props: Record<string, unknown>) => h('AnimatedPressable', props, props.children),
     Button: (props: Record<string, unknown>) => h('Button', props, props.label),
     IconButton: (props: Record<string, unknown>) => h('IconButton', props),
+    Toggle: (props: Record<string, unknown>) => h('Toggle', props),
   };
 });
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }));
@@ -57,13 +58,13 @@ beforeEach(() => {
 });
 afterEach(() => act(() => screen.unmount()));
 
-it('exports exactly the composition on screen, in both formats', () => {
+it('exports exactly the composition on screen, for each of the three outputs', () => {
   type('Жаңы жылыңыз менен!');
-  press('postcard-layout-banner');
-  press('postcard-size-small');
   press('postcard-background-gold');
-  for (const format of ['square', 'portrait'] as const) {
+  for (const format of ['square', 'portrait', 'wallpaper'] as const) {
     press(`postcard-format-${format}`);
+    press('postcard-layout-banner');
+    press('postcard-size-small');
     press('postcard-export');
     const content = mockShare.calls[mockShare.calls.length - 1];
     expect(content).toMatchObject({ variant: 'postcard', cardSize: cardSize(format), imageSource: null });
@@ -73,6 +74,41 @@ it('exports exactly the composition on screen, in both formats', () => {
     expect(artwork.props.composition).toEqual(shown());
     expect(shown()).toMatchObject({ format, layout: 'banner', size: 'small', background: 'gold', greeting: 'Жаңы жылыңыз менен!' });
   }
+});
+
+it('adjusting one output never changes the others; the palette and greeting are shared', () => {
+  press('postcard-format-portrait');
+  const portraitBefore = shown();
+  press('postcard-format-wallpaper');
+  press('postcard-size-large');
+  press('postcard-position-top');
+  press('postcard-layout-border');
+  press('postcard-format-portrait');
+  expect(shown()).toEqual(portraitBefore);
+  // Shared: change the background from the portrait, see it on the wallpaper.
+  press('postcard-background-forest');
+  type('Shared greeting');
+  press('postcard-format-wallpaper');
+  expect(shown()).toMatchObject({ background: 'forest', greeting: 'Shared greeting', size: 'large', position: 'top', layout: 'border' });
+  // The thumbnails show each output's own composition.
+  const thumbs = (format: string) => screen.root.findAll((node) => node.props.testID === `postcard-thumb-${format}`)[0].findByType(PostcardView).props.composition;
+  expect(thumbs('portrait')).toMatchObject({ size: 'medium', layout: 'classic', background: 'forest' });
+  expect(thumbs('wallpaper')).toMatchObject({ size: 'large', layout: 'border' });
+});
+
+it('the clock guide is drawn on the wallpaper preview only, never in the export', () => {
+  press('postcard-format-wallpaper');
+  expect(screen.root.findAll((node) => node.props.testID === 'postcard-clock-guide').length).toBeGreaterThan(0);
+  press('postcard-export');
+  const exported = mockShare.calls[mockShare.calls.length - 1];
+  let rendered: ReactTestRenderer | null = null;
+  act(() => {
+    rendered = create(exported.artwork as never);
+  });
+  expect(JSON.stringify(rendered!.toJSON())).not.toContain('postcard-clock-guide');
+  expect(exported.cardSize).toEqual({ width: 360, height: 780 });
+  press('postcard-format-square');
+  expect(screen.root.findAll((node) => node.props.testID === 'postcard-clock-guide')).toHaveLength(0);
 });
 
 it('a failed export (the share sheet stays open) leaves the composition exactly as it was', () => {

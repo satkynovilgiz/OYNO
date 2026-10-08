@@ -12,8 +12,9 @@ import { colors } from '@/theme';
  * pattern title or OYNO text is added.
  */
 
-export type PostcardFormat = 'portrait' | 'square';
-export const FORMATS: PostcardFormat[] = ['portrait', 'square'];
+/** The outputs of a design set: two cards and a phone wallpaper. */
+export type PostcardFormat = 'portrait' | 'square' | 'wallpaper';
+export const FORMATS: PostcardFormat[] = ['square', 'portrait', 'wallpaper'];
 export type PostcardLayout = 'classic' | 'banner' | 'border';
 export const LAYOUTS: PostcardLayout[] = ['classic', 'banner', 'border'];
 export type PatternSize = 'small' | 'medium' | 'large';
@@ -25,7 +26,15 @@ export const BACKGROUNDS: PostcardBackground[] = ['pattern', 'cream', 'forest', 
 
 /** Logical card size; exported at 3x (1080 x 1350 or 1080 x 1080). */
 export const CARD_WIDTH = 360;
-export const CARD_HEIGHT: Record<PostcardFormat, number> = { portrait: 450, square: 360 };
+export const CARD_HEIGHT: Record<PostcardFormat, number> = { portrait: 450, square: 360, wallpaper: 780 };
+/**
+ * Wallpaper (360 x 780 -> 1080 x 2340, 19.5:9): a SUGGESTED clock area at
+ * the top and a reserve at the bottom (unlock bar / shortcuts) where the
+ * greeting is never placed. Lock screens differ between phones, so this is
+ * a guide, not a guarantee; the pattern may sit behind it.
+ */
+export const CLOCK_ZONE = { x: 0, y: 56, width: 360, height: 236 };
+export const BOTTOM_RESERVE = 96;
 export const EXPORT_SCALE = 3;
 export const GREETING_MAX = 80;
 export const MARGIN = 24;
@@ -204,8 +213,15 @@ export type PostcardFrame = {
 };
 
 /** Every box for this composition. Pattern and greeting never overlap; all stay inside the card. */
+/** Where the greeting may go: inside the margins, and on a wallpaper below the clock area and above the bottom reserve. */
+export function textZone(format: PostcardFormat): { top: number; bottom: number } {
+  const height = CARD_HEIGHT[format];
+  return format === 'wallpaper' ? { top: CLOCK_ZONE.y + CLOCK_ZONE.height + 16, bottom: height - BOTTOM_RESERVE } : { top: MARGIN, bottom: height - MARGIN };
+}
+
 export function frameFor(composition: PostcardComposition): PostcardFrame {
   const card = cardSize(composition.format);
+  const zone = textZone(composition.format);
   const hasGreeting = cleanGreeting(composition.greeting).length > 0;
   const inner = { x: MARGIN, width: card.width - MARGIN * 2 };
   const greetingBox = (y: number): Box => ({ x: inner.x, y, width: inner.width, height: GREETING_HEIGHT });
@@ -219,7 +235,9 @@ export function frameFor(composition: PostcardComposition): PostcardFrame {
     ];
     const middle = { y: strip + 12, height: card.height - strip * 2 - 24 };
     if (hasGreeting) {
-      return { card, pattern: { x: 0, y: 0, width: strip, height: strip }, strips, greeting: { x: inner.x, y: middle.y + (middle.height - GREETING_HEIGHT) / 2, width: inner.width, height: GREETING_HEIGHT } };
+      const top = Math.max(middle.y, zone.top);
+      const bottom = Math.min(middle.y + middle.height, zone.bottom);
+      return { card, pattern: { x: 0, y: 0, width: strip, height: strip }, strips, greeting: greetingBox(top + (bottom - top - GREETING_HEIGHT) / 2) };
     }
     const side = Math.min(middle.height, inner.width) * SIZE_FACTOR[composition.size];
     return { card, pattern: { x: (card.width - side) / 2, y: middle.y + (middle.height - side) / 2, width: side, height: side }, strips, greeting: null };
@@ -227,16 +245,18 @@ export function frameFor(composition: PostcardComposition): PostcardFrame {
 
   if (composition.layout === 'banner') {
     // The pattern fills a full-width band; the greeting sits below it.
-    const bandHeight = hasGreeting ? card.height - GREETING_HEIGHT - MARGIN * 2 : card.height - MARGIN * 2;
+    const greetingY = zone.bottom - GREETING_HEIGHT;
+    const bandHeight = hasGreeting ? greetingY - MARGIN : card.height - MARGIN * 2;
     const side = Math.min(bandHeight, card.width - MARGIN * 2) * SIZE_FACTOR[composition.size];
     const free = bandHeight - side;
     const offset = composition.position === 'top' ? 0 : composition.position === 'bottom' ? free : free / 2;
-    return { card, pattern: { x: (card.width - side) / 2, y: MARGIN + offset, width: side, height: side }, strips: [], greeting: hasGreeting ? greetingBox(card.height - MARGIN - GREETING_HEIGHT) : null };
+    return { card, pattern: { x: (card.width - side) / 2, y: MARGIN + offset, width: side, height: side }, strips: [], greeting: hasGreeting ? greetingBox(greetingY) : null };
   }
 
-  // classic: the pattern in the free area, the greeting at the bottom (or top when the pattern is placed at the bottom).
+  // classic: the pattern in the free area, the greeting at the bottom of its zone (or at its top when the pattern is placed at the bottom).
   const greetingAtTop = hasGreeting && composition.position === 'bottom';
-  const area = { y: MARGIN + (greetingAtTop ? GREETING_HEIGHT + 12 : 0), height: card.height - MARGIN * 2 - (hasGreeting ? GREETING_HEIGHT + 12 : 0) };
+  const greetingY = greetingAtTop ? zone.top : zone.bottom - GREETING_HEIGHT;
+  const area = !hasGreeting ? { y: MARGIN, height: card.height - MARGIN * 2 } : greetingAtTop ? { y: greetingY + GREETING_HEIGHT + 12, height: card.height - MARGIN - (greetingY + GREETING_HEIGHT + 12) } : { y: MARGIN, height: greetingY - 12 - MARGIN };
   const side = Math.min(area.height, inner.width) * SIZE_FACTOR[composition.size];
   const free = area.height - side;
   const offset = composition.position === 'top' ? 0 : composition.position === 'bottom' ? free : free / 2;
@@ -244,9 +264,37 @@ export function frameFor(composition: PostcardComposition): PostcardFrame {
     card,
     pattern: { x: (card.width - side) / 2, y: area.y + offset, width: side, height: side },
     strips: [],
-    greeting: hasGreeting ? greetingBox(greetingAtTop ? MARGIN : card.height - MARGIN - GREETING_HEIGHT) : null,
+    greeting: hasGreeting ? greetingBox(greetingY) : null,
   };
 }
 
 /** The share card for this composition: only the chosen pieces (built by the screen with the rendered card). */
 export const exportSize = (format: PostcardFormat) => ({ width: CARD_WIDTH * EXPORT_SCALE, height: CARD_HEIGHT[format] * EXPORT_SCALE });
+
+/**
+ * A design set: ONE copy of the saved pattern, a shared palette
+ * (background) and greeting, and an independent placement for each output.
+ * Editing one output's placement never touches the others.
+ */
+export type OutputPlacement = Pick<PostcardComposition, 'layout' | 'size' | 'position'>;
+export type DesignSet = Pick<PostcardComposition, 'sourceId' | 'artwork' | 'greeting' | 'background'> & { outputs: Record<PostcardFormat, OutputPlacement> };
+
+export function startDesignSet(source: Parameters<typeof startPostcard>[0]): DesignSet {
+  const base = startPostcard(source);
+  const placement = (): OutputPlacement => ({ layout: base.layout, size: base.size, position: base.position });
+  return { sourceId: base.sourceId, artwork: base.artwork, greeting: base.greeting, background: base.background, outputs: { square: placement(), portrait: placement(), wallpaper: placement() } };
+}
+
+export function compositionFor(set: DesignSet, format: PostcardFormat): PostcardComposition {
+  return { sourceId: set.sourceId, artwork: set.artwork, greeting: set.greeting, background: set.background, format, ...set.outputs[format] };
+}
+
+/** Shared settings (greeting, palette) apply to every output. */
+export function updateShared(set: DesignSet, patch: Partial<Pick<DesignSet, 'greeting' | 'background'>>): DesignSet {
+  return { ...set, ...patch };
+}
+
+/** One output's placement; the other outputs are the same objects as before. */
+export function updatePlacement(set: DesignSet, format: PostcardFormat, patch: Partial<OutputPlacement>): DesignSet {
+  return { ...set, outputs: { ...set.outputs, [format]: { ...set.outputs[format], ...patch } } };
+}

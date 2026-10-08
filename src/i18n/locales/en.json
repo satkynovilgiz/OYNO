@@ -5346,7 +5346,8 @@
     "format": "Format",
     "formats": {
       "portrait": "Portrait",
-      "square": "Square"
+      "square": "Square",
+      "wallpaper": "Phone wallpaper"
     },
     "layout": "Layout",
     "layouts": {
@@ -5382,7 +5383,17 @@
     "label": "Oymo postcard",
     "defaultTitle": "Oymo postcard",
     "webNote": "Saving or sharing the image works in the iOS and Android app. On the web, only the greeting can be shared, as text.",
-    "back": "Back to the Creator"
+    "back": "Back to the Creator",
+    "outputs": "Three matching designs",
+    "outputsHint": "Pick one to adjust and export. The greeting and background are shared; size, position and layout are set for each one separately.",
+    "dimensions": "{{width}} × {{height}} px",
+    "outputA11y": "{{output}}, {{width}} by {{height}} pixels",
+    "adjustFor": "Adjust the {{output}}",
+    "sharedTitle": "Shared by all three",
+    "clockGuide": "Suggested clock area",
+    "clockGuideNote": "Lock screens differ between phones, so this is only a guide: the greeting is kept out of it and away from the bottom edge. The guide is not part of the image.",
+    "showClockGuide": "Show the clock guide",
+    "exportSelected": "Preview, then share or save the {{output}}"
   },
   "activityChooser": {
     "title": "Find something to do",

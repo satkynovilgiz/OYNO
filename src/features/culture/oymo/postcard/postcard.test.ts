@@ -10,7 +10,7 @@ import ru from '@/i18n/locales/ru.json';
 import type { MotifLayer } from '@/services/culture/oymoEditor';
 import { colors } from '@/theme';
 
-import { BACKGROUNDS, backgroundColor, CARD_WIDTH, cardSize, cleanGreeting, contrast, exportSize, FORMATS, frameFor, GREETING_MAX, GREETING_SIZES, fits, glyphEm, greetingFontSize, greetingLength, greetingStyle, greetingTextBox, wrapLines, LAYOUTS, POSITIONS, SIZES, startPostcard, textColorOn, typedGreeting, type Box, type PostcardComposition } from './postcardModel';
+import { BACKGROUNDS, backgroundColor, BOTTOM_RESERVE, CARD_HEIGHT, CARD_WIDTH, CLOCK_ZONE, compositionFor, startDesignSet, textZone, updatePlacement, updateShared, cardSize, cleanGreeting, contrast, exportSize, FORMATS, frameFor, GREETING_MAX, GREETING_SIZES, fits, glyphEm, greetingFontSize, greetingLength, greetingStyle, greetingTextBox, wrapLines, LAYOUTS, POSITIONS, SIZES, startPostcard, textColorOn, typedGreeting, type Box, type PostcardComposition } from './postcardModel';
 import { PostcardView } from './PostcardView';
 
 jest.mock('react-i18next', () => ({ initReactI18next: { type: '3rdParty', init: () => undefined }, useTranslation: () => ({ t: (key: string) => key }) }));
@@ -76,9 +76,9 @@ describe('the original is never touched', () => {
 });
 
 describe('layout', () => {
-  it('in both formats, all three layouts and every placement: the pattern, strips and greeting stay inside the card and never overlap', () => {
+  it('in all three outputs, all three layouts and every placement: the pattern, strips and greeting stay inside the card and never overlap', () => {
     const all = everyComposition();
-    expect(all.length).toBe(2 * 3 * 3 * 3 * 2 * 4);
+    expect(all.length).toBe(3 * 3 * 3 * 3 * 2 * 4);
     for (const composition of all) {
       const frame = frameFor(composition);
       expect(frame.card).toEqual(cardSize(composition.format));
@@ -216,5 +216,76 @@ describe('languages', () => {
     const sections = [en, ru, kg].map((lang) => (lang as unknown as { postcard: unknown }).postcard);
     expect(keys(sections[1]).sort()).toEqual(keys(sections[0]).sort());
     expect(keys(sections[2]).sort()).toEqual(keys(sections[0]).sort());
+  });
+});
+
+describe('design set', () => {
+  const SET = () => startDesignSet(SAVED);
+
+  it('defines and keeps each output\'s dimensions: 1080 x 1080, 1080 x 1350, 1080 x 2340', () => {
+    expect(FORMATS).toEqual(['square', 'portrait', 'wallpaper']);
+    expect(FORMATS.map((format) => exportSize(format))).toEqual([
+      { width: 1080, height: 1080 },
+      { width: 1080, height: 1350 },
+      { width: 1080, height: 2340 },
+    ]);
+    for (const format of FORMATS) expect(frameFor(compositionFor(SET(), format)).card).toEqual(cardSize(format));
+  });
+
+  it('editing one placement leaves the other outputs exactly as they were', () => {
+    const before = SET();
+    const after = updatePlacement(before, 'wallpaper', { size: 'large', position: 'top', layout: 'banner' });
+    expect(after.outputs.wallpaper).toEqual({ size: 'large', position: 'top', layout: 'banner' });
+    expect(after.outputs.square).toBe(before.outputs.square);
+    expect(after.outputs.portrait).toBe(before.outputs.portrait);
+    expect(compositionFor(after, 'portrait')).toEqual(compositionFor(before, 'portrait'));
+    expect(before.outputs.wallpaper).toEqual({ size: 'medium', position: 'center', layout: 'classic' });
+  });
+
+  it('the palette and greeting are shared by every output', () => {
+    const set = updateShared(SET(), { background: 'forest', greeting: 'Майрамыңыз менен!' });
+    for (const format of FORMATS) expect(compositionFor(set, format)).toMatchObject({ background: 'forest', greeting: 'Майрамыңыз менен!', format });
+  });
+
+  it('works on one copy: the saved pattern is untouched by any change to the set', () => {
+    const saved = deepFreeze(JSON.parse(JSON.stringify(SAVED)));
+    const before = JSON.stringify(saved);
+    let set = startDesignSet(saved);
+    set.artwork.layers[0].color = '#000000';
+    set = updatePlacement(updateShared(set, { greeting: 'x', background: 'gold' }), 'square', { size: 'small' });
+    expect(JSON.stringify(saved)).toBe(before);
+  });
+
+  it('wallpaper: the greeting never enters the suggested clock area or the bottom reserve', () => {
+    for (const composition of everyComposition().filter((item) => item.format === 'wallpaper' && item.greeting)) {
+      const box = frameFor(composition).greeting!;
+      expect(overlap(box, CLOCK_ZONE)).toBe(false);
+      expect(box.y + box.height).toBeLessThanOrEqual(CARD_HEIGHT.wallpaper - BOTTOM_RESERVE);
+      expect(box.y).toBeGreaterThanOrEqual(textZone('wallpaper').top);
+    }
+  });
+
+  it('square and portrait are laid out exactly as before the design set existed', () => {
+    // Reference boxes from the single-postcard layout (classic/banner/border, medium, centre, with a greeting).
+    const at = (format: 'square' | 'portrait', layout: 'classic' | 'banner' | 'border') => frameFor({ ...startPostcard(SAVED), format, layout, greeting: 'Hi' });
+    expect(at('portrait', 'classic').greeting).toEqual({ x: 24, y: 294, width: 312, height: 132 });
+    expect(at('portrait', 'classic').pattern.y).toBeCloseTo(24 + (450 - 48 - 144 - (450 - 48 - 144) * 0.8) / 2, 5);
+    expect(at('square', 'banner').greeting).toEqual({ x: 24, y: 204, width: 312, height: 132 });
+    expect(at('square', 'border').greeting!.y).toBe(114);
+  });
+
+  it('every output exports exactly its preview', () => {
+    for (const format of FORMATS) {
+      const composition = compositionFor(updateShared(startDesignSet(SAVED), { greeting: 'Жаңы жылыңыз менен!' }), format);
+      let preview: ReturnType<typeof create> | null = null;
+      let exported: ReturnType<typeof create> | null = null;
+      act(() => {
+        preview = create(createElement(PostcardView, { composition }));
+        exported = create(createElement(ShareCard, { variant: 'postcard', title: 't', label: 'l', imageSource: null, cardSize: cardSize(format), artwork: createElement(PostcardView, { composition }) }));
+      });
+      const tree = exported!.toJSON() as unknown as { props: { style: Record<string, number> }; children: unknown[] };
+      expect(tree.props.style).toMatchObject(cardSize(format));
+      expect(JSON.stringify(tree.children[0])).toBe(JSON.stringify(preview!.toJSON()));
+    }
   });
 });

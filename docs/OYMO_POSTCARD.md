@@ -146,3 +146,51 @@ text, the same as every share card.
   text size: no clipping in the exported image.
 - [ ] VoiceOver / TalkBack: the radio groups, the greeting counter and the
   share sheet.
+
+## Design set (2026-10-07)
+
+The same composer now makes a matching set from one copy of the saved
+pattern. There is no new editor; it uses the same `PostcardView`,
+`ShareCard` postcard variant and `useShareCard` export.
+
+| Output | Logical size | Exported |
+| --- | --- | --- |
+| Square card | 360 × 360 | 1080 × 1080 px |
+| Portrait card | 360 × 450 | 1080 × 1350 px |
+| Phone wallpaper | 360 × 780 | 1080 × 2340 px (19.5:9) |
+
+Each output's size is shown under its thumbnail and above the preview.
+
+- **Shared:** the greeting and the palette (background), via
+  `updateShared`. They apply to every output.
+- **Per output:** layout, pattern size and position, via `updatePlacement`.
+  Changing one output returns the other outputs' placements as the same
+  objects, unchanged. This is tested in the model, the screen and e2e.
+- **Wallpaper:**
+  - A SUGGESTED clock area (`CLOCK_ZONE`: y 56–292 of 780) and a 96 pt
+    bottom reserve are kept free of the greeting in every layout,
+    placement and greeting combination (tested).
+  - The pattern may sit behind the clock area.
+  - The composer draws a dashed "Suggested clock area" guide over its
+    preview (it can be switched off). The guide is never part of the export:
+    the share sheet shows, and captures, the plain `PostcardView`.
+  - The screen says lock screens differ between phones. No compatibility is
+    promised.
+- **Square and portrait** are laid out exactly as before; the reference boxes
+  are pinned in a test.
+- **Export:** "Preview, then share or save the <output>" exports only the
+  selected output, at its own size × 3. A failure keeps the sheet open,
+  retryable, and the whole set is unchanged. The temporary-file rules above
+  are unchanged.
+- **Web:** compose and preview all three outputs. The image can't be saved
+  or shared there; only the greeting text can be shared.
+
+Representative outputs (square, portrait, and wallpaper with and without
+the guide, using a Kyrgyz greeting) were rendered in the e2e run and
+inspected.
+
+Device checks (PENDING):
+
+- [ ] Set the wallpaper as a lock screen on a few iOS and Android phones and
+  confirm the greeting clears the clock.
+- [ ] Saving a 1080 × 2340 image to Photos works on both platforms.

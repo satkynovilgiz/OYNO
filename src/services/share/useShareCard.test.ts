@@ -180,3 +180,15 @@ it('exports at the card size x 3 (square postcard: 1080 x 1080 physical)', async
   expect(options.width * ratio).toBe(1080);
   expect(options.height * ratio).toBe(1080);
 });
+
+it('exports a wallpaper at its own size x 3 (1080 x 2340 physical)', async () => {
+  await act(async () => {
+    await hook.share({ ...CARD, cardSize: { width: 360, height: 780 } }, 'fallback');
+  });
+  sharing.shareAsync.mockResolvedValue(undefined);
+  act(() => sheet().onShare(sheet().content));
+  await settle();
+  const options = viewShot.captureRef.mock.calls[0][1] as { width: number; height: number };
+  const ratio = jest.requireActual('react-native').PixelRatio.get();
+  expect([options.width * ratio, options.height * ratio]).toEqual([1080, 2340]);
+});

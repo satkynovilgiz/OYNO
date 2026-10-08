@@ -22,19 +22,19 @@ async function serveSavedPattern(page: Page) {
   return writes;
 }
 
-/** The greeting's text never spills out of its box, and the box stays inside the card. */
+/** The greeting's text never spills out of its box, and the box stays inside the card (measured in one pass, so a re-layout can't skew it). */
 async function expectGreetingInside(page: Page, scope = page.getByTestId('postcard-preview')) {
-  const card = (await scope.getByTestId('postcard-card').boundingBox())!;
-  const box = (await scope.getByTestId('postcard-greeting-box').boundingBox())!;
-  expect(box.x).toBeGreaterThanOrEqual(card.x - 0.5);
-  expect(box.y).toBeGreaterThanOrEqual(card.y - 0.5);
-  expect(box.x + box.width).toBeLessThanOrEqual(card.x + card.width + 0.5);
-  expect(box.y + box.height).toBeLessThanOrEqual(card.y + card.height + 0.5);
-  const fits = await scope.getByTestId('postcard-greeting-box').evaluate((el) => {
-    const text = el.firstElementChild as HTMLElement;
-    return text.scrollHeight <= el.clientHeight + 1 && text.scrollWidth <= el.clientWidth + 1;
+  const result = await scope.getByTestId('postcard-card').evaluate((card) => {
+    const box = card.querySelector('[data-testid="postcard-greeting-box"]') as HTMLElement;
+    const text = box.firstElementChild as HTMLElement;
+    const c = card.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    return {
+      inside: b.left >= c.left - 0.5 && b.top >= c.top - 0.5 && b.right <= c.right + 0.5 && b.bottom <= c.bottom + 0.5,
+      fits: text.scrollHeight <= box.clientHeight + 1 && text.scrollWidth <= box.clientWidth + 1,
+    };
   });
-  expect(fits).toBe(true);
+  expect(result).toEqual({ inside: true, fits: true });
 }
 
 test('saved pattern -> postcard in both formats; the shared preview is the same card; the original is untouched', async ({ page, errors }, testInfo) => {
@@ -134,6 +134,47 @@ test('representative greetings render inside their box at the size chosen, in bo
   }
   await testInfo.attach('greeting-fit.txt', { body: report.join('\n'), contentType: 'text/plain' });
   console.log(report.join('\n'));
+  expectNoPageErrors(errors);
+});
+
+test('design set: three outputs with their dimensions, independent placement, clock guide only in the composer', async ({ page, errors }, testInfo) => {
+  const writes = await serveSavedPattern(page);
+  await seed(page, { language: 'en', guest: true });
+  await page.goto('/culture/oymo/postcard?pattern=oymo-saved-1');
+  await expect(page.getByTestId('postcard-dims-square')).toHaveText('1080 × 1080 px');
+  await expect(page.getByTestId('postcard-dims-portrait')).toHaveText('1080 × 1350 px');
+  await expect(page.getByTestId('postcard-dims-wallpaper')).toHaveText('1080 × 2340 px');
+  await page.getByTestId('postcard-greeting-input').fill('Жаңы жылыңыз менен!');
+  await page.getByTestId('postcard-background-forest').click();
+
+  // Adjust the wallpaper only.
+  const portraitThumb = await page.getByTestId('postcard-thumb-portrait').innerHTML();
+  await page.getByTestId('postcard-format-wallpaper').click();
+  await page.getByTestId('postcard-size-large').click();
+  await page.getByTestId('postcard-position-top').click();
+  expect(await page.getByTestId('postcard-thumb-portrait').innerHTML()).toBe(portraitThumb);
+  await expect(page.getByTestId('postcard-clock-guide')).toBeVisible();
+  // The greeting box stays clear of the marked clock area.
+  const guide = (await page.getByTestId('postcard-clock-guide').boundingBox())!;
+  const greeting = (await page.getByTestId('postcard-preview').getByTestId('postcard-greeting-box').boundingBox())!;
+  expect(greeting.y).toBeGreaterThanOrEqual(guide.y + guide.height);
+  await page.getByTestId('postcard-preview').screenshot({ path: testInfo.outputPath('set-wallpaper-with-guide.png') });
+
+  for (const format of ['square', 'portrait', 'wallpaper'] as const) {
+    await page.getByTestId(`postcard-format-${format}`).click();
+    await page.getByTestId('postcard-export').click();
+    const sheet = page.getByTestId('share-preview-card');
+    await expect(sheet).toBeVisible();
+    // The export is the composer's card exactly - without the clock guide.
+    expect(await sheet.getByTestId('postcard-card').innerHTML()).toBe(await page.getByTestId('postcard-preview').getByTestId('postcard-card').innerHTML());
+    await expect(sheet.getByTestId('postcard-clock-guide')).toHaveCount(0);
+    const ratio = await sheet.getByTestId('postcard-card').evaluate((el) => (el as HTMLElement).offsetWidth / (el as HTMLElement).offsetHeight);
+    expect(ratio).toBeCloseTo({ square: 1, portrait: 0.8, wallpaper: 360 / 780 }[format], 3);
+    await sheet.screenshot({ path: testInfo.outputPath(`set-${format}-export-preview.png`) });
+    await page.getByRole('button', { name: 'Cancel' }).last().click();
+  }
+  expect(writes).toEqual([]);
+  await expectNoExposedKeys(page);
   expectNoPageErrors(errors);
 });
 
