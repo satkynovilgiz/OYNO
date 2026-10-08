@@ -42,6 +42,17 @@
 
 ## Rules
 
+- **Stable position (2026-10-08):** the current step is held by identity,
+  the step type plus the exhibit key (`StepId`), never by number. Steps are
+  rebuilt as content loads or the network changes, and a reflection can
+  appear before the visitor's step; they stay on the step they are reading.
+  - If that step disappears, a reflection falls back to its own exhibit;
+    anything else falls back to the step now at the same position, never
+    back to the start.
+  - Only content actually shown counts as "viewed". Loading, removed and
+    offline exhibits never do; a loading exhibit counts once it appears
+    while the visitor is on it.
+
 - Nothing advances by itself: there is no timer, no auto-play and no
   animation. Next, Previous, Skip and "Go back to it" are all the visitor's
   own taps.

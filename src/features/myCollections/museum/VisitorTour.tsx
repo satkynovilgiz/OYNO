@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Check, ChevronRight, ImageOff, Landmark, WifiOff } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, TextInput, View, type ImageSourcePropType } from 'react-native';
 
@@ -11,7 +11,7 @@ import type { CatalogContentType } from '@/services/content/contentCatalog';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import type { Exhibition, ExhibitSlide } from './museumModel';
-import { buildTour, closingRows, exhibitSteps, RESPONSE_MAX, START_TOUR, tourExhibits, tourReducer, type TourAction, type TourState } from './tourModel';
+import { buildTour, closingRows, currentIndex, exhibitSteps, RESPONSE_MAX, START_TOUR, tourExhibits, tourReducer, type TourAction, type TourState } from './tourModel';
 
 /**
  * The guided visitor mode of a Mini Museum (visitorTour.ts has the rules).
@@ -26,22 +26,28 @@ export function VisitorTour({ exhibition, title, slides, isOffline, large, onEnd
   const steps = useMemo(() => buildTour(exhibition, tourExhibits(slides, isOffline)), [exhibition, slides, isOffline]);
   const [state, setState] = useState<TourState>(START_TOUR);
   const [textFirst, setTextFirst] = useState(large);
-  const step = steps[Math.min(state.index, steps.length - 1)];
+  const index = currentIndex(steps, state);
+  const step = steps[index];
   const exhibits = exhibitSteps(steps);
   const total = exhibits.length;
   const big = textFirst || large;
 
-  const act = (action: TourAction) =>
-    setState((current) => {
-      const next = tourReducer(steps, current, action);
-      const entered = steps[next.index];
-      if (next.index !== current.index && entered?.kind === 'exhibit') announce(t('museum.visit.exhibitOf', { current: entered.position + 1, total }));
-      return next;
-    });
+  // Steps are rebuilt as content resolves or the network changes: keep the visitor on the SAME step.
+  useEffect(() => {
+    setState((current) => tourReducer(steps, current, { type: 'sync' }));
+  }, [steps]);
+
+  const act = (action: TourAction) => {
+    const next = tourReducer(steps, state, action);
+    if (next === state) return;
+    const entered = steps[currentIndex(steps, next)];
+    if (next.current !== state.current && entered?.kind === 'exhibit') announce(t('museum.visit.exhibitOf', { current: entered.position + 1, total }));
+    setState(next);
+  };
 
   const nav = (
     <View style={styles.navRow}>
-      {state.index > 0 ? <Button label={t('museum.visit.previous')} variant="secondary" onPress={() => act({ type: 'previous' })} testID="tour-previous" /> : null}
+      {index > 0 ? <Button label={t('museum.visit.previous')} variant="secondary" onPress={() => act({ type: 'previous' })} testID="tour-previous" /> : null}
       {step.kind === 'reflection' ? <Button label={t('museum.visit.skip')} variant="text" onPress={() => act({ type: 'next' })} testID="tour-skip" /> : null}
       {step.kind !== 'closing' ? <Button label={step.kind === 'welcome' ? t('museum.visit.begin') : t('museum.visit.next')} onPress={() => act({ type: 'next' })} testID="tour-next" /> : null}
     </View>
@@ -120,7 +126,7 @@ export function VisitorTour({ exhibition, title, slides, isOffline, large, onEnd
                 <Text style={styles.meta}>{row.status === 'exhibit' ? (row.viewed ? t('museum.visit.viewed') : t('museum.visit.notViewed')) : row.status === 'offline' ? t('museum.visit.offlineRow') : t('museum.visit.removedRow')}</Text>
               </View>
               {row.route ? <Button label={t('museum.visit.openSource')} variant="text" onPress={() => router.push(row.route as never)} accessibilityHint={row.title ?? undefined} testID={`tour-source-${row.position}`} /> : null}
-              {row.viewed ? <Check size={16} color={colors.primary} strokeWidth={2.5} /> : <Button label={t('museum.visit.revisit')} variant="text" onPress={() => act({ type: 'goTo', index: row.stepIndex })} testID={`tour-revisit-${row.position}`} />}
+              {row.viewed ? <Check size={16} color={colors.primary} strokeWidth={2.5} /> : row.status === 'exhibit' ? <Button label={t('museum.visit.revisit')} variant="text" onPress={() => act({ type: 'goTo', index: row.stepIndex })} testID={`tour-revisit-${row.position}`} /> : null}
             </View>
           ))}
           <Text style={styles.meta} testID="tour-not-learning">

@@ -50,11 +50,17 @@ jobs:
       - run: npm run e2e
         env:
           CI: 'true'
-      - if: failure()
+      # Screenshots + traces (outputDir) and the HTML report (outputFolder)
+      # live in DOT-directories; upload-artifact v4.4+ skips hidden files
+      # unless told otherwise, which silently uploaded nothing before.
+      # Also kept when the run is cancelled by its timeout.
+      - if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-failures
           path: |
             e2e/.results
             e2e/.report
+          include-hidden-files: true
+          if-no-files-found: warn
           retention-days: 14

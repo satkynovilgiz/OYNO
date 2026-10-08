@@ -58,10 +58,45 @@ test('preview shows what will change; importing twice adds nothing the second ti
   expectNoPageErrors(errors);
 });
 
-test('malformed, newer-version and damaged files are refused and change nothing', async ({ page, errors }) => {
-  await seed(page, { language: 'en', guest: true });
+/** Every store a learning-backup import can write (STORE_ADAPTERS persistence keys), plus the import's own marker. */
+const LEARNING_KEYS = [
+  'oyno.reading.v1',
+  'oyno.highlights.v1',
+  'oyno.myCollections.v1',
+  'oyno.challengeMistakes.v1',
+  'oyno.glossaryStudy.v1',
+  'oyno.glossaryStudySessions.v1',
+  'oyno.gameRecords.v1',
+  'oyno.komuzLibrary.v1',
+  'oyno.learningPaths.v1',
+  'oyno.listening.v1',
+  'oyno.weeklyGoal.v1',
+] as const;
+const MARKER = 'oyno.dataImport.pending';
+
+/** The parsed learning stores (not raw strings: formatting is not data). */
+const learningData = (page: Page) =>
+  page.evaluate((keys) => Object.fromEntries(keys.map((key) => [key, localStorage.getItem(key) === null ? null : JSON.parse(localStorage.getItem(key)!)])), [...LEARNING_KEYS]);
+
+test('malformed, newer-version and damaged files are refused and change no learning data', async ({ page, errors }) => {
+  // Real learning data in several stores, so "nothing changed" means something.
+  await seed(page, {
+    language: 'en',
+    guest: true,
+    storage: {
+      'oyno.komuzLibrary.v1': { guest: { favorites: ['ak-maral-min'] } },
+      'oyno.weeklyGoal.v1': { guest: { goal: 3, goalSetAt: T1, celebratedWeek: null, dismissedForYouOn: null } },
+      'oyno.gameRecords.v1': {},
+    },
+  });
   await page.goto('/settings/data-privacy/import');
-  const before = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+  // Initialization: the screen is ready (its pending-import check has run) and the app has finished starting up.
+  await expect(page.getByTestId('import-choose')).toBeEnabled();
+  await expect(page.getByTestId('import-interrupted')).toHaveCount(0);
+  await page.waitForLoadState('networkidle');
+  const before = await learningData(page);
+  expect(before['oyno.komuzLibrary.v1']).toEqual({ guest: { favorites: ['ak-maral-min'] } });
+
   for (const [text, message] of [
     ['{not json', "isn't valid JSON"],
     [backup({ version: 7 }), 'newer OYNO version'],
@@ -70,8 +105,12 @@ test('malformed, newer-version and damaged files are refused and change nothing'
   ] as const) {
     await chooseFile(page, text);
     await expect(page.getByTestId('import-error')).toContainText(message);
+    // Each refusal: no learning store changed, no "import in progress" marker.
+    expect(await learningData(page)).toEqual(before);
+    expect(await readStored(page, MARKER)).toBeNull();
   }
-  expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(before);
+  // No apply step is ever offered for a refused file.
+  await expect(page.getByTestId('import-apply')).toHaveCount(0);
   expectNoPageErrors(errors);
 });
 

@@ -37,31 +37,71 @@ export function buildTour(exhibition: Pick<Exhibition, 'exhibits' | 'reflections
   return steps;
 }
 
-export type TourState = { index: number; viewed: ExhibitKey[]; responses: Record<ExhibitKey, string> };
-export const START_TOUR: TourState = { index: 0, viewed: [], responses: {} };
+/**
+ * The current step is held by IDENTITY (step type + exhibit key), not by
+ * position: steps are rebuilt as content loads or the network changes (a
+ * reflection can appear once its exhibit resolves), and the visitor must
+ * stay on the step they are looking at.
+ */
+export type StepId = 'welcome' | 'closing' | `exhibit:${ExhibitKey}` | `reflection:${ExhibitKey}`;
+export const stepId = (step: TourStep): StepId => (step.kind === 'exhibit' ? `exhibit:${step.exhibit.key}` : step.kind === 'reflection' ? `reflection:${step.key}` : step.kind);
 
-export type TourAction = { type: 'next' } | { type: 'previous' } | { type: 'goTo'; index: number } | { type: 'respond'; key: ExhibitKey; text: string } | { type: 'restart' };
+/** `lastIndex` is only a fallback hint for when the current step no longer exists. */
+export type TourState = { current: StepId; lastIndex: number; viewed: ExhibitKey[]; responses: Record<ExhibitKey, string> };
+export const START_TOUR: TourState = { current: 'welcome', lastIndex: 0, viewed: [], responses: {} };
 
-function enter(state: TourState, steps: readonly TourStep[], index: number): TourState {
-  if (index < 0 || index >= steps.length || index === state.index) return state;
-  const step = steps[index];
-  const viewed = step.kind === 'exhibit' && !state.viewed.includes(step.exhibit.key) ? [...state.viewed, step.exhibit.key] : state.viewed;
-  return { ...state, index, viewed };
+/**
+ * Where the visitor is in THESE steps. If their step is gone:
+ *  - a reflection that disappeared -> its own exhibit;
+ *  - otherwise -> the step now at the position they were at (clamped),
+ *    i.e. what moved into its place - never a jump back to the start.
+ */
+export function currentIndex(steps: readonly TourStep[], state: TourState): number {
+  const found = steps.findIndex((step) => stepId(step) === state.current);
+  if (found >= 0) return found;
+  if (state.current.startsWith('reflection:')) {
+    const own = steps.findIndex((step) => stepId(step) === `exhibit:${state.current.slice('reflection:'.length)}`);
+    if (own >= 0) return own;
+  }
+  return Math.max(0, Math.min(state.lastIndex, steps.length - 1));
 }
 
-/** Every move is the visitor's: Next (also skips a reflection), Previous, or a jump back to an earlier step. */
+/** The visitor really saw this exhibit: its content is on screen (never loading, removed or offline). */
+const seen = (state: TourState, step: TourStep | undefined) =>
+  step?.kind === 'exhibit' && step.exhibit.kind === 'exhibit' && !state.viewed.includes(step.exhibit.key) ? [...state.viewed, step.exhibit.key] : state.viewed;
+
+function enter(state: TourState, steps: readonly TourStep[], index: number): TourState {
+  if (index < 0 || index >= steps.length || index === currentIndex(steps, state)) return state;
+  return { ...state, current: stepId(steps[index]), lastIndex: index, viewed: seen(state, steps[index]) };
+}
+
+export type TourAction = { type: 'next' } | { type: 'previous' } | { type: 'goTo'; index: number } | { type: 'respond'; key: ExhibitKey; text: string } | { type: 'restart' } | { type: 'sync' };
+
+/**
+ * Every move is the visitor's: Next (also skips a reflection), Previous, or
+ * a jump back to an earlier step. `sync` (after the steps were rebuilt)
+ * pins the current identity to where it now resolves and records a view
+ * only if the visitor is now actually looking at loaded content.
+ */
 export function tourReducer(steps: readonly TourStep[], state: TourState, action: TourAction): TourState {
+  const index = currentIndex(steps, state);
   switch (action.type) {
     case 'next':
-      return enter(state, steps, state.index + 1);
+      return enter(state, steps, index + 1);
     case 'previous':
-      return enter(state, steps, state.index - 1);
+      return enter(state, steps, index - 1);
     case 'goTo':
       return Number.isInteger(action.index) ? enter(state, steps, action.index) : state;
     case 'respond': {
-      const step = steps[state.index];
+      const step = steps[index];
       if (step?.kind !== 'reflection' || step.key !== action.key) return state;
       return { ...state, responses: { ...state.responses, [action.key]: action.text.slice(0, RESPONSE_MAX) } };
+    }
+    case 'sync': {
+      const current = stepId(steps[index]);
+      const viewed = seen(state, steps[index]);
+      if (current === state.current && index === state.lastIndex && viewed === state.viewed) return state;
+      return { ...state, current, lastIndex: index, viewed };
     }
     case 'restart':
       return START_TOUR;
