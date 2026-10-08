@@ -60,7 +60,12 @@ export type BeatResult = { grade: BeatGrade; /** beats; negative = early. null w
 export type RoundScore = { pattern: PatternId; beats: BeatResult[]; points: number; maxPoints: number; tempo: 'slower' | 'steady' | 'faster' | null; ignoredTaps: number };
 
 export function scoreTaps(pattern: PatternId, bpm: number, taps: readonly number[], ignoredTaps = 0): RoundScore {
-  const onsets = PATTERNS[pattern];
+  return { ...scoreOnsets(PATTERNS[pattern], bpm, taps, ignoredTaps), pattern };
+}
+
+/** The same relative-timing rules for any onsets (beats from the first note) - used by the Rhythm Workshop. */
+export function scoreOnsets(onsets: readonly number[], bpm: number, taps: readonly number[], ignoredTaps = 0): Omit<RoundScore, 'pattern'> & { pattern: PatternId | null } {
+  const pattern = null;
   const used = taps.slice(0, onsets.length);
   const maxPoints = onsets.length * POINTS.onTime;
   const missing = (): BeatResult => ({ grade: 'missing', deviation: null });

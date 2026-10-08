@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -216,6 +216,7 @@ export function RepeatRhythmScreen({ onPressBack }: { onPressBack: () => void })
           {soundOn && !effectsOn ? <Text style={styles.meta}>{t('rhythmRepeat.soundsOffSetting')}</Text> : null}
           <Text style={styles.meta}>{t('rhythmRepeat.howScored')}</Text>
           <Button label={t('rhythmRepeat.start')} size="lg" onPress={() => begin(difficulty)} testID="repeat-start" />
+          <Button label={t('rhythmWorkshop.entry')} variant="secondary" accessibilityHint={t('rhythmWorkshop.entryHint')} onPress={() => router.push('/culture/komuz/workshop' as never)} testID="workshop-entry" />
           <Text style={styles.meta}>{t('rhythmRepeat.practiceNote')}</Text>
         </ScrollView>
       </View>
