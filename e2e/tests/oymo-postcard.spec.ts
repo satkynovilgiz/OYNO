@@ -90,6 +90,53 @@ test('saved pattern -> postcard in both formats; the shared preview is the same 
   expectNoPageErrors(errors);
 });
 
+// 80-letter greetings: widest glyphs, Kyrgyz letters, mixed scripts, long unbroken words.
+const REPRESENTATIVE: Record<string, string> = {
+  zhe: 'Ж'.repeat(80),
+  sha: 'Ш'.repeat(80),
+  w: 'W'.repeat(80),
+  kyrgyz: 'Ңөү ңөү Ңөү ңөү '.repeat(6).slice(0, 80),
+  mixed: 'Жаңы жылыңыз менен! С Новым годом! Happy New Year! Майрамыңыз кут болсун, достор!'.slice(0, 80),
+  longWords: 'Майрамыңызмененкуттуктайбыз ПоздравляемсНовымгодом WishingyouwonderfulholidaysW'.slice(0, 80),
+};
+
+test('representative greetings render inside their box at the size chosen, in both formats and every layout', async ({ page, errors }, testInfo) => {
+  await serveSavedPattern(page);
+  await seed(page, { language: 'en', guest: true });
+  await page.goto('/culture/oymo/postcard?pattern=oymo-saved-1');
+  const report: string[] = [];
+  for (const [name, greeting] of Object.entries(REPRESENTATIVE)) {
+    await page.getByTestId('postcard-greeting-input').fill(greeting);
+    for (const format of ['portrait', 'square'] as const) {
+      await page.getByTestId(`postcard-format-${format}`).click();
+      for (const layout of ['classic', 'banner', 'border'] as const) {
+        await page.getByTestId(`postcard-layout-${layout}`).click();
+        await expectGreetingInside(page);
+        const text = page.getByTestId('postcard-preview').getByTestId('postcard-greeting');
+        // The DOM text uses the size the algorithm chose, and the real rendered text fits at that size.
+        const measured = await text.evaluate((el) => {
+          const node = el as HTMLElement;
+          const box = node.parentElement as HTMLElement;
+          const style = getComputedStyle(node);
+          const padding = parseFloat(getComputedStyle(box).paddingTop) + parseFloat(getComputedStyle(box).paddingBottom);
+          return { chosen: Number(node.dataset.fontSize), fontSize: parseFloat(style.fontSize), lines: Math.round(node.offsetHeight / parseFloat(style.lineHeight)), height: node.offsetHeight, room: box.clientHeight - padding };
+        });
+        // The preview is scaled with a transform, so computed sizes are the logical ones.
+        expect(measured.fontSize).toBe(measured.chosen);
+        expect(measured.height).toBeLessThanOrEqual(measured.room + 0.5);
+        report.push(`${name} ${format} ${layout}: ${measured.chosen}px, ${measured.lines} lines, ${measured.height}/${measured.room}`);
+      }
+      if (['zhe', 'w', 'mixed', 'longWords'].includes(name)) {
+        await page.getByTestId('postcard-layout-classic').click();
+        await page.getByTestId('postcard-preview').screenshot({ path: testInfo.outputPath(`greeting-${name}-${format}.png`) });
+      }
+    }
+  }
+  await testInfo.attach('greeting-fit.txt', { body: report.join('\n'), contentType: 'text/plain' });
+  console.log(report.join('\n'));
+  expectNoPageErrors(errors);
+});
+
 test('a deleted or unavailable pattern says so', async ({ page, errors }) => {
   await serveSavedPattern(page);
   await seed(page, { language: 'en', guest: true });

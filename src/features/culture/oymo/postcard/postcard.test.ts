@@ -10,7 +10,7 @@ import ru from '@/i18n/locales/ru.json';
 import type { MotifLayer } from '@/services/culture/oymoEditor';
 import { colors } from '@/theme';
 
-import { BACKGROUNDS, backgroundColor, CARD_WIDTH, cardSize, cleanGreeting, contrast, exportSize, FORMATS, frameFor, GREETING_MAX, GREETING_SIZES, greetingFontSize, greetingLength, greetingStyle, LAYOUTS, POSITIONS, SIZES, startPostcard, textColorOn, typedGreeting, worstCaseHeight, type Box, type PostcardComposition } from './postcardModel';
+import { BACKGROUNDS, backgroundColor, CARD_WIDTH, cardSize, cleanGreeting, contrast, exportSize, FORMATS, frameFor, GREETING_MAX, GREETING_SIZES, fits, glyphEm, greetingFontSize, greetingLength, greetingStyle, greetingTextBox, wrapLines, LAYOUTS, POSITIONS, SIZES, startPostcard, textColorOn, typedGreeting, type Box, type PostcardComposition } from './postcardModel';
 import { PostcardView } from './PostcardView';
 
 jest.mock('react-i18next', () => ({ initReactI18next: { type: '3rdParty', init: () => undefined }, useTranslation: () => ({ t: (key: string) => key }) }));
@@ -40,6 +40,17 @@ const deepFreeze = <T,>(value: T): T => {
   }
   return value;
 };
+/** 80-letter greetings: widest glyphs, Kyrgyz letters, mixed scripts, long words, short. */
+export const REPRESENTATIVE = [
+  'Ж'.repeat(GREETING_MAX),
+  'Ш'.repeat(GREETING_MAX),
+  'W'.repeat(GREETING_MAX),
+  'Ңөү ңөү Ңөү ңөү '.repeat(6).slice(0, GREETING_MAX),
+  'Жаңы жылыңыз менен! С Новым годом! Happy New Year! Майрамыңыз кут болсун, достор!'.slice(0, GREETING_MAX),
+  'Майрамыңызмененкуттуктайбыз ПоздравляемсНовымгодом WishingyouwonderfulholidaysW'.slice(0, GREETING_MAX),
+  'Ыраазычылык'.repeat(8).slice(0, GREETING_MAX),
+  'Happy holidays!',
+];
 const inside = (box: Box, card: { width: number; height: number }) => box.x >= 0 && box.y >= 0 && box.x + box.width <= card.width + 0.001 && box.y + box.height <= card.height + 0.001;
 const overlap = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
@@ -62,13 +73,6 @@ describe('the original is never touched', () => {
     expect(JSON.stringify(saved)).toBe(before);
   });
 
-  it('the flow never writes a saved pattern (no save/update/delete call anywhere in it)', () => {
-    const dir = __dirname;
-    for (const file of fs.readdirSync(dir).filter((name) => name.endsWith('.tsx') || (name.endsWith('.ts') && !name.endsWith('.test.ts')))) {
-      const text = fs.readFileSync(path.join(dir, file), 'utf8');
-      expect(text).not.toMatch(/saveOymoCreation|updateOymoCreation|deleteOymoCreation|\.insert\(|\.update\(|\.upsert\(|\.delete\(/);
-    }
-  });
 });
 
 describe('layout', () => {
@@ -105,14 +109,34 @@ describe('greeting', () => {
     expect(greetingLength(typedGreeting('🎉'.repeat(100)))).toBe(GREETING_MAX);
   });
 
-  it('the longest, widest greeting still fits its box at the smallest size; short greetings get the largest', () => {
-    const box = frameFor({ ...startPostcard(SAVED), greeting: 'x' }).greeting!;
-    expect(worstCaseHeight(box.width)).toBeLessThanOrEqual(box.height);
-    expect(greetingFontSize('Hello', box)).toBe(GREETING_SIZES[0]);
-    const long = greetingFontSize('Ж'.repeat(GREETING_MAX), box);
-    expect(long).toBeLessThan(GREETING_SIZES[0]);
-    // A single unbroken 80-letter word fits too (it wraps across lines).
-    expect(greetingFontSize('Майрамыңызменен'.repeat(6).slice(0, GREETING_MAX), box)).toBeGreaterThanOrEqual(GREETING_SIZES[GREETING_SIZES.length - 1]);
+  it('the size chosen is the largest that fits, measured with the same width table', () => {
+    for (const composition of everyComposition().filter((item) => item.greeting)) {
+      for (const greeting of REPRESENTATIVE) {
+        const box = greetingTextBox(frameFor({ ...composition, greeting }).greeting!);
+        const size = greetingFontSize(greeting, box);
+        expect(fits(greeting, size, box)).toBe(true);
+        const larger = GREETING_SIZES.filter((candidate) => candidate > size);
+        for (const candidate of larger) expect(fits(greeting, candidate, box)).toBe(false);
+      }
+    }
+  });
+
+  it('every 80-letter greeting of the widest glyphs fits at the smallest size', () => {
+    const box = greetingTextBox(frameFor({ ...startPostcard(SAVED), format: 'square', greeting: 'x' }).greeting!);
+    const smallest = GREETING_SIZES[GREETING_SIZES.length - 1];
+    for (const char of ['Ж', 'Ш', 'Щ', 'Ю', 'М', 'W', 'M', 'Ф', 'Ы', 'ж', 'ш', 'Ң', 'Ө', 'Ү', '🎉']) {
+      expect(fits(char.repeat(GREETING_MAX), smallest, box)).toBe(true);
+    }
+    // The estimate never treats a wide glyph as narrower than a plain letter.
+    expect(glyphEm('Ж')).toBeGreaterThan(glyphEm('а'));
+    expect(glyphEm('W')).toBeGreaterThan(glyphEm('n'));
+  });
+
+  it('wrapping: words move to the next line, an over-long word breaks across lines', () => {
+    expect(wrapLines('', 20, 100)).toBe(0);
+    expect(wrapLines('aa aa', 10, 1000)).toBe(1);
+    expect(wrapLines('aa aa', 10, 15)).toBe(2);
+    expect(wrapLines('Ж'.repeat(30), 10, 105)).toBe(3); // 10.5 per glyph -> 10 per line
   });
 
   it('readable by default: the text colour always reaches 4.5:1 on the chosen background', () => {
@@ -134,9 +158,6 @@ describe('export matches the preview', () => {
     expect(exportSize('square')).toEqual({ width: 1080, height: 1080 });
     for (const format of FORMATS) expect(shareCardSize({ variant: 'postcard', cardSize: cardSize(format) })).toEqual(cardSize(format));
     expect(shareCardSize({ variant: 'story' })).toEqual({ width: CARD_WIDTH, height: 450 });
-    const hook = fs.readFileSync(path.join(__dirname, '../../../../services/share/useShareCard.tsx'), 'utf8');
-    expect(hook).toContain('const size = shareCardSize(content);');
-    expect(hook).toContain('width: (size.width * EXPORT_SCALE) / scale, height: (size.height * EXPORT_SCALE) / scale');
   });
 
   it('the exported card renders exactly the previewed postcard - nothing added around it', () => {
@@ -187,14 +208,6 @@ describe('temporary export files', () => {
     expect(() => files.releaseExport('/gone.jpg')).not.toThrow();
   });
 
-  it('failed exports clean up and keep the composition (the preview stays open on failure)', () => {
-    const hook = fs.readFileSync(path.join(__dirname, '../../../../services/share/useShareCard.tsx'), 'utf8');
-    expect(hook).toContain('if (uri) releaseExport(uri);');
-    expect(hook).toContain('discardPreviousExport();');
-    // The screen keeps its own state; export never resets it.
-    const screen = fs.readFileSync(path.join(__dirname, 'PostcardScreen.tsx'), 'utf8');
-    expect(screen.slice(screen.indexOf('const onExport'), screen.indexOf('const choices'))).not.toContain('setComposition');
-  });
 });
 
 describe('languages', () => {

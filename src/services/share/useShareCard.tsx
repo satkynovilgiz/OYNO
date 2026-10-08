@@ -79,6 +79,8 @@ export function useShareCard(): {
   const [busy, setBusy] = useState<'share' | 'save' | null>(null);
   const cardRef = useRef<View>(null);
   const readyRef = useRef<(() => void) | null>(null);
+  /** One export at a time: a second Share/Save press (even in the same frame) is ignored. */
+  const exportingRef = useRef(false);
 
   async function share(content: ShareCardContent, fallbackMessage: string, options: { imageChoices?: ShareImageChoice[]; link?: ShareableLink } = {}) {
     if (preview || capturing) return;
@@ -90,9 +92,10 @@ export function useShareCard(): {
 
   /** Renders the card off-screen, waits for its picture, captures a JPEG. */
   async function capture(content: ShareCardContent): Promise<string> {
+    let giveUp: ReturnType<typeof setTimeout> | undefined;
     const ready = new Promise<void>((resolve) => {
       readyRef.current = resolve;
-      setTimeout(resolve, IMAGE_WAIT_MS);
+      giveUp = setTimeout(resolve, IMAGE_WAIT_MS);
     });
     discardPreviousExport();
     setCapturing(content);
@@ -109,13 +112,19 @@ export function useShareCard(): {
       trackExport(uri);
       return uri;
     } finally {
+      clearTimeout(giveUp);
       readyRef.current = null;
       setCapturing(null);
     }
   }
 
+  /**
+   * The preview stays open until the image has really been handed over:
+   * if capture or the share sheet fails, the same card (the caller's exact
+   * composition) is still showing and Share can simply be pressed again.
+   */
   async function confirmShare(content: ShareCardContent) {
-    if (!preview) return;
+    if (!preview || exportingRef.current) return;
     const fallback = preview.fallbackMessage;
     if (!imageShareSupported()) {
       recordDiagnostic('native_unavailable', 'image_share');
@@ -123,24 +132,28 @@ export function useShareCard(): {
       await shareText(fallback);
       return;
     }
+    exportingRef.current = true;
     setBusy('share');
     let uri: string | null = null;
     try {
       uri = await capture(content);
-      setPreview(null);
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const Sharing = require('expo-sharing') as typeof import('expo-sharing');
       await Sharing.shareAsync(uri, { mimeType: 'image/jpeg', UTI: 'public.jpeg', dialogTitle: content.title });
+      setPreview(null);
     } catch {
       if (uri) releaseExport(uri);
       recordDiagnostic('screen_error', 'share_capture');
       showToast(t('journal.v2.shareFailed'), { tone: 'info' });
     } finally {
+      exportingRef.current = false;
       setBusy(null);
     }
   }
 
   async function confirmSave(content: ShareCardContent) {
+    if (!preview || exportingRef.current) return;
+    exportingRef.current = true;
     setBusy('save');
     let uri: string | null = null;
     try {
@@ -161,6 +174,7 @@ export function useShareCard(): {
     } finally {
       // Photos keeps its own copy; the temporary file is never needed again.
       if (uri) releaseExport(uri);
+      exportingRef.current = false;
       setBusy(null);
     }
   }

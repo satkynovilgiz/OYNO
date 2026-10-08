@@ -116,44 +116,82 @@ export function greetingStyle(background: string): { color: string; plate: strin
 export type Box = { x: number; y: number; width: number; height: number };
 
 /** Font sizes tried for the greeting, largest first; line height 1.4x keeps accents and descenders unclipped. */
-export const GREETING_SIZES = [24, 20, 17, 15] as const;
+export const GREETING_SIZES = [24, 20, 17, 15, 13] as const;
 export const LINE_HEIGHT = 1.4;
-/** A conservative average glyph width (em) - wide enough for Ж/Ш/W-heavy text. */
-const GLYPH_EM = 0.62;
-/** The widest glyphs (Ж, Ш, Щ, Ю, W, M) - the worst case the box must still hold. */
-const WIDE_EM = 0.95;
 
-const linesNeeded = (text: string, fontSize: number, width: number, em = GLYPH_EM) => {
-  // Greedy word wrap with an estimated width per character; a word longer than a line breaks across lines.
-  const perLine = Math.max(1, Math.floor(width / (fontSize * em)));
+/**
+ * Conservative advance widths (em) for the bold system font, per character
+ * class. One table drives BOTH the size choice and the fit check, so the
+ * size chosen is the size that was checked. Values round UP the widest
+ * glyph of each class (bold SF / Roboto / Helvetica measured in the web
+ * build, see docs/OYMO_POSTCARD.md); the e2e test re-measures real text.
+ */
+const WIDE_UPPER = new Set([...'ЖШЩЮМWMФЫ@%Ꙗ']);
+const WIDE_LOWER = new Set([...'жшщюмwmфы']);
+const NARROW = new Set([...' iIlj.,:;!|\'"`()[]-']);
+export function glyphEm(char: string): number {
+  if (WIDE_UPPER.has(char)) return 1.05;
+  if (WIDE_LOWER.has(char)) return 0.9;
+  if (NARROW.has(char)) return 0.4;
+  const code = char.codePointAt(0) ?? 0;
+  // Emoji and other pictographs.
+  if (code >= 0x2190 && !/\p{L}/u.test(char)) return 1.3;
+  if (/\p{Lu}|\p{N}/u.test(char)) return 0.8;
+  return 0.68;
+}
+const wordWidth = (word: string, fontSize: number) => [...word].reduce((sum, char) => sum + glyphEm(char) * fontSize, 0);
+
+/**
+ * Greedy word wrap as a text engine does it: words move to the next line
+ * when they don't fit; a word wider than the line is broken across lines.
+ * Returns the number of lines.
+ */
+export function wrapLines(text: string, fontSize: number, width: number): number {
+  if (!text) return 0;
+  const space = glyphEm(' ') * fontSize;
   let lines = 1;
   let used = 0;
   for (const word of text.split(' ')) {
-    const length = [...word].length;
-    if (used === 0) {
-      lines += Math.ceil(length / perLine) - 1;
-      used = length % perLine || perLine;
-    } else if (used + 1 + length <= perLine) used += 1 + length;
-    else {
-      lines += Math.ceil(length / perLine);
-      used = length % perLine || perLine;
+    const size = wordWidth(word, fontSize);
+    if (used > 0 && used + space + size <= width) {
+      used += space + size;
+      continue;
+    }
+    if (used > 0) {
+      lines += 1;
+      used = 0;
+    }
+    if (size <= width) {
+      used = size;
+      continue;
+    }
+    // Too long for one line: break by characters.
+    for (const char of word) {
+      const advance = glyphEm(char) * fontSize;
+      if (used + advance > width) {
+        lines += 1;
+        used = 0;
+      }
+      used += advance;
     }
   }
   return lines;
-};
-
-/** The largest size whose wrapped greeting fits the box; the smallest size always fits GREETING_MAX wide glyphs (tested). */
-export function greetingFontSize(text: string, box: { width: number; height: number }): number {
-  for (const size of GREETING_SIZES) {
-    if (linesNeeded(text, size, box.width) * size * LINE_HEIGHT <= box.height) return size;
-  }
-  return GREETING_SIZES[GREETING_SIZES.length - 1];
 }
-/** Worst case at the smallest size (used by tests and docs). */
-export const worstCaseHeight = (width: number) => linesNeeded('Ж'.repeat(GREETING_MAX), GREETING_SIZES[GREETING_SIZES.length - 1], width, WIDE_EM) * GREETING_SIZES[GREETING_SIZES.length - 1] * LINE_HEIGHT;
+
+export const lineHeightFor = (fontSize: number) => Math.round(fontSize * LINE_HEIGHT);
+export const textHeight = (text: string, fontSize: number, width: number) => wrapLines(text, fontSize, width) * lineHeightFor(fontSize);
+export const fits = (text: string, fontSize: number, box: { width: number; height: number }) => textHeight(text, fontSize, box.width) <= box.height;
+
+/** The largest size whose wrapped greeting fits the box (null only if even the smallest doesn't - never for <= GREETING_MAX letters, tested). */
+export function greetingFontSize(text: string, box: { width: number; height: number }): number {
+  return GREETING_SIZES.find((size) => fits(text, size, box)) ?? GREETING_SIZES[GREETING_SIZES.length - 1];
+}
 
 const SIZE_FACTOR: Record<PatternSize, number> = { small: 0.6, medium: 0.8, large: 1 };
-const GREETING_HEIGHT = 120;
+const GREETING_HEIGHT = 132;
+/** Inner padding of the greeting box (the text gets box.width - 2 x this). */
+export const GREETING_PADDING = 8;
+export const greetingTextBox = (box: Box) => ({ width: box.width - GREETING_PADDING * 2, height: box.height - GREETING_PADDING * 2 });
 
 export type PostcardFrame = {
   card: { width: number; height: number };

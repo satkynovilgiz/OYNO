@@ -1,7 +1,7 @@
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { OymoArtwork } from '../components/OymoArtwork';
-import { backgroundColor, cleanGreeting, frameFor, greetingFontSize, greetingStyle, LINE_HEIGHT, type PostcardComposition } from './postcardModel';
+import { backgroundColor, cleanGreeting, frameFor, GREETING_PADDING, greetingFontSize, greetingStyle, greetingTextBox, lineHeightFor, type PostcardComposition } from './postcardModel';
 
 /**
  * The postcard at its LOGICAL size (360 x 450 or 360 x 360). The screen's
@@ -15,7 +15,7 @@ export function PostcardView({ composition }: { composition: PostcardComposition
   const background = backgroundColor(composition);
   const greeting = cleanGreeting(composition.greeting);
   const art = composition.artwork;
-  const fontSize = frame.greeting ? greetingFontSize(greeting, frame.greeting) : 0;
+  const fontSize = frame.greeting ? greetingFontSize(greeting, greetingTextBox(frame.greeting)) : 0;
   const ink = greetingStyle(background);
   return (
     <View style={[styles.card, { width: frame.card.width, height: frame.card.height, backgroundColor: background }]} testID="postcard-card">
@@ -34,7 +34,7 @@ export function PostcardView({ composition }: { composition: PostcardComposition
       ) : null}
       {frame.greeting ? (
         <View style={[styles.greetingBox, { left: frame.greeting.x, top: frame.greeting.y, width: frame.greeting.width, height: frame.greeting.height }, ink.plate ? { backgroundColor: ink.plate, borderRadius: 12 } : null]} testID="postcard-greeting-box">
-          <Text style={[styles.greeting, { fontSize, lineHeight: Math.round(fontSize * LINE_HEIGHT), color: ink.color }]} testID="postcard-greeting">
+          <Text style={[styles.greeting, { fontSize, lineHeight: lineHeightFor(fontSize), color: ink.color }]} testID="postcard-greeting" {...{ dataSet: { fontSize: String(fontSize) } }}>
             {greeting}
           </Text>
         </View>
@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
   strip: { position: 'absolute', flexDirection: 'row', overflow: 'hidden' },
   pattern: { position: 'absolute', overflow: 'hidden' },
   // The box clips as a last resort only; sizes are chosen so the text fits (postcard.test.ts).
-  greetingBox: { position: 'absolute', justifyContent: 'center', overflow: 'hidden' },
+  greetingBox: { position: 'absolute', justifyContent: 'center', overflow: 'hidden', padding: GREETING_PADDING },
   greeting: { textAlign: 'center', fontWeight: '700', ...(Platform.OS === 'web' ? ({ wordBreak: 'break-word', overflowWrap: 'anywhere' } as object) : null) },
 });

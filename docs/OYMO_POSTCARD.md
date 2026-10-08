@@ -27,10 +27,37 @@ Route: `/culture/oymo/postcard?pattern=<saved id>`.
   points), so Kyrgyz and Cyrillic letters and emoji are never split.
   - A live counter announces when the limit is reached; newlines become
     spaces.
-  - The font steps down 24 → 20 → 17 → 15 with a line height of 1.4×, so
-    accents and descenders are not clipped.
-  - The worst case is tested: 80 of the widest glyph (Ж) at 15 pt fits the
-    box.
+  - The font steps down 24 → 20 → 17 → 15 → 13 with a line height of 1.4×,
+    so accents and descenders are not clipped. The 13 pt step exists only so
+    that 80 emoji fit; it is 39 px in the export.
+  - Sizing uses ONE conservative width table per character class (bold
+    system font, em):
+
+    | Characters | Width |
+    | --- | --- |
+    | Ж Ш Щ Ю М W M Ф Ы | 1.05 |
+    | ж ш щ ю м w m ф ы | 0.9 |
+    | other capitals and digits | 0.8 |
+    | other letters, including ң ө ү | 0.68 |
+    | narrow punctuation and space | 0.4 |
+    | emoji | 1.3 |
+
+  - The text is wrapped greedily, the way a text engine does it, and an
+    over-long word breaks across lines.
+  - `greetingFontSize()` picks the largest size that `fits()` with that same
+    table, so the size chosen is the size that was checked. (Before
+    2026-10-07 the choice used 0.62 em while the worst-case check used
+    0.95 em.)
+  - The text box is the greeting box minus 8 pt of padding (296 × 116).
+  - Verified two ways:
+    - Unit tests: every 80-character string of each widest glyph, Kyrgyz
+      letter and emoji fits at the smallest size, and the size chosen for
+      representative greetings is the largest that fits.
+    - Web e2e test: it renders 80 × Ж, 80 × Ш, 80 × W, Kyrgyz, mixed
+      KG/RU/EN and long-word greetings in both formats and all three
+      layouts. In the DOM, the font size equals the chosen size and the
+      rendered height fits the box: the worst is 112 / 116, the 80 × Ж
+      case is 105 / 116.
   - Text colour is dark ink or white, whichever reaches 4.5:1. On mid-tone
     pattern backgrounds where neither does, the greeting sits on a cream
     plate.
@@ -54,8 +81,16 @@ Route: `/culture/oymo/postcard?pattern=<saved id>`.
   - The e2e test checks that the sheet's card HTML equals the screen's, the
     aspect ratio in both formats, and that the greeting box doesn't
     overflow.
-- If an export fails, the preview sheet stays open with a toast. The
-  composition lives in the screen and is never reset.
+- **Failures and retries.** The preview sheet stays open until the image
+  has really been handed over.
+  - If the capture or `shareAsync` rejects, the same card stays open, a
+    toast says so, the failed file is deleted, and Share can be pressed
+    again at once.
+  - Only one export runs at a time: a second Share, or Share + Save in the
+    same frame, is ignored.
+  - The composition lives in the screen and is never reset.
+  - All of this is tested through the real hook (`useShareCard.test.ts`)
+    and the real screen (`postcardScreen.test.ts`).
 
 ## Temporary files
 
@@ -99,6 +134,8 @@ text, the same as every share card.
 
 ## Device checks: PENDING (not performed)
 
+- [ ] iOS: the system share sheet presents over the open preview sheet (it
+  now stays open while sharing); dismissing it closes the preview.
 - [ ] iOS / Android: Share opens the system sheet with a 1080 × 1350
   (portrait) or 1080 × 1080 (square) JPEG that matches the preview.
 - [ ] Save to Photos with the permission granted and denied. When denied,
