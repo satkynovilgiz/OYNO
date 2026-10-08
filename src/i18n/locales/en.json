@@ -1076,6 +1076,41 @@
         "includes": "Includes",
         "used_in": "Used in",
         "material_for": "Material for"
+      },
+      "trail": {
+        "title": "Follow the Connection",
+        "start": "Follow the connections",
+        "startA11y": "Follow the connections from {{title}}",
+        "intro": "Every link here is quoted from OYNO's own articles, with its source. Your trail stays on this device for this visit only.",
+        "view": "Show the trail as",
+        "views": {
+          "path": "Path",
+          "list": "List"
+        },
+        "trailTitle": "Your trail",
+        "stepA11y": "Step {{n}} of {{total}}: {{title}}{{current}}",
+        "currentSuffix": ", you are here",
+        "via": "{{relation}}",
+        "here": "You are here",
+        "openArticle": "Read the article",
+        "needsConnection": "Reading this article needs a connection.",
+        "nextTitle": "Where next?",
+        "follow": "Follow to {{title}}",
+        "source": "Source",
+        "sourceA11y": "Open the source: {{title}}",
+        "sourced": "Sourced link",
+        "unavailable": "{{relation}}: an article that isn't available right now.",
+        "visitedNote_one": "{{count}} more link leads back to an object already on your trail.",
+        "visitedNote_few": "{{count}} more links lead back to objects already on your trail.",
+        "visitedNote_many": "{{count}} more links lead back to objects already on your trail.",
+        "visitedNote_other": "{{count}} more links lead back to objects already on your trail.",
+        "deadEnd": "No new connections from here. Go back to an earlier step to try another way.",
+        "back": "Back one step",
+        "forward": "Forward one step",
+        "yourGroupings": "In your collections",
+        "yourGroupingsNote": "Your own grouping - not a sourced connection.",
+        "missingStart": "This object isn't available, so a trail can't start here.",
+        "explore": "Explore Culture"
       }
     }
   },

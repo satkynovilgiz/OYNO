@@ -83,6 +83,7 @@ export function ConnectionDetailScreen({ connectionId, onPressBack }: { connecti
         </View>
 
         <Button label={t('culture.connections.openArticle', { title: from.title })} variant="secondary" onPress={() => router.push(contentRoute(from.type, from.id) as never)} />
+        <Button label={t('culture.connections.trail.start')} variant="secondary" accessibilityHint={t('culture.connections.trail.startA11y', { title: from.title })} onPress={() => router.push(`/culture/connections/trail?start=${encodeURIComponent(from.id)}${from.type === 'culture_material' ? '&type=culture_material' : ''}` as never)} testID="trail-start-detail" />
         {source ? <Button label={t('culture.connections.checkSources')} variant="secondary" onPress={() => router.push(contentRoute(source.type, source.id) as never)} /> : null}
       </ScrollView>
     </View>

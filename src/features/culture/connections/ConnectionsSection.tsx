@@ -36,6 +36,9 @@ export function ConnectionsSection({ type, id, experience }: { type: ConnectionC
       <Text style={styles.title} accessibilityRole="header">
         {t('culture.connections.title')}
       </Text>
+      <AnimatedPressable style={styles.why} onPress={() => router.push(`/culture/connections/trail?start=${encodeURIComponent(id)}${type === 'culture_material' ? '&type=culture_material' : ''}` as never)} hitSlop={6} accessibilityRole="link" accessibilityLabel={t('culture.connections.trail.start')} testID="trail-start">
+        <Text style={styles.whyText}>{t('culture.connections.trail.start')} →</Text>
+      </AnimatedPressable>
       <View style={experience === 'child' ? styles.grid : styles.list}>
         {/* Child tiles: two per row. */}
         {entries.map((entry) => {

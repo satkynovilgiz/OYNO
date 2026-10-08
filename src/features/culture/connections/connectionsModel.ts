@@ -13,23 +13,17 @@ export type ArticleConnection = {
 const forwardLabel = (relation: RelationKey) => relation;
 
 /**
- * Connections shown on an article: its own outgoing connections (curated
- * order), then incoming ones that explicitly allow reverse navigation -
- * read with the reverse label, never as the same relation. Destinations
- * that don't exist (deleted content) are dropped. Below the minimum the
- * section isn't shown at all.
+ * Every connection readable from this article: its own outgoing
+ * connections (curated order), then incoming ones that explicitly allow
+ * reverse navigation - read with the reverse label, never as the same
+ * relation. One entry per destination. Existence is NOT checked here.
  */
-export function connectionsFor(
-  type: ConnectionContentType,
-  id: string,
-  exists: (type: ConnectionContentType, id: string) => boolean,
-  connections: readonly CultureConnection[] = CULTURE_CONNECTIONS,
-): ArticleConnection[] {
+export function linksFrom(type: ConnectionContentType, id: string, connections: readonly CultureConnection[] = CULTURE_CONNECTIONS): ArticleConnection[] {
   const result: ArticleConnection[] = [];
   const seen = new Set<string>();
   const add = (entry: ArticleConnection) => {
     const key = `${entry.otherType}:${entry.otherId}`;
-    if (seen.has(key) || !exists(entry.otherType, entry.otherId)) return;
+    if (seen.has(key)) return;
     seen.add(key);
     result.push(entry);
   };
@@ -40,7 +34,23 @@ export function connectionsFor(
     if (connection.toType === type && connection.toId === id && connection.reverse && reverseLabel)
       add({ connection, direction: 'reverse', labelKey: reverseLabel, otherType: connection.fromType, otherId: connection.fromId });
   }
-  const shown = result.slice(0, MAX_CONNECTIONS_SHOWN);
+  return result;
+}
+
+/**
+ * Connections shown on an article: `linksFrom`, minus destinations that
+ * don't exist (deleted content). Below the minimum the section isn't
+ * shown at all.
+ */
+export function connectionsFor(
+  type: ConnectionContentType,
+  id: string,
+  exists: (type: ConnectionContentType, id: string) => boolean,
+  connections: readonly CultureConnection[] = CULTURE_CONNECTIONS,
+): ArticleConnection[] {
+  const shown = linksFrom(type, id, connections)
+    .filter((entry) => exists(entry.otherType, entry.otherId))
+    .slice(0, MAX_CONNECTIONS_SHOWN);
   return shown.length >= MIN_CONNECTIONS_SHOWN ? shown : [];
 }
 
