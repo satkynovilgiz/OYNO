@@ -5180,5 +5180,80 @@
     "exhibitCount_few": "{{count}} exhibits",
     "exhibitCount_many": "{{count}} exhibits",
     "exhibitCount_other": "{{count}} exhibits"
+  },
+  "rhythmRepeat": {
+    "title": "Repeat the Rhythm",
+    "entry": "Repeat the Rhythm",
+    "entryHint": "Hear a short pattern, then tap it back",
+    "intro": "Listen to a short pattern, then tap it back on the pad. Five rounds, no timer pressure.",
+    "exercisesNote": "These six patterns are practice exercises written for OYNO - they are not traditional komuz rhythms.",
+    "difficultyTitle": "Difficulty",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "difficultyHint": {
+      "easy": "Slower, simpler patterns",
+      "medium": "A moderate tempo",
+      "hard": "Faster, busier patterns"
+    },
+    "soundTitle": "Play the example sound",
+    "soundHint": "Off: the example is shown only as lights, so you can practise in silence.",
+    "soundsOffSetting": "Sound effects are off in Settings, so the example is shown only as lights.",
+    "start": "Start",
+    "best": "Best: {{points}} of {{max}}",
+    "notPlayed": "Not played yet",
+    "roundOf": "Round {{current}} of {{total}}",
+    "exercise": "Exercise: {{name}}",
+    "patterns": {
+      "even": "Even steps",
+      "pairs": "Pairs",
+      "long-short": "Long and short",
+      "run": "Running steps",
+      "offbeat": "Off the beat",
+      "skip": "Skipping"
+    },
+    "listen": "Listen and watch",
+    "yourTurn": "Your turn - tap the pattern on the pad",
+    "tapped": "Tapped {{count}} of {{total}}",
+    "pad": "Tap pad",
+    "padHint": "Tap once for each note",
+    "hearAgain": "Hear it again",
+    "showAgain": "Show it again",
+    "done": "Done",
+    "next": "Next round",
+    "seeSummary": "See summary",
+    "roundPoints": "{{points}} of {{max}} points",
+    "grade": {
+      "onTime": "on time",
+      "close": "close",
+      "off": "off the beat",
+      "missing": "missing"
+    },
+    "noteResult": "Note {{n}}: {{grade}}",
+    "noteResultTimed": "Note {{n}}: {{grade}}, {{direction}}",
+    "early": "early",
+    "late": "late",
+    "tempo": {
+      "slower": "Your tempo was slower than the example. Timing is judged against your own tempo.",
+      "faster": "Your tempo was faster than the example. Timing is judged against your own tempo.",
+      "steady": "You kept close to the example's tempo."
+    },
+    "tooFew": "Too few taps to judge the timing - try tapping every note.",
+    "ignored_one": "{{count}} double tap was ignored",
+    "ignored_few": "{{count}} double taps were ignored",
+    "ignored_many": "{{count}} double taps were ignored",
+    "ignored_other": "{{count}} double taps were ignored",
+    "paused": "Paused. The round will start again from the example.",
+    "restart": "Restart round",
+    "summaryTitle": "Session summary",
+    "summaryPoints": "{{points}} of {{max}} points",
+    "summaryCounts": "On time: {{onTime}} · Close: {{close}} · Off: {{off}} · Missing: {{missing}}",
+    "playAgain": "Play again",
+    "changeDifficulty": "Change difficulty",
+    "practiceNote": "Practice results stay on this device and are not game records.",
+    "noteA11y": "Note {{n}} of {{total}}",
+    "howScored": "How it's scored: each note is compared with your own steady tempo, so slow and fast playing count the same. Within about an eighth of a beat is on time, within a quarter is close."
   }
 }

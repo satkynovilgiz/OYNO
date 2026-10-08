@@ -172,6 +172,8 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
 
         {/* Rhythm practice only exists for tracks with an authored, reviewed chart. */}
         {rhythmAvailable ? <Button label={t('rhythm.practice')} variant="secondary" onPress={() => router.push('/culture/komuz/rhythm' as never)} /> : null}
+        {/* Authored practice exercises - needs no beat chart, so always offered. */}
+        <Button label={t('rhythmRepeat.entry')} variant="secondary" onPress={() => router.push('/culture/komuz/repeat' as never)} testID="repeat-entry" />
 
         {recent.length > 0 && !isChild ? (
           <View style={styles.section}>

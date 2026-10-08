@@ -474,3 +474,13 @@ PENDING (not performed on a device):
 - [ ] Airplane mode on a fresh install: an expedition still plays.
 - [ ] VoiceOver / TalkBack and the largest text size: the clues are read before
   the answers, and the answers stay on screen.
+
+## Repeat the Rhythm (2026-10-07)
+
+PENDING (not performed on a device). See docs/REPEAT_THE_RHYTHM.md for:
+
+- latency measurements (speaker, touch, Bluetooth);
+- sound and light sync;
+- silent switch;
+- backgrounding and calls mid-round;
+- VoiceOver / TalkBack and the largest text size.

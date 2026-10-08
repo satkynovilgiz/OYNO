@@ -1,4 +1,5 @@
 import { hapticImpact, hapticSelection } from '@/services/comfort/haptics';
+import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -152,6 +153,10 @@ export function RhythmTrainerScreen({ onPressBack }: { onPressBack: () => void }
         {header}
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}>
           <Text style={styles.intro}>{t('rhythm.intro')}</Text>
+          <AnimatedPressable style={styles.trackRow} onPress={() => router.push('/culture/komuz/repeat' as never)} accessibilityRole="button" accessibilityLabel={`${t('rhythmRepeat.entry')}. ${t('rhythmRepeat.entryHint')}`} testID="rhythm-repeat-mode">
+            <Text style={styles.trackTitle}>{t('rhythmRepeat.entry')}</Text>
+            <Text style={styles.meta}>{t('rhythmRepeat.entryHint')}</Text>
+          </AnimatedPressable>
           {charts.length === 0 ? <Text style={styles.empty}>{t('rhythm.noCharts')}</Text> : <Text style={styles.label}>{t('rhythm.chooseTrack')}</Text>}
           {charts.map((entry) => {
             const track = titleOf(entry.trackId)!;
