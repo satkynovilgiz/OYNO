@@ -11,14 +11,16 @@ import { AnimatedPressable, Button, IconButton, TextField, Toggle } from '@/comp
 import { announce } from '@/services/a11y/announce';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import type { CatalogContentType } from '@/services/content/contentCatalog';
+import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { useShareCard } from '@/services/share/useShareCard';
 import { ownerExhibition, useMyCollectionsStore } from '@/store/useMyCollectionsStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { useContentResolver, useMyCollections } from '../useMyCollections';
-import { buildExhibitionCover, CAPTION_MAX, emptyExhibition, exhibitKey, INTRO_MAX, MAX_EXHIBITS, moveExhibit, normalizeExhibition, setCaption, slidesFor, TITLE_MAX, toggleExhibit, type Exhibition } from './museumModel';
+import { buildExhibitionCover, CAPTION_MAX, emptyExhibition, exhibitKey, INTRO_MAX, MAX_EXHIBITS, moveExhibit, normalizeExhibition, REFLECTION_PROMPTS, setCaption, setReflection, slidesFor, TITLE_MAX, toggleExhibit, type Exhibition, type ReflectionPromptId } from './museumModel';
+import { VisitorTour } from './VisitorTour';
 
-type Mode = 'setup' | 'present';
+type Mode = 'setup' | 'present' | 'visit';
 
 /**
  * /profile/my-collections/museum?collection=<id> - present an existing
@@ -36,6 +38,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   const museums = useMyCollectionsStore((state) => state.museums);
   const { resolve, ready } = useContentResolver();
   const { share, shareHost } = useShareCard();
+  const { isOffline } = useNetworkStatus();
   const [mode, setMode] = useState<Mode>('setup');
   const [slide, setSlide] = useState(0);
   const [includeIntro, setIncludeIntro] = useState(false);
@@ -77,9 +80,9 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={mode === 'present' ? () => setMode('setup') : onPressBack} />
+        <IconButton icon={ChevronLeft} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={mode === 'setup' ? onPressBack : () => setMode('setup')} />
         <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
-          {mode === 'present' ? exhibitionTitle : t('museum.title')}
+          {mode === 'setup' ? t('museum.title') : exhibitionTitle}
         </Text>
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} keyboardShouldPersistTaps="handled">
@@ -99,6 +102,18 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
                     {index + 1}. {titleOf(key)}
                   </Text>
                   <TextField testID={`museum-caption-${index}`} label={t('museum.captionLabel')} value={exhibition.captions[key] ?? ''} onChangeText={(value) => save(setCaption(exhibition, key, value.slice(0, CAPTION_MAX)))} placeholder={t('museum.captionPlaceholder')} />
+                  {(() => {
+                    // Cycle: none -> each authored prompt -> none.
+                    const currentPrompt = exhibition.reflections?.[key] ?? null;
+                    const order: (ReflectionPromptId | null)[] = [null, ...REFLECTION_PROMPTS];
+                    const nextPrompt = order[(order.indexOf(currentPrompt) + 1) % order.length];
+                    const promptText = currentPrompt ? t(`museum.visit.prompts.${currentPrompt}`) : t('museum.visit.none');
+                    return (
+                      <AnimatedPressable style={styles.reflectionPick} onPress={() => save(setReflection(exhibition, key, nextPrompt))} accessibilityRole="button" accessibilityLabel={t('museum.visit.setupReflectionA11y', { name: titleOf(key), prompt: promptText })} testID={`museum-reflection-${index}`}>
+                        <Text style={styles.meta}>{t('museum.visit.setupReflection', { prompt: promptText })}</Text>
+                      </AnimatedPressable>
+                    );
+                  })()}
                 </View>
                 <View style={styles.moveColumn}>
                   <IconButton icon={ArrowUp} size={36} iconSize={14} elevated={false} disabled={index === 0} accessibilityLabel={t('museum.moveUp', { name: titleOf(key) })} onPress={() => save(moveExhibit(exhibition, index, -1))} testID={`museum-up-${index}`} />
@@ -122,6 +137,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
             })}
             {exhibition.exhibits.length >= MAX_EXHIBITS ? <Text style={styles.meta}>{t('museum.limit', { max: MAX_EXHIBITS })}</Text> : null}
             <Button label={t('museum.present')} size="lg" onPress={() => { setSlide(0); setMode('present'); }} disabled={exhibition.exhibits.length === 0} testID="museum-present" />
+            <Button label={t('museum.visit.startTour')} variant="secondary" accessibilityHint={t('museum.visit.startTourHint')} onPress={() => setMode('visit')} disabled={exhibition.exhibits.length === 0} testID="museum-visit" />
+            <Text style={styles.meta}>{t('museum.visit.startTourHint')}</Text>
 
             <View style={styles.card}>
               <Text style={styles.cardTitle}>{t('museum.shareTitle')}</Text>
@@ -134,6 +151,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
             </View>
           </View>
         ) : null}
+
+        {mode === 'visit' ? <VisitorTour exhibition={exhibition} title={exhibitionTitle} slides={slides} isOffline={isOffline} large={large} onEnd={() => setMode('setup')} /> : null}
 
         {mode === 'present' && current ? (
           <View style={styles.stack} testID="museum-present-view">
@@ -226,4 +245,5 @@ const styles = StyleSheet.create({
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, alignSelf: 'flex-start' },
   linkText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
   navRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  reflectionPick: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: cardRadii.compact, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderSubtle },
 });

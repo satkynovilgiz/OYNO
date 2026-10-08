@@ -81,3 +81,72 @@ test('accessible setup and presentation', async ({ page, errors }) => {
   await expectNoSeriousViolations(page, 'museum presentation');
   expectNoPageErrors(errors);
 });
+
+test('visitor tour: curator order, optional reflection, removed exhibit, closing with sources', async ({ page, errors }) => {
+  await seed(page, { language: 'en', guest: true, storage: { 'oyno.myCollections.v1': collections } });
+  await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+  await page.getByTestId('museum-caption-1').fill(CAPTION);
+  // A reflection prompt after the second exhibit (cycle: none -> first prompt).
+  await page.getByTestId('museum-reflection-1').click();
+  await expect(page.getByTestId('museum-reflection-1')).toContainText('Which detail would you point out');
+  await page.getByTestId('museum-visit').click();
+
+  await expect(page.getByTestId('tour-welcome')).toContainText('Yurt things');
+  await expect(page.locator('body')).not.toContainText('Private description');
+  await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour-progress')).toContainText('Exhibit 1 of 4');
+  await expect(page.getByTestId('tour-exhibit-title')).toHaveText('Боз үй');
+  await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour-exhibit-title')).toHaveText('Түндүк');
+  await expect(page.getByTestId('tour-caption')).toContainText(`Curator's note${CAPTION}`);
+  await page.getByTestId('tour-next').click();
+  // The reflection: clearly a prompt, optional - skip it.
+  await expect(page.getByTestId('tour-reflection')).toContainText('not a fact about the object');
+  await page.getByTestId('tour-skip').click();
+  await expect(page.getByTestId('tour-exhibit-title')).toHaveText('Жыгач каркас');
+  // Back to an earlier exhibit, then on.
+  await page.getByTestId('tour-previous').click();
+  await page.getByTestId('tour-previous').click();
+  await expect(page.getByTestId('tour-exhibit-title')).toHaveText('Түндүк');
+  await page.getByTestId('tour-next').click();
+  await page.getByTestId('tour-next').click();
+  await page.getByTestId('tour-next').click();
+  // The removed exhibit is a clear step that doesn't block the rest.
+  await expect(page.getByTestId('tour-exhibit-removed')).toContainText('no longer available');
+  await page.getByTestId('tour-next').click();
+
+  await expect(page.getByTestId('tour-closing')).toBeVisible();
+  await expect(page.getByTestId('tour-row-0')).toContainText('Viewed');
+  await expect(page.getByTestId('tour-row-3')).toContainText('No longer available');
+  await expect(page.getByTestId('tour-not-learning')).toContainText("isn't counted as learning");
+  await page.getByTestId('tour-source-1').click();
+  await expect(page).toHaveURL(/\/culture\/item\/boz-uy-tunduk$/);
+  // Viewing records nothing as learning or progress.
+  expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => /progress|learning|completion/i.test(key) && localStorage.getItem(key) !== null && localStorage.getItem(key) !== '{}'))).toEqual([]);
+  expectNoPageErrors(errors);
+});
+
+test('visitor tour: text-first mode, translated, accessible', async ({ page, errors }) => {
+  for (const language of ['kg', 'ru'] as const) {
+    await seed(page, { language, guest: true, storage: { 'oyno.myCollections.v1': collections } });
+    await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+    await page.getByTestId('museum-visit').click();
+    await page.getByTestId('tour-next').click();
+    await expectNoExposedKeys(page);
+  }
+  expectNoPageErrors(errors);
+});
+
+test('visitor tour accessible (welcome, exhibit, closing)', async ({ page, errors }) => {
+  await seed(page, { language: 'en', guest: true, storage: { 'oyno.myCollections.v1': collections } });
+  await page.goto(`/profile/my-collections/museum?collection=${ID}`);
+  await page.getByTestId('museum-visit').click();
+  await page.getByRole('switch').click(); // text first
+  await expectNoSeriousViolations(page, 'tour welcome');
+  await page.getByTestId('tour-next').click();
+  await expectNoSeriousViolations(page, 'tour exhibit (text first)');
+  for (let index = 0; index < 4; index += 1) await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour-closing')).toBeVisible();
+  await expectNoSeriousViolations(page, 'tour closing');
+  expectNoPageErrors(errors);
+});

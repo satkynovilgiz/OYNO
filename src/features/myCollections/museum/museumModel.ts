@@ -18,13 +18,29 @@ export const CAPTION_MAX = 200;
 
 /** `<contentType>:<contentId>` - the collection item an exhibit shows. */
 export type ExhibitKey = string;
-export type Exhibition = { title: string; intro: string; exhibits: ExhibitKey[]; captions: Record<ExhibitKey, string>; updatedAt: string };
+/**
+ * Reflection prompts the curator can place after an exhibit in the visitor
+ * tour. AUTHORED, open questions for the visitor - not facts about the
+ * object (texts: museum.visit.prompts.<id>).
+ */
+export const REFLECTION_PROMPTS = ['detail', 'reminds', 'askMaker', 'today', 'learnMore', 'share'] as const;
+export type ReflectionPromptId = (typeof REFLECTION_PROMPTS)[number];
+
+export type Exhibition = {
+  title: string;
+  intro: string;
+  exhibits: ExhibitKey[];
+  captions: Record<ExhibitKey, string>;
+  /** Visitor tour: a reflection prompt after selected exhibits (added later; older exhibitions have none). */
+  reflections?: Record<ExhibitKey, ReflectionPromptId>;
+  updatedAt: string;
+};
 
 export const exhibitKey = (item: { contentType: string; contentId: string }): ExhibitKey => `${item.contentType}:${item.contentId}`;
 
 export function emptyExhibition(collection: Pick<UserCollection, 'name'>, data: CollectionsData, collectionId: string, now = new Date()): Exhibition {
   const items = data.items.filter((item) => item.collectionId === collectionId).sort((a, b) => a.sortOrder - b.sortOrder);
-  return { title: collection.name.slice(0, TITLE_MAX), intro: '', exhibits: items.slice(0, MAX_EXHIBITS).map(exhibitKey), captions: {}, updatedAt: now.toISOString() };
+  return { title: collection.name.slice(0, TITLE_MAX), intro: '', exhibits: items.slice(0, MAX_EXHIBITS).map(exhibitKey), captions: {}, reflections: {}, updatedAt: now.toISOString() };
 }
 
 const clean = (value: string, max: number) => value.replace(/[<>{}]/g, '').slice(0, max);
@@ -47,7 +63,15 @@ export function normalizeExhibition(raw: unknown, data: CollectionsData, collect
       if (typeof caption === 'string' && caption.trim()) captions[key] = clean(caption, CAPTION_MAX);
     }
   }
+  const reflections: Record<ExhibitKey, ReflectionPromptId> = {};
+  if (value.reflections && typeof value.reflections === 'object') {
+    for (const key of exhibits) {
+      const prompt = (value.reflections as Record<string, unknown>)[key];
+      if (typeof prompt === 'string' && (REFLECTION_PROMPTS as readonly string[]).includes(prompt)) reflections[key] = prompt as ReflectionPromptId;
+    }
+  }
   return {
+    reflections,
     title: typeof value.title === 'string' ? clean(value.title, TITLE_MAX) : '',
     intro: typeof value.intro === 'string' ? clean(value.intro, INTRO_MAX) : '',
     exhibits,
@@ -61,7 +85,9 @@ export function toggleExhibit(exhibition: Exhibition, key: ExhibitKey): Exhibiti
   if (exhibition.exhibits.includes(key)) {
     const captions = { ...exhibition.captions };
     delete captions[key];
-    return { ...exhibition, exhibits: exhibition.exhibits.filter((item) => item !== key), captions };
+    const reflections = { ...(exhibition.reflections ?? {}) };
+    delete reflections[key];
+    return { ...exhibition, exhibits: exhibition.exhibits.filter((item) => item !== key), captions, reflections };
   }
   if (exhibition.exhibits.length >= MAX_EXHIBITS) return exhibition;
   return { ...exhibition, exhibits: [...exhibition.exhibits, key] };
@@ -73,6 +99,15 @@ export function moveExhibit(exhibition: Exhibition, index: number, delta: -1 | 1
   const exhibits = [...exhibition.exhibits];
   [exhibits[index], exhibits[target]] = [exhibits[target], exhibits[index]];
   return { ...exhibition, exhibits };
+}
+
+/** Places (or removes, with null) a reflection prompt after one shown exhibit. */
+export function setReflection(exhibition: Exhibition, key: ExhibitKey, prompt: ReflectionPromptId | null): Exhibition {
+  if (!exhibition.exhibits.includes(key)) return exhibition;
+  const reflections = { ...(exhibition.reflections ?? {}) };
+  if (prompt) reflections[key] = prompt;
+  else delete reflections[key];
+  return { ...exhibition, reflections };
 }
 
 export function setCaption(exhibition: Exhibition, key: ExhibitKey, caption: string): Exhibition {
