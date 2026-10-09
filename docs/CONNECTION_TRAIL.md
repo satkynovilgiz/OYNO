@@ -93,3 +93,66 @@ horse cluster, which joins it through the oymo article.
   order.
 - [ ] Android hardware Back from an article returns to the trail
   unchanged.
+
+## Connection Quest (2026-10-08)
+
+- **Route:** `/culture/connections/quest`. The entry is "Try a Connection
+  Quest" on the trail screen.
+- **Code:** `questModel.ts` (pure) and `ConnectionQuestScreen.tsx`.
+- **Reused:** the connection dataset, `linksFrom` (directed links plus only
+  the reverse readings the data allows), the trail model (`follow`,
+  `trailOptions`, `goTo`) and the article resolver. No connection or
+  explanation is invented; every option and every route step quotes its
+  source.
+
+### Rules
+
+- **Generation:**
+  - Breadth-first search over AVAILABLE content (`exists`) between every
+    pair of objects with links.
+  - A quest is offered only when a route of 2–4 links exists.
+  - Shortest first, at most 6, up to two of each length from different
+    starts.
+  - With the full data the offer is 2, 2, 3, 3, 4, 4 links. With no
+    reachable pair, it says so.
+- **Every offered quest is solvable:** a unit test plays every one by
+  following hints, under several sets of missing content, and arrives in
+  exactly the quest's shortest number of links.
+- **Play:**
+  - The destination stays on screen throughout.
+  - The current object comes with up to 3 sourced options; missing articles
+    show as unavailable.
+  - The route so far is a readable numbered list, and tapping a step returns
+    to it.
+  - Restart, or Choose another quest.
+  - Sources open the article that states the link, and the quest is kept
+    when you come back (memory slot).
+- **Hint:** the first link of an actual shortest remaining route from where
+  the player is. It avoids objects already on the trail, which the trail
+  won't offer again.
+- **Dead end:** "From here the destination can't be reached without going
+  back", with "Go back to <the latest step that still has a route>", or, if
+  none, "Start again from <start>".
+- **Cycles:** routes never revisit an object, and the trail never offers
+  one again.
+- **Finish:** "You reached …", then the route, each link with its quoted
+  evidence, source article and section, plus "nothing is scored or saved".
+  No XP and no mastery.
+- Offline with cached articles; KG/RU/EN; large text in child mode.
+
+### Tests
+
+- **Unit (`quest.test.ts`):**
+  - directed links and reverse rules (the `learn_next` link is one-way);
+  - every route link is a dataset connection;
+  - shortest and bounded routes;
+  - every offered quest solvable by its hints under four content sets;
+  - none offered when nothing is reachable;
+  - hints follow a real remaining route and are always on screen;
+  - no cycles across all pairs;
+  - missing objects are routed around or the quest isn't offered;
+  - dead end, then recovery.
+- **e2e (`connection-quest.spec.ts`):**
+  - start → hint → read the source → return → follow to the destination,
+    with the evidence shown on the route;
+  - retrace, restart, RU, axe.

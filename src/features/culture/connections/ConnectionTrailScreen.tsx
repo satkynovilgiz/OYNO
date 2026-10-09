@@ -109,6 +109,7 @@ export function ConnectionTrailScreen({ startType, startId, onPressBack }: { sta
       {header}
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
         <Text style={styles.meta}>{t('culture.connections.trail.intro')}</Text>
+        <Button label={t('culture.connections.quest.entry')} variant="text" onPress={() => router.push('/culture/connections/quest' as never)} testID="quest-entry" />
 
         {/* The trail: a path of steps, or the same steps as a list. */}
         <View style={styles.rowBetween}>
