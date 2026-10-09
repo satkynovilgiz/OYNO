@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ChevronLeft, Layers, Palette, Redo2, Shapes, Share2, Undo2, Wand2 } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -27,9 +27,9 @@ import {
 import type { SymmetryMode } from '@/services/culture/symmetry';
 import { takeCreatorHandoff } from '@/services/culture/oymoHandoff';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
-import { fitRecipe, recipeFromHistory, setSessionRecipe, type HistoryEntry, type StepLabel } from '@/features/culture/oymo/recipe/recipeModel';
+import { clearSessionRecipe, fingerprint, fitRecipe, recipeFromHistory, setSessionRecipe, type HistoryEntry, type StepLabel } from '@/features/culture/oymo/recipe/recipeModel';
 import { recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
-import { useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
+import { fetchOymoCreations, OYMO_CREATIONS_QUERY_KEY, useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProgressStore } from '@/store/useProgressStore';
@@ -110,7 +110,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
   /** Replay the CURRENT design (saved or not) in the recipe player. */
   function openSessionRecipe() {
-    setSessionRecipe(recipeFromHistory(history, historyIndex));
+    setSessionRecipe(owner, recipeFromHistory(history, historyIndex));
     router.push('/culture/oymo/recipe?source=session' as never);
   }
 
@@ -177,6 +177,10 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   async function handleSave(name: string) {
     setIsSaving(true);
     setSaveError(false);
+    // The save RPC returns no id: note the ids that exist now, so the NEW creation can be found afterwards.
+    const before = new Set((queryClient.getQueryData<OymoCreationRow[]>(OYMO_CREATIONS_QUERY_KEY) ?? creations ?? []).map((creation) => creation.id));
+    const recipe = includeRecipe ? recipeFromHistory(history, historyIndex) : null;
+    const saved = { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode };
     const success = await useProgressStore.getState().saveOymoCreation({
       name,
       layers: editorState.layers,
@@ -184,13 +188,16 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
       symmetryMode,
     });
     setIsSaving(false);
-    if (success && includeRecipe) {
-      // Optional: kept on this device for this account, matched to the saved creation by its content.
-      useOymoRecipeStore.getState().saveRecipe(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }, recipeFromHistory(history, historyIndex));
-    }
     if (success) {
-      queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
       setShowSaveModal(false);
+      const rows = await queryClient.fetchQuery({ queryKey: OYMO_CREATIONS_QUERY_KEY, queryFn: fetchOymoCreations, staleTime: 0 }).catch(() => null);
+      if (recipe && rows) {
+        // Optional recipe: attached to the ONE new creation with this content, by its id. If that can't be told
+        // apart for certain (none, or several new matches), nothing is attached rather than guessing.
+        const print = fingerprint(saved);
+        const fresh = rows.filter((row) => !before.has(row.id) && fingerprint({ layers: row.layers, backgroundColor: row.background_color, symmetry: row.symmetry_mode }) === print);
+        if (fresh.length === 1) useOymoRecipeStore.getState().saveRecipe(owner, fresh[0].id, recipe);
+      }
     } else if (!isGuest) {
       setSaveError(true);
     }
@@ -200,7 +207,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
     if (!pendingDeleteCreation) return;
     const success = await useProgressStore.getState().deleteOymoCreation(pendingDeleteCreation.id);
     if (success) {
-      useOymoRecipeStore.getState().removeFor(owner, { layers: pendingDeleteCreation.layers, backgroundColor: pendingDeleteCreation.background_color, symmetry: pendingDeleteCreation.symmetry_mode });
+      useOymoRecipeStore.getState().removeFor(owner, pendingDeleteCreation.id);
       queryClient.invalidateQueries({ queryKey: ['oymo_creations'] });
     }
     setPendingDeleteCreation(null);
@@ -209,7 +216,17 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   const selectedLayer = editorState.layers.find((l) => l.id === selectedLayerId) ?? null;
   const recipes = useOymoRecipeStore((state) => state.saved);
   const openedCreation = creations?.find((creation) => creation.id === openedCreationId) ?? null;
-  const openedHasRecipe = !!openedCreation && !!recipeFor(recipes, owner, { layers: openedCreation.layers, backgroundColor: openedCreation.background_color, symmetry: openedCreation.symmetry_mode });
+  const openedHasRecipe = !!openedCreation && !!recipeFor(recipes, owner, openedCreation.id);
+  // Recipes saved before they were keyed by creation id: adopt only unambiguous ones.
+  useEffect(() => {
+    if (creations) useOymoRecipeStore.getState().adoptLegacy(owner, creations);
+  }, [creations, owner]);
+  // Another account: an unsaved session recipe from the previous one is dropped.
+  const sessionOwner = useRef(owner);
+  useEffect(() => {
+    if (sessionOwner.current !== owner) clearSessionRecipe();
+    sessionOwner.current = owner;
+  }, [owner]);
   const recipeFitInfo = (() => {
     const full = recipeFromHistory(history, historyIndex);
     const fitted = fitRecipe(full);

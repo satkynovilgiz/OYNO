@@ -87,9 +87,23 @@ export function normalizeRecipe(raw: unknown): Recipe | null {
   return { steps, trimmed: Number.isInteger(value.trimmed) && (value.trimmed as number) >= 0 ? (value.trimmed as number) : 0 };
 }
 
-/** The unsaved session's recipe handed to the player (memory only). */
-let session: Recipe | null = null;
-export const setSessionRecipe = (recipe: Recipe | null) => {
-  session = recipe ? JSON.parse(JSON.stringify(recipe)) : null;
+/**
+ * The unsaved session's recipe handed to the player - memory only and
+ * bound to the OWNER who made it: another account (after sign-out or a
+ * switch) gets nothing, and reading it as someone else clears it.
+ */
+let session: { owner: string; recipe: Recipe } | null = null;
+export const setSessionRecipe = (owner: string, recipe: Recipe | null) => {
+  session = recipe ? { owner, recipe: JSON.parse(JSON.stringify(recipe)) as Recipe } : null;
 };
-export const sessionRecipe = () => session;
+export function sessionRecipe(owner: string): Recipe | null {
+  if (!session) return null;
+  if (session.owner !== owner) {
+    session = null;
+    return null;
+  }
+  return session.recipe;
+}
+export const clearSessionRecipe = () => {
+  session = null;
+};

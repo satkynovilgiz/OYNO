@@ -41,10 +41,14 @@ export function RecipePlayerScreen({ creationId, onPressBack }: { creationId: st
 
   const creation = creationId ? (creations?.find((entry) => entry.id === creationId) ?? null) : null;
   const recipe: Recipe | null = useMemo(() => {
-    if (!creationId) return sessionRecipe();
+    // A session recipe only for the owner who made it (direct links / other accounts get none).
+    if (!creationId) return sessionRecipe(owner);
     if (!creation) return null;
-    return recipeFor(saved, owner, { layers: creation.layers, backgroundColor: creation.background_color, symmetry: creation.symmetry_mode });
+    return recipeFor(saved, owner, creation.id);
   }, [creationId, creation, saved, owner]);
+  useEffect(() => {
+    if (creations) useOymoRecipeStore.getState().adoptLegacy(owner, creations);
+  }, [creations, owner]);
 
   const [index, setIndex] = useState(0);
   // Plays by itself on open - unless Reduce Motion is on: then it's manual until Play is pressed.

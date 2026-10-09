@@ -15,7 +15,9 @@ export type OymoCreationRow = {
   updated_at: string;
 };
 
-async function fetchOymoCreations(): Promise<OymoCreationRow[]> {
+export const OYMO_CREATIONS_QUERY_KEY = ['oymo_creations'] as const;
+
+export async function fetchOymoCreations(): Promise<OymoCreationRow[]> {
   const { data, error } = await supabase.from('oymo_creations').select('*').order('updated_at', { ascending: false });
   if (error) throw error;
   return data;

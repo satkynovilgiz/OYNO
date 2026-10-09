@@ -30,22 +30,48 @@ There is no second editor.
 - The save dialog says so: "the last N of M steps will be saved". The player
   says "N earlier steps weren't kept".
 
-## Saving: optional, owner-bound, backwards compatible
+## Saving: optional, owner + creation id (revised 2026-10-08)
 
-- The save dialog has "Also save the recipe (n steps)". It is off by
-  default and only shown to signed-in accounts, the only ones that can
-  save creations.
-- Recipes are kept on THIS DEVICE, keyed by the owning account (the same
-  owner as `oymo_creations`) and by the saved creation's content
-  fingerprint. The `save_oymo_creation` RPC returns no id.
-- Another account never sees them (tested). Deleting the creation deletes
-  its recipe, and recipes survive a restart (tested).
-- **Older creations**, and creations saved without a recipe, simply have
-  none: no replay button, and the player says so.
-- **Backend dependency (not done):** syncing recipes across devices would
-  need a new `oymo_creations` column or table plus an RPC change, which is a
-  migration. This feature deliberately stays local, and there is no public
-  sharing.
+- "Also save the recipe" is off by default and signed-in only.
+- Recipes are stored on THIS DEVICE under `oyno.oymoRecipes.v2`, as
+  `{ <owner>: { byCreation: { <creationId>: … }, legacy: {…} } }`.
+- **How the id is found:** `save_oymo_creation` returns no id (checked: it
+  inserts and returns only `{ progress }`). The Creator notes the creation
+  ids that exist before saving, refetches the creations afterwards, and
+  attaches the recipe to the ONE new row with the saved content. With zero
+  or several such rows, nothing is attached rather than guessing.
+- **What that guarantees:**
+  - Two identical creations have independent recipes.
+  - Deleting one removes only its own recipe.
+  - A creation saved without a recipe never inherits another's.
+  - Other accounts never see a recipe (all tested).
+
+### Migration from v1 (content fingerprints)
+
+- On load, v1 entries are kept as that owner's `legacy`, and the v1 key is
+  removed.
+- When that owner's creations are known (in the Creator or the player), a
+  legacy recipe is adopted by a creation only when EXACTLY ONE creation has
+  that content.
+  - An ambiguous one (two or more identical creations, or none) stays
+    unassigned and is never shown.
+  - If the identical twins later reduce to one, that one adopts it.
+- v1 existed for less than a day, so few if any devices have it.
+
+### Session recipes
+
+- The unsaved session's recipe is bound to the owner who made it (memory
+  only).
+- Another account, after a sign-out or a switch, gets nothing, and the
+  stale session is cleared. A direct visit to `?source=session` by anyone
+  else shows "nothing to replay".
+- The Creator also drops the session when the account changes.
+- Opening a stage still hands over a deep copy.
+
+### Backend dependency (not done)
+
+Returning the new id from the RPC, or syncing recipes across devices,
+would need a migration. Neither is done.
 
 ## Player
 

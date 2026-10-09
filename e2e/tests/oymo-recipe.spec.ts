@@ -81,6 +81,9 @@ test('reopen a saved creation with its recipe -> replay -> copy a stage; an olde
   await expect(page.getByTestId('oymo-handoff-note')).toBeVisible();
   // The saved creation was never written to.
   expect(writes).toEqual([]);
+  // The v1 (content-keyed) recipe was adopted by its only matching creation, by id.
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('oyno.oymoRecipes.v2') ?? '{}'));
+  expect(Object.keys(stored.guest.byCreation)).toEqual(['saved-recipe-1']);
   // An older creation's player explains there is no recipe.
   await page.goto('/culture/oymo/recipe?creation=older-1');
   await expect(page.getByTestId('recipe-none')).toContainText('has no recipe');
@@ -99,5 +102,22 @@ test('Reduce Motion: the recipe does not play by itself; KG/RU; accessible', asy
   await expect(page.getByTestId('recipe-step')).toContainText('Шаг 2 из 5');
   await expectNoExposedKeys(page);
   await expectNoSeriousViolations(page, 'recipe player');
+  expectNoPageErrors(errors);
+});
+
+test('two identical saved creations: only the one saved with a recipe offers it', async ({ page, errors }) => {
+  const twin = { ...SAVED_ROW, id: 'twin-2', name: 'Synthetic twin 5r' };
+  await serveCreations(page, [SAVED_ROW, twin]);
+  await seed(page, { language: 'en', guest: true, storage: { 'oyno.oymoRecipes.v2': { guest: { byCreation: { 'saved-recipe-1': { recipe: RECIPE, savedAt: '' } }, legacy: {} } } } });
+  await page.goto('/culture/oymo/create');
+  await page.getByRole('button', { name: twin.name }).click();
+  await expect(page.getByTestId('oymo-replay-saved')).toHaveCount(0);
+  await page.getByRole('button', { name: SAVED_ROW.name }).click();
+  await expect(page.getByTestId('oymo-replay-saved')).toBeVisible();
+  await page.goto('/culture/oymo/recipe?creation=twin-2');
+  await expect(page.getByTestId('recipe-none')).toContainText('has no recipe');
+  // A direct visit to the session route with no session of this account's own shows nothing.
+  await page.goto('/culture/oymo/recipe?source=session');
+  await expect(page.getByTestId('recipe-none')).toContainText('nothing to replay');
   expectNoPageErrors(errors);
 });
