@@ -9,7 +9,7 @@ import type { SymmetryMode } from './symmetry';
  * `symmetry` is the mode the composition was made with (default: none -
  * the layers are already the whole design).
  */
-export type CreatorHandoff = { state: OymoEditorState; symmetry: SymmetryMode; source: 'restore' | 'symmetry' | 'recipe' };
+export type CreatorHandoff = { state: OymoEditorState; symmetry: SymmetryMode; source: 'restore' | 'symmetry' | 'recipe' | 'remember' };
 let pending: CreatorHandoff | null = null;
 
 export function handOffToCreator(state: OymoEditorState, options: { symmetry?: SymmetryMode; source?: CreatorHandoff['source'] } = {}): void {

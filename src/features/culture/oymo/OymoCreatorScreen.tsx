@@ -302,7 +302,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -310,6 +310,13 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('restorePattern.title')}</Text>
             <Text style={styles.headerSubtitle}>{t('restorePattern.entryMeta')}</Text>
+          </View>
+        </AnimatedPressable>
+        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/remember' as never)} accessibilityRole="button" accessibilityLabel={`${t('rememberPattern.title')}. ${t('rememberPattern.entryMeta')}`} testID="remember-entry">
+          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.restoreTitle}>{t('rememberPattern.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('rememberPattern.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/symmetry' as never)} accessibilityRole="button" accessibilityLabel={`${t('symmetryPlayground.title')}. ${t('symmetryPlayground.entryMeta')}`} testID="symmetry-entry">
