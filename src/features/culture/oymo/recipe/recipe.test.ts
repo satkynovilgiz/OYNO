@@ -7,7 +7,7 @@ import kg from '@/i18n/locales/kg.json';
 import ru from '@/i18n/locales/ru.json';
 import { addLayer, EMPTY_OYMO_STATE, rotateLayer, setBackgroundColor, type OymoEditorState } from '@/services/culture/oymoEditor';
 import { takeCreatorHandoff } from '@/services/culture/oymoHandoff';
-import { LEGACY_RECIPES_KEY, recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
+import { LEGACY_RECIPES_KEY, OYMO_RECIPES_KEY, recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
 
 import { clearSessionRecipe, fingerprint, fitRecipe, finalState, sessionRecipe, setSessionRecipe, MAX_RECIPE_BYTES, MAX_RECIPE_STEPS, normalizeRecipe, recipeBytes, recipeFromHistory, stageAsCopy, STEP_LABELS, type HistoryEntry } from './recipeModel';
 
@@ -154,6 +154,40 @@ describe('saved recipes: by owner + creation id', () => {
     // ...and if one of them is deleted later, the remaining single match adopts it.
     useOymoRecipeStore.getState().adoptLegacy('user-b', [row('d2')]);
     expect(recipeFor(useOymoRecipeStore.getState().saved, 'user-b', 'd2')).toEqual(recipeB);
+  });
+
+  it('adoption waits for storage: before load it is a no-op, after load it adopts the unambiguous recipe', async () => {
+    const print = fingerprint(content(last));
+    await AsyncStorage.setItem(LEGACY_RECIPES_KEY, JSON.stringify({ 'user-a': { [print]: { recipe: recipeA, savedAt: 'x' } } }));
+    useOymoRecipeStore.setState({ saved: {}, isLoaded: false });
+    // Creations arrive first (deferred storage): nothing adopted, nothing lost.
+    useOymoRecipeStore.getState().adoptLegacy('user-a', [row('c1')]);
+    expect(useOymoRecipeStore.getState().saved).toEqual({});
+    await useOymoRecipeStore.getState().load();
+    // The retry once loading completes.
+    useOymoRecipeStore.getState().adoptLegacy('user-a', [row('c1')]);
+    expect(recipeFor(useOymoRecipeStore.getState().saved, 'user-a', 'c1')).toEqual(recipeA);
+  });
+
+  it('a failed v2 write keeps the v1 data for the next launch', async () => {
+    const print = fingerprint(content(last));
+    const v1 = JSON.stringify({ 'user-a': { [print]: { recipe: recipeA, savedAt: 'x' } } });
+    await AsyncStorage.setItem(LEGACY_RECIPES_KEY, v1);
+    const realSetItem = AsyncStorage.setItem;
+    AsyncStorage.setItem = () => Promise.reject(new Error('disk full'));
+    useOymoRecipeStore.setState({ saved: {}, isLoaded: false });
+    try {
+      await useOymoRecipeStore.getState().load();
+    } finally {
+      AsyncStorage.setItem = realSetItem;
+    }
+    expect(await AsyncStorage.getItem(LEGACY_RECIPES_KEY)).toBe(v1);
+    expect(await AsyncStorage.getItem(OYMO_RECIPES_KEY)).toBeNull();
+    // Next launch: the write succeeds, then (and only then) v1 is removed.
+    useOymoRecipeStore.setState({ saved: {}, isLoaded: false });
+    await useOymoRecipeStore.getState().load();
+    expect(await AsyncStorage.getItem(LEGACY_RECIPES_KEY)).toBeNull();
+    expect(JSON.parse((await AsyncStorage.getItem(OYMO_RECIPES_KEY)) ?? '{}')['user-a'].legacy[print]).toBeTruthy();
   });
 });
 

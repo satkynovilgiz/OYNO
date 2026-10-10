@@ -48,8 +48,12 @@ There is no second editor.
 
 ### Migration from v1 (content fingerprints)
 
-- On load, v1 entries are kept as that owner's `legacy`, and the v1 key is
-  removed.
+- On load, v1 entries are kept as that owner's `legacy`. The v1 key is
+  removed only AFTER the v2 write has succeeded; if that write fails, v1 is
+  kept and the migration runs again on the next launch.
+- Adoption runs only once recipe storage has finished loading. The Creator
+  and the player both retry it when loading completes, so storage that loads
+  after the creation list still adopts.
 - When that owner's creations are known (in the Creator or the player), a
   legacy recipe is adopted by a creation only when EXACTLY ONE creation has
   that content.

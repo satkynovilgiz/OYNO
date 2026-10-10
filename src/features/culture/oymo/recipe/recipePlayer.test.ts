@@ -5,9 +5,9 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { create as createStore } from 'zustand';
 
 import { EMPTY_OYMO_STATE } from '@/services/culture/oymoEditor';
-import { useOymoRecipeStore } from '@/store/useOymoRecipeStore';
+import { LEGACY_RECIPES_KEY, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
 
-import { recipeFromHistory, sessionRecipe, setSessionRecipe } from './recipeModel';
+import { fingerprint, recipeFromHistory, sessionRecipe, setSessionRecipe } from './recipeModel';
 import { RecipePlayerScreen } from './RecipePlayerScreen';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: {} }));
@@ -17,7 +17,9 @@ jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }));
 jest.mock('@/services/a11y/announce', () => ({ announce: () => undefined }));
 jest.mock('@/services/motion/useReducedMotion', () => ({ useReducedMotion: () => true }));
-jest.mock('@/services/content/oymoCreationsService', () => ({ useOymoCreations: () => ({ data: [{ id: 'c1', name: 'n', layers: [], background_color: '#EADCC0', symmetry_mode: 'none', created_at: '', updated_at: '' }], isLoading: false }) }));
+// A stable list (like react-query's cached data), so effects re-run only when their real inputs change.
+const mockCreations = [{ id: 'c1', name: 'n', layers: [], background_color: '#EADCC0', symmetry_mode: 'none', created_at: '', updated_at: '' }];
+jest.mock('@/services/content/oymoCreationsService', () => ({ useOymoCreations: () => ({ data: mockCreations, isLoading: false }) }));
 const mockOwner = createStore<{ owner: string }>(() => ({ owner: 'user-a' }));
 jest.mock('@/features/games/records/useGameRecords', () => ({ useRecordsOwner: () => mockOwner((state) => state.owner) }));
 jest.mock('@/components/ui', () => {
@@ -67,5 +69,18 @@ it("another account's saved recipe for the same creation id is never shown", () 
   act(() => screen.unmount());
   mockOwner.setState({ owner: 'user-a' });
   render('c1');
+  expect(has('recipe-stage')).toBe(true);
+});
+
+it('recipe storage that finishes loading after the creations still adopts an unambiguous v1 recipe', async () => {
+  const print = fingerprint({ layers: [], backgroundColor: '#EADCC0', symmetry: 'none' });
+  await AsyncStorage.setItem(LEGACY_RECIPES_KEY, JSON.stringify({ 'user-a': { [print]: { recipe, savedAt: 'x' } } }));
+  useOymoRecipeStore.setState({ saved: {}, isLoaded: false });
+  render('c1'); // creations are already there; storage is still loading
+  expect(has('recipe-stage')).toBe(false);
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+  expect(useOymoRecipeStore.getState().isLoaded).toBe(true);
   expect(has('recipe-stage')).toBe(true);
 });

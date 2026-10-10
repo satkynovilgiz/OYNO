@@ -215,12 +215,14 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
 
   const selectedLayer = editorState.layers.find((l) => l.id === selectedLayerId) ?? null;
   const recipes = useOymoRecipeStore((state) => state.saved);
+  const recipesLoaded = useOymoRecipeStore((state) => state.isLoaded);
   const openedCreation = creations?.find((creation) => creation.id === openedCreationId) ?? null;
   const openedHasRecipe = !!openedCreation && !!recipeFor(recipes, owner, openedCreation.id);
-  // Recipes saved before they were keyed by creation id: adopt only unambiguous ones.
+  // Recipes saved before they were keyed by creation id: adopt only unambiguous ones,
+  // once recipe storage has loaded (re-runs when it finishes after the creations).
   useEffect(() => {
-    if (creations) useOymoRecipeStore.getState().adoptLegacy(owner, creations);
-  }, [creations, owner]);
+    if (creations && recipesLoaded) useOymoRecipeStore.getState().adoptLegacy(owner, creations);
+  }, [creations, owner, recipesLoaded]);
   // Another account: an unsaved session recipe from the previous one is dropped.
   const sessionOwner = useRef(owner);
   useEffect(() => {

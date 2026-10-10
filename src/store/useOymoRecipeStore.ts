@@ -85,8 +85,13 @@ export const useOymoRecipeStore = create<State>((set, get) => {
       }
       set({ saved, isLoaded: true });
       if (legacyRaw !== null) {
-        persist();
-        void AsyncStorage.removeItem(LEGACY_RECIPES_KEY).catch(() => undefined);
+        // Remove v1 only once v2 is durably written; a failed write keeps v1 for the next launch.
+        try {
+          await AsyncStorage.setItem(OYMO_RECIPES_KEY, JSON.stringify(get().saved));
+        } catch {
+          return;
+        }
+        await AsyncStorage.removeItem(LEGACY_RECIPES_KEY).catch(() => undefined);
       }
     },
     saveRecipe: (owner, creationId, recipe) => {
@@ -102,6 +107,8 @@ export const useOymoRecipeStore = create<State>((set, get) => {
       put(owner, { ...current, byCreation });
     },
     adoptLegacy: (owner, creations) => {
+      // Before storage has loaded there is nothing to adopt yet - callers retry once `isLoaded` flips.
+      if (!get().isLoaded) return;
       const current = mine(owner);
       const prints = Object.keys(current.legacy);
       if (prints.length === 0) return;

@@ -46,9 +46,10 @@ export function RecipePlayerScreen({ creationId, onPressBack }: { creationId: st
     if (!creation) return null;
     return recipeFor(saved, owner, creation.id);
   }, [creationId, creation, saved, owner]);
+  // Only after recipe storage has loaded - re-runs when loading completes after the creations.
   useEffect(() => {
-    if (creations) useOymoRecipeStore.getState().adoptLegacy(owner, creations);
-  }, [creations, owner]);
+    if (creations && loaded) useOymoRecipeStore.getState().adoptLegacy(owner, creations);
+  }, [creations, owner, loaded]);
 
   const [index, setIndex] = useState(0);
   // Plays by itself on open - unless Reduce Motion is on: then it's manual until Play is pressed.
