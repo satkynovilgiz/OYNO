@@ -5902,5 +5902,73 @@
     "restart": "Try this one again",
     "another": "Choose another",
     "openedCopy": "A copy from Remember the Pattern - it isn't saved yet. Save it to keep it."
+  },
+  "remixStudio": {
+    "title": "Explore variations",
+    "entry": "Explore variations",
+    "entryHint": "Try other palettes, backgrounds and symmetry on a copy of this design. This design stays as it is.",
+    "intro": "Variations use only the Creator's own changes - palette, background and symmetry - on a copy of your design. Your design and its recipe are not changed.",
+    "noDesign": "There is no design to explore. Open a design in the Creator and choose “Explore variations”.",
+    "back": "Back to my design",
+    "original": "Original",
+    "variation": "Variation",
+    "whatChanged": "What changed",
+    "noChanges": "No changes yet - choose an option below.",
+    "listTitle": "Compared as a list",
+    "palette": "Palette",
+    "background": "Background",
+    "symmetry": "Symmetry",
+    "keep": "Keep original",
+    "symmetryCurrent": "This is how the design looks now.",
+    "symmetryInLayers": "The copies are separate layers in this design, so this would mean deleting layers.",
+    "open": "Open variation in Creator",
+    "openHint": "Opens as a new, unsaved copy. The original design is not changed.",
+    "localNote": "Variations are made on this device.",
+    "openedCopy": "This is an unsaved copy of a variation. Your original design is unchanged.",
+    "palettes": {
+      "greens": "Greens",
+      "earth": "Earth browns",
+      "goldBrown": "Gold and brown",
+      "darkLight": "Dark and light"
+    },
+    "colors": {
+      "cream": "Cream",
+      "lightCream": "Light cream",
+      "darkGreen": "Dark green",
+      "gold": "Gold",
+      "other": "Another colour"
+    },
+    "change": {
+      "background": "Background changed: {{from}} → {{to}}",
+      "symmetryRemoved": "Symmetry removed: only the layers themselves are shown",
+      "symmetry": {
+        "mirror": "Mirror symmetry applied",
+        "fourWay": "4-way symmetry applied"
+      },
+      "palette_one": "Palette “{{palette}}”: {{count}} layer recoloured",
+      "palette_few": "Palette “{{palette}}”: {{count}} layers recoloured",
+      "palette_many": "Palette “{{palette}}”: {{count}} layers recoloured",
+      "palette_other": "Palette “{{palette}}”: {{count}} layers recoloured",
+      "symmetryMerged_one": "{{mode}} symmetry applied - {{count}} copy layer merged so nothing is doubled",
+      "symmetryMerged_few": "{{mode}} symmetry applied - {{count}} copy layers merged so nothing is doubled",
+      "symmetryMerged_many": "{{mode}} symmetry applied - {{count}} copy layers merged so nothing is doubled",
+      "symmetryMerged_other": "{{mode}} symmetry applied - {{count}} copy layers merged so nothing is doubled"
+    },
+    "facts": {
+      "background": "Background: {{color}}",
+      "symmetry": "Symmetry: {{mode}}",
+      "layers_one": "{{count}} layer",
+      "layers_few": "{{count}} layers",
+      "layers_many": "{{count}} layers",
+      "layers_other": "{{count}} layers",
+      "shown_one": "{{count}} motif shown",
+      "shown_few": "{{count}} motifs shown",
+      "shown_many": "{{count}} motifs shown",
+      "shown_other": "{{count}} motifs shown",
+      "colors_one": "{{count}} colour",
+      "colors_few": "{{count}} colours",
+      "colors_many": "{{count}} colours",
+      "colors_other": "{{count}} colours"
+    }
   }
 }

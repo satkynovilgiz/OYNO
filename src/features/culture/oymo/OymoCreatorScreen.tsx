@@ -29,6 +29,7 @@ import { takeCreatorHandoff } from '@/services/culture/oymoHandoff';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { clearSessionRecipe, fingerprint, fitRecipe, recipeFromHistory, setSessionRecipe, type HistoryEntry, type StepLabel } from '@/features/culture/oymo/recipe/recipeModel';
 import { recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
+import { setRemixSource } from '@/features/culture/oymo/remix/remixModel';
 import { fetchOymoCreations, OYMO_CREATIONS_QUERY_KEY, useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -106,6 +107,12 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
   function setSymmetryMode(mode: SymmetryMode) {
     if (mode === symmetryMode) return;
     pushEntry({ state: editorState, symmetry: mode, label: 'symmetry' });
+  }
+
+  /** Variations of the CURRENT design (a copy; this design and its recipe stay as they are). */
+  function openRemixStudio() {
+    setRemixSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode });
+    router.push('/culture/oymo/remix' as never);
   }
 
   /** Replay the CURRENT design (saved or not) in the recipe player. */
@@ -304,7 +311,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -380,6 +387,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           </>
         )}
 
+        {editorState.layers.length > 0 ? <Button label={t('remixStudio.entry')} variant="secondary" onPress={openRemixStudio} accessibilityHint={t('remixStudio.entryHint')} testID="oymo-explore-variations" /> : null}
         {/* Pattern Recipe: replay how this design was built (this session), or a saved creation's recipe. */}
         {history.length > 1 || historyIndex > 0 ? <Button label={t('culture.oymo.recipe.replayThis')} variant="secondary" onPress={openSessionRecipe} accessibilityHint={t('culture.oymo.recipe.replayThisHint')} testID="oymo-replay-session" /> : null}
         {openedCreationId && openedHasRecipe ? <Button label={t('culture.oymo.recipe.replaySaved')} variant="secondary" onPress={() => router.push(`/culture/oymo/recipe?creation=${encodeURIComponent(openedCreationId)}` as never)} testID="oymo-replay-saved" /> : null}
