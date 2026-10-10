@@ -5457,7 +5457,8 @@
       "webNote": "On the web the card can be previewed, but it can only be shared as text; saving the image needs the iOS or Android app.",
       "label": "Story card",
       "endStory": "Back to the museum",
-      "storyFallback": "A story"
+      "storyFallback": "A story",
+      "shortenedNote": "Long words may be shortened to fit this card (ending with …). The full words are in the app."
     },
     "narration": {
       "title": "Narration for “{{name}}”",
@@ -5504,6 +5505,37 @@
       "curatorLabel": "Curator's narration",
       "transcriptByCurator": "Transcript written by the curator",
       "writtenByCurator": "Written by the curator"
+    },
+    "preview": {
+      "entry": "Preview as a visitor",
+      "entryHint": "See the exhibition, the guided tour or the story exactly as visitors will - read-only, with a readiness checklist.",
+      "banner": "Visitor preview - read-only. This is what visitors see.",
+      "title": "Preview as a visitor",
+      "intro": "Choose where to start. Nothing you do in the preview changes the exhibition. Private collection notes and editing controls are not shown.",
+      "start": {
+        "exhibition": "Start with the exhibition",
+        "tour": "Start the guided tour",
+        "story": "Start the story"
+      },
+      "unavailable": {
+        "noExhibits": "Add at least one exhibit first.",
+        "noStory": "The story needs at least {{min}} cards."
+      },
+      "checklistTitle": "Readiness checklist",
+      "checking": "Checking which exhibits are available…",
+      "allClear": "Nothing to fix: every exhibit can be shown.",
+      "optionalNote": "Title, introduction, captions, narration and story words are optional and are never listed here.",
+      "goEdit": "Go to this in editing",
+      "items": {
+        "noExhibits": "There are no exhibits yet. Choose items from your collection.",
+        "unavailable": "Exhibit {{n}} is no longer available in OYNO. Visitors see a notice instead of it. Remove it from the exhibition, or keep it as a placeholder.",
+        "noImage": "Exhibit {{n}} ({{name}}) has no picture. Visitors see a placeholder.",
+        "storyTooShort": "The story has {{count}} cards; it needs at least {{min}} to be presented.",
+        "storyUnavailable": "Story card {{n}}: its exhibit is no longer available. Remove the card or choose another exhibit.",
+        "storyShortened": "Story card {{n}}: the words don't fully fit on the exported card, so they will be shortened (marked with … and a note)."
+      },
+      "exportLayout": "The exported card (same layout as the image)",
+      "return": "Return to editing"
     }
   },
   "rhythmRepeat": {

@@ -10,10 +10,11 @@ import { announce } from '@/services/a11y/announce';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import type { Exhibition, ExhibitSlide } from './museumModel';
+import { CARD, fitStoryCard, IMAGE_HEIGHTS, TYPE } from './previewModel';
 import { addCard, canTell, CARD_TEXT_MAX, CARD_TITLE_MAX, cardContent, EMPTY_STORY, endStoryPlace, keepStoryPlace, moveCard, removeCard, resumeStoryPlace, setCardWords, STORY_MAX, STORY_MIN, storySlides, type Story, type StoryCardContent } from './storyModel';
 
 /** Logical size of an exported story card (captured at 3x: 1080 x 1350). */
-export const STORY_CARD_SIZE = { width: 360, height: 450 };
+export const STORY_CARD_SIZE = { width: CARD.width, height: CARD.height };
 
 /** Curator side: choose and order up to six exhibits that can be shown, with optional words per card. */
 export function StorySetup({ exhibition, slides, titleOf, onChange, onPresent }: { exhibition: Exhibition; slides: ExhibitSlide[]; titleOf: (key: string) => string; onChange: (story: Story) => void; onPresent: () => void }) {
@@ -70,13 +71,19 @@ export function StorySetup({ exhibition, slides, titleOf, onChange, onPresent }:
  */
 export function StoryCardView({ content }: { content: StoryCardContent }) {
   const { t } = useTranslation();
+  // The same fit rule for the preview and the exported image: the picture shrinks first, then text is
+  // limited with an ellipsis AND a visible note - never silently cut by the card's edge.
+  const fit = fitStoryCard(content);
+  // Fixed logical size: system font scaling would change the export, so it is not applied inside the card.
+  const fixed = { allowFontScaling: false, maxFontSizeMultiplier: 1 } as const;
   return (
     <View style={[styles.exportCard, STORY_CARD_SIZE]} testID="story-export-card">
-      <Text style={styles.exportPart}>{t(`museum.story.parts.${content.part}`)}</Text>
-      {content.picture ? <Image source={content.picture as ImageSourcePropType} style={styles.exportImage} resizeMode="cover" /> : <View style={[styles.exportImage, styles.noImage]}><Landmark size={28} color={colors.textMuted} /></View>}
-      {content.exhibitTitle ? <Text style={styles.exportExhibit}>{content.exhibitTitle}</Text> : null}
-      {content.cardTitle ? <Text style={styles.exportTitle}>{content.cardTitle}</Text> : null}
-      {content.text ? <Text style={styles.exportText}>{content.text}</Text> : null}
+      <Text {...fixed} style={styles.exportPart}>{t(`museum.story.parts.${content.part}`)}</Text>
+      {content.picture ? <Image source={content.picture as ImageSourcePropType} style={[styles.exportImage, { height: fit.imageHeight }]} resizeMode="cover" /> : <View style={[styles.exportImage, styles.noImage, { height: fit.imageHeight }]}><Landmark size={28} color={colors.textMuted} /></View>}
+      {content.exhibitTitle ? <Text {...fixed} style={styles.exportExhibit} numberOfLines={fit.lines.exhibit} testID="story-export-exhibit">{content.exhibitTitle}</Text> : null}
+      {content.cardTitle ? <Text {...fixed} style={styles.exportTitle} numberOfLines={fit.lines.title} testID="story-export-title">{content.cardTitle}</Text> : null}
+      {content.text ? <Text {...fixed} style={styles.exportText} numberOfLines={fit.lines.text} testID="story-export-text">{content.text}</Text> : null}
+      {fit.shortened ? <Text {...fixed} style={styles.exportNote} testID="story-export-shortened">{t('museum.story.shortenedNote')}</Text> : null}
     </View>
   );
 }
@@ -87,7 +94,7 @@ export function StoryCardView({ content }: { content: StoryCardContent }) {
  * removed exhibits shown as such. The place in the story survives opening
  * a source (memory only).
  */
-export function StoryPresent({ exhibition, slides, owner, collectionId, storyTitle, large, onShare, onEnd }: { exhibition: Exhibition; slides: ExhibitSlide[]; owner: string; collectionId: string; storyTitle: string; large: boolean; onShare: (content: ShareCardContent, fallback: string) => void; onEnd: () => void }) {
+export function StoryPresent({ exhibition, slides, owner, collectionId, storyTitle, large, onShare, onEnd, preview = false }: { exhibition: Exhibition; slides: ExhibitSlide[]; owner: string; collectionId: string; storyTitle: string; large: boolean; onShare: (content: ShareCardContent, fallback: string) => void; onEnd: () => void; preview?: boolean }) {
   const { t } = useTranslation();
   const story = exhibition.story ?? EMPTY_STORY;
   const cards = storySlides(story, slides);
@@ -169,13 +176,38 @@ export function StoryPresent({ exhibition, slides, owner, collectionId, storyTit
             <Button label={t('museum.story.previous')} variant="secondary" disabled={index === 0} onPress={() => go(index - 1)} testID="story-previous" />
             {index < cards.length - 1 ? <Button label={t('museum.story.next')} onPress={() => go(index + 1)} testID="story-next" /> : <Button label={t('museum.story.endStory')} onPress={end} testID="story-end" />}
           </View>
-          <Button label={t('museum.story.exportCard')} variant="secondary" onPress={() => exportCard(index)} testID="story-export" />
-          <Text style={styles.meta}>{t('museum.story.exportNote')}</Text>
-          {Platform.OS === 'web' ? <Text style={styles.meta}>{t('museum.story.webNote')}</Text> : null}
+          {preview ? (
+            // Visitor Preview: the card exactly as it would be exported (same component, scaled to the screen) - read-only.
+            <View style={styles.stack} testID="story-export-preview">
+              <Text style={styles.label}>{t('museum.preview.exportLayout')}</Text>
+              <ScaledCard>
+                <StoryCardView content={cardContent(cards[index])} />
+              </ScaledCard>
+            </View>
+          ) : (
+            <>
+              <Button label={t('museum.story.exportCard')} variant="secondary" onPress={() => exportCard(index)} testID="story-export" />
+              <Text style={styles.meta}>{t('museum.story.exportNote')}</Text>
+              {Platform.OS === 'web' ? <Text style={styles.meta}>{t('museum.story.webNote')}</Text> : null}
+            </>
+          )}
         </>
       ) : (
         <Button label={t('museum.story.endStory')} variant="secondary" onPress={end} testID="story-end" />
       )}
+    </View>
+  );
+}
+
+/** Shows a fixed-size card scaled down to the available width (never up), keeping its exact layout. */
+export function ScaledCard({ children }: { children: React.ReactNode }) {
+  const [available, setAvailable] = useState<number>(STORY_CARD_SIZE.width);
+  const scale = Math.min(1, available / STORY_CARD_SIZE.width);
+  return (
+    <View style={{ width: '100%' }} onLayout={(event) => setAvailable(event.nativeEvent.layout.width)}>
+      <View style={{ width: STORY_CARD_SIZE.width * scale, height: STORY_CARD_SIZE.height * scale, overflow: 'hidden', borderRadius: 12, borderWidth: 1, borderColor: colors.borderSubtle }}>
+        <View style={{ width: STORY_CARD_SIZE.width, height: STORY_CARD_SIZE.height, transform: [{ scale }], transformOrigin: 'top left' }}>{children}</View>
+      </View>
     </View>
   );
 }
@@ -206,10 +238,11 @@ const styles = StyleSheet.create({
   curator: { gap: 2, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceAlt, borderLeftWidth: 3, borderLeftColor: colors.primary },
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, alignSelf: 'flex-start' },
   linkText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
-  exportCard: { padding: 20, gap: 8, backgroundColor: colors.surface, overflow: 'hidden' },
-  exportPart: { ...textStyles.overline, color: colors.primary },
-  exportImage: { width: 320, height: 220, borderRadius: 12, backgroundColor: colors.surfaceMuted },
-  exportExhibit: { ...textStyles.small, fontWeight: '700', color: colors.textSecondary },
-  exportTitle: { fontSize: 22, lineHeight: 30, fontWeight: '700', color: colors.textPrimary },
-  exportText: { fontSize: 15, lineHeight: 22, color: colors.textPrimary },
+  exportCard: { padding: CARD.padding, gap: CARD.gap, backgroundColor: colors.surface, overflow: 'hidden' },
+  exportPart: { ...textStyles.overline, fontSize: TYPE.part.size, lineHeight: TYPE.part.line, color: colors.primary },
+  exportImage: { width: CARD.width - CARD.padding * 2, height: IMAGE_HEIGHTS.full, borderRadius: 12, backgroundColor: colors.surfaceMuted },
+  exportExhibit: { fontSize: TYPE.exhibit.size, lineHeight: TYPE.exhibit.line, fontWeight: '700', color: colors.textSecondary },
+  exportTitle: { fontSize: TYPE.title.size, lineHeight: TYPE.title.line, fontWeight: '700', color: colors.textPrimary },
+  exportText: { fontSize: TYPE.text.size, lineHeight: TYPE.text.line, color: colors.textPrimary },
+  exportNote: { fontSize: TYPE.note.size, lineHeight: TYPE.note.line, fontStyle: 'italic', color: colors.textSecondary },
 });
