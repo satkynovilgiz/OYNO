@@ -71,6 +71,8 @@ export function MyCollectionsScreen({ onPressBack }: { onPressBack: () => void }
           </View>
         ) : null}
 
+        <Button label={t('curatorChallenge.entry')} variant="secondary" accessibilityHint={t('curatorChallenge.entryHint')} onPress={() => router.push('/profile/my-collections/challenge' as never)} testID="challenge-entry" />
+
         {data.collections.length === 0 && !creating ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>{t('myCollections.emptyList')}</Text>

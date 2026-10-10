@@ -34,6 +34,12 @@ type State = {
   museums: Museums;
   load: () => Promise<void>;
   saveExhibition: (owner: string, collectionId: string, exhibition: Exhibition) => void;
+  /**
+   * A new collection WITH its exhibition (Curator Challenge), written to
+   * storage before it is shown: resolves to the collection id, or null when
+   * the write failed (nothing changed - the caller keeps its draft).
+   */
+  createWithExhibition: (owner: string, input: { name: string; items: { contentType: CollectionContentType; contentId: string }[]; exhibition: Exhibition }) => Promise<string | null>;
   create: (owner: string, input: { name: string; description?: string | null }) => UserCollection;
   edit: (owner: string, id: string, input: { name: string; description: string | null }) => void;
   remove: (owner: string, id: string) => void;
@@ -87,6 +93,29 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       persistMuseums();
       // A removed exhibit's narration recording goes with it.
       deleteAudio(owner, releasedAudio(before, exhibition));
+    },
+    createWithExhibition: async (owner, input) => {
+      if (!get().isLoaded) return null;
+      let created: { data: CollectionsData; collection: UserCollection };
+      try {
+        created = createCollection(ownerCollections(get().saved, owner), { name: input.name });
+      } catch {
+        return null;
+      }
+      let data = created.data;
+      for (const item of input.items) data = addItem(data, created.collection.id, item.contentType, item.contentId);
+      const saved = { ...get().saved, [owner]: data };
+      const museums = { ...get().museums, [owner]: { ...get().museums[owner], [created.collection.id]: input.exhibition } };
+      try {
+        await AsyncStorage.multiSet([
+          [MY_COLLECTIONS_KEY, JSON.stringify(saved)],
+          [MY_MUSEUMS_KEY, JSON.stringify(museums)],
+        ]);
+      } catch {
+        return null;
+      }
+      set({ saved, museums });
+      return created.collection.id;
     },
     create: (owner, input) => {
       const { data, collection } = createCollection(ownerCollections(get().saved, owner), input);
