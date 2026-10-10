@@ -33,6 +33,7 @@ export function useConnectionContent() {
     return map;
   }, [items.data, materials.data]);
   const get = useCallback((type: ConnectionContentType, id: string) => targets.get(`${type}:${id}`) ?? null, [targets]);
+  const all = useCallback(() => [...targets.values()], [targets]);
   const exists = useCallback((type: ConnectionContentType, id: string) => targets.has(`${type}:${id}`), [targets]);
-  return { get, exists, isLoading: items.isLoading, waitingForNetwork: isWaitingForNetwork(items), retry: () => void items.refetch() };
+  return { get, all, exists, isLoading: items.isLoading, waitingForNetwork: isWaitingForNetwork(items), retry: () => void items.refetch() };
 }

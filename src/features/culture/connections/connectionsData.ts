@@ -160,6 +160,15 @@ export const CULTURE_CONNECTIONS: readonly CultureConnection[] = [
   },
 ];
 
+/** Field -> existing article section label. */
+export const SOURCE_FIELD_LABEL: Record<string, string> = {
+  origin: 'culture.item.originLabel',
+  history: 'culture.item.historyLabel',
+  cultural_meaning: 'culture.item.culturalMeaningLabel',
+  traditional_method: 'culture.item.traditionalMethodLabel',
+  objects_used: 'culture.item.objectsUsedLabel',
+};
+
 export const MAX_CONNECTIONS_SHOWN = 5;
 export const MIN_CONNECTIONS_SHOWN = 2;
 

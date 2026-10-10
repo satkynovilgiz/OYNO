@@ -347,6 +347,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
             {/* Connections: curated cross-topic relationships (explicit, sourced; not same-category browsing). */}
             {reader.focusMode ? null : <ConnectionsSection type="culture_item" id={item.id} experience={experience} />}
+            {reader.focusMode ? null : <Button label={t('discoveryBoard.fromArticle')} variant="secondary" onPress={() => router.push(`/culture/board?from=${encodeURIComponent(`culture_item:${item.id}`)}` as never)} accessibilityHint={t('discoveryBoard.fromArticleHint')} testID="board-from-article" />}
             {reader.focusMode ? null : <Button label={t('compare.free.fromArticle')} variant="secondary" onPress={() => router.push(freeCompareRoute({ left: item.id, right: null }) as never)} testID="compare-from-article" />}
 
             {/* 5. Relevant images. */}

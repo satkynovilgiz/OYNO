@@ -13,18 +13,10 @@ import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, spacing, textStyles, typography } from '@/theme';
 
 import { ConnectionCard } from './ConnectionsSection';
-import { contentRoute } from './connectionsData';
+import { contentRoute, SOURCE_FIELD_LABEL as FIELD_LABEL } from './connectionsData';
 import { connectionById } from './connectionsModel';
 import { useConnectionContent } from './useConnectionContent';
 
-/** Field -> existing article section label. */
-const FIELD_LABEL: Record<string, string> = {
-  origin: 'culture.item.originLabel',
-  history: 'culture.item.historyLabel',
-  cultural_meaning: 'culture.item.culturalMeaningLabel',
-  traditional_method: 'culture.item.traditionalMethodLabel',
-  objects_used: 'culture.item.objectsUsedLabel',
-};
 
 /**
  * /culture/connections/[id] - "Explore the connection": both articles,
