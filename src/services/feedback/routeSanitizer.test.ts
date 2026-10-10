@@ -30,6 +30,7 @@ function routePatterns(dir = APP, prefix = ''): string[] {
 const PRIVATE_PARAMS: Record<string, string> = {
   '/journal/[entryId]': 'entryId',
   '/profile/my-collections/[id]': 'id',
+  '/culture/board/[boardId]': 'boardId',
 };
 
 // Synthetic ids, deliberately SHORT and lowercase - they look like public slugs.

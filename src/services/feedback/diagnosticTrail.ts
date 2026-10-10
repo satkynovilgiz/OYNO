@@ -52,6 +52,7 @@ function looksPrivate(segment: string): boolean {
  * the value looks like (a short lowercase id can look like a public slug):
  *   /journal/<entry>                 (not book / calendar / collage / new)
  *   /profile/my-collections/<id>
+ *   /culture/board/<id>              (a person's Discovery Board)
  *   /open/<type>/<id>                unknown type -> both replaced
  *   /<auth screen>/<anything>
  *   /<unknown top-level route>/...   the whole path is unknown text
@@ -63,6 +64,7 @@ function privateByStructure(segments: string[], index: number): boolean {
   if (AUTH_ROUTES.has(first)) return true;
   if (first === 'journal') return index > 1 || !JOURNAL_STATIC.has(second);
   if (first === 'profile' && second === 'my-collections') return index >= 2;
+  if (first === 'culture' && second === 'board') return index >= 2;
   if (first === 'open') return index === 1 ? !OPEN_TYPES.has(second) : !OPEN_TYPES.has(second) || index > 2;
   return false;
 }
