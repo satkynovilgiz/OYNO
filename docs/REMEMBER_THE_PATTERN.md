@@ -85,3 +85,62 @@ Nothing is stored. Works offline; KG/RU/EN; large chips in child mode.
 - [ ] Touch drag on the rebuild grid on iOS and Android.
 - [ ] The timed countdown keeps time when the app is backgrounded and
   returns.
+
+## Together: two players on one device
+
+`/culture/oymo/remember-together` ("Play together on one device" on the
+setup screen). The rules are in `togetherModel.ts`; the solo game's grid,
+editor, matching and described list are reused (`RememberViews.tsx`).
+
+1. **Setup.** Optional names (default "Player A" / "Player B"; they live
+   only in this screen's state). Viewing is untimed by default; 10 or 20 s
+   is optional.
+2. **Authoring.**
+   - The author places 3-7 pieces with the six supported motifs on the 5 x 5
+     grid, with move, remove and Undo.
+   - An 8th piece is refused.
+   - "Done - pass the device" validates (count, supported motifs, on the grid,
+     one per cell, using the solo integrity check) and lists any problem
+     instead of continuing.
+3. **Privacy screen.** "Pass the device to <name>". Nothing of the pattern
+   is rendered (no grid, no list). Only the other player's explicit "Ready"
+   continues.
+4. **Look, hide, rebuild, Check.** This uses the solo game's state.
+   - The reference is a deep copy of the author's pieces, so the rebuild
+     can't reach it.
+   - The motif picker offers every supported motif, so every valid pattern
+     can be rebuilt.
+   - "Show again" marks the attempt assisted.
+   - Feedback is the same gentle counts (matched, missing, wrong motif,
+     extra).
+5. **Done.** Shows the result, the number of checks, and assisted or not.
+   - **Swap roles:** the other player authors next, with an empty editor;
+     reference and attempt are discarded.
+   - **Same pattern, try again:** returns to the privacy screen; a fresh
+     attempt starts on Ready.
+   - **Open in Creator:** the rebuild opens as an unsaved copy.
+   - **New game.**
+
+No leaderboard, XP, account or storage. Works offline. KG/RU/EN.
+
+Tests: `together.test.ts` covers:
+- phases, including that only Ready leaves the privacy screen;
+- swap, retry and new game resets;
+- validation;
+- deep copies;
+- assistance;
+- (cell, motif) matching;
+- 60 generated valid patterns, all solvable with the offered controls;
+- the screen not rendering the reference before Ready.
+
+`e2e/tests/remember-together.spec.ts` (320 and 412 px):
+- create, refused pass, valid pass;
+- the privacy screen contains no grid or list (axe);
+- Ready, described list, hide, rebuild with feedback, Show again
+  (assisted), done;
+- swap to an empty editor;
+- KG offline, then open the rebuild in the Creator.
+
+Pending on device: passing a phone with VoiceOver/TalkBack running. The
+privacy screen moves focus to its heading on web; this is unverified on
+native.

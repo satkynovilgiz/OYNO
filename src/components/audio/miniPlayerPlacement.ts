@@ -9,7 +9,7 @@ const CONTENT_ROUTES = ['/culture/item', '/culture/material', '/daily', '/saved'
 
 /** Interactive labs and the quiz (category pages like /culture/shyrdak are
  * reading screens and keep the mini player). */
-const CULTURE_LABS = ['/culture/boz-uy/build', '/culture/boz-uy/memory', '/culture/oymo/create', '/culture/oymo/restore', '/culture/oymo/postcard', '/culture/oymo/symmetry', '/culture/oymo/recipe', '/culture/oymo/remember', '/culture/oymo/remix', '/culture/shyrdak/create', '/culture/komuz/learn', '/culture/komuz/repeat', '/culture/komuz/workshop', '/culture/quiz', '/culture/detective', '/culture/duel'];
+const CULTURE_LABS = ['/culture/boz-uy/build', '/culture/boz-uy/memory', '/culture/oymo/create', '/culture/oymo/restore', '/culture/oymo/postcard', '/culture/oymo/symmetry', '/culture/oymo/recipe', '/culture/oymo/remember', '/culture/oymo/remember-together', '/culture/oymo/remix', '/culture/shyrdak/create', '/culture/komuz/learn', '/culture/komuz/repeat', '/culture/komuz/workshop', '/culture/quiz', '/culture/detective', '/culture/duel'];
 
 export type MiniPlayerPlacement = 'aboveTabBar' | 'bottom' | null;
 

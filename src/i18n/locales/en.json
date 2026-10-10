@@ -6092,5 +6092,42 @@
     "cardsTitle_few": "Articles on the board ({{count}} of {{max}})",
     "cardsTitle_many": "Articles on the board ({{count}} of {{max}})",
     "cardsTitle_other": "Articles on the board ({{count}} of {{max}})"
+  },
+  "rememberTogether": {
+    "title": "Remember the Pattern together",
+    "entry": "Play together on one device",
+    "entryHint": "One player makes a pattern, the other rebuilds it from memory. Then swap.",
+    "intro": "Player A makes a small pattern ({{min}}-{{max}} pieces) while Player B looks away. Pass the device; B looks, hides it and rebuilds it. Then swap roles.",
+    "practiceNote": "Just for fun and practice - no scores, nothing is saved, and it says nothing about anyone's memory.",
+    "player": {
+      "a": "Player A",
+      "b": "Player B"
+    },
+    "nameLabel": "Name for {{player}} (optional)",
+    "namesNote": "Names stay on this screen only.",
+    "start": "Start",
+    "makeTitle": "{{name}}, make a pattern",
+    "makeHint": "Use {{min}} to {{max}} pieces. Keep the screen away from {{other}}.",
+    "doneMaking": "Done - pass the device",
+    "problems": {
+      "tooFew": "Add at least {{min}} pieces.",
+      "tooMany": "A pattern can have at most {{max}} pieces.",
+      "unsupportedMotif": "Use only the motifs offered here.",
+      "outsideGrid": "Every piece must be on the grid.",
+      "sharedCell": "Only one piece per square."
+    },
+    "passTitle": "Pass the device to {{name}}",
+    "passBody": "{{name}}: when you have the device, tap Ready. {{author}}'s pattern appears only then.",
+    "ready": "I'm {{name}} - ready",
+    "lookTitle": "{{name}}, look at {{author}}'s pattern",
+    "buildTitle": "{{name}}, rebuild it",
+    "doneTitle": "{{name}} rebuilt {{author}}'s pattern",
+    "swap": "Swap roles: {{name}} makes the next one",
+    "retry": "Same pattern, try again",
+    "newGame": "New game",
+    "pieces_one": "{{count}} of {{max}} pieces placed",
+    "pieces_few": "{{count}} of {{max}} pieces placed",
+    "pieces_many": "{{count}} of {{max}} pieces placed",
+    "pieces_other": "{{count}} of {{max}} pieces placed"
   }
 }
