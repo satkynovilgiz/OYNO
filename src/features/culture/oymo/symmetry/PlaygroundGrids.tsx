@@ -89,23 +89,43 @@ export function SourceGrid({ size, pieces, selected, name, onTapCell, onDrop }: 
   );
 }
 
-/** A read-only result (or target) with the rule's guide lines. Copies are drawn lighter than the source. */
-export function ResultGrid({ size, marks, mode, guides, name, testID }: { size: number; marks: ReturnType<typeof resultOf>; mode: SymmetryMode; guides: boolean; name: (id: string) => string; testID: string }) {
+/**
+ * A read-only result (or target) with the rule's guide lines. Copies are drawn lighter than the source.
+ * Optional: a colour per mark (default INK), and `onTapCell` makes every cell a button that can be
+ * marked (`marked`, drawn with a thick outline) - used by Pattern Detective.
+ */
+export function ResultGrid({ size, marks, mode, guides, name, testID, onTapCell, marked, cellLabel }: { size: number; marks: (ReturnType<typeof resultOf>[number] & { color?: string })[]; mode: SymmetryMode; guides: boolean; name: (id: string) => string; testID: string; onTapCell?: (cell: Cell) => void; marked?: ReadonlySet<string>; cellLabel?: (cell: Cell) => string }) {
   const { t } = useTranslation();
   const cell = size / GRID;
   const label = marks.length === 0 ? t('symmetryPlayground.empty') : marks.map((mark) => t('symmetryPlayground.cellA11y', { row: mark.cell.row + 1, col: mark.cell.col + 1, content: mark.source ? name(mark.motifId) : t('symmetryPlayground.copy', { name: name(mark.motifId) }) })).join('; ');
+  const interactive = !!onTapCell;
   return (
-    <View style={[styles.grid, { width: size, height: size }]} accessible accessibilityRole="image" accessibilityLabel={label} testID={testID}>
-      {Array.from({ length: GRID * GRID }, (_, index) => (
-        <View key={index} style={[styles.cell, { left: (index % GRID) * cell, top: Math.floor(index / GRID) * cell, width: cell, height: cell }]} />
-      ))}
+    <View style={[styles.grid, { width: size, height: size }]} accessible={!interactive} accessibilityRole={interactive ? undefined : 'image'} accessibilityLabel={interactive ? undefined : label} testID={testID}>
+      {Array.from({ length: GRID * GRID }, (_, index) => {
+        const at = { col: index % GRID, row: Math.floor(index / GRID) };
+        const box = { left: at.col * cell, top: at.row * cell, width: cell, height: cell };
+        if (!interactive) return <View key={index} style={[styles.cell, box]} />;
+        const on = marked?.has(cellKey(at)) ?? false;
+        return (
+          <Pressable
+            key={index}
+            style={[styles.cell, box, styles.tapCell, on && styles.cellMarked]}
+            onPress={() => onTapCell?.(at)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: on }}
+            aria-checked={on}
+            accessibilityLabel={cellLabel ? cellLabel(at) : t('symmetryPlayground.cellA11y', { row: at.row + 1, col: at.col + 1, content: '' })}
+            testID={`${testID}-cell-${at.col}-${at.row}`}
+          />
+        );
+      })}
       {guides && mode !== 'none' ? <View style={[styles.guide, styles.guideVertical, { left: size / 2 - 1 }]} testID={`${testID}-guide-vertical`} /> : null}
       {guides && mode === 'fourWay' ? <View style={[styles.guide, styles.guideHorizontal, { top: size / 2 - 1 }]} testID={`${testID}-guide-horizontal`} /> : null}
       {marks.map((mark) => {
         const Shape = getMotifShape(mark.motifId);
         return (
-          <View key={`${cellKey(mark.cell)}-${mark.motifId}`} style={[styles.mark, { left: mark.cell.col * cell, top: mark.cell.row * cell, width: cell, height: cell, opacity: mark.source ? 1 : 0.55 }]} testID={`${testID}-mark-${mark.cell.col}-${mark.cell.row}`}>
-            <Shape size={cell * 0.62} color={INK} />
+          <View key={`${cellKey(mark.cell)}-${mark.motifId}`} pointerEvents="none" style={[styles.mark, { left: mark.cell.col * cell, top: mark.cell.row * cell, width: cell, height: cell, opacity: mark.source ? 1 : 0.55 }]} testID={`${testID}-mark-${mark.cell.col}-${mark.cell.row}`}>
+            <Shape size={cell * 0.62} color={mark.color ?? INK} />
           </View>
         );
       })}
@@ -121,6 +141,8 @@ const styles = StyleSheet.create({
   cellLifted: { zIndex: 2 },
   piece: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
   mark: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  tapCell: { zIndex: 1 },
+  cellMarked: { borderWidth: 4, borderColor: colors.accentTerracottaDark, backgroundColor: 'rgba(185,98,47,0.12)' },
   guide: { position: 'absolute', backgroundColor: colors.accentTerracotta },
   guideVertical: { top: 0, bottom: 0, width: 2 },
   guideHorizontal: { left: 0, right: 0, height: 2 },
