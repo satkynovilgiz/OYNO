@@ -65,7 +65,7 @@ describe('arranging exhibits', () => {
     const collection = seedCollection('guest', 3);
     const data = ownerCollections(useMyCollectionsStore.getState().saved, 'guest');
     const tampered = { title: '<b>Exhibit</b>', intro: INTRO, exhibits: ['culture_item:boz-uy-tunduk', 'culture_item:boz-uy-tunduk', 'culture_item:gone', 'region:naryn', 'culture_item:shyrdak-craft'], captions: { 'culture_item:gone': 'x', 'culture_item:shyrdak-craft': CAPTION_A, 'culture_item:boz-uy-overview': 'not shown' }, updatedAt: 'x' };
-    expect(normalizeExhibition(tampered, data, collection.id)).toEqual({ title: 'bExhibit/b', intro: INTRO, exhibits: ['culture_item:boz-uy-tunduk', 'culture_item:shyrdak-craft'], captions: { 'culture_item:shyrdak-craft': CAPTION_A }, reflections: {}, lookClosely: { exhibits: [], clues: [] }, story: { cards: [] }, updatedAt: 'x' });
+    expect(normalizeExhibition(tampered, data, collection.id)).toEqual({ title: 'bExhibit/b', intro: INTRO, exhibits: ['culture_item:boz-uy-tunduk', 'culture_item:shyrdak-craft'], captions: { 'culture_item:shyrdak-craft': CAPTION_A }, reflections: {}, lookClosely: { exhibits: [], clues: [] }, story: { cards: [] }, narrations: {}, updatedAt: 'x' });
     expect(normalizeExhibition('nope', data, collection.id)).toBeNull();
   });
 });

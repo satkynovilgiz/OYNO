@@ -15,6 +15,8 @@ import {
   type UserCollection,
 } from '@/features/myCollections/myCollectionsModel';
 import type { Exhibition } from '@/features/myCollections/museum/museumModel';
+import { referencedAudio, releasedAudio } from '@/features/myCollections/museum/narrationModel';
+import { narrationAudio } from '@/services/museum/narrationAudio';
 import { safeJsonParse } from '@/services/storage/safeJson';
 
 export const MY_COLLECTIONS_KEY = 'oyno.myCollections.v1';
@@ -56,6 +58,10 @@ export function ownerCollections(saved: Saved, owner: string): CollectionsData {
 export const useMyCollectionsStore = create<State>((set, get) => {
   const persist = () => void AsyncStorage.setItem(MY_COLLECTIONS_KEY, JSON.stringify(get().saved)).catch(() => undefined);
   const persistMuseums = () => void AsyncStorage.setItem(MY_MUSEUMS_KEY, JSON.stringify(get().museums)).catch(() => undefined);
+  /** Recordings no longer referenced by any of the owner's exhibitions are deleted from the device. */
+  const deleteAudio = (owner: string, ids: Iterable<string>) => {
+    for (const id of ids) void narrationAudio().remove(owner, id).catch(() => undefined);
+  };
   const update = (owner: string, change: (data: CollectionsData) => CollectionsData) => {
     set({ saved: { ...get().saved, [owner]: change(ownerCollections(get().saved, owner)) } });
     persist();
@@ -76,8 +82,11 @@ export const useMyCollectionsStore = create<State>((set, get) => {
     },
     saveExhibition: (owner, collectionId, exhibition) => {
       if (!ownerCollections(get().saved, owner).collections.some((collection) => collection.id === collectionId)) return;
+      const before = get().museums[owner]?.[collectionId];
       set({ museums: { ...get().museums, [owner]: { ...get().museums[owner], [collectionId]: exhibition } } });
       persistMuseums();
+      // A removed exhibit's narration recording goes with it.
+      deleteAudio(owner, releasedAudio(before, exhibition));
     },
     create: (owner, input) => {
       const { data, collection } = createCollection(ownerCollections(get().saved, owner), input);
@@ -90,9 +99,11 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       // Its presentation (and private captions) go with it.
       if (get().museums[owner]?.[id]) {
         const mine = { ...get().museums[owner] };
+        const gone = referencedAudio({ [id]: mine[id] });
         delete mine[id];
         set({ museums: { ...get().museums, [owner]: mine } });
         persistMuseums();
+        deleteAudio(owner, gone);
       }
     },
     add: (owner, collectionId, contentType, contentId) => update(owner, (data) => addItem(data, collectionId, contentType, contentId)),
@@ -107,6 +118,7 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       // Forgetting an owner on this device forgets their presentations too.
       if (!data && get().museums[owner]) {
         const museums = { ...get().museums };
+        deleteAudio(owner, referencedAudio(museums[owner]));
         delete museums[owner];
         set({ museums });
         persistMuseums();
@@ -126,6 +138,10 @@ export const useMyCollectionsStore = create<State>((set, get) => {
         delete museums.guest;
         set({ museums });
         persistMuseums();
+        // Their recordings follow, bound to the account from now on.
+        void narrationAudio()
+          .reassign('guest', userId)
+          .catch(() => undefined);
       }
     },
   };

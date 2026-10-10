@@ -2,6 +2,7 @@ import type { ShareCardContent } from '@/components/share/ShareCard';
 import { colors } from '@/theme';
 
 import { normalizeLook, type LookClosely } from './lookCloselyModel';
+import { normalizeNarrations, type Narration } from './narrationModel';
 import { normalizeStory, type Story } from './storyModel';
 
 import type { CollectionsData, ResolvedContent, UserCollection } from '../myCollectionsModel';
@@ -40,6 +41,8 @@ export type Exhibition = {
   lookClosely?: LookClosely;
   /** Optional "Story Cards" (storyModel.ts); older exhibitions have none. */
   story?: Story;
+  /** The curator's narration per exhibit (narrationModel.ts): a reference to a recording on this device and/or written words. */
+  narrations?: Record<ExhibitKey, Narration>;
   updatedAt: string;
 };
 
@@ -81,6 +84,7 @@ export function normalizeExhibition(raw: unknown, data: CollectionsData, collect
     reflections,
     lookClosely: normalizeLook(value.lookClosely, { exhibits }),
     story: normalizeStory(value.story, { exhibits }),
+    narrations: normalizeNarrations(value.narrations, exhibits),
     title: typeof value.title === 'string' ? clean(value.title, TITLE_MAX) : '',
     intro: typeof value.intro === 'string' ? clean(value.intro, INTRO_MAX) : '',
     exhibits,
@@ -96,7 +100,10 @@ export function toggleExhibit(exhibition: Exhibition, key: ExhibitKey): Exhibiti
     delete captions[key];
     const reflections = { ...(exhibition.reflections ?? {}) };
     delete reflections[key];
-    return { ...exhibition, exhibits: exhibition.exhibits.filter((item) => item !== key), captions, reflections };
+    // Its narration goes with it (the store deletes the released recording).
+    const narrations = { ...(exhibition.narrations ?? {}) };
+    delete narrations[key];
+    return { ...exhibition, exhibits: exhibition.exhibits.filter((item) => item !== key), captions, reflections, narrations };
   }
   if (exhibition.exhibits.length >= MAX_EXHIBITS) return exhibition;
   return { ...exhibition, exhibits: [...exhibition.exhibits, key] };

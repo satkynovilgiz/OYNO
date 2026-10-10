@@ -11,6 +11,7 @@ import type { CatalogContentType } from '@/services/content/contentCatalog';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import type { Exhibition, ExhibitSlide } from './museumModel';
+import { NarrationPlayback } from './Narration';
 import { buildTour, closingRows, currentIndex, exhibitSteps, RESPONSE_MAX, START_TOUR, tourExhibits, tourReducer, type TourAction, type TourState } from './tourModel';
 
 /**
@@ -21,7 +22,7 @@ import { buildTour, closingRows, currentIndex, exhibitSteps, RESPONSE_MAX, START
  * prompts. Never the collection's private description, Journal text or
  * notes. Responses and "viewed" live in this component only.
  */
-export function VisitorTour({ exhibition, title, slides, isOffline, large, onEnd }: { exhibition: Exhibition; title: string; slides: ExhibitSlide[]; isOffline: boolean; large: boolean; onEnd: () => void }) {
+export function VisitorTour({ exhibition, title, slides, isOffline, large, owner, onEnd }: { exhibition: Exhibition; title: string; slides: ExhibitSlide[]; isOffline: boolean; large: boolean; owner: string; onEnd: () => void }) {
   const { t } = useTranslation();
   const steps = useMemo(() => buildTour(exhibition, tourExhibits(slides, isOffline)), [exhibition, slides, isOffline]);
   const [state, setState] = useState<TourState>(START_TOUR);
@@ -89,6 +90,7 @@ export function VisitorTour({ exhibition, title, slides, isOffline, large, onEnd
       ) : null}
 
       {step.kind === 'exhibit' ? <ExhibitView exhibit={step.exhibit} big={big} textFirst={textFirst} /> : null}
+      {step.kind === 'exhibit' && step.exhibit.kind !== 'loading' ? <NarrationPlayback key={`${owner}:${step.exhibit.key}`} owner={owner} narration={exhibition.narrations?.[step.exhibit.key]} big={big} /> : null}
 
       {step.kind === 'reflection' ? (
         <View style={styles.stack} testID="tour-reflection">

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, ImageOff, Landmark, Share2 } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, ImageOff, Landmark, Mic, Share2 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
@@ -23,6 +23,10 @@ import { StoryPresent, StorySetup } from './StoryCards';
 import { endStoryPlace, resumeStoryPlace } from './storyModel';
 import { endLookSession, resumeLookSession } from './lookCloselyModel';
 import { VisitorTour } from './VisitorTour';
+import { NarrationEditor, NarrationPlayback, type CommitNarrations } from './Narration';
+import { referencedAudio } from './narrationModel';
+import { sweepNarrations } from '@/services/museum/narrationAudio';
+import { stopNarration } from '@/services/museum/narrationPlayer';
 
 type Mode = 'setup' | 'present' | 'visit' | 'look' | 'story';
 
@@ -47,6 +51,8 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
   const [mode, setMode] = useState<Mode>(() => (resumeLookSession(owner, collectionId) ? 'look' : resumeStoryPlace(owner, collectionId) ? 'story' : 'setup'));
   const [slide, setSlide] = useState(0);
   const [includeIntro, setIncludeIntro] = useState(false);
+  /** The exhibit whose narration editor is open (one at a time). */
+  const [narrating, setNarrating] = useState<string | null>(null);
   const collection = data.collections.find((candidate) => candidate.id === collectionId) ?? null;
 
   // The owner's saved exhibition, re-checked against the collection now (removed items drop out).
@@ -60,12 +66,30 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
     if (!resumeLookSession(owner, collectionId) && !resumeStoryPlace(owner, collectionId)) setMode('setup');
     setSlide(0);
     setIncludeIntro(false);
+    setNarrating(null);
+    // Another account never hears the previous one's narration.
+    stopNarration();
   }, [owner]);
+
+  // Narration plays only while the exhibition is open, and stops when the view changes.
+  useEffect(() => stopNarration(), [mode]);
+  useEffect(() => () => stopNarration(), []);
+
+  // Recordings this owner's exhibitions no longer reference (a failed delete, a removed item) are cleared.
+  useEffect(() => {
+    if (!isLoaded) return;
+    void sweepNarrations(owner, referencedAudio(useMyCollectionsStore.getState().museums[owner])).catch(() => undefined);
+  }, [isLoaded, owner]);
 
   if (!isLoaded) return <View style={styles.root} />;
   if (!collection || !exhibition) return <NotFoundState onPressBack={onPressBack} />;
 
   const save = (next: Exhibition) => useMyCollectionsStore.getState().saveExhibition(owner, collectionId, { ...next, updatedAt: new Date().toISOString() });
+  // Narration changes can finish after other edits (a recording being saved): always apply them to the LATEST exhibition.
+  const commitNarrations: CommitNarrations = (change) => {
+    const latest = normalizeExhibition(ownerExhibition(useMyCollectionsStore.getState().museums, owner, collectionId), data, collectionId) ?? exhibition;
+    save({ ...latest, narrations: change(latest.narrations ?? {}) });
+  };
   const items = data.items.filter((item) => item.collectionId === collectionId).sort((a, b) => a.sortOrder - b.sortOrder);
   const slides = slidesFor(exhibition, resolve, ready);
   const current = slides[Math.min(slide, slides.length - 1)];
@@ -119,6 +143,22 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
                       </AnimatedPressable>
                     );
                   })()}
+                  {(() => {
+                    const narration = exhibition.narrations?.[key] ?? null;
+                    const open = narrating === key;
+                    const status = narration?.audioId ? t('museum.narration.statusRecorded') : narration?.text.trim() ? t('museum.narration.statusWritten') : t('museum.narration.statusNone');
+                    return (
+                      <>
+                        <AnimatedPressable style={styles.reflectionPick} onPress={() => setNarrating(open ? null : key)} accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={t('museum.narration.toggleA11y', { name: titleOf(key), status })} testID={`museum-narration-${index}`}>
+                          <View style={styles.inlineRow}>
+                            <Mic size={14} color={colors.textSecondary} strokeWidth={2} />
+                            <Text style={styles.meta}>{t('museum.narration.toggle', { status })}</Text>
+                          </View>
+                        </AnimatedPressable>
+                        {open ? <NarrationEditor key={`${owner}:${key}`} owner={owner} exhibitKey={key} title={titleOf(key)} narration={narration} commit={commitNarrations} /> : null}
+                      </>
+                    );
+                  })()}
                 </View>
                 <View style={styles.moveColumn}>
                   <IconButton icon={ArrowUp} size={36} iconSize={14} elevated={false} disabled={index === 0} accessibilityLabel={t('museum.moveUp', { name: titleOf(key) })} onPress={() => save(moveExhibit(exhibition, index, -1))} testID={`museum-up-${index}`} />
@@ -165,7 +205,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
 
         {mode === 'look' ? <LookCloselyPlay exhibition={exhibition} slides={slides} owner={owner} collectionId={collectionId} onEnd={() => setMode('setup')} /> : null}
 
-        {mode === 'visit' ? <VisitorTour exhibition={exhibition} title={exhibitionTitle} slides={slides} isOffline={isOffline} large={large} onEnd={() => setMode('setup')} /> : null}
+        {mode === 'visit' ? <VisitorTour exhibition={exhibition} title={exhibitionTitle} slides={slides} isOffline={isOffline} large={large} owner={owner} onEnd={() => setMode('setup')} /> : null}
 
         {mode === 'present' && current ? (
           <View style={styles.stack} testID="museum-present-view">
@@ -212,6 +252,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
                 <Text style={[styles.body, large && styles.bodyLarge]}>{current.caption}</Text>
               </View>
             ) : null}
+            {current.kind !== 'loading' ? <NarrationPlayback key={`${owner}:${current.key}`} owner={owner} narration={exhibition.narrations?.[current.key]} big={large} /> : null}
             <View style={styles.navRow}>
               <Button label={t('museum.previous')} variant="secondary" onPress={() => go(slide - 1)} disabled={slide === 0} testID="museum-prev" />
               {slide < slides.length - 1 ? <Button label={t('museum.next')} onPress={() => go(slide + 1)} testID="museum-next" /> : <Button label={t('museum.finish')} onPress={() => setMode('setup')} testID="museum-finish" />}
@@ -258,5 +299,6 @@ const styles = StyleSheet.create({
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, alignSelf: 'flex-start' },
   linkText: { ...textStyles.small, fontWeight: '700', color: colors.primary },
   navRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   reflectionPick: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: cardRadii.compact, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderSubtle },
 });
