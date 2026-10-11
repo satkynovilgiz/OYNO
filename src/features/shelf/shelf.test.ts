@@ -41,7 +41,7 @@ const item = (patch: Partial<ShelfItem>): ShelfItem => ({ key: patch.key ?? 'k',
 
 describe('adapters', () => {
   it('each type opens its existing route, with truthful storage labels', () => {
-    expect(designItems(mockDesigns['user-a'] && (mockDesigns['user-a'] as { data: never[] }).data)[0]).toMatchObject({ type: 'design', title: 'Felt corner', route: '/culture/oymo/create?creation=d1', storage: 'cloud', detail: { params: { count: 2 } } });
+    expect(designItems((mockDesigns['user-a'] as { data: Parameters<typeof designItems>[0] }).data)[0]).toMatchObject({ type: 'design', title: 'Felt corner', route: '/culture/oymo/create?creation=d1', storage: 'cloud', detail: { params: { count: 2 } } });
     const board = createBoard({ type: 'culture_item', id: 'boz-uy-tunduk', titleSnapshot: 'T' }, { question: 'q', promptId: null, title: '' });
     expect(boardItems([board])[0]).toMatchObject({ type: 'board', title: null, route: `/culture/board/${board.id}`, storage: 'device' });
     const collections = { collections: [{ id: 'uc_1', name: 'Yurt things', description: null, createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-02T10:00:00Z' }], items: [] };
