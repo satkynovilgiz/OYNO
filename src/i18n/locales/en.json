@@ -6850,5 +6850,14 @@
     "doneMeta_few": "Made in {{count}} turns.",
     "doneMeta_many": "Made in {{count}} turns.",
     "doneMeta_other": "Made in {{count}} turns."
+  },
+  "vocabulary": {
+    "example": "Example from this article",
+    "exampleSource": "Quoted from this article, section “{{section}}”.",
+    "audioVerified": "A verified recording of this term is available.",
+    "noAudio": "No verified recording of this term yet - device speech isn't offered as pronunciation.",
+    "addToReview": "Add to my review",
+    "inReview": "In my review list",
+    "addToReviewHint": "Adds the term to your Glossary review cards"
   }
 }

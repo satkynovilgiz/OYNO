@@ -323,7 +323,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                       {t(field.labelKey)}
                     </Text>
                     {/* Known glossary terms are tappable (first per section, authored forms in this language only). */}
-                    <GlossaryText text={item[field.key] as string} language={bodyLanguage} style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]} />
+                    <GlossaryText text={item[field.key] as string} language={bodyLanguage} sectionKey={field.key as string} style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]} />
                     {/* Save the WHOLE authored section (no fragile text selection). */}
                     <PassageActions
                       contentType="culture_item"

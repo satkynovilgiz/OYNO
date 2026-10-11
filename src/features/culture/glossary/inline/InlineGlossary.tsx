@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { BookOpen, X } from 'lucide-react-native';
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,15 +15,21 @@ import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { colors, radii, spacing, textStyles } from '@/theme';
 
 import { glossaryRoute } from '../glossaryData';
+import { sectionLabelKey } from '../../itemSections';
+import { useRecordsOwner } from '@/features/games/records/useGameRecords';
+import { ownerStudy, useGlossaryStudyStore } from '@/store/useGlossaryStudyStore';
+import { exampleSentence, inReview, verifiedPronunciation, vocabLinkFor } from './vocabularyLinks';
 import type { ResolvedGlossaryEntry } from '../glossaryModel';
 import { useGlossary } from '../useGlossary';
 import { buildInlineTermIndex, EMPTY_TERM_INDEX, inlineDefinition, segmentText, selfEntryIds, type InlineTermIndex } from './inlineTermIndex';
 
+/** Where a term was tapped: its section (stable key), that section's text and the exact word. */
+type TapContext = { sectionKey?: string; sectionText: string; form: string };
 type InlineGlossaryValue = {
   /** Term index per rendered article language (built lazily, once each). */
   indexFor: (language: SupportedLanguage) => InlineTermIndex;
   exclude: ReadonlySet<string>;
-  open: (entryId: string) => void;
+  open: (entryId: string, context?: TapContext) => void;
 };
 
 const InlineGlossaryContext = createContext<InlineGlossaryValue | null>(null);
@@ -37,6 +43,7 @@ const InlineGlossaryContext = createContext<InlineGlossaryValue | null>(null);
 export function InlineGlossaryProvider({ articleItemId, children }: { articleItemId: string | null; children: ReactNode }) {
   const { entries } = useGlossary();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [tap, setTap] = useState<TapContext | null>(null);
   const cache = useMemo(() => new Map<SupportedLanguage, InlineTermIndex>(), [entries]);
   const indexFor = useCallback(
     (language: SupportedLanguage) => {
@@ -50,8 +57,9 @@ export function InlineGlossaryProvider({ articleItemId, children }: { articleIte
     [cache, entries],
   );
   const exclude = useMemo(() => selfEntryIds(entries, articleItemId), [entries, articleItemId]);
-  const open = useCallback((entryId: string) => {
+  const open = useCallback((entryId: string, context?: TapContext) => {
     setOpenId(entryId);
+    setTap(context ?? null);
     // Only the entry id - never the surrounding article text.
     track('inline_glossary_opened', { glossary_entry_id: entryId });
   }, []);
@@ -60,7 +68,7 @@ export function InlineGlossaryProvider({ articleItemId, children }: { articleIte
   return (
     <InlineGlossaryContext.Provider value={value}>
       {children}
-      {opened ? <InlineGlossarySheet resolved={opened} onClose={() => setOpenId(null)} /> : null}
+      {opened ? <InlineGlossarySheet resolved={opened} vocab={vocabFor(articleItemId, opened.entry.id, tap)} onClose={() => setOpenId(null)} /> : null}
     </InlineGlossaryContext.Provider>
   );
 }
@@ -72,7 +80,7 @@ export function InlineGlossaryProvider({ articleItemId, children }: { articleIte
  * size / line spacing apply to terms too. Without a provider, or with no
  * match, it is exactly a plain <Text>.
  */
-export function GlossaryText({ text, language, style }: { text: string; language: SupportedLanguage; style: StyleProp<TextStyle> }) {
+export function GlossaryText({ text, language, style, sectionKey }: { text: string; language: SupportedLanguage; style: StyleProp<TextStyle>; sectionKey?: string }) {
   const { t } = useTranslation();
   const glossary = useContext(InlineGlossaryContext);
   const segments = useMemo(() => (glossary ? segmentText(text, glossary.indexFor(language), { exclude: glossary.exclude }) : null), [glossary, text, language]);
@@ -86,7 +94,7 @@ export function GlossaryText({ text, language, style }: { text: string; language
           <Text
             key={position}
             style={styles.term}
-            onPress={() => glossary.open(segment.entryId)}
+            onPress={() => glossary.open(segment.entryId, { sectionKey, sectionText: text, form: segment.text })}
             suppressHighlighting={false}
             accessibilityRole="link"
             accessibilityLabel={`${segment.text}, ${t('glossary.inlineTermA11y')}`}
@@ -100,8 +108,16 @@ export function GlossaryText({ text, language, style }: { text: string; language
   );
 }
 
-/** Quick lookup: term, short existing definition, [Open Glossary]. */
-function InlineGlossarySheet({ resolved, onClose }: { resolved: ResolvedGlossaryEntry; onClose: () => void }) {
+type VocabContext = { example: string | null; sectionKey: string; articleTitle: string | null };
+/** A reviewed vocabulary link for this tap (article + section + entry), or null. */
+function vocabFor(articleItemId: string | null, entryId: string, tap: TapContext | null): VocabContext | null {
+  const link = tap ? vocabLinkFor(articleItemId, tap.sectionKey, entryId) : null;
+  if (!link || !tap) return null;
+  return { example: exampleSentence(tap.sectionText, tap.form), sectionKey: link.sectionKey, articleTitle: null };
+}
+
+/** Quick lookup: term, short existing definition, [Open Glossary] - plus, for a reviewed vocabulary link, the example, pronunciation and review. */
+function InlineGlossarySheet({ resolved, vocab, onClose }: { resolved: ResolvedGlossaryEntry; vocab: VocabContext | null; onClose: () => void }) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -128,6 +144,7 @@ function InlineGlossarySheet({ resolved, onClose }: { resolved: ResolvedGlossary
         ) : null}
         <Text style={[styles.definition, definition.large && styles.definitionLarge]}>{definition.text}</Text>
         <Text style={styles.from}>{t('glossary.from', { title: resolved.item.title })}</Text>
+        {vocab ? <VocabularyPanel entryId={resolved.entry.id} vocab={vocab} /> : null}
         <Button
           label={t('glossary.openGlossary')}
           icon={<BookOpen size={18} color={colors.textOnPrimary} strokeWidth={2.25} />}
@@ -141,7 +158,45 @@ function InlineGlossarySheet({ resolved, onClose }: { resolved: ResolvedGlossary
   );
 }
 
+/** Example (quoted from this section), pronunciation (verified recordings only), and the existing review queue. */
+function VocabularyPanel({ entryId, vocab }: { entryId: string; vocab: VocabContext }) {
+  const { t } = useTranslation();
+  const owner = useRecordsOwner();
+  const record = ownerStudy(useGlossaryStudyStore((state) => state.saved), owner)[entryId];
+  // The study store must be loaded first - a write before that would replace the saved review list.
+  const studyLoaded = useGlossaryStudyStore((state) => state.isLoaded);
+  useEffect(() => {
+    void useGlossaryStudyStore.getState().load();
+  }, []);
+  const audio = verifiedPronunciation(entryId);
+  const label = sectionLabelKey(vocab.sectionKey);
+  return (
+    <View style={styles.vocab} testID="vocab-panel">
+      {vocab.example ? (
+        <View style={styles.example} testID="vocab-example">
+          <Text style={styles.overline}>{t('vocabulary.example')}</Text>
+          <Text style={styles.definition}>“{vocab.example}”</Text>
+          <Text style={styles.from}>{t('vocabulary.exampleSource', { section: label ? t(label) : vocab.sectionKey })}</Text>
+        </View>
+      ) : null}
+      <Text style={styles.from} testID="vocab-audio">
+        {audio ? t('vocabulary.audioVerified') : t('vocabulary.noAudio')}
+      </Text>
+      <Button
+        label={inReview(record) ? t('vocabulary.inReview') : t('vocabulary.addToReview')}
+        variant="secondary"
+        disabled={!studyLoaded || inReview(record)}
+        onPress={() => useGlossaryStudyStore.getState().answer(owner, entryId, 'review_again')}
+        accessibilityHint={t('vocabulary.addToReviewHint')}
+        testID="vocab-save"
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  vocab: { gap: spacing.xs, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.borderSubtle },
+  example: { gap: 2 },
   // Glossary semantics: dotted underline in the text's own colour - distinct
   // from Read & Listen (section background) and saved passages (bookmark row).
   term: { textDecorationLine: 'underline', textDecorationStyle: 'dotted', textDecorationColor: colors.accentTerracotta },
