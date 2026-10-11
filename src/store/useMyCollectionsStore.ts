@@ -35,6 +35,12 @@ type State = {
   load: () => Promise<void>;
   saveExhibition: (owner: string, collectionId: string, exhibition: Exhibition) => void;
   /**
+   * The same, but written to storage FIRST and shown only after the write
+   * succeeded (false = nothing changed). Released narration audio is NOT
+   * deleted here - the caller does that once this resolves true.
+   */
+  writeExhibition: (owner: string, collectionId: string, exhibition: Exhibition) => Promise<boolean>;
+  /**
    * A new collection WITH its exhibition (Curator Challenge), written to
    * storage before it is shown: resolves to the collection id, or null when
    * the write failed (nothing changed - the caller keeps its draft).
@@ -93,6 +99,17 @@ export const useMyCollectionsStore = create<State>((set, get) => {
       persistMuseums();
       // A removed exhibit's narration recording goes with it.
       deleteAudio(owner, releasedAudio(before, exhibition));
+    },
+    writeExhibition: async (owner, collectionId, exhibition) => {
+      if (!get().isLoaded || !ownerCollections(get().saved, owner).collections.some((collection) => collection.id === collectionId)) return false;
+      const museums = { ...get().museums, [owner]: { ...get().museums[owner], [collectionId]: exhibition } };
+      try {
+        await AsyncStorage.setItem(MY_MUSEUMS_KEY, JSON.stringify(museums));
+      } catch {
+        return false;
+      }
+      set({ museums: { ...get().museums, [owner]: { ...get().museums[owner], [collectionId]: exhibition } } });
+      return true;
     },
     createWithExhibition: async (owner, input) => {
       if (!get().isLoaded) return null;

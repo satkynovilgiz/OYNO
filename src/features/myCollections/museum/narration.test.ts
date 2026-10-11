@@ -11,7 +11,8 @@ import { attachRecording, detachRecording, MAX_NARRATION_MS, normalizeNarrations
 
 jest.mock('react-i18next', () => ({ initReactI18next: { type: '3rdParty', init: () => undefined }, useTranslation: () => ({ t: (key: string) => key }) }));
 jest.mock('lucide-react-native', () => new Proxy({}, { get: () => () => null }));
-jest.mock('@/services/a11y/announce', () => ({ announce: () => undefined }));
+const mockAnnounce = jest.fn();
+jest.mock('@/services/a11y/announce', () => ({ announce: (text: string) => mockAnnounce(text) }));
 jest.mock('@/components/ui', () => {
   const { createElement: h } = jest.requireActual('react');
   return {
@@ -202,6 +203,7 @@ describe('playback coordination', () => {
 describe('the editor', () => {
   let store: ReturnType<typeof memoryNarrationStore>;
   let narrations: Record<string, Narration>;
+  let writeFails = false;
   let screen: ReactTestRenderer;
   const byId = (testID: string) => screen.root.findAll((node) => node.props.testID === testID && typeof node.type === 'string')[0];
   const has = (testID: string) => screen.root.findAll((node) => node.props.testID === testID).length > 0;
@@ -211,7 +213,22 @@ describe('the editor', () => {
     });
   };
   const render = (owner = 'user-a') => {
-    const element = () => createElement(NarrationEditor, { owner, exhibitKey: KEY, title: 'Tunduk', narration: narrations[KEY] ?? null, commit: (change) => { narrations = change(narrations); } });
+    const element = () =>
+      createElement(NarrationEditor, {
+        owner,
+        exhibitKey: KEY,
+        title: 'Tunduk',
+        narration: narrations[KEY] ?? null,
+        commit: (change) => {
+          narrations = change(narrations);
+        },
+        // The exhibition write: fails while `writeFails` is set (nothing changes then).
+        persist: async (change) => {
+          if (writeFails) return false;
+          narrations = change(narrations);
+          return true;
+        },
+      });
     act(() => {
       screen = create(element());
     });
@@ -231,10 +248,58 @@ describe('the editor', () => {
     mockSupport = 'available';
     mockPermission = true;
     mockDeleteTemp.mockClear();
+    mockAnnounce.mockClear();
+    writeFails = false;
   });
   afterEach(() => {
     act(() => screen.unmount());
     setNarrationAudioStore(null);
+  });
+
+  it('replacing: the exhibition write fails -> previous recording kept, no success announced; Retry -> replaced, then the old file goes', async () => {
+    const previous = await store.save('user-a', 'old');
+    narrations = { [KEY]: { audioId: previous, durationMs: 3000, text: 'transcript' } };
+    render();
+    writeFails = true;
+    await recordTake('blob:new');
+    await press('narration-save');
+    expect(has('narration-failed')).toBe(true);
+    expect(narrations[KEY].audioId).toBe(previous); // still the saved one
+    expect(store.records.has(previous)).toBe(true);
+    expect(store.records.size).toBe(2); // the new take is kept for Retry
+    expect(mockAnnounce).not.toHaveBeenCalledWith('museum.narration.savedAnnounce');
+    writeFails = false;
+    await press('narration-retry-save');
+    const replacement = narrations[KEY].audioId as string;
+    expect(replacement).not.toBe(previous);
+    expect(store.records.has(previous)).toBe(false);
+    expect([...store.records.keys()]).toEqual([replacement]);
+    expect(mockAnnounce).toHaveBeenCalledWith('museum.narration.savedAnnounce');
+  });
+
+  it('giving up after a failed write deletes only the new file', async () => {
+    const previous = await store.save('user-a', 'old');
+    narrations = { [KEY]: { audioId: previous, durationMs: 3000, text: '' } };
+    render();
+    writeFails = true;
+    await recordTake('blob:new');
+    await press('narration-save');
+    await press('narration-discard-pending');
+    await flush();
+    expect([...store.records.keys()]).toEqual([previous]);
+    expect(narrations[KEY].audioId).toBe(previous);
+  });
+
+  it('deleting: a failed write keeps the recording and its file', async () => {
+    const saved = await store.save('user-a', 'old');
+    narrations = { [KEY]: { audioId: saved, durationMs: 3000, text: 'words' } };
+    render();
+    writeFails = true;
+    await press('narration-delete');
+    await press('narration-delete-confirm');
+    expect(has('narration-delete-failed')).toBe(true);
+    expect(narrations[KEY].audioId).toBe(saved);
+    expect(store.records.has(saved)).toBe(true);
   });
 
   it('permission denied: no recording, written narration still works', async () => {

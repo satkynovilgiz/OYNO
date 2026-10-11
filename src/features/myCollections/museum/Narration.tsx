@@ -15,6 +15,8 @@ import { attachRecording, detachRecording, formatDuration, MAX_NARRATION_MS, NAR
 type Narrations = Record<string, Narration>;
 /** Applies a change to the LATEST stored narrations (not a stale copy) and returns what was saved. */
 export type CommitNarrations = (change: (narrations: Narrations) => Narrations) => void;
+/** Like CommitNarrations, but resolves only once the exhibition is WRITTEN to storage (false = not saved, nothing changed). */
+export type PersistNarrations = (change: (narrations: Narrations) => Narrations) => Promise<boolean>;
 
 /**
  * Exhibition editing: the curator's narration for ONE exhibit. Recording
@@ -23,22 +25,30 @@ export type CommitNarrations = (change: (narrations: Narrations) => Narrations) 
  * "Save recording", and a replacement removes the previous one only once
  * the new one is saved.
  */
-export function NarrationEditor({ owner, exhibitKey, title, narration, commit }: { owner: string; exhibitKey: string; title: string; narration: Narration | null; commit: CommitNarrations }) {
+export function NarrationEditor({ owner, exhibitKey, title, narration, commit, persist }: { owner: string; exhibitKey: string; title: string; narration: Narration | null; commit: CommitNarrations; persist: PersistNarrations }) {
   const { t } = useTranslation();
   const support = recordingSupport();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteFailed, setDeleteFailed] = useState(false);
   const hasAudio = !!narration?.audioId;
 
-  const removeRecording = () => {
+  const removeRecording = async () => {
     let released: string | null = null;
-    commit((narrations) => {
+    const ok = await persist((narrations) => {
       const result = detachRecording(narrations, exhibitKey);
       released = result.released;
       return result.narrations;
     });
+    // Not written: the recording stays referenced, so its file stays too.
+    if (!ok) {
+      setDeleteFailed(true);
+      announce(t('museum.narration.deleteFailed'));
+      return;
+    }
+    setDeleteFailed(false);
     if (released) {
       if (useNarrationPlayer.getState().playingId === released) stopNarration();
-      void narrationAudio()
+      await narrationAudio()
         .remove(owner, released)
         .catch(() => undefined);
     }
@@ -58,18 +68,23 @@ export function NarrationEditor({ owner, exhibitKey, title, narration, commit }:
             <PlayButton owner={owner} audioId={narration.audioId as string} testID="narration-play-saved" />
             {confirmDelete ? (
               <>
-                <Button label={t('museum.narration.confirmDelete')} variant="danger" size="sm" onPress={removeRecording} testID="narration-delete-confirm" />
+                <Button label={t('museum.narration.confirmDelete')} variant="danger" size="sm" onPress={() => void removeRecording()} testID="narration-delete-confirm" />
                 <Button label={t('museum.narration.keep')} variant="text" size="sm" onPress={() => setConfirmDelete(false)} />
               </>
             ) : (
               <Button label={t('museum.narration.delete')} variant="text" size="sm" onPress={() => setConfirmDelete(true)} testID="narration-delete" />
             )}
           </View>
+          {deleteFailed ? (
+            <Text style={styles.meta} testID="narration-delete-failed">
+              {t('museum.narration.deleteFailed')}
+            </Text>
+          ) : null}
         </View>
       ) : null}
 
       {support === 'available' ? (
-        <Recorder owner={owner} exhibitKey={exhibitKey} replacing={hasAudio} commit={commit} />
+        <Recorder owner={owner} exhibitKey={exhibitKey} replacing={hasAudio} persist={persist} />
       ) : (
         <Text style={styles.meta} testID="narration-unavailable">
           {t(support === 'needs_app_update' ? 'museum.narration.needsUpdate' : 'museum.narration.unsupported')}
@@ -120,7 +135,7 @@ function PlayButton({ owner, audioId, testID }: { owner: string; audioId: string
 }
 
 /** Mounted only where recording is really possible in this build. */
-function Recorder({ owner, exhibitKey, replacing, commit }: { owner: string; exhibitKey: string; replacing: boolean; commit: CommitNarrations }) {
+function Recorder({ owner, exhibitKey, replacing, persist }: { owner: string; exhibitKey: string; replacing: boolean; persist: PersistNarrations }) {
   const { t } = useTranslation();
   // Loaded lazily (like the other audio modules): only where recording is really possible.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -133,6 +148,8 @@ function Recorder({ owner, exhibitKey, replacing, commit }: { owner: string; exh
   const limit = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
   const previewPlaying = useNarrationPlayer((state) => state.playingId === PREVIEW_ID);
+  /** A recording copied into storage but not yet referenced by the exhibition (its metadata write failed). */
+  const pending = useRef<{ id: string; durationMs: number } | null>(null);
 
   const clearTimers = () => {
     if (limit.current) clearTimeout(limit.current);
@@ -199,17 +216,41 @@ function Recorder({ owner, exhibitKey, replacing, commit }: { owner: string; exh
       announce(t('museum.narration.saveFailed'));
       return;
     }
+    deleteRecording(tempUri); // copied in: the temporary take is no longer needed
+    pending.current = { id, durationMs };
+    await attach();
+  };
+
+  /**
+   * Points the exhibit at the saved recording - written to storage first.
+   * Only after that succeeds is the previous recording deleted and success
+   * announced. On failure the previous recording stays the saved one; the
+   * new file is kept for Retry (and deleted if the curator leaves or discards).
+   */
+  const attach = async () => {
+    const take = pending.current;
+    if (!take) return;
     let released: string | null = null;
-    commit((narrations) => {
-      const result = attachRecording(narrations, exhibitKey, id, durationMs);
+    const ok = await persist((narrations) => {
+      const result = attachRecording(narrations, exhibitKey, take.id, take.durationMs);
       released = result.released;
       return result.narrations;
     });
-    // Only now, with the new one saved and referenced, the previous recording goes.
+    if (!ok) {
+      dispatch({ type: 'saveFailed' });
+      announce(t('museum.narration.saveFailed'));
+      return;
+    }
+    pending.current = null;
     if (released) await narrationAudio().remove(owner, released).catch(() => undefined);
-    deleteRecording(tempUri);
-    dispatch({ type: 'saved' });
+    dispatch(phaseRef.current.kind === 'saving' ? { type: 'saved' } : { type: 'discard' });
     announce(t('museum.narration.savedAnnounce'));
+  };
+  /** Gives up on a saved-but-not-attached take (the previous recording stays). */
+  const dropPending = () => {
+    const take = pending.current;
+    pending.current = null;
+    if (take) void narrationAudio().remove(owner, take.id).catch(() => undefined);
   };
 
   // Backgrounded while recording: stop (the take goes to review, nothing is saved by itself).
@@ -231,6 +272,7 @@ function Recorder({ owner, exhibitKey, replacing, commit }: { owner: string; exh
       }
       if (useNarrationPlayer.getState().playingId === PREVIEW_ID) stopNarration();
       deleteRecording(tempOf(phaseRef.current));
+      dropPending();
       void setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -286,7 +328,14 @@ function Recorder({ owner, exhibitKey, replacing, commit }: { owner: string; exh
   return (
     <View style={styles.panel} testID="narration-failed">
       <Text style={styles.body}>{phase.reason === 'save' ? t('museum.narration.saveFailed') : t('museum.narration.startFailed')}</Text>
-      <Button label={t('museum.narration.tryAgain')} variant="text" size="sm" onPress={() => dispatch({ type: 'ask' })} testID="narration-retry" />
+      {pending.current ? (
+        <View style={styles.row}>
+          <Button label={t('museum.narration.retrySave')} size="sm" onPress={() => void attach()} testID="narration-retry-save" />
+          <Button label={t('museum.narration.discard')} variant="text" size="sm" onPress={() => { dropPending(); dispatch({ type: 'discard' }); }} testID="narration-discard-pending" />
+        </View>
+      ) : (
+        <Button label={t('museum.narration.tryAgain')} variant="text" size="sm" onPress={() => dispatch({ type: 'ask' })} testID="narration-retry" />
+      )}
     </View>
   );
 }

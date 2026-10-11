@@ -23,7 +23,7 @@ import { StoryPresent, StorySetup } from './StoryCards';
 import { endStoryPlace, resumeStoryPlace } from './storyModel';
 import { endLookSession, resumeLookSession } from './lookCloselyModel';
 import { VisitorTour } from './VisitorTour';
-import { NarrationEditor, NarrationPlayback, type CommitNarrations } from './Narration';
+import { NarrationEditor, NarrationPlayback, type CommitNarrations, type PersistNarrations } from './Narration';
 import { referencedAudio } from './narrationModel';
 import { endPreview, keepPreview, PREVIEW_STARTS, readiness, resumePreview, startAvailability, type EditTarget, type PreviewStart, type ReadinessItem } from './previewModel';
 import { sweepNarrations } from '@/services/museum/narrationAudio';
@@ -98,9 +98,15 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
 
   const save = (next: Exhibition) => useMyCollectionsStore.getState().saveExhibition(owner, collectionId, { ...next, updatedAt: new Date().toISOString() });
   // Narration changes can finish after other edits (a recording being saved): always apply them to the LATEST exhibition.
+  const latestExhibition = () => normalizeExhibition(ownerExhibition(useMyCollectionsStore.getState().museums, owner, collectionId), data, collectionId) ?? exhibition;
   const commitNarrations: CommitNarrations = (change) => {
-    const latest = normalizeExhibition(ownerExhibition(useMyCollectionsStore.getState().museums, owner, collectionId), data, collectionId) ?? exhibition;
+    const latest = latestExhibition();
     save({ ...latest, narrations: change(latest.narrations ?? {}) });
+  };
+  /** Recordings: the exhibition is written to storage before the caller deletes any previous audio. */
+  const persistNarrations: PersistNarrations = (change) => {
+    const latest = latestExhibition();
+    return useMyCollectionsStore.getState().writeExhibition(owner, collectionId, { ...latest, narrations: change(latest.narrations ?? {}), updatedAt: new Date().toISOString() });
   };
   const items = data.items.filter((item) => item.collectionId === collectionId).sort((a, b) => a.sortOrder - b.sortOrder);
   const slides = slidesFor(exhibition, resolve, ready);
@@ -238,7 +244,7 @@ export function MiniMuseumScreen({ collectionId, onPressBack }: { collectionId: 
                             <Text style={styles.meta}>{t('museum.narration.toggle', { status })}</Text>
                           </View>
                         </AnimatedPressable>
-                        {open ? <NarrationEditor key={`${owner}:${key}`} owner={owner} exhibitKey={key} title={titleOf(key)} narration={narration} commit={commitNarrations} /> : null}
+                        {open ? <NarrationEditor key={`${owner}:${key}`} owner={owner} exhibitKey={key} title={titleOf(key)} narration={narration} commit={commitNarrations} persist={persistNarrations} /> : null}
                       </>
                     );
                   })()}

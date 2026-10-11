@@ -5504,7 +5504,9 @@
       "missing": "This recording isn't available on this device.",
       "curatorLabel": "Curator's narration",
       "transcriptByCurator": "Transcript written by the curator",
-      "writtenByCurator": "Written by the curator"
+      "writtenByCurator": "Written by the curator",
+      "retrySave": "Retry saving",
+      "deleteFailed": "The recording couldn't be deleted. It is still saved - try again."
     },
     "preview": {
       "entry": "Preview as a visitor",
