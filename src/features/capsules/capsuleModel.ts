@@ -1,6 +1,6 @@
 import type { ConnectionContentType } from '@/features/culture/connections/connectionsData';
 import { shiftDate } from '@/features/journal/journalDisplay';
-import type { MotifLayer } from '@/services/culture/oymoEditor';
+import { MAX_OYMO_LAYERS, type MotifLayer } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
 
 /**
@@ -168,7 +168,7 @@ function normalizeDesign(raw: unknown): DesignSnapshot | null {
     if (!layer || typeof layer !== 'object' || typeof layer.motifId !== 'string' || typeof layer.color !== 'string' || !layer.point || typeof layer.point.x !== 'number' || typeof layer.point.y !== 'number') return [];
     return [{ id: typeof layer.id === 'string' ? layer.id : 'layer', motifId: layer.motifId, color: layer.color, point: { x: layer.point.x, y: layer.point.y }, rotation: Number(layer.rotation) || 0, scale: Number(layer.scale) || 1, visible: layer.visible !== false }];
   });
-  return { layers: layers.slice(0, 200), backgroundColor: value.backgroundColor, symmetry: value.symmetry as SymmetryMode, takenAt: typeof value.takenAt === 'string' ? value.takenAt : '' };
+  return { layers: layers.slice(0, MAX_OYMO_LAYERS), backgroundColor: value.backgroundColor, symmetry: value.symmetry as SymmetryMode, takenAt: typeof value.takenAt === 'string' ? value.takenAt : '' };
 }
 
 export function normalizeCapsule(raw: unknown): Capsule | null {

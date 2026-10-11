@@ -312,7 +312,7 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : handoff.source === 'border' ? t('borderWorkshop.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -327,6 +327,13 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('rememberPattern.title')}</Text>
             <Text style={styles.headerSubtitle}>{t('rememberPattern.entryMeta')}</Text>
+          </View>
+        </AnimatedPressable>
+        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/border' as never)} accessibilityRole="button" accessibilityLabel={`${t('borderWorkshop.title')}. ${t('borderWorkshop.entryMeta')}`} testID="border-entry">
+          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.restoreTitle}>{t('borderWorkshop.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('borderWorkshop.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/pattern-detective' as never)} accessibilityRole="button" accessibilityLabel={`${t('patternDetective.title')}. ${t('patternDetective.entryMeta')}`} testID="detective-entry">

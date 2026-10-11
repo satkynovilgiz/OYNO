@@ -6423,5 +6423,61 @@
     "picksTitle_few": "Articles ({{count}} of {{max}})",
     "picksTitle_many": "Articles ({{count}} of {{max}})",
     "picksTitle_other": "Articles ({{count}} of {{max}})"
+  },
+  "borderWorkshop": {
+    "title": "Border Workshop",
+    "entryMeta": "Repeat a tile of motifs as a strip or a frame",
+    "intro": "Arrange motifs in one tile, then repeat it along a strip or around a frame. Adjust how many and how far apart, then open the result in the Creator.",
+    "ownCreation": "What you make here is your own creation - the app gives it no traditional name or meaning.",
+    "tileTitle": "1. Your tile",
+    "tileHint": "Tap an empty square to place the chosen motif; tap a motif to select it (rotate, recolour with a colour above, or remove).",
+    "cellA11y": "Tile row {{row}}, column {{col}}: {{content}}",
+    "cellContent": "{{motif}}, {{color}}, turned {{rotation}}°",
+    "empty": "empty",
+    "rotate": "Turn 45°",
+    "remove": "Remove",
+    "done": "Done",
+    "tileSize": "Tile size",
+    "sizeOption": "{{size}} pt",
+    "repeatTitle": "2. Repeat it",
+    "layoutTitle": "Layout",
+    "layouts": {
+      "horizontal": "Horizontal strip",
+      "vertical": "Vertical strip",
+      "frame": "Square frame"
+    },
+    "spacing": "Spacing: {{spacing}} pt",
+    "maxNote": "That's the most that fits the canvas and the Creator's limit of {{layers}} layers.",
+    "overlap": "The tiles overlap by {{amount}} pt. That's allowed - make the spacing larger if you don't want it.",
+    "previewTitle": "3. Preview",
+    "summaryTitle": "In words",
+    "emptyTile": "The tile is empty - place a motif first.",
+    "summary": {
+      "piece": "Row {{row}}, column {{col}}: {{motif}}, {{color}}, turned {{rotation}}°",
+      "settings": "{{layout}}, {{count}} per run, spacing {{spacing}} pt, tile {{size}} pt",
+      "result_one": "{{tiles}} tile in the design, {{layers}} layers (limit {{max}})",
+      "result_few": "{{tiles}} tiles in the design, {{layers}} layers (limit {{max}})",
+      "result_many": "{{tiles}} tiles in the design, {{layers}} layers (limit {{max}})",
+      "result_other": "{{tiles}} tiles in the design, {{layers}} layers (limit {{max}})"
+    },
+    "open": "Open in the Creator",
+    "openHint": "Opens as a new, unsaved copy. Your tile stays here, and nothing saved is changed.",
+    "opened": "Opened in the Creator as an unsaved copy",
+    "openedCopy": "This is an unsaved copy from the Border Workshop.",
+    "less": "Less",
+    "more": "More",
+    "colors": {
+      "green": "green",
+      "orange": "orange",
+      "brown": "brown",
+      "gold": "gold",
+      "grey": "grey",
+      "darkBrown": "dark brown",
+      "other": "another colour"
+    },
+    "count_one": "How many: {{count}} (up to {{max}})",
+    "count_few": "How many: {{count}} (up to {{max}})",
+    "count_many": "How many: {{count}} (up to {{max}})",
+    "count_other": "How many: {{count}} (up to {{max}})"
   }
 }

@@ -37,12 +37,20 @@ const DEFAULT_BACKGROUND = '#EADCC0';
 
 export const EMPTY_OYMO_STATE: OymoEditorState = { layers: [], backgroundColor: DEFAULT_BACKGROUND, nextId: 0 };
 
-const MIN_SCALE = 0.4;
-const MAX_SCALE = 2.5;
+/**
+ * The most layers one design may have - enforced by the editor's own
+ * add/duplicate, and used by generators (Border Workshop) and snapshots
+ * (Time Capsule). Before 2026-10-11 there was no limit at all.
+ */
+export const MAX_OYMO_LAYERS = 200;
+
+export const MIN_SCALE = 0.4;
+export const MAX_SCALE = 2.5;
 const ROTATION_STEP = 15;
 const SCALE_STEP = 0.15;
 
 export function addLayer(state: OymoEditorState, point: Point, motifId: string, color: string): OymoEditorState {
+  if (state.layers.length >= MAX_OYMO_LAYERS) return state;
   const layer: MotifLayer = { id: `layer${state.nextId}`, motifId, color, point, rotation: 0, scale: 1, visible: true };
   return { ...state, layers: [...state.layers, layer], nextId: state.nextId + 1 };
 }
@@ -53,7 +61,7 @@ export function removeLayer(state: OymoEditorState, layerId: string): OymoEditor
 
 export function duplicateLayer(state: OymoEditorState, layerId: string): OymoEditorState {
   const source = state.layers.find((l) => l.id === layerId);
-  if (!source) return state;
+  if (!source || state.layers.length >= MAX_OYMO_LAYERS) return state;
   const copy: MotifLayer = { ...source, id: `layer${state.nextId}`, point: { x: source.point.x + 12, y: source.point.y + 12 } };
   return { ...state, layers: [...state.layers, copy], nextId: state.nextId + 1 };
 }
