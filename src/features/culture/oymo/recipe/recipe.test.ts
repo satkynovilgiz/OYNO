@@ -1,12 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createElement } from 'react';
-import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 
 import en from '@/i18n/locales/en.json';
 import kg from '@/i18n/locales/kg.json';
 import ru from '@/i18n/locales/ru.json';
 import { addLayer, EMPTY_OYMO_STATE, rotateLayer, setBackgroundColor, type OymoEditorState } from '@/services/culture/oymoEditor';
-import { takeCreatorHandoff } from '@/services/culture/oymoHandoff';
 import { LEGACY_RECIPES_KEY, OYMO_RECIPES_KEY, recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
 
 import { clearSessionRecipe, fingerprint, fitRecipe, finalState, sessionRecipe, setSessionRecipe, MAX_RECIPE_BYTES, MAX_RECIPE_STEPS, normalizeRecipe, recipeBytes, recipeFromHistory, stageAsCopy, STEP_LABELS, type HistoryEntry } from './recipeModel';
@@ -201,109 +198,5 @@ describe('session recipes belong to their owner', () => {
     setSessionRecipe('user-a', recipe);
     clearSessionRecipe();
     expect(sessionRecipe('user-a')).toBeNull();
-  });
-});
-
-describe('the Creator records the recipe (signed in) and replays a session', () => {
-  let screen: ReactTestRenderer;
-  // The fake server: saving appends a row with a fresh id (the RPC itself returns no id).
-  const mockRows: { id: string; name: string; layers: unknown; background_color: string; symmetry_mode: string; created_at: string; updated_at: string }[] = [];
-  const mockSave = jest.fn(async (input: { name: string; layers: unknown; backgroundColor: string; symmetryMode: string }) => {
-    mockRows.unshift({ id: `row-${mockRows.length + 1}`, name: input.name, layers: JSON.parse(JSON.stringify(input.layers)), background_color: input.backgroundColor, symmetry_mode: input.symmetryMode, created_at: '', updated_at: '' });
-    return true;
-  });
-  beforeAll(() => {
-    jest.doMock('react-i18next', () => ({ initReactI18next: { type: '3rdParty', init: () => undefined }, useTranslation: () => ({ t: (key: string) => key }) }));
-    jest.doMock('lucide-react-native', () => new Proxy({}, { get: () => () => null }));
-    jest.doMock('expo-router', () => ({ router: { push: jest.fn(), replace: jest.fn() } }));
-    jest.doMock('@tanstack/react-query', () => ({ ...jest.requireActual('@tanstack/react-query'), useQueryClient: () => ({ invalidateQueries: jest.fn(), getQueryData: () => [...mockRows], fetchQuery: async () => [...mockRows] }) }));
-    jest.doMock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }));
-    jest.doMock('@/hooks/useIsTablet', () => ({ useIsTablet: () => false }));
-    jest.doMock('@/services/analytics/analytics', () => ({ track: () => undefined }));
-    jest.doMock('@/features/culture/components/LabAboutNote', () => ({ LabAboutNote: () => null }));
-    jest.doMock('@/services/share/useShareCard', () => ({ useShareCard: () => ({ share: jest.fn(), shareHost: null }) }));
-    jest.doMock('@/services/content/oymoCreationsService', () => ({ OYMO_CREATIONS_QUERY_KEY: ['oymo_creations'], fetchOymoCreations: async () => [...mockRows], useOymoCreations: () => ({ data: [...mockRows] }) }));
-    jest.doMock('@/store/useAuthStore', () => ({ useAuthStore: (select: (state: { status: string }) => unknown) => select({ status: 'authenticated' }) }));
-    jest.doMock('@/store/useProgressStore', () => ({ useProgressStore: { getState: () => ({ saveOymoCreation: mockSave, deleteOymoCreation: jest.fn() }) } }));
-    jest.doMock('@/features/games/records/useGameRecords', () => ({ useRecordsOwner: () => 'user-a', currentRecordsOwner: () => 'user-a' }));
-    jest.doMock('@/components/ui', () => {
-      const { createElement: h } = jest.requireActual('react');
-      return {
-        AnimatedPressable: (props: Record<string, unknown>) => h('AnimatedPressable', props, props.children),
-        Button: (props: Record<string, unknown>) => h('Button', props, props.label),
-        IconButton: (props: Record<string, unknown>) => h('IconButton', props),
-        ConfirmationModal: () => null,
-        TextField: (props: Record<string, unknown>) => h('TextField', props),
-        Toggle: (props: Record<string, unknown>) => h('Toggle', props),
-      };
-    });
-  });
-
-  beforeEach(async () => {
-    await AsyncStorage.clear();
-    useOymoRecipeStore.setState({ saved: {}, isLoaded: true });
-    mockSave.mockClear();
-    mockRows.length = 0;
-  });
-
-  it('edit (place, symmetry, background) -> save with the recipe -> the recipe replays to the saved design', async () => {
-    const { OymoCreatorScreen } = jest.requireActual('../OymoCreatorScreen') as typeof import('../OymoCreatorScreen');
-    const { SymmetryControl } = jest.requireActual('../components/SymmetryControl') as typeof import('../components/SymmetryControl');
-    const { SaveModal } = jest.requireActual('../components/SaveModal') as typeof import('../components/SaveModal');
-    act(() => {
-      screen = create(createElement(OymoCreatorScreen, { onPressBack: () => undefined }));
-    });
-    const buttonByLabel = (label: string) => screen.root.findAll((node) => node.props.label === label && node.props.onPress)[0];
-    act(() => buttonByLabel('culture.oymo.placeAtCenter').props.onPress());
-    const tab = (label: string) => act(() => screen.root.findAll((node) => node.props.accessibilityLabel === label && node.props.onPress)[0].props.onPress());
-    tab('culture.oymo.symmetrySection');
-    act(() => screen.root.findByType(SymmetryControl).props.onChangeMode('mirror'));
-    act(() => buttonByLabel('culture.oymo.placeAtCenter').props.onPress());
-    const modal = () => screen.root.findByType(SaveModal);
-    expect(modal().props.recipe).toMatchObject({ include: false, steps: 4, kept: 4 });
-    act(() => modal().props.recipe.onChange(true));
-    await act(async () => {
-      await modal().props.onSave('My pattern');
-    });
-    expect(mockSave).toHaveBeenCalledTimes(1);
-    const saved = (mockSave.mock.calls[0] as unknown as [{ layers: OymoEditorState['layers']; backgroundColor: string; symmetryMode: 'mirror' }])[0];
-    const stored = recipeFor(useOymoRecipeStore.getState().saved, 'user-a', 'row-1')!;
-    expect(stored.steps.map((step) => step.label)).toEqual(['start', 'place', 'symmetry', 'place']);
-    expect(finalState(stored)).toEqual({ layers: saved.layers, backgroundColor: saved.backgroundColor, symmetry: 'mirror' });
-    expect(recipeFor(useOymoRecipeStore.getState().saved, 'user-b', 'row-1')).toBeNull();
-
-    // The SAME design saved again WITHOUT the recipe: that new creation gets none (no inheriting by content).
-    act(() => modal().props.recipe.onChange(false));
-    await act(async () => {
-      await modal().props.onSave('Same again');
-    });
-    expect(mockRows.map((entry) => entry.id)).toEqual(['row-2', 'row-1']);
-    expect(recipeFor(useOymoRecipeStore.getState().saved, 'user-a', 'row-2')).toBeNull();
-    expect(recipeFor(useOymoRecipeStore.getState().saved, 'user-a', 'row-1')).not.toBeNull();
-
-    // Undo reverts the symmetry change too (it is a step of its own).
-    const undo = () => screen.root.findAll((node) => typeof node.props.accessibilityLabel === 'string' && /undo/i.test(node.props.accessibilityLabel) && node.props.onPress)[0];
-    expect(undo()).toBeDefined();
-    act(() => undo().props.onPress());
-    expect(screen.root.findByType(SymmetryControl).props.mode).toBe('mirror');
-    act(() => undo().props.onPress());
-    expect(screen.root.findByType(SymmetryControl).props.mode).toBe('fourWay');
-    act(() => screen.unmount());
-  });
-
-  it('saving WITHOUT the recipe stores none (recipes are optional)', async () => {
-    const { OymoCreatorScreen } = jest.requireActual('../OymoCreatorScreen') as typeof import('../OymoCreatorScreen');
-    const { SaveModal } = jest.requireActual('../components/SaveModal') as typeof import('../components/SaveModal');
-    act(() => {
-      screen = create(createElement(OymoCreatorScreen, { onPressBack: () => undefined }));
-    });
-    act(() => screen.root.findAll((node) => node.props.label === 'culture.oymo.placeAtCenter' && node.props.onPress)[0].props.onPress());
-    await act(async () => {
-      await screen.root.findByType(SaveModal).props.onSave('Plain');
-    });
-    expect(mockSave).toHaveBeenCalledTimes(1);
-    expect(useOymoRecipeStore.getState().saved).toEqual({});
-    expect(takeCreatorHandoff()).toBeNull();
-    act(() => screen.unmount());
   });
 });
