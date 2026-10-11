@@ -6612,5 +6612,32 @@
       "cards_other": "{{count}} articles"
     },
     "note": "The shelf shows only the account that is signed in now. Deleting is done in each item's own screen."
+  },
+  "mysteryObject": {
+    "title": "Mystery Object",
+    "entryMeta": "Untimed: read clues, guess the object",
+    "intro": "Read a clue about an object from OYNO's culture articles and guess which of four it is. Reveal more clues whenever you like.",
+    "untimed": "No timer and no score - wrong guesses don't end the round.",
+    "start": "Start a mystery",
+    "loading": "Loading the articles…",
+    "offlineNone": "The articles aren't available right now. Connect once to load them; after that, mysteries work offline.",
+    "none": "No mystery can be played with the articles available right now.",
+    "removed": "That mystery's articles are no longer available - try another one.",
+    "howTo": "Clues come from the article about the object. Choose your answer below.",
+    "clueN": "Clue {{n}}",
+    "fromSection": "From the article's “{{section}}” section",
+    "fromArticle": "From the article “{{article}}”, section “{{section}}”",
+    "reveal": "Reveal another clue",
+    "allClues": "All clues are shown.",
+    "whichOne": "Which object is it?",
+    "notThis": "Not {{name}} - try again",
+    "notThisShort": "not this one",
+    "tryAgain": "Not quite - try another one. Your clues stay.",
+    "showAnswer": "Show the answer",
+    "found": "Yes - it's {{name}}!",
+    "itWas": "It was {{name}}.",
+    "gameNote": "Game note: you used {{clues}} of 3 clues and made {{guesses}} guess(es). Nothing is scored or saved.",
+    "readArticle": "Read the article",
+    "another": "Another mystery"
   }
 }

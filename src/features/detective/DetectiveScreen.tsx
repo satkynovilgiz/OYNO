@@ -366,6 +366,21 @@ export function DetectiveEntryRow() {
   );
 }
 
+/** The untimed Mystery Object, beside Culture Detective (same reviewed clues, different rules). */
+export function MysteryEntryRow() {
+  const { t } = useTranslation();
+  return (
+    <AnimatedPressable style={styles.entryRow} onPress={() => router.push('/culture/mystery' as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${t('mysteryObject.title')}. ${t('mysteryObject.entryMeta')}`} testID="mystery-entry">
+      <Search size={18} color={colors.primary} strokeWidth={2} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.cardTitle}>{t('mysteryObject.title')}</Text>
+        <Text style={styles.meta}>{t('mysteryObject.entryMeta')}</Text>
+      </View>
+      <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+    </AnimatedPressable>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
