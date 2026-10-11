@@ -69,6 +69,7 @@ function privateByStructure(segments: string[], index: number): boolean {
   if (first === 'culture' && second === 'board') return index >= 2;
   if (first === 'profile' && second === 'capsules') return index >= 2;
   if (first === 'profile' && second === 'oymo-portfolios') return index >= 2;
+  if (first === 'profile' && second === 'scrapbooks') return index >= 2;
   if (first === 'open') return index === 1 ? !OPEN_TYPES.has(second) : !OPEN_TYPES.has(second) || index > 2;
   return false;
 }
