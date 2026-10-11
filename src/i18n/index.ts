@@ -61,3 +61,16 @@ i18n
   });
 
 export default i18n;
+
+/**
+ * Switch the UI language for a temporary session (Festival Mode) WITHOUT
+ * changing the user's saved choice: i18next caches every change, so the
+ * stored language is written back right after. An app restart mid-session
+ * therefore comes back in the user's own language.
+ */
+export async function changeLanguageTemporarily(language: SupportedLanguage): Promise<void> {
+  const stored = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+  await i18n.changeLanguage(language);
+  if (stored === null) await AsyncStorage.removeItem(LANGUAGE_STORAGE_KEY);
+  else await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, stored);
+}

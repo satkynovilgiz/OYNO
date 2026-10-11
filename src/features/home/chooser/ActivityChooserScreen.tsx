@@ -106,6 +106,7 @@ export function ActivityChooserScreen({ onPressBack }: { onPressBack: () => void
         ) : null}
 
         <Text style={styles.meta}>{t('activityChooser.privacy')}</Text>
+        <Button label={t('festival.entry')} variant="secondary" accessibilityHint={t('festival.entryHint')} onPress={() => router.push('/festival' as never)} testID="festival-entry" />
       </ScrollView>
     </View>
   );
