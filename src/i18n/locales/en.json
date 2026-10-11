@@ -3615,14 +3615,18 @@
     "state": {
       "not_started": "Not started",
       "in_progress": "In progress",
-      "completed": "Completed"
+      "completed": "Completed",
+      "skipped": "Skipped"
     },
     "verb": {
       "culture_item": "Read",
       "glossary": "Learn the term",
       "challenge": "Test your knowledge",
       "game": "Play",
-      "interactive_lab": "Try it yourself"
+      "interactive_lab": "Try it yourself",
+      "memory": "Practise",
+      "connection": "Explore the connection",
+      "reflection": "Reflect"
     },
     "paths": {
       "boz-uy": {
@@ -3636,8 +3640,28 @@
       "horse-games": {
         "title": "Traditional Horse Games",
         "description": "Read about Kok Boru and Kyz Kuumai, play both games, then test your knowledge of horse culture."
+      },
+      "inside-boz-uy": {
+        "title": "Inside a boz uy",
+        "description": "Read OYNO's article, rebuild the boz uy from memory, explore one sourced connection, make your own Oymo design - and, if you like, write a reflection.",
+        "why": {
+          "discover": "Start with OYNO's own article about the boz uy.",
+          "build-from-memory": "Practise putting the boz uy's parts together in the Build from Memory activity.",
+          "connection": "OYNO's article on the frame names the tunduk among its parts - see the connection and its source.",
+          "oymo-design": "Make a pattern of your own in the Oymo Creator. It is your creation; no traditional meaning is given to it.",
+          "reflection": "Optional: write what you noticed, in your own words."
+        }
       }
-    }
+    },
+    "reflectionTitle": "A personal reflection in your journal",
+    "skip": "Skip this step",
+    "unskip": "Undo skip",
+    "journeyLoadError": "Which steps you opened or skipped couldn't be read. Nothing was changed.",
+    "writeFailed": "That change couldn't be saved. Nothing was lost - try again.",
+    "restart": "Restart this path",
+    "restartConfirm": "Restart? Your “Mark step complete” ticks, opened steps and skips for this path are cleared. Steps finished in their own activity (like a read article) stay finished.",
+    "restartYes": "Restart",
+    "restartNo": "Keep my progress"
   },
   "forYou": {
     "title": "For you today",

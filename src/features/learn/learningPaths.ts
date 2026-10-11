@@ -7,7 +7,9 @@
  * complete". Opening a step never completes it. No locking, no rewards.
  */
 
-export type StepType = 'culture_item' | 'glossary' | 'challenge' | 'game' | 'interactive_lab';
+/** `memory` = Build from Memory, `connection` = one entry of the sourced connections dataset,
+ * `reflection` = a personal journal entry (always optional). */
+export type StepType = 'culture_item' | 'glossary' | 'challenge' | 'game' | 'interactive_lab' | 'memory' | 'connection' | 'reflection';
 
 export type LearningPathStep = {
   id: string;
@@ -15,6 +17,10 @@ export type LearningPathStep = {
   /** Real content id: culture item id, glossary entry id, challenge id
    * (`collection-<id>`), game progress id, or lab id. */
   targetId: string;
+  /** May be skipped (and un-skipped); a skipped step doesn't block finishing the path. */
+  optional?: boolean;
+  /** Why this step is in the path: an authored instruction (no new cultural claim). */
+  whyKey?: string;
 };
 
 export type LearningPath = {
@@ -69,7 +75,25 @@ export const LEARNING_PATHS: LearningPath[] = [
       { id: 'challenge', type: 'challenge', targetId: 'collection-horse-culture' },
     ],
   },
+  {
+    // "Inside a boz uy": the article, Build from Memory, one sourced connection, your own Oymo design, an optional reflection.
+    id: 'inside-boz-uy',
+    titleKey: 'learningPaths.paths.inside-boz-uy.title',
+    descriptionKey: 'learningPaths.paths.inside-boz-uy.description',
+    heroItemId: 'boz-uy-overview',
+    steps: [
+      { id: 'discover', type: 'culture_item', targetId: 'boz-uy-overview', whyKey: 'learningPaths.paths.inside-boz-uy.why.discover' },
+      { id: 'build-from-memory', type: 'memory', targetId: 'boz-uy', whyKey: 'learningPaths.paths.inside-boz-uy.why.build-from-memory' },
+      { id: 'connection', type: 'connection', targetId: 'tunduk-part-of-karkas', whyKey: 'learningPaths.paths.inside-boz-uy.why.connection' },
+      { id: 'oymo-design', type: 'interactive_lab', targetId: 'oymo', whyKey: 'learningPaths.paths.inside-boz-uy.why.oymo-design' },
+      { id: 'reflection', type: 'reflection', targetId: 'journal', optional: true, whyKey: 'learningPaths.paths.inside-boz-uy.why.reflection' },
+    ],
+  },
 ];
+
+/** Build from Memory activities by target id. */
+export const MEMORY_ROUTE: Record<string, string> = { 'boz-uy': '/culture/boz-uy/memory' };
+export const REFLECTION_ROUTE: Record<string, string> = { journal: '/journal/new' };
 
 const LAB_ROUTE: Record<LabId, string> = {
   'boz-uy': '/culture/boz-uy/build',
@@ -97,15 +121,26 @@ export function stepRoute(step: LearningPathStep, gameRoute: (gameId: string) =>
       return gameRoute(step.targetId);
     case 'interactive_lab':
       return LAB_ROUTE[step.targetId as LabId] ?? null;
+    case 'memory':
+      return MEMORY_ROUTE[step.targetId] ?? null;
+    case 'connection':
+      return `/culture/connections/${step.targetId}`;
+    case 'reflection':
+      return REFLECTION_ROUTE[step.targetId] ?? null;
   }
 }
 
 /** Steps that need an explicit "Mark step complete" (no reliable signal). */
 export function isManualStep(step: LearningPathStep): boolean {
+  if (step.type === 'memory' || step.type === 'connection' || step.type === 'reflection') return true;
   return step.type === 'interactive_lab' && !LAB_SIGNAL[step.targetId as LabId];
 }
 
-export type StepState = 'not_started' | 'in_progress' | 'completed';
+/** `skipped` = an optional step the person chose to skip. */
+export type StepState = 'not_started' | 'in_progress' | 'completed' | 'skipped';
+/** What the journey store recorded (visited from the path, skipped). Absent for plain paths. */
+export type JourneySignals = { visited: (stepId: string) => boolean; skipped: (stepId: string) => boolean };
+const NO_JOURNEY: JourneySignals = { visited: () => false, skipped: () => false };
 
 /** Every real signal a step can be derived from (gathered by the hook). */
 export type PathSignals = {
@@ -130,8 +165,20 @@ export function challengeResultKey(challengeId: string): string {
   return challengeId;
 }
 
-export function stepState(path: LearningPath, step: LearningPathStep, signals: PathSignals): StepState {
+export function stepState(path: LearningPath, step: LearningPathStep, signals: PathSignals, journey: JourneySignals = NO_JOURNEY): StepState {
+  const base = signalState(path, step, signals);
+  if (base === 'completed') return base;
+  if (step.optional && journey.skipped(step.id)) return 'skipped';
+  // Visited only says it was opened - never finished.
+  return base === 'not_started' && journey.visited(step.id) ? 'in_progress' : base;
+}
+
+function signalState(path: LearningPath, step: LearningPathStep, signals: PathSignals): StepState {
   switch (step.type) {
+    case 'memory':
+    case 'connection':
+    case 'reflection':
+      return signals.manualCompleted(path.id, step.id) ? 'completed' : 'not_started';
     case 'culture_item':
       return signals.readingCompleted(step.targetId) ? 'completed' : signals.readingStarted(step.targetId) ? 'in_progress' : 'not_started';
     case 'glossary':
@@ -151,11 +198,12 @@ export function stepState(path: LearningPath, step: LearningPathStep, signals: P
 export type PathProgress = { states: StepState[]; completed: number; total: number; nextIndex: number | null; done: boolean; started: boolean };
 
 /** Deterministic: the first step (in order) that isn't completed. */
-export function pathProgress(path: LearningPath, signals: PathSignals): PathProgress {
-  const states = path.steps.map((step) => stepState(path, step, signals));
+export function pathProgress(path: LearningPath, signals: PathSignals, journey: JourneySignals = NO_JOURNEY): PathProgress {
+  const states = path.steps.map((step) => stepState(path, step, signals, journey));
   const completed = states.filter((state) => state === 'completed').length;
-  const next = states.findIndex((state) => state !== 'completed');
-  return { states, completed, total: states.length, nextIndex: next >= 0 ? next : null, done: completed === states.length, started: states.some((state) => state !== 'not_started') };
+  // A skipped (optional) step is passed over, never counted as finished.
+  const next = states.findIndex((state) => state !== 'completed' && state !== 'skipped');
+  return { states, completed, total: states.length, nextIndex: next >= 0 ? next : null, done: next < 0, started: states.some((state) => state !== 'not_started') };
 }
 
 /** Home: the active path (started, not done) - the most advanced one,
@@ -180,6 +228,8 @@ export function validatePaths(
     challenges: ReadonlySet<string>;
     games: ReadonlyMap<string, string>;
     hasKey: (key: string) => boolean;
+    /** Connection dataset ids (sourced connections). */
+    connections?: ReadonlySet<string>;
   },
 ): string[] {
   const problems: string[] = [];
@@ -206,7 +256,15 @@ export function validatePaths(
               ? catalog.challenges.has(step.targetId)
               : step.type === 'game'
                 ? catalog.games.has(step.targetId)
-                : step.targetId in LAB_ROUTE;
+                : step.type === 'memory'
+                  ? step.targetId in MEMORY_ROUTE
+                  : step.type === 'connection'
+                    ? !!catalog.connections?.has(step.targetId)
+                    : step.type === 'reflection'
+                      ? step.targetId in REFLECTION_ROUTE
+                      : step.targetId in LAB_ROUTE;
+      if (step.type === 'reflection' && !step.optional) problems.push(`${path.id}: a reflection step must be optional`);
+      if (step.whyKey && !catalog.hasKey(step.whyKey)) problems.push(`${path.id}: missing string ${step.whyKey}`);
       if (!exists) problems.push(`${path.id}: ${target} missing`);
       if (!stepRoute(step, (id) => catalog.games.get(id) ?? null)) problems.push(`${path.id}: no route for ${target}`);
     }

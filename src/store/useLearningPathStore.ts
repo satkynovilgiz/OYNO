@@ -2,6 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
+import { createSerialQueue } from '@/services/storage/serialWrites';
+
+const queue = createSerialQueue();
 
 export const LEARNING_PATH_KEY = 'oyno.learningPaths.v1';
 
@@ -30,7 +33,10 @@ type State = {
   isLoaded: boolean;
   saved: Saved;
   load: () => Promise<void>;
-  setManual: (owner: string, pathId: string, stepId: string, completed: boolean) => void;
+  /** Written to storage first, then shown; resolves false when the write failed (nothing changed). */
+  setManual: (owner: string, pathId: string, stepId: string, completed: boolean) => Promise<boolean>;
+  /** Restart a path: forgets its manual completions (write-first, like setManual). */
+  clearPath: (owner: string, pathId: string) => Promise<boolean>;
   /** Private Cloud Sync: the merged account state (null = forget this owner on this device). */
   applySynced: (owner: string, data: ManualSteps | null) => void;
   adoptGuest: (userId: string) => void;
@@ -48,6 +54,22 @@ export const useLearningPathStore = create<State>((set, get) => {
     if (get().isLoaded) apply();
     else void get().load().then(apply);
   };
+  /** Serialized, from the latest state, storage first - then published. */
+  const writeManual = (owner: string, change: (mine: ManualSteps) => ManualSteps | null) =>
+    queue(async () => {
+      await get().load();
+      const mine = ownerManualSteps(get().saved, owner);
+      const next = change(mine);
+      if (next === null) return true;
+      const saved = { ...get().saved, [owner]: next };
+      try {
+        await AsyncStorage.setItem(LEARNING_PATH_KEY, JSON.stringify(saved));
+      } catch {
+        return false;
+      }
+      set({ saved: { ...get().saved, [owner]: next } });
+      return true;
+    });
   return {
     isLoaded: false,
     saved: {},
@@ -63,13 +85,18 @@ export const useLearningPathStore = create<State>((set, get) => {
       return loading;
     },
     setManual: (owner, pathId, stepId, completed) =>
-      whenLoaded(() => {
-        const mine = ownerManualSteps(get().saved, owner);
+      writeManual(owner, (mine) => {
         const steps = { ...(mine[pathId] ?? {}) };
         if (completed) steps[stepId] = steps[stepId] ?? new Date().toISOString();
         else delete steps[stepId];
-        set({ saved: { ...get().saved, [owner]: { ...mine, [pathId]: steps } } });
-        persist();
+        return { ...mine, [pathId]: steps };
+      }),
+    clearPath: (owner, pathId) =>
+      writeManual(owner, (mine) => {
+        if (!mine[pathId]) return null;
+        const next = { ...mine };
+        delete next[pathId];
+        return next;
       }),
     applySynced: (owner, data) =>
       whenLoaded(() => {

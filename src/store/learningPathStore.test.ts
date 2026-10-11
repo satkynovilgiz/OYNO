@@ -43,10 +43,10 @@ describe('load and writes', () => {
 
   it('confirming again keeps the first completion time (no duplicate, no reset)', async () => {
     await useLearningPathStore.getState().load();
-    useLearningPathStore.getState().setManual('guest', 'boz-uy', 'build', true);
+    await useLearningPathStore.getState().setManual('guest', 'boz-uy', 'build', true);
     const first = useLearningPathStore.getState().saved.guest['boz-uy'].build;
     await new Promise((resolve) => setTimeout(resolve, 5));
-    useLearningPathStore.getState().setManual('guest', 'boz-uy', 'build', true);
+    await useLearningPathStore.getState().setManual('guest', 'boz-uy', 'build', true);
     expect(useLearningPathStore.getState().saved.guest['boz-uy']).toEqual({ build: first });
   });
 

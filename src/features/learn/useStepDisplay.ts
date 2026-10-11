@@ -8,6 +8,8 @@ import { gameTitleKey } from '@/features/games/types';
 import type { SupportedLanguage } from '@/i18n';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 
+import { connectionById } from '@/features/culture/connections/connectionsModel';
+
 import { stepRoute, type LearningPathStep } from './learningPaths';
 
 export function gameRouteFor(gameId: string): string | null {
@@ -55,6 +57,19 @@ export function useStepDisplay(): (step: LearningPathStep) => StepDisplay {
         const lab = INTERACTIVE_EXPERIENCES.find((entry) => entry.id === step.targetId);
         return lab && route ? { verb, route, title: t(lab.titleKey), status: 'ready' } : missing(verb);
       }
+      case 'memory':
+        return route ? { verb, route, title: t('culture.bozUy.memory.title'), status: 'ready' } : missing(verb);
+      case 'connection': {
+        // A sourced connection from the dataset, between two articles that both still exist.
+        const connection = connectionById(step.targetId);
+        if (!connection) return missing(verb);
+        if (!items) return { verb, route, title: '…', status: isError ? 'failed' : 'loading' };
+        const from = items.find((candidate) => candidate.id === connection.fromId);
+        const to = items.find((candidate) => candidate.id === connection.toId);
+        return from && to ? { verb, route, title: `${from.title} → ${to.title}`, status: 'ready' } : missing(verb);
+      }
+      case 'reflection':
+        return route ? { verb, route, title: t('learningPaths.reflectionTitle'), status: 'ready' } : missing(verb);
     }
   };
 }

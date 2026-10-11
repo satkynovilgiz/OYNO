@@ -82,7 +82,8 @@ test('manual step: the card asks for confirmation; last step shows the completio
   await page.goto('/culture/item/boz-uy-overview?fromPath=boz-uy');
   await expect(page.getByTestId('path-continue-done')).toBeVisible();
   await expect(page.getByTestId('path-continue-portfolio')).toBeVisible();
-  await expect(page.getByTestId('path-continue-other')).toContainText('Felt & Oymo');
+  // "Inside a boz uy" shares the read overview article, so it is the started path suggested next.
+  await expect(page.getByTestId('path-continue-other')).toContainText('Inside a boz uy');
   await page.getByTestId('path-continue-portfolio').click();
   await expect(page).toHaveURL(/\/profile\/portfolio$/);
   await expectNoExposedKeys(page);

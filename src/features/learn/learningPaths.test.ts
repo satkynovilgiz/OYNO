@@ -1,3 +1,4 @@
+import { CULTURE_CONNECTIONS } from '@/features/culture/connections/connectionsData';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -35,12 +36,14 @@ const catalog = {
   glossary: new Set(GLOSSARY.map((entry) => entry.id)),
   challenges: new Set(collections.filter((collection) => collectionQuestionIds(collection).length > 0).map((collection) => `collection-${collection.id}`)),
   games: new Map(Object.values(GAME_RECORD_RULES).map((rule) => [rule.gameId, rule.route])),
+  connections: new Set(CULTURE_CONNECTIONS.map((connection) => connection.id)),
   hasKey: (key: string) => [en, ru, kg].every((dict) => typeof lookup(dict, key) === 'string' && (lookup(dict, key) as string).length > 0),
 };
 
 describe('Learning Paths - integrity', () => {
   it('every path resolves: unique ids, real targets, routes, >= 3 steps, strings in KG/RU/EN', () => {
-    expect(LEARNING_PATHS.length).toBeLessThanOrEqual(3);
+    // Three topic paths + the curated "Inside a boz uy" journey.
+    expect(LEARNING_PATHS.length).toBeLessThanOrEqual(4);
     expect(validatePaths(LEARNING_PATHS, catalog)).toEqual([]);
   });
 

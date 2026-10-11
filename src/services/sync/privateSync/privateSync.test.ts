@@ -119,7 +119,7 @@ describe('first device upload + second device hydrate', () => {
     useGlossaryStudyStore.getState().answer('user-a', 'tunduk', 'review_again');
     useWeeklyGoalStore.getState().setGoal('user-a', 5);
     useKomuzLibraryStore.getState().toggleFavorite('user-a', 'chon-kerbez');
-    useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', true);
+    await useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', true);
     await sync();
 
     const rows = [...(backend.rows.get('user-a')?.values() ?? [])];
@@ -265,7 +265,7 @@ describe('offline first', () => {
 
   it('a push whose response was lost is retried safely (no duplicate, no endless retry)', async () => {
     signInAs('user-a');
-    useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', true);
+    await useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', true);
     const at = useLearningPathStore.getState().saved['user-a']['boz-uy'].builder;
     // The server applied the write, but the device never heard back.
     backend.push('user-a', 'path_steps', [{ key: 'boz-uy|builder', base_rev: 0, deleted: false, payload: { at } }]);
@@ -307,7 +307,7 @@ describe('deletion propagates', () => {
   it('a removed audio bookmark and an unmarked path step sync as deletions', async () => {
     signInAs('user-a');
     const bookmark = useListeningStore.getState().addBookmark('user-a', { sourceType: 'komuz', sourceId: 'chon-kerbez', title: 'Чоң кербез', route: '/culture/komuz/listen', positionType: 'seconds', position: 74 });
-    useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', true);
+    await useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', true);
     await sync();
     useListeningStore.getState().removeBookmark('user-a', bookmark.id);
     useLearningPathStore.getState().setManual('user-a', 'boz-uy', 'builder', false);

@@ -93,7 +93,9 @@ describe('Continue learning', () => {
 
   it('all steps done: completion state suggests a started path first, else one not done', () => {
     const all = { read: ['boz-uy-overview', 'boz-uy-karkas'], gotIt: ['tunduk'], manual: ['boz-uy/build'], challenges: ['collection-boz-uy-world'] };
-    expect(pathContinuation(BOZ_UY, 4, signals(all))).toEqual({ kind: 'done', otherPath: LEARNING_PATHS.find((candidate) => candidate.id === 'felt-oymo') });
+    // "Inside a boz uy" shares the overview article, so it is already started - a started path comes first.
+    expect(pathContinuation(BOZ_UY, 4, signals(all))).toEqual({ kind: 'done', otherPath: LEARNING_PATHS.find((candidate) => candidate.id === 'inside-boz-uy') });
+    expect(pathContinuation(BOZ_UY, 4, signals(all), LEARNING_PATHS.filter((candidate) => candidate.id !== 'inside-boz-uy'))).toEqual({ kind: 'done', otherPath: LEARNING_PATHS.find((candidate) => candidate.id === 'felt-oymo') });
     expect(pathContinuation(BOZ_UY, 4, signals({ ...all, read: [...all.read, 'horse-kok-boru'] }))).toEqual({ kind: 'done', otherPath: HORSE });
   });
 

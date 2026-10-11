@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Check, ChevronLeft, ChevronRight, Circle, Share2, Link2 } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,8 @@ import { cultureItemImages } from '@/features/culture/data';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useLearningPathStore } from '@/store/useLearningPathStore';
+import { ownerJourney, useJourneyStore } from '@/store/useJourneyStore';
+import { connectionById } from '@/features/culture/connections/connectionsModel';
 import { colors, editorial, radii, spacing, textStyles, typography } from '@/theme';
 
 import { buildPathShareCard } from './learningPathShare';
@@ -54,11 +56,37 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
   const inFlight = useOfflineStore((state) => state.inFlight);
   const failed = useOfflineStore((state) => state.failed);
   const path = LEARNING_PATHS.find((candidate) => candidate.id === pathId);
+  // Journey: visited / skipped per owner (the store blocks writes until loaded).
+  const journeyStatus = useJourneyStore((state) => state.status);
+  const journeySaved = useJourneyStore((state) => state.saved);
+  useEffect(() => {
+    void useJourneyStore.getState().load();
+  }, []);
+  const [writeFailed, setWriteFailed] = useState(false);
+  const [confirmRestart, setConfirmRestart] = useState(false);
+  useEffect(() => {
+    setWriteFailed(false);
+    setConfirmRestart(false);
+  }, [owner]);
   const pack = useMemo(() => (path ? buildLearningPathOfflineManifest(path) : null), [path]);
   if (!path || !pack) return <NotFoundState onPressBack={onPressBack} />;
   const packState = learningPathPackState(pack, manifest, inFlight, failed);
 
-  const progress = pathProgress(path, signals);
+  const record = ownerJourney(journeySaved, owner, path.id);
+  const journey = { visited: (stepId: string) => !!record.visited[stepId], skipped: (stepId: string) => !!record.skipped[stepId] };
+  const progress = pathProgress(path, signals, journey);
+  const allReady = ready && journeyStatus === 'ready';
+  /** Opening a step records only that it was VISITED (never finished). */
+  const open = (route: string, stepId: string) => {
+    void useJourneyStore.getState().visit(owner, path.id, stepId);
+    openStep(route, path.id);
+  };
+  const report = async (write: Promise<boolean>) => setWriteFailed(!(await write));
+  const restart = async () => {
+    const [manual, visits] = await Promise.all([useLearningPathStore.getState().clearPath(owner, path.id), useJourneyStore.getState().clearPath(owner, path.id)]);
+    setWriteFailed(!(manual && visits));
+    setConfirmRestart(false);
+  };
   const hero = path.heroItemId ? (cultureItemImages[path.heroItemId]?.[0] ?? null) : null;
   const title = t(path.titleKey);
   // Offline: each step says whether it opens on this device (the existing
@@ -71,7 +99,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
   // (removed content is skipped, not opened into a dead end) and, offline,
   // is saved on this device. Same rule as before, one more condition.
   const reachable = routes.map((route, index) => !!route && (!isOffline || availableOffline[index]));
-  const pick = offlineContinue(progress.nextIndex, progress.states.map((state) => state === 'completed'), reachable);
+  const pick = offlineContinue(progress.nextIndex, progress.states.map((state) => state === 'completed' || state === 'skipped'), reachable);
   const continueIndex = pick.index;
   const nextRoute = continueIndex !== null ? routes[continueIndex] : null;
   const trueNext = progress.nextIndex !== null ? path.steps[progress.nextIndex] : null;
@@ -128,7 +156,7 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
               />
             </View>
           ) : nextRoute ? (
-            <Button label={progress.started ? t('learningPaths.continue') : t('learningPaths.start')} size={isChild ? 'lg' : 'md'} onPress={() => openStep(nextRoute, path.id)} testID="path-start" />
+            <Button label={progress.started ? t('learningPaths.continue') : t('learningPaths.start')} size={isChild ? 'lg' : 'md'} onPress={() => (continueIndex !== null ? open(nextRoute, path.steps[continueIndex].id) : openStep(nextRoute, path.id))} testID="path-start" />
           ) : null}
           {ready && pick.trueNextUnavailable && trueNext && progress.nextIndex !== null ? (
             <Text style={styles.offlineNote} accessibilityLiveRegion="polite" testID={trueNextRemoved ? 'path-next-removed' : 'path-next-offline'}>
@@ -150,18 +178,31 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
 
           <PathOfflineRow pack={pack} state={packState} title={title} />
 
-          <View style={{ gap: spacing.xs }}>
+          {journeyStatus === 'error' ? (
+            <View style={styles.catalogFailed} testID="path-journey-error">
+              <Text style={styles.offlineNote}>{t('learningPaths.journeyLoadError')}</Text>
+              <Button label={t('common.retry')} size="sm" variant="secondary" onPress={() => void useJourneyStore.getState().retryLoad()} />
+            </View>
+          ) : null}
+          {writeFailed ? (
+            <Text style={styles.warn} accessibilityLiveRegion="polite" testID="path-write-failed">
+              {t('learningPaths.writeFailed')}
+            </Text>
+          ) : null}
+          <View style={{ gap: spacing.xs }} testID="path-steps">
             {path.steps.map((step, index) => {
               const { verb, title: stepTitle, route, status } = displays[index];
               const removed = status === 'missing';
               const state = progress.states[index];
               // Not loaded yet: no state shown and nothing to mark (a tap would act on a guess).
-              const manual = ready && isManualStep(step);
+              const manual = allReady && isManualStep(step);
+              const why = step.whyKey ? t(step.whyKey) : null;
+              const evidence = step.type === 'connection' ? (connectionById(step.targetId)?.evidence ?? null) : null;
               return (
-                <View key={step.id} style={[styles.step, isChild && styles.stepChild, ready && state === 'completed' && styles.stepDone]}>
+                <View key={step.id} style={[styles.step, isChild && styles.stepChild, ready && state === 'completed' && styles.stepDone]} testID={`path-step-${step.id}`}>
                   <AnimatedPressable
                     style={styles.stepMain}
-                    onPress={() => route && openStep(route, path.id)}
+                    onPress={() => route && open(route, step.id)}
                     disabled={removed}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: removed }}
@@ -181,10 +222,18 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
                     </View>
                     <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
                   </AnimatedPressable>
-                  {manual ? (
+                  {why ? <Text style={styles.why}>{why}</Text> : null}
+                  {evidence ? <Text style={styles.evidence} testID={`path-evidence-${step.id}`}>“{evidence}”</Text> : null}
+                  {step.optional && allReady && state !== 'completed' ? (
+                    <AnimatedPressable style={styles.mark} onPress={() => void report(useJourneyStore.getState().setSkipped(owner, path.id, step.id, state !== 'skipped'))} accessibilityRole="button" accessibilityLabel={state === 'skipped' ? t('learningPaths.unskip') : t('learningPaths.skip')} testID={`path-skip-${step.id}`}>
+                      <Text style={styles.markText}>{state === 'skipped' ? t('learningPaths.unskip') : t('learningPaths.skip')}</Text>
+                    </AnimatedPressable>
+                  ) : null}
+                  {manual && state !== 'skipped' ? (
                     <AnimatedPressable
                       style={styles.mark}
-                      onPress={() => useLearningPathStore.getState().setManual(owner, path.id, step.id, state !== 'completed')}
+                      testID={`path-finish-${step.id}`}
+                      onPress={() => void report(useLearningPathStore.getState().setManual(owner, path.id, step.id, state !== 'completed'))}
                       accessibilityRole="checkbox"
                       accessibilityState={{ checked: state === 'completed' }}
                       aria-checked={state === 'completed'}
@@ -197,6 +246,19 @@ export function LearningPathScreen({ pathId, onPressBack }: { pathId: string; on
               );
             })}
           </View>
+          {allReady && progress.started ? (
+            confirmRestart ? (
+              <View style={styles.catalogFailed} testID="path-restart-confirm">
+                <Text style={styles.offlineNote}>{t('learningPaths.restartConfirm')}</Text>
+                <View style={{ flexDirection: 'row', gap: spacing.xs }}>
+                  <Button label={t('learningPaths.restartYes')} size="sm" onPress={() => void restart()} testID="path-restart-yes" />
+                  <Button label={t('learningPaths.restartNo')} size="sm" variant="text" onPress={() => setConfirmRestart(false)} />
+                </View>
+              </View>
+            ) : (
+              <Button label={t('learningPaths.restart')} variant="text" onPress={() => setConfirmRestart(true)} testID="path-restart" />
+            )
+          ) : null}
         </View>
       </ScrollView>
       {shareHost}
@@ -234,4 +296,7 @@ const styles = StyleSheet.create({
   stepOfflineNo: { color: colors.textMuted },
   catalogFailed: { gap: spacing.xs, alignItems: 'flex-start' },
   offlineNote: { ...textStyles.small, color: colors.textSecondary },
+  why: { ...textStyles.small, color: colors.textSecondary, paddingHorizontal: spacing.xs },
+  evidence: { ...textStyles.small, fontStyle: 'italic', color: colors.textPrimary, paddingHorizontal: spacing.xs },
+  warn: { ...textStyles.small, fontWeight: '700', color: colors.accentTerracottaText },
 });
