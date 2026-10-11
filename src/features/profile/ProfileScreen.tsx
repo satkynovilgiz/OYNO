@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, BarChart3, BookMarked, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, Mail, MessageSquareWarning } from 'lucide-react-native';
+import { Award, BarChart3, Bookmark, BookMarked, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, Mail, MessageSquareWarning } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -149,6 +149,7 @@ export function ProfileScreen() {
               { route: '/games/stats', icon: BarChart3, title: t('gameStats.title'), meta: t('gameStats.profileMeta') },
               { route: '/profile/my-collections', icon: FolderOpen, title: t('myCollections.title'), meta: t('myCollections.profileMeta') },
               { route: '/profile/capsules', icon: Mail, title: t('timeCapsule.title'), meta: t('timeCapsule.profileMeta') },
+              { route: '/profile/reading-notes', icon: Bookmark, title: t('readingCompanion.title'), meta: t('readingCompanion.profileMeta') },
               { route: '/profile/highlights', icon: Highlighter, title: t('highlights.title'), meta: t('highlights.profileMeta') },
               { route: '/study', icon: Zap, title: t('study.title'), meta: t('study.entryMeta') },
               { route: '/profile/activity', icon: History, title: t('timeline.title'), meta: t('timeline.profileMeta') },

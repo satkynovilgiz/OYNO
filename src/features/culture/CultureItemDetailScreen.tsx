@@ -24,6 +24,8 @@ import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/Readi
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
 import { ContentsButton } from '@/features/culture/reader/navigator/ContentsSheet';
+import { DETAIL_FIELDS } from '@/features/culture/itemSections';
+import { SectionBookmark } from '@/features/culture/reading/SectionBookmark';
 import { currentSectionAt, jumpOffset, resumeSection, tableOfContents, type NavSection } from '@/features/culture/reader/navigator/sectionNavigator';
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
@@ -61,19 +63,6 @@ function bodyLanguageFor(item: CultureItemRow, appLanguage: string): string {
   return item.translation?.status === 'available' ? appLanguage : 'kg';
 }
 
-const DETAIL_FIELDS: { key: keyof CultureItemRow; labelKey: string }[] = [
-  { key: 'origin', labelKey: 'culture.item.originLabel' },
-  { key: 'history', labelKey: 'culture.item.historyLabel' },
-  { key: 'cultural_meaning', labelKey: 'culture.item.culturalMeaningLabel' },
-  { key: 'when_used', labelKey: 'culture.item.whenUsedLabel' },
-  { key: 'ingredients', labelKey: 'culture.item.ingredientsLabel' },
-  { key: 'traditional_method', labelKey: 'culture.item.traditionalMethodLabel' },
-  { key: 'who_participates', labelKey: 'culture.item.whoParticipatesLabel' },
-  { key: 'objects_used', labelKey: 'culture.item.objectsUsedLabel' },
-  { key: 'regional_notes', labelKey: 'culture.item.regionalNotesLabel' },
-  { key: 'modern_status', labelKey: 'culture.item.modernStatusLabel' },
-  { key: 'fun_facts', labelKey: 'culture.item.funFactsLabel' },
-];
 
 export function CultureItemDetailScreen({ item, images, audioTracks, initialSection, onPressBack }: CultureItemDetailScreenProps) {
   const { t, i18n } = useTranslation();
@@ -283,7 +272,14 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
             </View>
           )}
 
-          <View style={styles.contentBody} onLayout={(event) => (sectionOffsets.current.body = event.nativeEvent.layout.y)}>
+          <View
+            style={styles.contentBody}
+            onLayout={(event) => {
+              sectionOffsets.current.body = event.nativeEvent.layout.y;
+              // Layout runs child-first: the sections are measured before this container, so retry here.
+              scrollToInitialSection();
+            }}
+          >
             {/* 2. Short context: alternative names. (Review state and sources
                 live in the quiet "Sources & notes" row at the end.) */}
             {item.alt_names ? (
@@ -306,7 +302,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
             ) : filledFields.length === 0 ? (
               hasAudio ? null : <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
             ) : (
-              <View style={styles.fields} onLayout={(event) => (sectionOffsets.current.fields = event.nativeEvent.layout.y)}>
+              <View
+                style={styles.fields}
+                onLayout={(event) => {
+                  sectionOffsets.current.fields = event.nativeEvent.layout.y;
+                  scrollToInitialSection();
+                }}
+              >
                 {filledFields.map((field, index) => (
                   <View
                     key={field.key}
@@ -333,6 +335,8 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                       language={bodyLanguage}
                       simple={isChild}
                     />
+                    {/* Reading Companion: bookmark this named section, optionally with your own note. */}
+                    <SectionBookmark contentType="culture_item" contentId={item.id} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} articleTitle={item.title} />
                   </View>
                 ))}
               </View>
@@ -409,7 +413,7 @@ const styles = StyleSheet.create({
   heroTitleEditorial: { ...editorial(textStyles.display) },
   plainHeader: { paddingHorizontal: spacing.md, gap: spacing.xs },
   plainTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
-  plainEyebrow: { ...textStyles.overline, color: colors.accentTerracotta },
+  plainEyebrow: { ...textStyles.overline, color: colors.accentTerracottaText },
   plainHeaderTitle: { ...textStyles.display, color: colors.textPrimary },
   contentBody: { paddingHorizontal: spacing.lg, gap: spacing.lg },
   context: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
@@ -420,7 +424,7 @@ const styles = StyleSheet.create({
   pending: { ...textStyles.body, color: colors.textSecondary },
   fields: { gap: spacing.md },
   field: { gap: spacing.xs },
-  fieldLabel: { ...textStyles.overline, color: colors.accentTerracotta },
+  fieldLabel: { ...textStyles.overline, color: colors.accentTerracottaText },
   paragraph: { ...textStyles.body, fontSize: 16, lineHeight: 25, color: colors.textPrimary },
   paragraphChild: { fontSize: 17, lineHeight: 26 },
   actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

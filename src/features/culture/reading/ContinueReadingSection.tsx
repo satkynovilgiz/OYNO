@@ -11,6 +11,7 @@ import type { AgeExperience } from '@/services/ageExperience/types';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useCultureMaterials } from '@/services/content/cultureService';
 import { ownerReading, useReadingStore } from '@/store/useReadingStore';
+import { ownerBookmarks, useSectionBookmarksStore } from '@/store/useSectionBookmarksStore';
 import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
 
 import { continueReading, percentRead, recentlyRead, type ReadingProgress } from './readingModel';
@@ -36,7 +37,9 @@ export function ContinueReadingSection({ experience }: { experience: AgeExperien
 
   useEffect(() => {
     void useReadingStore.getState().load();
+    void useSectionBookmarksStore.getState().load();
   }, []);
+  const bookmarkCount = Object.keys(ownerBookmarks(useSectionBookmarksStore((state) => state.saved), owner)).length;
 
   const resolve = (record: ReadingProgress): Resolved | null => {
     if (record.contentType === 'culture_item') {
@@ -56,7 +59,8 @@ export function ContinueReadingSection({ experience }: { experience: AgeExperien
     .map(resolve)
     .filter((entry): entry is Resolved => !!entry);
 
-  if (!currentResolved && recent.length === 0) return null;
+  const notesLink = bookmarkCount > 0 ? <Button label={t('readingCompanion.notesLink', { count: bookmarkCount })} variant="secondary" size="sm" onPress={() => router.push('/profile/reading-notes' as never)} testID="reading-notes-link" /> : null;
+  if (!currentResolved && recent.length === 0) return notesLink ? <View style={styles.section}>{notesLink}</View> : null;
 
   return (
     <View style={styles.section}>
@@ -75,10 +79,13 @@ export function ContinueReadingSection({ experience }: { experience: AgeExperien
               </View>
             </View>
           </View>
-          <Button label={t('reading.continue')} size="sm" onPress={() => router.push(currentResolved.route as never)} />
+          {/* Back to the section (anchor by its key - the article checks it still exists), else the saved position. */}
+          <Button label={currentResolved.record.lastSectionKey ? t('readingCompanion.continueSection') : t('reading.continue')} size="sm" onPress={() => router.push((currentResolved.record.lastSectionKey ? `${currentResolved.route}?section=${encodeURIComponent(currentResolved.record.lastSectionKey)}` : currentResolved.route) as never)} testID="continue-reading" />
+          <Button label={t('readingCompanion.clearPosition')} variant="text" size="sm" onPress={() => useReadingStore.getState().reset(owner, currentResolved.record.contentType, currentResolved.record.contentId)} testID="continue-reading-clear" />
         </View>
       ) : null}
 
+      {notesLink}
       {recent.length > 0 && !isChild ? (
         <View style={{ gap: spacing.xs }}>
           <SectionHeader title={t('reading.recentlyRead')} size="sm" inset={0} />
