@@ -49,11 +49,13 @@ import { OYMO_MOTIFS, type OymoMotifId } from './motifs';
 
 type OymoCreatorScreenProps = {
   onPressBack: () => void;
+  /** ?creation=<id> (from My OYNO Shelf): open that saved design once the list has loaded. */
+  initialCreationId?: string | null;
 };
 
 type PanelTab = 'motif' | 'color' | 'symmetry' | 'layers';
 
-export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
+export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: OymoCreatorScreenProps) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
@@ -165,6 +167,16 @@ export function OymoCreatorScreen({ onPressBack }: OymoCreatorScreenProps) {
     setSelectedLayerId(null);
     setOpenedCreationId(creation.id);
   }
+
+  // Opened from the Shelf: load that saved design ONCE (a handoff copy takes precedence).
+  const openedInitial = useRef(false);
+  useEffect(() => {
+    if (openedInitial.current || !initialCreationId || handoff || !creations) return;
+    openedInitial.current = true;
+    const row = creations.find((creation) => creation.id === initialCreationId);
+    if (row) loadCreation(row);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creations, initialCreationId]);
 
   // Shares only the design itself (rendered live), the lab's name and OYNO
   // branding - never the account or anything private.

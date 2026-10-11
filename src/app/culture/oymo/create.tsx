@@ -1,7 +1,8 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 
 import { OymoCreatorScreen } from '@/features/culture/oymo/OymoCreatorScreen';
 
 export default function OymoCreateRoute() {
-  return <OymoCreatorScreen onPressBack={() => router.back()} />;
+  const { creation } = useLocalSearchParams<{ creation?: string }>();
+  return <OymoCreatorScreen onPressBack={() => router.back()} initialCreationId={typeof creation === 'string' ? creation : null} />;
 }

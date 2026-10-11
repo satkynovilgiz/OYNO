@@ -6542,5 +6542,75 @@
     "savedAt": "Moment saved at {{time}}",
     "jumped": "Going to {{time}}",
     "storageNote": "The notebook stays on this device for this account only. It isn't synced and isn't part of the learning-data export (the separate saved listening points are)."
+  },
+  "shelf": {
+    "title": "My OYNO Shelf",
+    "profileMeta": "Everything you've made, in one place",
+    "intro": "Your designs, exhibitions, discovery boards and time capsules - each opens in its own screen. Nothing is copied here.",
+    "filter": "Show",
+    "types": {
+      "all": "All",
+      "design": "Oymo designs",
+      "exhibition": "Exhibitions",
+      "board": "Discovery boards",
+      "capsule": "Time capsules"
+    },
+    "search": "Search titles",
+    "searchPlaceholder": "Type part of a title",
+    "sort": "Sort by",
+    "sorts": {
+      "updated": "Recently changed",
+      "created": "Recently made",
+      "title": "Title A-Z"
+    },
+    "loading": "Loading {{type}}…",
+    "error": "{{type}} couldn't be loaded. The rest of your shelf is shown.",
+    "retry": "Try again",
+    "signedOut": "Oymo designs are saved to your account - sign in to see them here.",
+    "noMatch": "No titles match your search.",
+    "noDate": "no date",
+    "updated": "changed {{date}}",
+    "empty": {
+      "design": "No saved Oymo designs yet.",
+      "exhibition": "No Mini Museum exhibitions yet.",
+      "board": "No discovery boards yet.",
+      "capsule": "No time capsules yet."
+    },
+    "create": {
+      "design": "Open the Oymo Creator",
+      "exhibition": "Go to My Collections",
+      "board": "Start from an article",
+      "capsule": "Write a time capsule"
+    },
+    "untitled": {
+      "design": "Untitled design",
+      "exhibition": "Untitled exhibition",
+      "board": "Untitled board",
+      "capsule": "Untitled capsule"
+    },
+    "storage": {
+      "cloud": "Saved to your account",
+      "device": "On this device only"
+    },
+    "detail": {
+      "sealedUntil": "Sealed until {{date}}",
+      "capsule": {
+        "draft": "Draft",
+        "opened": "Opened"
+      },
+      "layers_one": "{{count}} motif",
+      "layers_few": "{{count}} motifs",
+      "layers_many": "{{count}} motifs",
+      "layers_other": "{{count}} motifs",
+      "exhibits_one": "{{count}} exhibit",
+      "exhibits_few": "{{count}} exhibits",
+      "exhibits_many": "{{count}} exhibits",
+      "exhibits_other": "{{count}} exhibits",
+      "cards_one": "{{count}} article",
+      "cards_few": "{{count}} articles",
+      "cards_many": "{{count}} articles",
+      "cards_other": "{{count}} articles"
+    },
+    "note": "The shelf shows only the account that is signed in now. Deleting is done in each item's own screen."
   }
 }
