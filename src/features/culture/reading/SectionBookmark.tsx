@@ -43,8 +43,11 @@ export function SectionBookmark({ contentType, contentId, sectionKey, sectionLab
   const text = note ?? saved?.note ?? '';
   const save = async () => {
     setBusy(true);
-    const ok = await useSectionBookmarksStore.getState().save(owner, { contentType, contentId, sectionKey, articleTitle, sectionLabel, note: text });
+    const startedFor = owner;
+    const ok = await useSectionBookmarksStore.getState().save(startedFor, { contentType, contentId, sectionKey, articleTitle, sectionLabel, note: text });
     setBusy(false);
+    // The account changed meanwhile: the result belongs to the previous account - nothing is shown here.
+    if (shownOwner.current !== startedFor) return;
     if (!ok) {
       setFailed('save');
       announce(t('readingCompanion.saveFailed'));
@@ -57,8 +60,10 @@ export function SectionBookmark({ contentType, contentId, sectionKey, sectionLab
   };
   const remove = async () => {
     setBusy(true);
-    const ok = await useSectionBookmarksStore.getState().remove(owner, key);
+    const startedFor = owner;
+    const ok = await useSectionBookmarksStore.getState().remove(startedFor, key);
     setBusy(false);
+    if (shownOwner.current !== startedFor) return;
     if (!ok) return setFailed('remove');
     setFailed(null);
     setNote(null);

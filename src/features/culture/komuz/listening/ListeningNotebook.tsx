@@ -47,7 +47,10 @@ export function ListeningNotebook() {
 
   const current = komuzTracks.find((entry) => entry.id === currentTrackId) ?? null;
   const capture = async (pending: Pending) => {
-    const moment = await useListeningNotebookStore.getState().capture(owner, pending);
+    const startedFor = owner;
+    const moment = await useListeningNotebookStore.getState().capture(startedFor, pending);
+    // The account changed while it was being written: it was saved for the account that made it - show nothing here.
+    if (shownOwner.current !== startedFor) return;
     if (!moment) {
       setFailedCapture(pending);
       announce(t('listeningNotebook.saveFailed'));
@@ -65,7 +68,9 @@ export function ListeningNotebook() {
   };
   const saveNote = async () => {
     if (!editing) return;
-    const ok = await useListeningNotebookStore.getState().setNote(owner, editing.id, editing.text);
+    const startedFor = owner;
+    const ok = await useListeningNotebookStore.getState().setNote(startedFor, editing.id, editing.text);
+    if (shownOwner.current !== startedFor) return;
     if (!ok) {
       setFailedNote(editing.id);
       announce(t('listeningNotebook.saveFailed'));

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
+import { createSerialQueue } from '@/services/storage/serialWrites';
 import { normalizeBookmarks, removeBookmark, upsertBookmark, type Bookmarks, type SectionBookmark } from '@/features/culture/reading/sectionBookmarks';
 
 /**
@@ -23,21 +24,34 @@ type State = {
   remove: (owner: string, key: string) => Promise<boolean>;
 };
 
+/** Serializes every write to SECTION_BOOKMARKS_KEY (all owners share that one object). */
+const queue = createSerialQueue();
+
 export const ownerBookmarks = (saved: Saved, owner: string): Bookmarks => normalizeBookmarks(saved[owner]);
 export const ownerBookmark = (saved: Saved, owner: string, key: string): SectionBookmark | null => ownerBookmarks(saved, owner)[key] ?? null;
 
 export const useSectionBookmarksStore = create<State>((set, get) => {
-  const write = async (owner: string, next: Bookmarks) => {
-    if (get().status !== 'ready') return false;
-    const saved = { ...get().saved, [owner]: next };
-    try {
-      await AsyncStorage.setItem(SECTION_BOOKMARKS_KEY, JSON.stringify(saved));
-    } catch {
-      return false;
-    }
-    set({ saved: { ...get().saved, [owner]: next } });
-    return true;
-  };
+  /**
+   * Every mutation goes through ONE queue for this storage key: the change
+   * is computed from the LATEST state inside the queue, written, and only
+   * then published. `change` returns null for "nothing to do".
+   */
+  const mutate = (owner: string, change: (current: Bookmarks) => Bookmarks | null, onNoChange: boolean) =>
+    queue(async () => {
+      if (get().status !== 'ready') return false;
+      const current = ownerBookmarks(get().saved, owner);
+      const next = change(current);
+      if (next === null || next === current) return onNoChange;
+      const saved = { ...get().saved, [owner]: next };
+      try {
+        await AsyncStorage.setItem(SECTION_BOOKMARKS_KEY, JSON.stringify(saved));
+      } catch {
+        return false;
+      }
+      // Publish only this owner's change on top of whatever is current now (other owners untouched).
+      set({ saved: { ...get().saved, [owner]: next } });
+      return true;
+    });
   return {
     status: 'idle',
     saved: {},
@@ -65,16 +79,11 @@ export const useSectionBookmarksStore = create<State>((set, get) => {
       set({ status: 'idle' });
       await get().load();
     },
-    save: async (owner, input) => {
-      const current = ownerBookmarks(get().saved, owner);
-      const next = upsertBookmark(current, input);
-      if (next === current) return false;
-      return write(owner, next);
-    },
-    remove: async (owner, key) => {
-      const current = ownerBookmarks(get().saved, owner);
-      const next = removeBookmark(current, key);
-      return next === current ? true : write(owner, next);
-    },
+    save: (owner, input) =>
+      mutate(owner, (current) => {
+        const next = upsertBookmark(current, input);
+        return next === current ? null : next;
+      }, false),
+    remove: (owner, key) => mutate(owner, (current) => removeBookmark(current, key), true),
   };
 });

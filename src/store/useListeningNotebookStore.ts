@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
+import { createSerialQueue } from '@/services/storage/serialWrites';
 import { captureMoment, normalizeNotebook, removeMoment, setMomentNote, type Moment, type Notebook } from '@/features/culture/komuz/listening/notebookModel';
 
 /**
@@ -22,19 +23,27 @@ type State = {
   remove: (owner: string, id: string) => Promise<boolean>;
 };
 
+/** Serializes every write to LISTENING_NOTEBOOK_KEY (all owners share that one object). */
+const queue = createSerialQueue();
+
 export const ownerNotebook = (saved: Saved, owner: string): Notebook => normalizeNotebook(saved[owner]);
 
 export const useListeningNotebookStore = create<State>((set, get) => {
-  const write = async (owner: string, next: Notebook) => {
-    if (get().status !== 'ready') return false;
-    try {
-      await AsyncStorage.setItem(LISTENING_NOTEBOOK_KEY, JSON.stringify({ ...get().saved, [owner]: next }));
-    } catch {
-      return false;
-    }
-    set({ saved: { ...get().saved, [owner]: next } });
-    return true;
-  };
+  /** One queue for this key: computed from the LATEST state inside the queue, written, then published. */
+  const mutate = <T,>(owner: string, change: (current: Notebook) => { next: Notebook; result: T } | null, failed: T, unchanged: T) =>
+    queue(async () => {
+      if (get().status !== 'ready') return failed;
+      const current = ownerNotebook(get().saved, owner);
+      const outcome = change(current);
+      if (!outcome || outcome.next === current) return outcome ? outcome.result : unchanged;
+      try {
+        await AsyncStorage.setItem(LISTENING_NOTEBOOK_KEY, JSON.stringify({ ...get().saved, [owner]: outcome.next }));
+      } catch {
+        return failed;
+      }
+      set({ saved: { ...get().saved, [owner]: outcome.next } });
+      return outcome.result;
+    });
   return {
     status: 'idle',
     saved: {},
@@ -62,20 +71,12 @@ export const useListeningNotebookStore = create<State>((set, get) => {
       set({ status: 'idle' });
       await get().load();
     },
-    capture: async (owner, input) => {
-      const { notebook, moment } = captureMoment(ownerNotebook(get().saved, owner), input);
-      if (!moment) return null;
-      return (await write(owner, notebook)) ? moment : null;
-    },
-    setNote: async (owner, id, note) => {
-      const current = ownerNotebook(get().saved, owner);
-      if (!current[id]) return false;
-      return write(owner, setMomentNote(current, id, note));
-    },
-    remove: async (owner, id) => {
-      const current = ownerNotebook(get().saved, owner);
-      const next = removeMoment(current, id);
-      return next === current ? true : write(owner, next);
-    },
+    capture: (owner, input) =>
+      mutate<Moment | null>(owner, (current) => {
+        const { notebook, moment } = captureMoment(current, input);
+        return moment ? { next: notebook, result: moment } : null;
+      }, null, null),
+    setNote: (owner, id, note) => mutate(owner, (current) => (current[id] ? { next: setMomentNote(current, id, note), result: true } : null), false, false),
+    remove: (owner, id) => mutate(owner, (current) => ({ next: removeMoment(current, id), result: true }), false, true),
   };
 });

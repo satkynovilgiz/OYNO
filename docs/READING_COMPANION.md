@@ -51,6 +51,24 @@ retried when the containers are measured.
 
 ## Storage
 
+- **Writes are serialized per storage key** (`services/storage/serialWrites.ts`).
+  All owners share one persisted object, so there is one queue per key.
+- Each mutation runs inside the queue and goes through four steps:
+  1. it reads the LATEST state;
+  2. it computes the change;
+  3. it writes to storage;
+  4. only then does it publish.
+- Two overlapping saves (same or different owners) can't overwrite each
+  other.
+- **A failed write:**
+  - the operation reports failure and nothing is published;
+  - the queue moves on, so the next operation still runs;
+  - the queue never retries on its own; Retry stays the user's choice,
+    with the same messages as before.
+- **Account switch while a write is pending:** the write completes for the
+  account that started it. The screen doesn't apply its result, such as an
+  open editor or an error, to the new account.
+
 - `oyno.sectionBookmarks.v1`: `{ <owner>: { <key>: bookmark } }`, on this
   device, per owner, at most 200.
 - Writes go to storage first. A failed or unreadable load is an error state

@@ -140,6 +140,27 @@ describe('the notebook in the Listening Room', () => {
     expect(Object.values(ownerNotebook(useListeningNotebookStore.getState().saved, 'user-a'))[0].seconds).toBe(42.4);
   });
 
+  it('the account changes while a capture is being written: saved for the first account, nothing shown for the new one', async () => {
+    const real = AsyncStorage.setItem;
+    let release: () => void = () => undefined;
+    AsyncStorage.setItem = (key: string, value: string) => new Promise<void>((resolve) => (release = () => void real(key, value).then(resolve)));
+    let saving: Promise<void> = Promise.resolve();
+    act(() => {
+      saving = all('notebook-save-moment')[0].props.onPress();
+    });
+    act(() => mockOwner.setState({ owner: 'user-b' }));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      release();
+      await saving;
+    });
+    AsyncStorage.setItem = real;
+    expect(Object.values(ownerNotebook(useListeningNotebookStore.getState().saved, 'user-a'))).toHaveLength(1);
+    expect(ownerNotebook(useListeningNotebookStore.getState().saved, 'user-b')).toEqual({});
+    expect(byPrefix('notebook-moment-')).toHaveLength(0); // user-b sees no moment and no open editor
+    expect(byPrefix('notebook-note-m')).toHaveLength(0);
+  });
+
   it('an unavailable recording keeps its notes; another account sees none', async () => {
     act(() => useListeningNotebookStore.setState({ status: 'ready', saved: { 'user-a': { mgone1: moment({ id: 'mgone1', trackId: 'removed-track', note: 'Kept note' }) } } }));
     expect(all('notebook-track-missing')).toHaveLength(1);
