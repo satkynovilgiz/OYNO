@@ -54,6 +54,7 @@ function looksPrivate(segment: string): boolean {
  *   /profile/my-collections/<id>
  *   /culture/board/<id>              (a person's Discovery Board)
  *   /profile/capsules/<id>           (a person's Time Capsule)
+ *   /profile/oymo-portfolios/<id>    (a person's Oymo Design Portfolio)
  *   /open/<type>/<id>                unknown type -> both replaced
  *   /<auth screen>/<anything>
  *   /<unknown top-level route>/...   the whole path is unknown text
@@ -67,6 +68,7 @@ function privateByStructure(segments: string[], index: number): boolean {
   if (first === 'profile' && second === 'my-collections') return index >= 2;
   if (first === 'culture' && second === 'board') return index >= 2;
   if (first === 'profile' && second === 'capsules') return index >= 2;
+  if (first === 'profile' && second === 'oymo-portfolios') return index >= 2;
   if (first === 'open') return index === 1 ? !OPEN_TYPES.has(second) : !OPEN_TYPES.has(second) || index > 2;
   return false;
 }

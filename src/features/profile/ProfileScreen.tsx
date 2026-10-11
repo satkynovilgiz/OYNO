@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, BarChart3, Bookmark, BookMarked, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, Library, Mail, MessageSquareWarning } from 'lucide-react-native';
+import { Award, BarChart3, Bookmark, BookMarked, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, Library, Mail, Palette, MessageSquareWarning } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -145,6 +145,7 @@ export function ProfileScreen() {
             {/* Two small private entries: per-game records and the recap. */}
             {[
               { route: '/profile/shelf', icon: Library, title: t('shelf.title'), meta: t('shelf.profileMeta') },
+              { route: '/profile/oymo-portfolios', icon: Palette, title: t('oymoPortfolio.title'), meta: t('oymoPortfolio.profileMeta') },
               { route: '/profile/portfolio', icon: BookMarked, title: t('portfolio.title'), meta: t('portfolio.profileMeta') },
               { route: '/profile/game-records', icon: Trophy, title: t('gameRecords.title'), meta: t('gameRecords.profileMeta') },
               { route: '/games/stats', icon: BarChart3, title: t('gameStats.title'), meta: t('gameStats.profileMeta') },
