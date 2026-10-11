@@ -20,6 +20,8 @@ import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { addArticle, clampOpenOn, daysUntil, earliestOpenOn, editDraft, isDue, MAX_ARTICLES, MESSAGE_MAX, newCapsule, openCapsule, reflect, REFLECTION_MAX, removeArticle, seal, sealProblems, stepDate, takeOfferedDesign, TITLE_MAX, type Capsule } from './capsuleModel';
 
+type Action = 'draft' | 'seal' | 'open' | 'openEarly' | 'reflect' | 'delete';
+
 export const capsuleRoute = (id: string) => `/profile/capsules/${encodeURIComponent(id)}`;
 
 /** Unsaved edits per owner + capsule, kept while an article is open (memory only). */
@@ -181,8 +183,12 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
     if (shownKey.current === key) return;
     shownKey.current = key;
     setDraftState(drafts.get(key) ?? (capsuleId === 'new' ? newCapsule() : null));
+    setFailed(null);
+    setConfirm(null);
+    setReflection(null);
   }, [key, capsuleId]);
-  const [failed, setFailed] = useState<null | (() => Promise<void>)>(null);
+  /** WHICH action failed - Retry re-runs it with what is on screen NOW (never an old copy). */
+  const [failed, setFailed] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<'early' | 'delete' | null>(null);
   const [search, setSearch] = useState('');
@@ -193,13 +199,13 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
     drafts.set(key, next);
     setDraftState(next);
   };
-  /** Writes; on failure keeps everything on screen and offers Retry. */
-  const persist = async (next: Capsule, after?: () => void) => {
+  /** Writes; on failure keeps everything on screen and offers Retry (of the same action, on the latest content). */
+  const persist = async (action: Action, next: Capsule, after?: () => void) => {
     setBusy(true);
     const ok = await useCapsuleStore.getState().save(owner, next);
     setBusy(false);
     if (!ok) {
-      setFailed(() => () => persist(next, after));
+      setFailed(action);
       announce(t('timeCapsule.saveFailed'));
       return;
     }
@@ -214,11 +220,25 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
     const ok = capsuleId === 'new' ? true : await useCapsuleStore.getState().remove(owner, capsuleId);
     setBusy(false);
     if (!ok) {
-      setFailed(() => destroy);
+      setFailed('delete');
       return;
     }
     drafts.delete(key);
     onPressBack();
+  };
+  /** Every saving action, computed from the CURRENT capsule / reflection text. */
+  const run = (action: Action) => {
+    if (action === 'delete') return void destroy();
+    if (!capsule) return;
+    if (action === 'draft') return void persist(action, capsule);
+    if (action === 'seal') return void persist(action, seal(capsule, today), () => announce(t('timeCapsule.sealedAnnounce')));
+    if (action === 'open') return void persist(action, openCapsule(capsule, today, { early: !capsule.openOn }));
+    if (action === 'openEarly') return void persist(action, openCapsule(capsule, today, { early: true }), () => setConfirm(null));
+    const text = reflection ?? capsule.reflection;
+    return void persist(action, reflect(capsule, text), () => {
+      setReflection(null);
+      announce(t('timeCapsule.reflectionSaved'));
+    });
   };
 
   const body = (() => {
@@ -275,8 +295,8 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
             </View>
           ) : null}
           <Text style={styles.note}>{t('timeCapsule.sealExplain')}</Text>
-          <Button label={t('timeCapsule.saveDraft')} variant="secondary" disabled={busy} onPress={() => void persist(capsule)} testID="capsule-save-draft" />
-          <Button label={t('timeCapsule.seal')} icon={<Lock size={16} color={colors.textOnPrimary} strokeWidth={2.25} />} disabled={busy || problems.length > 0} onPress={() => void persist(seal(capsule, today), () => announce(t('timeCapsule.sealedAnnounce')))} testID="capsule-seal" />
+          <Button label={t('timeCapsule.saveDraft')} variant="secondary" disabled={busy} onPress={() => run('draft')} testID="capsule-save-draft" />
+          <Button label={t('timeCapsule.seal')} icon={<Lock size={16} color={colors.textOnPrimary} strokeWidth={2.25} />} disabled={busy || problems.length > 0} onPress={() => run('seal')} testID="capsule-seal" />
         </View>
       );
     }
@@ -291,12 +311,12 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
           </Text>
           <Text style={styles.note}>{t('timeCapsule.notEncryption')}</Text>
           {due || !capsule.openOn ? (
-            <Button label={t('timeCapsule.open')} onPress={() => void persist(openCapsule(capsule, today, { early: !capsule.openOn }))} disabled={busy} testID="capsule-open" />
+            <Button label={t('timeCapsule.open')} onPress={() => run('open')} disabled={busy} testID="capsule-open" />
           ) : confirm === 'early' ? (
             <View style={styles.card} testID="capsule-early-confirm">
               <Text style={styles.body}>{t('timeCapsule.earlyConfirm', { date: formatLongDate(capsule.openOn, language) })}</Text>
               <View style={styles.wrap}>
-                <Button label={t('timeCapsule.earlyYes')} onPress={() => void persist(openCapsule(capsule, today, { early: true }), () => setConfirm(null))} disabled={busy} testID="capsule-early-yes" />
+                <Button label={t('timeCapsule.earlyYes')} onPress={() => run('openEarly')} disabled={busy} testID="capsule-early-yes" />
                 <Button label={t('timeCapsule.earlyNo')} variant="text" onPress={() => setConfirm(null)} testID="capsule-early-no" />
               </View>
             </View>
@@ -346,7 +366,7 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
         ) : null}
         <TextField testID="capsule-reflection" label={t('timeCapsule.reflectionLabel')} value={text} onChangeText={(value) => setReflection(value.slice(0, REFLECTION_MAX))} multiline numberOfLines={5} placeholder={t('timeCapsule.reflectionPlaceholder')} />
         <Text style={styles.meta}>{t('timeCapsule.reflectionNote')}</Text>
-        <Button label={t('timeCapsule.saveReflection')} disabled={busy || reflection === null} onPress={() => void persist(reflect(capsule, text), () => { setReflection(null); announce(t('timeCapsule.reflectionSaved')); })} testID="capsule-save-reflection" />
+        <Button label={t('timeCapsule.saveReflection')} disabled={busy || reflection === null} onPress={() => run('reflect')} testID="capsule-save-reflection" />
       </View>
     );
   })();
@@ -359,7 +379,7 @@ export function CapsuleScreen({ capsuleId, onPressBack }: { capsuleId: string; o
           {failed ? (
             <View style={[styles.card, styles.error]} accessibilityLiveRegion="polite" testID="capsule-save-failed">
               <Text style={styles.body}>{t('timeCapsule.saveFailed')}</Text>
-              <Button label={t('timeCapsule.retry')} onPress={() => void failed()} disabled={busy} testID="capsule-retry" />
+              <Button label={t('timeCapsule.retry')} onPress={() => run(failed)} disabled={busy} testID="capsule-retry" />
             </View>
           ) : null}
           {body}

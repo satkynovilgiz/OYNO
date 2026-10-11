@@ -190,6 +190,45 @@ describe('the screens', () => {
     expect(ownerCapsules(useCapsuleStore.getState().saved, 'user-a')[0]).toMatchObject({ title: 'For later', message: 'Hello, future me.', status: 'draft' });
   });
 
+  it('failed save -> edit -> Retry saves the LATEST text -> reopen shows it', async () => {
+    act(() => {
+      screen = create(createElement(CapsuleScreen, { capsuleId: 'new', onPressBack: () => undefined }));
+    });
+    type('capsule-title', 'For later');
+    type('capsule-message', 'First words.');
+    const real = AsyncStorage.setItem;
+    AsyncStorage.setItem = () => Promise.reject(new Error('disk full'));
+    await press('capsule-save-draft');
+    AsyncStorage.setItem = real;
+    expect(has('capsule-save-failed')).toBe(true);
+    type('capsule-message', 'Edited after the failure.');
+    await press('capsule-retry');
+    const [stored] = ownerCapsules(useCapsuleStore.getState().saved, 'user-a');
+    expect(stored.message).toBe('Edited after the failure.');
+    act(() => screen.unmount());
+    act(() => {
+      screen = create(createElement(CapsuleScreen, { capsuleId: stored.id, onPressBack: () => undefined }));
+    });
+    expect(all('capsule-message')[0].props.value).toBe('Edited after the failure.');
+  });
+
+  it('a pending Retry is dropped when the owner changes', async () => {
+    await useCapsuleStore.getState().save('user-a', ready());
+    const id = ownerCapsules(useCapsuleStore.getState().saved, 'user-a')[0].id;
+    act(() => {
+      screen = create(createElement(CapsuleScreen, { capsuleId: id, onPressBack: () => undefined }));
+    });
+    type('capsule-message', 'Unsaved');
+    const real = AsyncStorage.setItem;
+    AsyncStorage.setItem = () => Promise.reject(new Error('disk full'));
+    await press('capsule-save-draft');
+    AsyncStorage.setItem = real;
+    expect(has('capsule-save-failed')).toBe(true);
+    act(() => mockOwner.setState({ owner: 'user-b' }));
+    expect(has('capsule-save-failed')).toBe(false);
+    expect(has('capsule-retry')).toBe(false);
+  });
+
   it('sealed: the message is not shown; early opening needs a confirmation; then reflect', async () => {
     const sealed = seal(editDraft(ready(), { openOn: earliestOpenOn(localDateKey()) }), localDateKey());
     await useCapsuleStore.getState().save('user-a', sealed);
