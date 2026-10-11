@@ -12,6 +12,7 @@ export default function AdminRoute() {
         onPressPush={() => router.push('/admin/push' as never)}
         onPressFeedback={() => router.push('/admin/feedback' as never)}
         onPressRegions={() => router.push('/admin/regions' as never)}
+        onPressMakers={() => router.push('/admin/makers' as never)}
       />
     </AdminGate>
   );

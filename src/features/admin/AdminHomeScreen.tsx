@@ -16,13 +16,14 @@ type AdminHomeScreenProps = {
   onPressPush: () => void;
   onPressFeedback: () => void;
   onPressRegions: () => void;
+  onPressMakers: () => void;
 };
 
 /** Internal tooling, not part of the app's localized surface - kept in
  * English deliberately (same reasoning as the rest of this file: it's for
  * whoever has an admin_roles row, not end users) rather than adding a
  * fourth i18n surface nobody but an admin will ever see. */
-export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback, onPressRegions }: AdminHomeScreenProps) {
+export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback, onPressRegions, onPressMakers }: AdminHomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { data: role, isLoading } = useAdminRole();
 
@@ -80,6 +81,16 @@ export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPr
             </Text>
             <AnimatedPressable style={styles.row} onPress={onPressFeedback} accessibilityRole="button" accessibilityLabel="Feedback and content reports">
               <Text style={styles.rowLabel}>Feedback & content reports</Text>
+              <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+            </AnimatedPressable>
+          </View>
+
+          <View style={styles.group}>
+            <Text style={styles.groupTitle} accessibilityRole="header">
+              Meet the Makers
+            </Text>
+            <AnimatedPressable style={styles.row} onPress={onPressMakers} accessibilityRole="button" accessibilityLabel="Meet the Makers - internal schema preview with a demo fixture">
+              <Text style={styles.rowLabel}>Schema preview (demo fixture, not public)</Text>
               <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
             </AnimatedPressable>
           </View>
