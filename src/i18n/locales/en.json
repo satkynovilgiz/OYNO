@@ -6517,5 +6517,30 @@
     "notesLink_few": "Your section notes ({{count}})",
     "notesLink_many": "Your section notes ({{count}})",
     "notesLink_other": "Your section notes ({{count}})"
+  },
+  "listeningNotebook": {
+    "title": "Listening notebook",
+    "intro": "Save a moment while a recording plays and add your own observation. Tap a time to go back to it.",
+    "loadError": "Your notebook couldn't be read on this device. Nothing was changed.",
+    "retry": "Try again",
+    "saveMoment": "Save this moment ({{time}})",
+    "saveMomentHint": "Saves the point the recording is at now",
+    "playFirst": "Play a recording to save a moment.",
+    "saveFailed": "Couldn't save. Nothing was lost - try again.",
+    "none": "No saved moments yet.",
+    "trackMissing": "This recording isn't available now. Your note is kept.",
+    "goA11y": "Go to {{time}} in {{title}}",
+    "noteLabel": "Your observation (personal note)",
+    "notePlaceholder": "What did you notice here?",
+    "saveNote": "Save note",
+    "cancel": "Cancel",
+    "yourNote": "Your note",
+    "noNote": "No note yet.",
+    "editNote": "Edit note",
+    "delete": "Delete moment",
+    "notSeekable": "This recording can't jump to a time right now (it hasn't reported its length yet). Your note is kept - try again once it plays.",
+    "savedAt": "Moment saved at {{time}}",
+    "jumped": "Going to {{time}}",
+    "storageNote": "The notebook stays on this device for this account only. It isn't synced and isn't part of the learning-data export (the separate saved listening points are)."
   }
 }

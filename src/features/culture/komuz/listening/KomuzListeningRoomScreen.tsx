@@ -20,6 +20,7 @@ import { clockTime, filterTracks, nextIndex, previousIndex, realDuration, showFa
 import { RHYTHM_CHARTS } from '../rhythm/rhythmCharts';
 import { supportedCharts } from '../rhythm/rhythmModel';
 import { registerKomuzHost, useKomuzPlayerStore } from './useKomuzPlayerStore';
+import { ListeningNotebook } from './ListeningNotebook';
 import { shareContentLink } from '@/services/links/shareContentLink';
 
 /**
@@ -170,6 +171,8 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
           <Text style={styles.offline}>{t('komuzRoom.availableOffline')}</Text>
         </View>
 
+        <ListeningNotebook />
+
         {/* Rhythm practice only exists for tracks with an authored, reviewed chart. */}
         {rhythmAvailable ? <Button label={t('rhythm.practice')} variant="secondary" onPress={() => router.push('/culture/komuz/rhythm' as never)} /> : null}
         {/* Authored practice exercises - needs no beat chart, so always offered. */}
@@ -271,6 +274,11 @@ function Scrubber({ position, duration, label, onSeek }: { position: number; dur
       accessibilityRole="adjustable"
       accessibilityLabel={t('komuzRoom.position')}
       accessibilityValue={{ min: 0, max: Math.round(duration), now: Math.round(position), text: label }}
+      // react-native-web doesn't map accessibilityValue onto the slider role - give the ARIA values directly.
+      aria-valuemin={0}
+      aria-valuemax={Math.round(duration)}
+      aria-valuenow={Math.round(position)}
+      aria-valuetext={label}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event) => onSeek(position + (event.nativeEvent.actionName === 'increment' ? 10 : -10))}
     >
@@ -292,7 +300,7 @@ const styles = StyleSheet.create({
   nowPlaying: { alignItems: 'center', gap: spacing.xs, padding: spacing.lg, borderRadius: radii.xl, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.surfaceBorder },
   art: { width: 168, height: 168, borderRadius: radii.xl, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceFeature, marginBottom: spacing.sm },
   artChild: { width: 200, height: 200 },
-  kicker: { ...typography.overline, color: colors.accentTerracotta },
+  kicker: { ...typography.overline, color: colors.accentTerracottaText },
   trackTitle: { ...textStyles.h2, color: colors.textPrimary, textAlign: 'center' },
   performer: { ...textStyles.body, color: colors.textSecondary },
   unconfirmed: { ...textStyles.small, color: colors.accentTerracotta, fontWeight: '700' },
@@ -304,7 +312,7 @@ const styles = StyleSheet.create({
   playButtonChild: { width: 84, height: 84, borderRadius: 42 },
   offline: { ...textStyles.small, color: colors.textMuted, marginTop: spacing.xs },
   section: { gap: spacing.xs },
-  sectionTitle: { ...typography.overline, color: colors.accentTerracotta },
+  sectionTitle: { ...typography.overline, color: colors.accentTerracottaText },
   listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   filters: { flexDirection: 'row', gap: 4, padding: 3, borderRadius: radii.pill, backgroundColor: colors.surfaceMuted },
   filter: { minHeight: 32, justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: radii.pill },
@@ -323,5 +331,5 @@ const styles = StyleSheet.create({
   rowTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
   rowTitleChild: { fontSize: 18 },
   rowMeta: { ...textStyles.small, color: colors.textSecondary },
-  unconfirmedSmall: { ...textStyles.small, color: colors.accentTerracotta },
+  unconfirmedSmall: { ...textStyles.small, color: colors.accentTerracottaText },
 });
