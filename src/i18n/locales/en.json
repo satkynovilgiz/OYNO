@@ -6123,7 +6123,10 @@
     "cardsTitle_one": "Articles on the board ({{count}} of {{max}})",
     "cardsTitle_few": "Articles on the board ({{count}} of {{max}})",
     "cardsTitle_many": "Articles on the board ({{count}} of {{max}})",
-    "cardsTitle_other": "Articles on the board ({{count}} of {{max}})"
+    "cardsTitle_other": "Articles on the board ({{count}} of {{max}})",
+    "loading": "Loading your boards…",
+    "loadError": "Your boards couldn't be read on this device. Nothing was changed, and new boards can't be made until they load.",
+    "retry": "Try again"
   },
   "rememberTogether": {
     "title": "Remember the Pattern together",

@@ -2,18 +2,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { MAX_BOARDS, normalizeBoard, type Board } from '@/features/culture/board/boardModel';
-import { safeJsonParse } from '@/services/storage/safeJson';
 
 /** Culture Discovery Boards: owner ('guest' or account id) -> that owner's boards. On this device only; not synced. */
 export const DISCOVERY_BOARDS_KEY = 'oyno.discoveryBoards.v1';
 
 type Saved = Record<string, Board[]>;
 
+export type BoardLoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 type State = {
   isLoaded: boolean;
+  /** 'error': the stored boards couldn't be read - they stay on the device untouched and no write is allowed. */
+  status: BoardLoadStatus;
   saved: Saved;
   load: () => Promise<void>;
-  /** Adds (newest first) - false when the owner already has MAX_BOARDS. */
+  /** After a failed read. */
+  retryLoad: () => Promise<void>;
+  /** Adds (newest first) - false before storage has loaded (or after a failed read), or at MAX_BOARDS. */
   add: (owner: string, board: Board) => boolean;
   /** Replaces one of THIS owner's boards (by id); a board of another owner can't be reached. */
   update: (owner: string, boardId: string, change: (board: Board) => Board) => void;
@@ -37,22 +41,50 @@ export const useDiscoveryBoardStore = create<State>((set, get) => {
   };
   return {
     isLoaded: false,
+    status: 'idle',
     saved: {},
     load: async () => {
-      if (get().isLoaded) return;
-      const raw = await AsyncStorage.getItem(DISCOVERY_BOARDS_KEY).catch(() => null);
+      if (get().status === 'ready' || get().status === 'loading') return;
+      set({ status: 'loading' });
+      let raw: string | null;
+      try {
+        raw = await AsyncStorage.getItem(DISCOVERY_BOARDS_KEY);
+      } catch {
+        set({ status: 'error' });
+        return;
+      }
       // A load that finishes late never overwrites a store already written meanwhile.
       if (get().isLoaded) return;
-      const parsed = safeJsonParse<Saved>(raw, {});
-      set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
+      let parsed: unknown = {};
+      if (raw !== null) {
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          parsed = null;
+        }
+      }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        // Unreadable: kept as it is on the device; nothing may be written over it.
+        set({ status: 'error' });
+        return;
+      }
+      set({ saved: parsed as Saved, isLoaded: true, status: 'ready' });
+    },
+    retryLoad: async () => {
+      if (get().status !== 'error') return;
+      set({ status: 'idle' });
+      await get().load();
     },
     add: (owner, board) => {
+      // Before the stored boards are known, a write would replace them.
+      if (get().status !== 'ready') return false;
       const boards = ownerBoards(get().saved, owner);
       if (boards.length >= MAX_BOARDS) return false;
       put(owner, [board, ...boards]);
       return true;
     },
     update: (owner, boardId, change) => {
+      if (get().status !== 'ready') return;
       const boards = ownerBoards(get().saved, owner);
       const index = boards.findIndex((board) => board.id === boardId);
       if (index === -1) return;
@@ -61,6 +93,7 @@ export const useDiscoveryBoardStore = create<State>((set, get) => {
       put(owner, boards.map((board, position) => (position === index ? next : board)));
     },
     remove: (owner, boardId) => {
+      if (get().status !== 'ready') return;
       const boards = ownerBoards(get().saved, owner);
       if (!boards.some((board) => board.id === boardId)) return;
       put(owner, boards.filter((board) => board.id !== boardId));

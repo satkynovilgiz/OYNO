@@ -129,7 +129,7 @@ describe('missing content', () => {
 describe('storage per owner', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
-    useDiscoveryBoardStore.setState({ isLoaded: true, saved: {} });
+    useDiscoveryBoardStore.setState({ isLoaded: true, status: 'ready', saved: {} });
   });
 
   it('saved locally, survives a restart, never visible to another account', async () => {
@@ -142,7 +142,7 @@ describe('storage per owner', () => {
     expect(ownerBoard(useDiscoveryBoardStore.getState().saved, 'user-b', board.id)).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(JSON.parse((await AsyncStorage.getItem(DISCOVERY_BOARDS_KEY)) ?? '{}')['user-a'][0].title).toBe('Renamed');
-    useDiscoveryBoardStore.setState({ isLoaded: false, saved: {} });
+    useDiscoveryBoardStore.setState({ isLoaded: false, status: 'idle', saved: {} });
     await useDiscoveryBoardStore.getState().load();
     expect(ownerBoard(useDiscoveryBoardStore.getState().saved, 'user-a', board.id)?.title).toBe('Renamed');
     useDiscoveryBoardStore.getState().remove('user-a', board.id);
@@ -166,7 +166,7 @@ describe('the board screen', () => {
     mockOwner.setState({ owner: 'user-a' });
     mockPush.mockClear();
     board = attachConnection(addCard(base(), karkas), 'tunduk-part-of-karkas');
-    useDiscoveryBoardStore.setState({ isLoaded: true, saved: { 'user-a': [board] } });
+    useDiscoveryBoardStore.setState({ isLoaded: true, status: 'ready', saved: { 'user-a': [board] } });
     render();
   });
   afterEach(() => act(() => screen.unmount()));
@@ -206,5 +206,50 @@ describe('the board screen', () => {
     expect(has('board-card-unavailable-1')).toBe(true);
     expect(ownerBoard(useDiscoveryBoardStore.getState().saved, 'user-a', board.id)?.cards).toHaveLength(2);
     mockGone.clear();
+  });
+});
+
+describe('loading before creating', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    useDiscoveryBoardStore.setState({ isLoaded: false, status: 'idle', saved: {} });
+  });
+
+  it('a delayed read: creation is refused until it completes, then the new board joins the existing ones', async () => {
+    const existing = rename(base(), 'Existing board');
+    await AsyncStorage.setItem(DISCOVERY_BOARDS_KEY, JSON.stringify({ 'user-a': [existing] }));
+    let release: () => void = () => undefined;
+    const realGet = AsyncStorage.getItem;
+    AsyncStorage.getItem = (key: string) => new Promise((resolve) => (release = () => void realGet(key).then(resolve)));
+    const loading = useDiscoveryBoardStore.getState().load();
+    expect(useDiscoveryBoardStore.getState().add('user-a', base())).toBe(false); // still reading
+    release();
+    await loading;
+    AsyncStorage.getItem = realGet;
+    expect(useDiscoveryBoardStore.getState().add('user-a', rename(base(), 'New board'))).toBe(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const stored = JSON.parse((await AsyncStorage.getItem(DISCOVERY_BOARDS_KEY)) ?? '{}')['user-a'].map((board: Board) => board.title);
+    expect(stored).toEqual(['New board', 'Existing board']);
+  });
+
+  it('a failed or unreadable read keeps the stored boards and blocks writes; retry recovers', async () => {
+    await AsyncStorage.setItem(DISCOVERY_BOARDS_KEY, JSON.stringify({ 'user-a': [rename(base(), 'Existing board')] }));
+    const realGet = AsyncStorage.getItem;
+    AsyncStorage.getItem = () => Promise.reject(new Error('read failed'));
+    await useDiscoveryBoardStore.getState().load();
+    AsyncStorage.getItem = realGet;
+    expect(useDiscoveryBoardStore.getState().status).toBe('error');
+    expect(useDiscoveryBoardStore.getState().add('user-a', base())).toBe(false);
+    useDiscoveryBoardStore.getState().update('user-a', 'x', (board) => board);
+    expect(JSON.parse((await AsyncStorage.getItem(DISCOVERY_BOARDS_KEY)) ?? '{}')['user-a']).toHaveLength(1);
+    await useDiscoveryBoardStore.getState().retryLoad();
+    expect(useDiscoveryBoardStore.getState().status).toBe('ready');
+    expect(ownerBoards(useDiscoveryBoardStore.getState().saved, 'user-a').map((board) => board.title)).toEqual(['Existing board']);
+    // Unreadable JSON is an error too, never "no boards".
+    await AsyncStorage.setItem(DISCOVERY_BOARDS_KEY, '{oops');
+    useDiscoveryBoardStore.setState({ isLoaded: false, status: 'idle', saved: {} });
+    await useDiscoveryBoardStore.getState().load();
+    expect(useDiscoveryBoardStore.getState().status).toBe('error');
+    expect(await AsyncStorage.getItem(DISCOVERY_BOARDS_KEY)).toBe('{oops');
   });
 });

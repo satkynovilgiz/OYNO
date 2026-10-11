@@ -27,10 +27,11 @@ function useBoards() {
   const owner = useRecordsOwner();
   const saved = useDiscoveryBoardStore((state) => state.saved);
   const isLoaded = useDiscoveryBoardStore((state) => state.isLoaded);
+  const status = useDiscoveryBoardStore((state) => state.status);
   useEffect(() => {
     void useDiscoveryBoardStore.getState().load();
   }, []);
-  return { owner, saved, isLoaded };
+  return { owner, saved, isLoaded, status };
 }
 
 function Header({ title, onPressBack }: { title: string; onPressBack: () => void }) {
@@ -46,11 +47,21 @@ function Header({ title, onPressBack }: { title: string; onPressBack: () => void
   );
 }
 
+function LoadError() {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.card} testID="board-load-error">
+      <Text style={styles.body}>{t('discoveryBoard.loadError')}</Text>
+      <Button label={t('discoveryBoard.retry')} onPress={() => void useDiscoveryBoardStore.getState().retryLoad()} testID="board-load-retry" />
+    </View>
+  );
+}
+
 /** /culture/board?from=<type>:<id> - start a board around an article, or reopen one. */
 export function BoardStartScreen({ from, onPressBack }: { from: string | null; onPressBack: () => void }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { owner, saved, isLoaded } = useBoards();
+  const { owner, saved, isLoaded, status } = useBoards();
   const content = useConnectionContent();
   const [question, setQuestionText] = useState('');
   const [prompt, setPrompt] = useState<PromptId | null>(null);
@@ -90,7 +101,8 @@ export function BoardStartScreen({ from, onPressBack }: { from: string | null; o
                 </AnimatedPressable>
               ))}
             </View>
-            <Button label={t('discoveryBoard.create')} onPress={create} disabled={!start || (!prompt && !question.trim())} testID="board-create" />
+            {/* Creating is possible only once your saved boards are known (otherwise they could be replaced). */}
+            <Button label={t('discoveryBoard.create')} onPress={create} disabled={status !== 'ready' || !start || (!prompt && !question.trim())} testID="board-create" />
             {full ? <Text style={styles.warn}>{t('discoveryBoard.full')}</Text> : null}
           </View>
         ) : null}
@@ -98,7 +110,8 @@ export function BoardStartScreen({ from, onPressBack }: { from: string | null; o
         <Text style={styles.section} accessibilityRole="header">
           {t('discoveryBoard.yourBoards')}
         </Text>
-        {!isLoaded ? <Text style={styles.meta}>…</Text> : boards.length === 0 ? <Text style={styles.meta}>{t('discoveryBoard.noBoards')}</Text> : null}
+        {status === 'error' ? <LoadError /> : null}
+        {status !== 'error' && !isLoaded ? <Text style={styles.meta} testID="board-loading">{t('discoveryBoard.loading')}</Text> : isLoaded && boards.length === 0 ? <Text style={styles.meta}>{t('discoveryBoard.noBoards')}</Text> : null}
         {boards.map((board) => (
           <AnimatedPressable key={board.id} style={styles.listRow} onPress={() => router.push(boardRoute(board.id) as never)} accessibilityRole="button" accessibilityLabel={`${board.title}. ${board.question}`} testID={`board-open-${board.id}`}>
             <View style={styles.flex}>
@@ -123,7 +136,7 @@ export function BoardStartScreen({ from, onPressBack }: { from: string | null; o
 export function BoardScreen({ boardId, onPressBack }: { boardId: string; onPressBack: () => void }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { owner, saved, isLoaded } = useBoards();
+  const { owner, saved, isLoaded, status } = useBoards();
   const content = useConnectionContent();
   const ready = !content.isLoading && !content.waitingForNetwork;
   const board = ownerBoard(saved, owner, boardId);
@@ -146,6 +159,15 @@ export function BoardScreen({ boardId, onPressBack }: { boardId: string; onPress
   const resolveTitle = useMemo(() => (type: ConnectionContentType, id: string) => (ready ? (content.get(type, id)?.title ?? null) : (board?.cards.find((card) => card.type === type && card.id === id)?.titleSnapshot ?? id)), [ready, content, board]);
   const review = useMemo(() => (board ? reviewBoard(board, resolveTitle) : null), [board, resolveTitle]);
 
+  if (status === 'error')
+    return (
+      <View style={styles.root}>
+        <Header title={t('discoveryBoard.title')} onPressBack={onPressBack} />
+        <View style={styles.content}>
+          <LoadError />
+        </View>
+      </View>
+    );
   if (!isLoaded) return <View style={styles.root} />;
   if (!board || !review) return <NotFoundState onPressBack={onPressBack} />;
 
