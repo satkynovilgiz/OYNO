@@ -324,7 +324,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : handoff.source === 'border' ? t('borderWorkshop.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : handoff.source === 'border' ? t('borderWorkshop.openedCopy') : handoff.source === 'together' ? t('createTogether.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -339,6 +339,13 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('rememberPattern.title')}</Text>
             <Text style={styles.headerSubtitle}>{t('rememberPattern.entryMeta')}</Text>
+          </View>
+        </AnimatedPressable>
+        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/together' as never)} accessibilityRole="button" accessibilityLabel={`${t('createTogether.title')}. ${t('createTogether.entryMeta')}`} testID="together-create-entry">
+          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.restoreTitle}>{t('createTogether.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('createTogether.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/border' as never)} accessibilityRole="button" accessibilityLabel={`${t('borderWorkshop.title')}. ${t('borderWorkshop.entryMeta')}`} testID="border-entry">
@@ -434,7 +441,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
       <SaveModal
         recipe={{ include: includeRecipe, onChange: setIncludeRecipe, ...recipeFitInfo }}
         visible={showSaveModal}
-        defaultName={t('culture.oymo.save.defaultName', { count: (creations?.length ?? 0) + 1 })}
+        defaultName={handoff?.name ?? t('culture.oymo.save.defaultName', { count: (creations?.length ?? 0) + 1 })}
         isSaving={isSaving}
         isGuest={isGuest}
         hasError={saveError}

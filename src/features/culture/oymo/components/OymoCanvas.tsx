@@ -41,7 +41,8 @@ export function OymoCanvas({ layers, backgroundColor, symmetryMode, selectedLaye
       ref={wrapRef}
       style={[styles.wrap, { backgroundColor }]}
       accessibilityLabel={t('culture.oymo.canvasLabel')}
-      accessibilityRole="image"
+      // A labelled GROUP: it contains motif buttons, and an "image" can't contain interactive controls.
+      role="group"
     >
       <Pressable onPress={handlePress} style={StyleSheet.absoluteFill} accessibilityRole="none">
         <Svg width={CANVAS_SIZE} height={CANVAS_SIZE} viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}>
