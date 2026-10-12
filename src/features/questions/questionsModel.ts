@@ -1,3 +1,5 @@
+import { draftMap, ownerKey } from '@/services/drafts/draftRegistry';
+
 /**
  * My Questions - the reader's own questions, saved from an article section.
  * Pure rules; storage is useQuestionsStore (on this device, per owner).
@@ -122,8 +124,8 @@ export const newQuestionId = () => `q-${Date.now().toString(36)}-${Math.random()
 export const questionRoute = (id: string) => `/profile/questions/${encodeURIComponent(id)}`;
 
 /* ---------- unsaved drafts (memory), per owner - survive opening a source ---------- */
-const drafts = new Map<string, string>();
-export const draftKey = (owner: string, scope: string) => `${owner}::${scope}`;
+const drafts = draftMap<string>('question');
+export const draftKey = (owner: string, scope: string) => ownerKey(owner, scope);
 export const getDraft = (owner: string, scope: string) => drafts.get(draftKey(owner, scope));
 export const setDraft = (owner: string, scope: string, text: string | null) => {
   if (text === null) drafts.delete(draftKey(owner, scope));

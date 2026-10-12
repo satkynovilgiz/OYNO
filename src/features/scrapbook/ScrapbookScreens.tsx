@@ -13,6 +13,7 @@ import { useConnectionContent } from '@/features/culture/connections/useConnecti
 import { clockTime } from '@/features/culture/komuz/listening/komuzQueue';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { announce } from '@/services/a11y/announce';
+import { draftMap, ownerKey } from '@/services/drafts/draftRegistry';
 import { useOymoCreations } from '@/services/content/oymoCreationsService';
 import { useJournalStore } from '@/store/useJournalStore';
 import { ownerNotebook, useListeningNotebookStore } from '@/store/useListeningNotebookStore';
@@ -24,7 +25,7 @@ import { addEntry, CAPTION_MAX, ENTRY_KINDS, MAX_ENTRIES, moveEntry, newScrapboo
 export const scrapbookRoute = (id: string) => `/profile/scrapbooks/${encodeURIComponent(id)}`;
 
 /** Unsaved edits per owner + scrapbook (memory) - kept while a source is open. */
-const drafts = new Map<string, Scrapbook>();
+const drafts = draftMap<Scrapbook>('scrapbook');
 
 function useScrapbooks() {
   const owner = useRecordsOwner();
@@ -154,7 +155,7 @@ export function ScrapbookScreen({ bookId, onPressBack }: { bookId: string; onPre
   const insets = useSafeAreaInsets();
   const { owner, status, saved } = useScrapbooks();
   const { resolve, candidates } = useSources(owner);
-  const key = `${owner}\u0000${bookId}`;
+  const key = ownerKey(owner, bookId);
   const [draft, setDraftState] = useState<Scrapbook | null>(() => drafts.get(key) ?? null);
   const shownKey = useRef(key);
   useEffect(() => {

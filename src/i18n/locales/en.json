@@ -7511,5 +7511,41 @@
     "planTitle_few": "My Next Visit: {{count}} of {{max}}",
     "planTitle_many": "My Next Visit: {{count}} of {{max}}",
     "planTitle_other": "My Next Visit: {{count}} of {{max}}"
+  },
+  "recovery": {
+    "title": "Recovery Center",
+    "profileMeta": "Unfinished edits and saves",
+    "intro": "Edits you haven't saved yet, and saves with a step still to finish. Open each in its own editor, retry where it's safe, or discard it.",
+    "restartNote": "Most unsaved edits are kept only while the app is open. Journal drafts are stored on this device and survive a restart.",
+    "empty": "Nothing unfinished right now.",
+    "untitled": "Untitled",
+    "loading": "Checking the saved record…",
+    "kinds": {
+      "portfolio": "Design portfolio",
+      "scrapbook": "Scrapbook",
+      "questionNew": "New question (not saved yet)",
+      "questionEdit": "Question - changed",
+      "compareNote": "Listening comparison note",
+      "journal": "Journal draft",
+      "firstUse": "Getting-started guide"
+    },
+    "state": {
+      "unsaved": "Unsaved edits - not saved yet",
+      "pending": "Saved - one step still to record"
+    },
+    "survives": "Kept after the app restarts",
+    "memoryOnly": "Kept only until the app is closed",
+    "parentMissing": "The saved record this belongs to no longer exists. It can't be saved again from here - you can only discard the draft.",
+    "openToSave": "Open it to finish and save - retrying from here could create a second record.",
+    "open": "Open in its editor",
+    "retrySave": "Retry saving",
+    "recordStep": "Record the step",
+    "retried": "Done - saved.",
+    "retryFailed": "It still couldn't be saved. Your edits are kept.",
+    "discard": "Discard",
+    "discardConfirm": "Discard these unsaved edits? The saved version (if any) and everything else stay as they are.",
+    "discardPending": "Stop reminding me? The design stays saved; only the guide step stays unrecorded.",
+    "discardYes": "Discard",
+    "discarded": "Discarded."
   }
 }

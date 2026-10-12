@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, BarChart3, Bookmark, BookMarked, BookOpen, CalendarPlus, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, HelpCircle, Library, Mail, Palette, MessageSquareWarning } from 'lucide-react-native';
+import { Award, BarChart3, Bookmark, BookMarked, BookOpen, CalendarPlus, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, HelpCircle, Library, Mail, Palette, MessageSquareWarning, RotateCcw } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -146,6 +146,7 @@ export function ProfileScreen() {
             {[
               { route: '/profile/shelf', icon: Library, title: t('shelf.title'), meta: t('shelf.profileMeta') },
               { route: '/profile/scrapbooks', icon: BookOpen, title: t('scrapbook.title'), meta: t('scrapbook.profileMeta') },
+              { route: '/profile/recovery', icon: RotateCcw, title: t('recovery.title'), meta: t('recovery.profileMeta') },
               { route: '/profile/discovery-recap', icon: History, title: t('discoveryRecap.title'), meta: t('discoveryRecap.profileMeta') },
               { route: '/profile/next-visit', icon: CalendarPlus, title: t('nextVisit.title'), meta: t('nextVisit.profileMeta') },
               { route: '/profile/questions', icon: HelpCircle, title: t('myQuestions.title'), meta: t('myQuestions.profileMeta') },

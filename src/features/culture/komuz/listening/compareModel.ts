@@ -1,3 +1,5 @@
+import { draftMap, ownerKey } from '@/services/drafts/draftRegistry';
+
 /**
  * Listening Compare - two recordings, one player, one comparison note.
  *
@@ -96,9 +98,9 @@ export const newComparisonId = () => `c-${Date.now().toString(36)}-${Math.random
 export const compareRoute = (id: string) => `/culture/komuz/compare/${encodeURIComponent(id)}`;
 
 /* ---------- unsaved note drafts (memory, per owner) ---------- */
-const drafts = new Map<string, string>();
-export const noteDraft = (owner: string, id: string) => drafts.get(`${owner}::${id}`);
-export const setNoteDraft = (owner: string, id: string, text: string | null) => (text === null ? drafts.delete(`${owner}::${id}`) : drafts.set(`${owner}::${id}`, text));
+const drafts = draftMap<string>('compareNote');
+export const noteDraft = (owner: string, id: string) => drafts.get(ownerKey(owner, id));
+export const setNoteDraft = (owner: string, id: string, text: string | null) => (text === null ? drafts.delete(ownerKey(owner, id)) : drafts.set(ownerKey(owner, id), text));
 export const clearNoteDraftIfUnchanged = (owner: string, id: string, sent: string) => {
-  if (drafts.get(`${owner}::${id}`) === sent) drafts.delete(`${owner}::${id}`);
+  if (drafts.get(ownerKey(owner, id)) === sent) drafts.delete(ownerKey(owner, id));
 };

@@ -9,6 +9,7 @@ import { NotFoundState } from '@/components/system/NotFoundState';
 import { AnimatedPressable, Button, IconButton, TextField, Toggle } from '@/components/ui';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { announce } from '@/services/a11y/announce';
+import { draftMap, ownerKey } from '@/services/drafts/draftRegistry';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useOymoCreations } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
@@ -23,7 +24,8 @@ export const portfolioRoute = (id: string) => `/profile/oymo-portfolios/${encode
 export const PORTFOLIO_CARD_SIZE = { width: 360, height: 450 };
 
 /** Unsaved edits per owner + portfolio (memory) - kept while the share sheet or another screen is open. */
-const drafts = new Map<string, Portfolio>();
+/** Unsaved edits per owner + portfolio (memory; listable by the Recovery Center). */
+const drafts = draftMap<Portfolio>('portfolio');
 
 function usePortfolios() {
   const owner = useRecordsOwner();
@@ -123,7 +125,7 @@ export function PortfolioScreen({ portfolioId, onPressBack }: { portfolioId: str
   const creations = useOymoCreations();
   const { share, shareHost, isSharing } = useShareCard();
   const stored = ownerPortfolio(saved, owner, portfolioId);
-  const key = `${owner}\u0000${portfolioId}`;
+  const key = ownerKey(owner, portfolioId);
   const [draft, setDraftState] = useState<Portfolio | null>(() => drafts.get(key) ?? null);
   const shownKey = useRef(key);
   useEffect(() => {
@@ -152,7 +154,7 @@ export function PortfolioScreen({ portfolioId, onPressBack }: { portfolioId: str
     const startedFor = owner;
     const ok = await usePortfolioStore.getState().save(startedFor, portfolio);
     setBusy(false);
-    if (shownKey.current !== `${startedFor}\u0000${portfolioId}`) return;
+    if (shownKey.current !== ownerKey(startedFor, portfolioId)) return;
     if (!ok) {
       // Nothing changed in storage; the edits stay on screen.
       setFailed(true);
