@@ -172,6 +172,7 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
         </View>
 
         <ListeningNotebook />
+        {komuzTracks.length >= 2 ? <Button label={t('listeningCompare.entry')} variant="secondary" accessibilityHint={t('listeningCompare.entryHint')} onPress={() => router.push('/culture/komuz/compare' as never)} testID="compare-entry" /> : null}
 
         {/* Rhythm practice only exists for tracks with an authored, reviewed chart. */}
         {rhythmAvailable ? <Button label={t('rhythm.practice')} variant="secondary" onPress={() => router.push('/culture/komuz/rhythm' as never)} /> : null}

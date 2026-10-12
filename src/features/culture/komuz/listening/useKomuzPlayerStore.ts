@@ -26,7 +26,7 @@ type KomuzPlayerState = {
   play: (trackId: string, queue?: string[]) => void;
   /** Resume a saved point: plays the track, then seeks once the player
    * reports a real duration. Only from a user tap. */
-  playFrom: (trackId: string, seconds: number) => void;
+  playFrom: (trackId: string, seconds: number, queue?: string[]) => void;
   toggle: () => void;
   pause: () => void;
   next: () => void;
@@ -144,8 +144,8 @@ export const useKomuzPlayerStore = create<KomuzPlayerState>((set, get) => {
     onListened: null,
     lastFinished: null,
 
-    playFrom: (trackId, seconds) => {
-      get().play(trackId);
+    playFrom: (trackId, seconds, queue) => {
+      get().play(trackId, queue);
       pendingSeek = seconds > 0 ? seconds : null;
     },
 

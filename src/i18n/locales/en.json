@@ -7119,5 +7119,43 @@
     "deleteConfirm": "Delete this question, its links and your answer from this device? This can't be undone.",
     "deleteYes": "Delete",
     "deleted": "Question deleted."
+  },
+  "listeningCompare": {
+    "title": "Listening Compare",
+    "entry": "Compare two recordings",
+    "entryHint": "Listen to two recordings one at a time, save a moment from each and write what you notice",
+    "intro": "Choose two recordings. You switch between them yourself - only one plays at a time, and each keeps its own place.",
+    "noAlign": "OYNO doesn't line the recordings up or assume their parts match - what you compare is up to your ears.",
+    "choose": {
+      "a": "Recording A",
+      "b": "Recording B"
+    },
+    "start": "Start comparing",
+    "saved": "Your comparisons",
+    "loading": "Loading…",
+    "loadError": "Your comparisons couldn't be read on this device. Nothing was changed.",
+    "saveFailed": "It couldn't be saved - nothing was lost here. Try again.",
+    "notFound": "This comparison isn't in this account.",
+    "toStart": "Go to Listening Compare",
+    "oneAtATime": "One player: switching to the other recording pauses this one. Each recording comes back to where you left it.",
+    "side": {
+      "a": "Recording A",
+      "b": "Recording B"
+    },
+    "nowSide": "Now: {{side}}",
+    "notPlaying": "Not playing. Its place: {{time}}.",
+    "notSeekable": "This recording hasn't reported its length yet, so it can't jump to a point - it plays from where it is.",
+    "missing": "This recording isn't available right now. Your saved moment and note are kept.",
+    "saveMoment": "Save this moment ({{time}})",
+    "momentSaved": "Saved a moment from {{side}} at {{time}}.",
+    "savedMoment": "Your moment: {{time}}",
+    "goToMoment": "Go to this moment",
+    "noteTitle": "Your comparison",
+    "noteHint": "Your own observations as a listener - not facts about the music.",
+    "noteLabel": "What you notice",
+    "notePlaceholder": "For example: how the two feel different to you…",
+    "saveNote": "Save note",
+    "noteSaved": "Note saved.",
+    "storageNote": "Saved only on this device, for this account - not synced and not in the data export. Moments also appear in your Listening Notebook."
   }
 }

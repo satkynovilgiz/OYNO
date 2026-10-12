@@ -35,6 +35,7 @@ const PRIVATE_PARAMS: Record<string, string> = {
   '/profile/oymo-portfolios/[portfolioId]': 'portfolioId',
   '/profile/scrapbooks/[bookId]': 'bookId',
   '/profile/questions/[questionId]': 'questionId',
+  '/culture/komuz/compare/[comparisonId]': 'comparisonId',
 };
 
 // Synthetic ids, deliberately SHORT and lowercase - they look like public slugs.
