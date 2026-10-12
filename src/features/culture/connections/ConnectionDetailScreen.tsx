@@ -13,7 +13,8 @@ import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { colors, spacing, textStyles, typography } from '@/theme';
 
 import { ConnectionCard } from './ConnectionsSection';
-import { contentRoute, SOURCE_FIELD_LABEL as FIELD_LABEL } from './connectionsData';
+import { ConnectionEvidence } from './ConnectionEvidence';
+import { contentRoute } from './connectionsData';
 import { connectionById } from './connectionsModel';
 import { useConnectionContent } from './useConnectionContent';
 
@@ -66,13 +67,7 @@ export function ConnectionDetailScreen({ connectionId, onPressBack }: { connecti
         </View>
         <ConnectionCard entry={forward} target={to} experience={experience} onPress={() => router.push(contentRoute(to.type, to.id) as never)} />
 
-        <View style={styles.quote}>
-          <Text style={styles.quoteLabel}>{t('culture.connections.inOynoWords')}</Text>
-          <Text style={styles.quoteText}>“{connection.evidence}”</Text>
-          <Text style={styles.attribution}>
-            {t('culture.connections.fromArticle', { title: source?.title ?? connection.source.contentId, section: FIELD_LABEL[connection.source.field] ? t(FIELD_LABEL[connection.source.field]) : connection.source.field })}
-          </Text>
-        </View>
+        <ConnectionEvidence connection={connection} sourceTitle={source?.title ?? null} />
 
         <Button label={t('culture.connections.openArticle', { title: from.title })} variant="secondary" onPress={() => router.push(contentRoute(from.type, from.id) as never)} />
         <Button label={t('culture.connections.trail.start')} variant="secondary" accessibilityHint={t('culture.connections.trail.startA11y', { title: from.title })} onPress={() => router.push(`/culture/connections/trail?start=${encodeURIComponent(from.id)}${from.type === 'culture_material' ? '&type=culture_material' : ''}` as never)} testID="trail-start-detail" />
@@ -91,8 +86,4 @@ const styles = StyleSheet.create({
   title: { ...textStyles.display, color: colors.textPrimary },
   relationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   relation: { ...textStyles.title, fontSize: 17, color: colors.accentTerracotta },
-  quote: { gap: spacing.xs, paddingLeft: spacing.sm, borderLeftWidth: 3, borderLeftColor: colors.accentGold },
-  quoteLabel: { ...textStyles.overline, color: colors.textSecondary },
-  quoteText: { ...textStyles.body, fontSize: 17, lineHeight: 26, color: colors.textPrimary },
-  attribution: { ...textStyles.small, color: colors.textMuted },
 });

@@ -132,9 +132,11 @@ describe('Culture Connections - routes, offline, UI', () => {
   });
 
   it('detail shows only the authored excerpt as explanation (never generated prose)', () => {
-    const screen = read('src/features/culture/connections/ConnectionDetailScreen.tsx');
-    expect(screen).toContain('{connection.evidence}');
-    expect(screen).toContain("t('culture.connections.fromArticle'");
+    // The detail screen and the Connection Map share one evidence block.
+    const evidence = read('src/features/culture/connections/ConnectionEvidence.tsx');
+    expect(evidence).toContain('{connection.evidence}');
+    expect(evidence).toContain("t('culture.connections.fromArticle'");
+    for (const file of ['ConnectionDetailScreen.tsx', 'ConnectionMapScreen.tsx']) expect(read(`src/features/culture/connections/${file}`)).toContain('<ConnectionEvidence connection=');
   });
 
   it('article integration, age variants, analytics properties', () => {

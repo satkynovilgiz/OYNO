@@ -9,6 +9,7 @@ import { track } from '@/services/analytics/analytics';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
 
+import { mapRoute } from './connectionMapModel';
 import { connectionRoute, contentRoute, type ConnectionContentType } from './connectionsData';
 import { connectionsFor, type ArticleConnection } from './connectionsModel';
 import { useConnectionContent, type ConnectionTarget } from './useConnectionContent';
@@ -38,6 +39,9 @@ export function ConnectionsSection({ type, id, experience }: { type: ConnectionC
       </Text>
       <AnimatedPressable style={styles.why} onPress={() => router.push(`/culture/connections/trail?start=${encodeURIComponent(id)}${type === 'culture_material' ? '&type=culture_material' : ''}` as never)} hitSlop={6} accessibilityRole="link" accessibilityLabel={t('culture.connections.trail.start')} testID="trail-start">
         <Text style={styles.whyText}>{t('culture.connections.trail.start')} →</Text>
+      </AnimatedPressable>
+      <AnimatedPressable style={styles.why} onPress={() => router.push(mapRoute({ type, id }) as never)} hitSlop={6} accessibilityRole="link" accessibilityLabel={t('connectionMap.entry')} testID="connection-map-entry">
+        <Text style={styles.whyText}>{t('connectionMap.entry')} →</Text>
       </AnimatedPressable>
       <View style={experience === 'child' ? styles.grid : styles.list}>
         {/* Child tiles: two per row. */}
