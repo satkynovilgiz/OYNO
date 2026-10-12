@@ -34,6 +34,10 @@ export type ReadingTracker = {
   /** Layout is about to change (text size, spacing, focus mode): keep the
    * same RATIO once the new layout is measured - never jump to the top. */
   keepPosition: () => void;
+  /** The current scroll offset (last reported by the ScrollView). */
+  scrollY: () => number;
+  /** Scroll to this offset once the content is tall enough (e.g. returning to the same place). */
+  restoreTo: (y: number) => void;
 };
 
 /**
@@ -84,9 +88,22 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
     scrollRef.current?.scrollTo({ y: offset, animated: false });
   }, []);
 
+  // The last scroll offset, and a snapshot taken when the screen loses focus
+  // (opening a source etc.) - restored when it is shown again, because a
+  // hidden web screen can lose its scroll position.
+  const lastY = useRef(0);
+  const pendingY = useRef<number | null>(null);
+  const tryApplyY = () => {
+    const y = pendingY.current;
+    if (y === null || contentHeight.current < y + Math.max(1, viewportHeight.current) * 0.5) return;
+    pendingY.current = null;
+    lastY.current = y;
+    scrollRef.current?.scrollTo({ y, animated: false });
+  };
   const onScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      if (layoutMeasurement.height > 0) lastY.current = contentOffset.y;
       contentHeight.current = contentSize.height;
       viewportHeight.current = layoutMeasurement.height;
       const next = scrollRatio(contentOffset.y, contentSize.height, layoutMeasurement.height);
@@ -118,10 +135,12 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
     onContentSizeChange: (_width, height) => {
       contentHeight.current = height;
       tryApplyResume();
+      tryApplyY();
     },
     onLayout: (event) => {
       viewportHeight.current = event.nativeEvent.layout.height;
       tryApplyResume();
+      tryApplyY();
     },
     ratio,
     record,
@@ -155,6 +174,12 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     },
     markRead: () => useReadingStore.getState().markRead(owner, contentType, contentId),
+    scrollY: () => lastY.current,
+    restoreTo: (y) => {
+      if (!(y > 0)) return;
+      pendingY.current = y;
+      tryApplyY();
+    },
     keepPosition: () => {
       // Applied on the next content-size change (the new layout).
       if (lastRatio.current !== null && lastRatio.current > 0) pendingResume.current = lastRatio.current;

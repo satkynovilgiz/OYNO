@@ -7303,5 +7303,30 @@
       "dark_white": "White"
     },
     "openedCopy": "Opened from Color Lab as a new, unsaved copy with your colour changes. The original design is unchanged."
+  },
+  "sourceLens": {
+    "toggle": "About this information",
+    "toggleA11y": "About the information in {{section}}",
+    "articleText": "OYNO's article text",
+    "articleTextBody": "This section is part of OYNO's own article, written by its editors. Review state of the article: {{status}}.",
+    "textUpdated": "Article text last updated: {{date}}",
+    "recorded": "Recorded sources",
+    "wholeArticle": "These sources are recorded for the whole article. OYNO doesn't record which source supports this particular section.",
+    "notAvailable": "Source details are not available. That doesn't mean the information is wrong - only that no source has been recorded yet.",
+    "open": "Open source",
+    "openHint": "Opens the source's own website, outside OYNO",
+    "openFailed": "This link couldn't be opened.",
+    "unavailableEntry": "A recorded source that isn't a working web link (not opened).",
+    "explorer": "All sources for this article",
+    "quotesTitle": "Original words quoted from this section",
+    "excerptNote": "An exact excerpt of this section, quoted as evidence in one of OYNO's connections between articles.",
+    "noExcerpts": "No exact excerpts of this section are quoted elsewhere in OYNO.",
+    "noContributorQuotes": "Contributor quotations: none are recorded for this section.",
+    "personalTitle": "Your notes",
+    "personalNote": "What you wrote yourself - your notes, not a source.",
+    "personalKind": {
+      "bookmark": "Bookmark note",
+      "highlight": "Highlight note"
+    }
   }
 }

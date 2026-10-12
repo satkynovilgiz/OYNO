@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { router } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image as ExpoImage } from 'expo-image';
 import { ChevronLeft, Heart, Share2 } from 'lucide-react-native';
@@ -28,6 +28,8 @@ import { DETAIL_FIELDS } from '@/features/culture/itemSections';
 import { SectionBookmark } from '@/features/culture/reading/SectionBookmark';
 import { AddToNextVisit } from '@/features/nextVisit/NextVisitScreen';
 import { SaveQuestion } from '@/features/questions/QuestionsScreens';
+import { SourceLensToggle } from '@/features/culture/sources/SourceLens';
+import { keepLensReturn, openLensFor, takeLensReturn } from '@/features/culture/sources/sourceLensModel';
 import { currentSectionAt, jumpOffset, resumeSection, tableOfContents, type NavSection } from '@/features/culture/reader/navigator/sectionNavigator';
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
@@ -84,6 +86,18 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
     reading.keepPosition();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reader.textSize, reader.lineSpacing, reader.focusMode]);
+  // Coming back from a source / the Source Explorer: the same place in the article.
+  // Only when it was left from an open Source Lens (never on an ordinary visit).
+  useFocusEffect(
+    useCallback(() => {
+      const y = takeLensReturn(item.id);
+      if (y !== null) reading.restoreTo(y);
+      return () => {
+        if (openLensFor(item.id)) keepLensReturn(item.id, reading.scrollY());
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [item.id]),
+  );
   // Opened from a saved highlight: scroll near that section once laid out
   // (anchored by section KEY, never by a stored pixel position).
   const sectionOffsets = useRef<Record<string, number>>({});
@@ -339,6 +353,8 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                     />
                     {/* Reading Companion: bookmark this named section, optionally with your own note. */}
                     <SectionBookmark contentType="culture_item" contentId={item.id} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} articleTitle={item.title} />
+                    {/* Source Lens: what OYNO actually records about this section's information. */}
+                    <SourceLensToggle article={item} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} />
                     {/* My Questions: a question in your own words, linked to this section by its key. */}
                     <SaveQuestion articleId={item.id} articleTitle={item.title} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} />
                   </View>
