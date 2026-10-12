@@ -4,7 +4,7 @@ import { CANVAS_SIZE } from '@/features/culture/oymo/components/OymoCanvas';
 import { getLayerRenderPoints, type MotifLayer } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
 
-import { getMotifShape } from '../motifs';
+import { LayerMotif } from './LayerMotif';
 
 /** Shape size and placement box on the live canvas (OymoCanvas). */
 const CANVAS_SHAPE = 36;
@@ -23,13 +23,12 @@ export function OymoArtwork({ layers, backgroundColor, symmetryMode, size, trans
       {layers
         .filter((layer) => layer.visible)
         .map((layer) => {
-          const Shape = getMotifShape(layer.motifId);
           return getLayerRenderPoints(layer, symmetryMode, CANVAS_SIZE).map((point, index) => (
             <View
               key={`${layer.id}-${index}`}
               style={{ position: 'absolute', left: point.x * scale - shape / 2, top: point.y * scale - shape / 2, width: shape, height: shape, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: `${layer.rotation}deg` }, { scale: layer.scale }] }}
             >
-              <Shape size={shape} color={layer.color} />
+              <LayerMotif layer={layer} size={shape} />
             </View>
           ));
         })}

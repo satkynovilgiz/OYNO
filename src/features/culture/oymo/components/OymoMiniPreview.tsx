@@ -5,7 +5,7 @@ import { getLayerRenderPoints, type MotifLayer } from '@/services/culture/oymoEd
 import type { SymmetryMode } from '@/services/culture/symmetry';
 import { radii } from '@/theme';
 
-import { getMotifShape } from '../motifs';
+import { LayerMotif } from './LayerMotif';
 
 const MINI_SIZE = 72;
 const SCALE = MINI_SIZE / CANVAS_SIZE;
@@ -28,7 +28,6 @@ export function OymoMiniPreview({ layers, backgroundColor, symmetryMode }: OymoM
       {layers
         .filter((layer) => layer.visible)
         .map((layer) => {
-          const Shape = getMotifShape(layer.motifId);
           return getLayerRenderPoints(layer, symmetryMode, CANVAS_SIZE).map((point, index) => (
             <View
               key={`${layer.id}-${index}`}
@@ -39,7 +38,7 @@ export function OymoMiniPreview({ layers, backgroundColor, symmetryMode }: OymoM
                 transform: [{ rotate: `${layer.rotation}deg` }, { scale: layer.scale }],
               }}
             >
-              <Shape size={MINI_SHAPE_SIZE} color={layer.color} />
+              <LayerMotif layer={layer} size={MINI_SHAPE_SIZE} />
             </View>
           ));
         })}

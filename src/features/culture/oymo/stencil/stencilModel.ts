@@ -1,5 +1,6 @@
 import { getLayerRenderPoints, type MotifLayer, type SymmetryMode } from '@/services/culture/oymoEditor';
 
+import { isCustomId, toGeometry, validateEmbedded } from '../customMotif/customMotifModel';
 import { isEnclosed, MOTIF_GEOMETRY, MOTIF_VIEWBOX } from '../motifGeometry';
 
 /**
@@ -39,11 +40,11 @@ export const DEFAULT_SETTINGS: StencilSettings = { orientation: 'portrait', thic
 
 export type StencilDesign = { layers: readonly MotifLayer[]; symmetry: SymmetryMode; name: string | null };
 
-export type Placement = { layerId: string; motifId: string; x: number; y: number; rotation: number; scale: number };
+export type Placement = { layerId: string; motifId: string; x: number; y: number; rotation: number; scale: number; custom?: MotifLayer['custom'] };
 
 /** Every drawn copy, exactly as the Creator draws it (hidden layers are not drawn there either). */
 export function placements(design: StencilDesign): Placement[] {
-  return design.layers.filter((layer) => layer.visible).flatMap((layer) => getLayerRenderPoints(layer, design.symmetry, CANVAS).map((point) => ({ layerId: layer.id, motifId: layer.motifId, x: point.x, y: point.y, rotation: layer.rotation, scale: layer.scale })));
+  return design.layers.filter((layer) => layer.visible).flatMap((layer) => getLayerRenderPoints(layer, design.symmetry, CANVAS).map((point) => ({ layerId: layer.id, motifId: layer.motifId, x: point.x, y: point.y, rotation: layer.rotation, scale: layer.scale, ...(layer.custom ? { custom: layer.custom } : {}) })));
 }
 
 /** A motif-local point (0..24) on the canvas: centred on the copy, rotated, then scaled - like the canvas's transform. */
@@ -98,7 +99,9 @@ export function buildStencilPage(design: StencilDesign, settings: StencilSetting
   const small = new Set<string>();
 
   for (const placement of placements(design)) {
-    const geometry = MOTIF_GEOMETRY[placement.motifId];
+    // A user-created motif outlines from its own embedded geometry (or is reported, never substituted).
+    const embedded = isCustomId(placement.motifId) ? validateEmbedded(placement.custom) : null;
+    const geometry = isCustomId(placement.motifId) ? (embedded ? toGeometry(embedded.primitives) : undefined) : MOTIF_GEOMETRY[placement.motifId];
     if (!geometry) {
       unknown.add(placement.motifId);
       continue;
@@ -133,7 +136,7 @@ export function buildStencilPage(design: StencilDesign, settings: StencilSetting
     if (!settings.labels.includes(field)) continue;
     if (field === 'name' && design.name?.trim()) labels.push({ field, text: design.name.trim().slice(0, 60) });
     if (field === 'motifs') {
-      const names = [...new Set(placements(design).map((p) => p.motifId))].filter((id) => MOTIF_GEOMETRY[id]).map(texts.motifName);
+      const names = [...new Set(placements(design).map((p) => p.motifId))].filter((id) => MOTIF_GEOMETRY[id] || isCustomId(id)).map(texts.motifName);
       if (names.length) labels.push({ field, text: names.join(', ') });
     }
     if (field === 'note') labels.push({ field, text: texts.note });

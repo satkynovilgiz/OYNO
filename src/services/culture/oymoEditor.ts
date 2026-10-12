@@ -25,6 +25,8 @@ export type MotifLayer = {
   rotation: number;
   scale: number;
   visible: boolean;
+  /** A user-created motif's geometry, embedded when `motifId` is 'custom:<id>' (format: customMotifModel.ts). */
+  custom?: { v: number; name: string; primitives: unknown[] };
 };
 
 export type OymoEditorState = {

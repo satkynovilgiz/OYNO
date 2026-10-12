@@ -6,7 +6,8 @@ import { AnimatedPressable, IconButton } from '@/components/ui';
 import type { MotifLayer } from '@/services/culture/oymoEditor';
 import { colors, radii, spacing, typography } from '@/theme';
 
-import { getMotifShape } from '../motifs';
+import { isCustomId } from '../customMotif/customMotifModel';
+import { LayerMotif } from './LayerMotif';
 
 type LayersPanelProps = {
   layers: MotifLayer[];
@@ -38,7 +39,6 @@ export function LayersPanel({
   return (
     <View style={styles.list}>
       {displayLayers.map((layer, displayIndex) => {
-        const Shape = getMotifShape(layer.motifId);
         const isSelected = layer.id === selectedLayerId;
         const isTop = displayIndex === 0;
         const isBottom = displayIndex === displayLayers.length - 1;
@@ -57,10 +57,11 @@ export function LayersPanel({
               accessibilityState={{ selected: isSelected }}
             >
               <View style={styles.thumb}>
-                <Shape size={20} color={layer.color} />
+                <LayerMotif layer={layer} size={20} />
               </View>
               <Text style={styles.name} numberOfLines={1}>
                 {t('culture.oymo.layers.layerLabel', { index: layers.indexOf(layer) + 1 })}
+                {isCustomId(layer.motifId) ? ` · ${t('customMotif.userCreated')}` : ''}
               </Text>
             </AnimatedPressable>
             <View style={styles.rowActions}>

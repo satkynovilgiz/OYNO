@@ -7,7 +7,7 @@ import { getLayerRenderPoints, type MotifLayer } from '@/services/culture/oymoEd
 import type { SymmetryMode } from '@/services/culture/symmetry';
 import { colors, radii } from '@/theme';
 
-import { getMotifShape } from '../motifs';
+import { LayerMotif } from './LayerMotif';
 
 export const CANVAS_SIZE = 300;
 
@@ -59,7 +59,6 @@ export function OymoCanvas({ layers, backgroundColor, symmetryMode, selectedLaye
       {layers
         .filter((layer) => layer.visible)
         .map((layer) => {
-          const Shape = getMotifShape(layer.motifId);
           const isSelected = layer.id === selectedLayerId;
           return getLayerRenderPoints(layer, symmetryMode, CANVAS_SIZE).map((point, index) => (
             <Pressable
@@ -79,7 +78,7 @@ export function OymoCanvas({ layers, backgroundColor, symmetryMode, selectedLaye
               hitSlop={8}
             >
               {isSelected && <View style={styles.selectionRing} pointerEvents="none" />}
-              <Shape size={36} color={layer.color} />
+              <LayerMotif layer={layer} size={36} />
             </Pressable>
           ));
         })}

@@ -34,6 +34,7 @@ export function StencilStudioScreen({ onPressBack }: { onPressBack: () => void }
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'failed' | 'unavailable' | 'done'>('idle');
   const supported = pdfExportSupported();
   const motifName = (id: string) => {
+    if (id.startsWith('custom:')) return t('customMotif.userCreated');
     const motif = OYMO_MOTIFS.find((entry) => entry.id === id);
     return motif ? t(motif.nameKey) : id;
   };
