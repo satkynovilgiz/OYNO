@@ -64,7 +64,7 @@ describe('locale key parity (en/ru/kg)', () => {
     // and craft names are NOT here - in ru/kg they are written in Cyrillic
     // (English words like "Challenge" used to be allowlisted and hid
     // untranslated titles).
-    const allowedLatinInNonEnglish = /\b(OYNO|Google|Apple|XP|Haptics|ID|PDF|URL|iOS|Android|VS|email)\b/gi;
+    const allowedLatinInNonEnglish = /\b(OYNO|Google|Apple|XP|Haptics|ID|PDF|URL|iOS|Android|VS|email|WCAG|Machado)\b/gi;
 
     const enKeys = flattenKeys(en);
     for (const key of enKeys) {

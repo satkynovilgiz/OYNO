@@ -31,6 +31,7 @@ import { clearSessionRecipe, fingerprint, fitRecipe, recipeFromHistory, setSessi
 import { recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
 import { setRemixSource } from '@/features/culture/oymo/remix/remixModel';
 import { setStencilSource } from '@/features/culture/oymo/stencil/stencilModel';
+import { setColorLabSource } from '@/features/culture/oymo/colorLab/colorLabModel';
 import { offerDesign, snapshotDesign } from '@/features/capsules/capsuleModel';
 import { fetchOymoCreations, OYMO_CREATIONS_QUERY_KEY, useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
@@ -325,7 +326,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : handoff.source === 'border' ? t('borderWorkshop.openedCopy') : handoff.source === 'together' ? t('createTogether.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : handoff.source === 'border' ? t('borderWorkshop.openedCopy') : handoff.source === 'together' ? t('createTogether.openedCopy') : handoff.source === 'colorLab' ? t('colorLab.openedCopy') : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
@@ -423,6 +424,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         )}
 
         {editorState.layers.length > 0 ? <Button label={t('timeCapsule.fromCreator')} variant="secondary" accessibilityHint={t('timeCapsule.fromCreatorHint')} onPress={() => { offerDesign(owner, snapshotDesign({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })); router.push('/profile/capsules/new' as never); }} testID="oymo-to-capsule" /> : null}
+        {editorState.layers.length > 0 ? <Button label={t('colorLab.entry')} variant="secondary" accessibilityHint={t('colorLab.entryHint')} onPress={() => { setColorLabSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }, openedCreation?.name ?? null); router.push('/culture/oymo/colors' as never); }} testID="oymo-color-lab" /> : null}
         {editorState.layers.length > 0 ? <Button label={t('stencil.entry')} variant="secondary" accessibilityHint={t('stencil.entryHint')} onPress={() => { setStencilSource(owner, { layers: editorState.layers, symmetry: symmetryMode, name: openedCreation?.name ?? null }); router.push('/culture/oymo/stencil' as never); }} testID="oymo-make-stencil" /> : null}
         {editorState.layers.length > 0 ? <Button label={t('remixStudio.entry')} variant="secondary" onPress={openRemixStudio} accessibilityHint={t('remixStudio.entryHint')} testID="oymo-explore-variations" /> : null}
         {/* Pattern Recipe: replay how this design was built (this session), or a saved creation's recipe. */}
