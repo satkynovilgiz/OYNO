@@ -6,6 +6,7 @@ import i18n from '@/i18n';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
+import { useFirstUseStore } from '@/store/useFirstUseStore';
 
 export default function ProfileSetupRoute() {
   const user = useAuthStore((state) => state.user);
@@ -31,6 +32,9 @@ export default function ProfileSetupRoute() {
 
         if (!nameSaved) showToast(i18n.t('profileSetup.v2.nameNotSaved'), { tone: 'info' });
         else if (!avatarSynced) showToast(i18n.t('profileSetup.v2.avatar.willSync'), { tone: 'info' });
+        // A new account is offered the first-use guide once (an account that already had it is left alone).
+        const setupOwner = useAuthStore.getState().user?.id;
+        if (setupOwner) void useFirstUseStore.getState().offer(setupOwner);
         router.replace('/home');
         return true;
       }}

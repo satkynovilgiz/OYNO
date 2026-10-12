@@ -29,6 +29,7 @@ import {
   TodayDiscoveryEntryCard,
 } from './components';
 import { ContinueRegionCard } from './components/ContinueRegionCard';
+import { FirstUseHomeCard } from '@/features/firstUse/FirstUseScreen';
 import { ActivityChooserEntry } from './chooser/ActivityChooserScreen';
 import { ForYouSection } from './forYou/ForYouCard';
 import { HomeLearningPathCard } from '@/features/learn/LearningPathCard';
@@ -249,6 +250,10 @@ export function HomeScreen() {
             onPressNotifications={() => router.push('/notifications' as never)}
           />
         </ScreenEntrance>
+
+        <View style={styles.horizontalPad}>
+          <FirstUseHomeCard />
+        </View>
 
         <AgeExperienceTransition style={styles.sectionList}>
           {visibleSections(experience, homeLayout).map((id, index) => (

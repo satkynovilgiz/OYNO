@@ -6918,5 +6918,69 @@
     "sessionMeta_few": "About {{minutes}} minutes - take your time.",
     "sessionMeta_many": "About {{minutes}} minutes - take your time.",
     "sessionMeta_other": "About {{minutes}} minutes - take your time."
+  },
+  "firstUse": {
+    "title": "Getting started",
+    "intro": "A short tour: read one article, make a small Oymo design with step-by-step help, choose whether to save it, and find it on your shelf. Skip any time.",
+    "noTest": "There's no test and no score - it only shows you around.",
+    "start": "Help me get started",
+    "skip": "Skip",
+    "continue": "Continue",
+    "skipGuide": "Skip the guide",
+    "loading": "Loading…",
+    "loadError": "The guide's progress couldn't be read on this device.",
+    "writeFailed": "That step couldn't be stored on this device - it may show as not done next time.",
+    "cardTitle": "New here? Let's look around together",
+    "cardContinueTitle": "Continue getting started",
+    "cardBody": "One article, one small design, and where to find it - a few minutes.",
+    "helpEntry": "Getting started guide",
+    "helpEntryHint": "Replay the short tour: an article, a small design and your shelf",
+    "steps": {
+      "article": "Discover an article",
+      "create": "Make a small design",
+      "save": "Choose whether to save",
+      "find": "Find it on My OYNO Shelf"
+    },
+    "stepDone": "Done",
+    "stepNow": "Now",
+    "article": {
+      "body": "Start with one article from OYNO's library. Open it, read as much as you like, then come back here.",
+      "open": "Open the article",
+      "offline": "Articles can't load right now. Try again when you're online, or skip the guide."
+    },
+    "create": {
+      "body": "Oymo is OYNO's pattern maker. Three small steps:",
+      "one": "1. Choose a motif",
+      "two": "2. Choose a colour",
+      "three": "3. Tap the canvas or \"Place\" - the pattern mirrors itself",
+      "undo": "Undo last",
+      "done": "I'm happy with it",
+      "count_one": "{{count}} of {{max}} motifs",
+      "count_few": "{{count}} of {{max}} motifs",
+      "count_many": "{{count}} of {{max}} motifs",
+      "count_other": "{{count}} of {{max}} motifs"
+    },
+    "save": {
+      "guest": "You're exploring as a guest. Designs are saved to an account, so as a guest this one isn't saved. Sign in to save it - your design stays here while you do.",
+      "signIn": "Sign in to save",
+      "account": "Save it to your account to find it again later - or don't, that's fine too.",
+      "nameLabel": "Name (optional)",
+      "save": "Save this design",
+      "dontSave": "Continue without saving",
+      "failed": "It couldn't be saved. Your design is still here - try again, or continue without saving.",
+      "saved": "Saved \"{{name}}\".",
+      "gone": "This design was cleared (for example after switching accounts). You can continue without saving."
+    },
+    "defaultName": "My first pattern",
+    "find": {
+      "saved": "\"{{name}}\" is saved. My OYNO Shelf keeps your designs, exhibitions, boards and capsules in one place.",
+      "notSaved": "This design wasn't saved. My OYNO Shelf is where saved designs, exhibitions, boards and capsules appear."
+    },
+    "openShelf": "Open My OYNO Shelf",
+    "finishedTitle": "That's the tour",
+    "finishedSaved": "Your design \"{{name}}\" is on your shelf.",
+    "finishedNotSaved": "You looked around without saving - nothing was kept.",
+    "replayNote": "You can replay this guide any time from Settings → Help.",
+    "replay": "Replay the guide"
   }
 }

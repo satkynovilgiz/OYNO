@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronRight, ChevronUp, MessageSquareWarning, Search } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { ChevronDown, ChevronRight, ChevronUp, Compass, MessageSquareWarning, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -65,6 +66,22 @@ export function HelpScreen({ onPressBack }: HelpScreenProps) {
         <View style={styles.feedbackEntryText}>
           <Text style={styles.feedbackEntryTitle}>{t('feedback.helpEntry')}</Text>
           <Text style={styles.feedbackEntryHint}>{t('feedback.helpEntryHint')}</Text>
+        </View>
+        <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
+      </AnimatedPressable>
+
+      <AnimatedPressable
+        style={styles.feedbackEntry}
+        onPress={() => router.push('/start' as never)}
+        accessibilityRole="button"
+        accessibilityLabel={t('firstUse.helpEntry')}
+        accessibilityHint={t('firstUse.helpEntryHint')}
+        testID="help-first-use"
+      >
+        <Compass size={20} color={colors.primary} strokeWidth={2} />
+        <View style={styles.feedbackEntryText}>
+          <Text style={styles.feedbackEntryTitle}>{t('firstUse.helpEntry')}</Text>
+          <Text style={styles.feedbackEntryHint}>{t('firstUse.helpEntryHint')}</Text>
         </View>
         <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
       </AnimatedPressable>

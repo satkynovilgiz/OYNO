@@ -5,7 +5,11 @@ import { SignInScreen } from '@/features/auth/SignInScreen';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useEnabledOAuthProviders } from '@/services/auth/authProviders';
 import type { OAuthProvider } from '@/services/auth';
+import { hasAwaitingDraft } from '@/features/firstUse/firstUseModel';
 import { useAuthStore } from '@/store/useAuthStore';
+
+/** A guest who chose "Sign in to save" in the first-use guide goes back to their waiting design. */
+const afterSignIn = () => (hasAwaitingDraft() ? '/start' : '/home') as never;
 
 export default function SignInRoute() {
   const signIn = useAuthStore((state) => state.signIn);
@@ -25,7 +29,7 @@ export default function SignInRoute() {
   const handleOAuth = async (provider: OAuthProvider) => {
     const outcome = await signInWithOAuth(provider);
     if (outcome === 'new-user') router.replace('/profile-setup');
-    else if (outcome === 'signed-in') router.replace('/home');
+    else if (outcome === 'signed-in') router.replace(afterSignIn());
   };
 
   return (
@@ -39,7 +43,7 @@ export default function SignInRoute() {
       onSubmit={async (input) => {
         const ok = await signIn(input);
         // No success modal - straight into OYNO.
-        if (ok) router.replace('/home');
+        if (ok) router.replace(afterSignIn());
         return ok;
       }}
       onPressSignUp={() => {
