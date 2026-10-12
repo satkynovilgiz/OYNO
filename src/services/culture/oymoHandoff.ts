@@ -10,7 +10,7 @@ import type { SymmetryMode } from './symmetry';
  * the layers are already the whole design).
  */
 /** `name`: an optional suggested design name for the Creator's Save (never a person's name unless they typed it as the design name). */
-export type CreatorHandoff = { state: OymoEditorState; symmetry: SymmetryMode; source: 'restore' | 'symmetry' | 'recipe' | 'remember' | 'remix' | 'detective' | 'border' | 'together' | 'colorLab'; name?: string };
+export type CreatorHandoff = { state: OymoEditorState; symmetry: SymmetryMode; source: 'restore' | 'symmetry' | 'recipe' | 'remember' | 'remix' | 'detective' | 'border' | 'together' | 'colorLab' | 'milestone'; name?: string };
 let pending: CreatorHandoff | null = null;
 
 export function handOffToCreator(state: OymoEditorState, options: { symmetry?: SymmetryMode; source?: CreatorHandoff['source']; name?: string } = {}): void {
