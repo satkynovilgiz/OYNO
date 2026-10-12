@@ -28,7 +28,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const KNOWN_TOP_LEVEL_ROUTES = [
   'achievements', 'activities', 'admin', 'age-group', 'appearance', 'auth-callback', 'avatar-editor', 'challenges', 'character-select', 'collection', 'collections',
   'culture', 'daily', 'explore', 'festival', 'forgot-password', 'games', 'home', 'journal', 'journey', 'language', 'learn', 'notifications', 'offline', 'onboarding',
-  'open', 'profile', 'profile-setup', 'quests', 'reset-password', 'saved', 'search', 'settings', 'sign-in', 'start', 'sign-up', 'study', 'trails', 'verify-email',
+  'open', 'prepare-offline', 'profile', 'profile-setup', 'quests', 'reset-password', 'saved', 'search', 'settings', 'sign-in', 'start', 'sign-up', 'study', 'trails', 'verify-email',
   'verify-reset-code', 'whats-new',
 ] as const;
 const TOP_LEVEL = new Set<string>(KNOWN_TOP_LEVEL_ROUTES);

@@ -3,7 +3,7 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 
 import { safeJsonParse } from '@/services/storage/safeJson';
 
-import { EMPTY_MANIFEST, hashQueryKey, parseManifest, referencedHashes, utf8ByteLength, type OfflineManifest } from './offlineManifest';
+import { EMPTY_MANIFEST, hashQueryKey, parseManifest, referencedHashes, utf8ByteLength, type OfflineManifest, type OfflineManifestEntry } from './offlineManifest';
 
 /** Everything offline lives under this prefix and nothing else - removing
  * downloads can never touch progress, favorites, Passport or Journey data,
@@ -109,4 +109,13 @@ export async function verifyStoredQueries(hashes: readonly string[]): Promise<Ma
     result.set(hash, valid ? { status: 'ok', savedAt: typeof stored!.savedAt === 'number' ? stored!.savedAt : null, data: stored!.data } : { status: 'corrupt', savedAt: null, data: undefined });
   }
   return result;
+}
+
+/** Real stored bytes of exactly these downloads (their persisted query results; shared results counted once). Nothing estimated. */
+export async function measureEntriesBytes(entries: readonly OfflineManifestEntry[]): Promise<number> {
+  const hashes = new Set(entries.flatMap((entry) => entry.queryHashes));
+  const pairs: readonly (readonly [string, string | null])[] = await AsyncStorage.multiGet([...hashes].map((hash) => QUERY_PREFIX + hash)).catch(() => []);
+  let bytes = 0;
+  for (const [, value] of pairs) bytes += value ? utf8ByteLength(value) : 0;
+  return bytes;
 }

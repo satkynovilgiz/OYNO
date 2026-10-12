@@ -187,6 +187,7 @@ export function NextVisitScreen({ onPressBack }: { onPressBack: () => void }) {
           )
         ) : null}
 
+        {queue.length ? <Button label={t('prepareOffline.fromPlan')} variant="secondary" onPress={() => router.push('/prepare-offline' as never)} testID="next-visit-prepare" /> : null}
         <Text style={styles.section} accessibilityRole="header">
           {t('nextVisit.addTitle')}
         </Text>

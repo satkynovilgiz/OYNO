@@ -191,6 +191,7 @@ export function OfflineDownloadsScreen({ onPressBack }: { onPressBack: () => voi
       <LibraryHeader title={t('offline.library.title')} subtitle={t('offline.v2.subtitle')} onPressBack={onPressBack} />
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
+        <Button label={t('prepareOffline.entry')} variant="secondary" accessibilityHint={t('prepareOffline.entryHint')} onPress={() => router.push('/prepare-offline' as never)} testID="prepare-offline-entry" />
         {isOffline ? (
           <View style={styles.offlineNote} accessibilityLiveRegion="polite">
             <CloudOff size={16} color={colors.textSecondary} strokeWidth={2.25} />
