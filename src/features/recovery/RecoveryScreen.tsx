@@ -9,6 +9,7 @@ import { Button, IconButton } from '@/components/ui';
 import { unrecordedSave } from '@/features/firstUse/firstUseModel';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { announce } from '@/services/a11y/announce';
+import { useExplanationsStore } from '@/store/useExplanationsStore';
 import { useJournalDraftStore } from '@/store/useJournalDraftStore';
 import { useJournalStore } from '@/store/useJournalStore';
 import { ownerComparisons, useListeningCompareStore } from '@/store/useListeningCompareStore';
@@ -41,6 +42,7 @@ export function RecoveryScreen({ onPressBack }: { onPressBack: () => void }) {
     void useQuestionsStore.getState().load();
     void useListeningCompareStore.getState().load();
     void useJournalDraftStore.getState().load();
+    void useExplanationsStore.getState().load();
     void useJournalStore.getState().load();
   }, []);
   // Drafts live in memory maps: re-read them whenever this screen is shown.

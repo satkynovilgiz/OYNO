@@ -7527,7 +7527,8 @@
       "questionEdit": "Question - changed",
       "compareNote": "Listening comparison note",
       "journal": "Journal draft",
-      "firstUse": "Getting-started guide"
+      "firstUse": "Getting-started guide",
+      "explanation": "Explanation"
     },
     "state": {
       "unsaved": "Unsaved edits - not saved yet",
@@ -7653,5 +7654,43 @@
     "hidden_other": "{{count}} more connected objects aren't shown (map limit).",
     "expandA11y": "Show the connections of {{title}}",
     "viewportA11y": "Connection map picture - the same connections are listed below"
+  },
+  "explain": {
+    "title": "Explain it yourself",
+    "entry": "Explain it yourself",
+    "entryHint": "Write how you'd explain this article to someone - in your own words",
+    "listTitle": "My explanations",
+    "profileMeta": "Articles you explained in your own words",
+    "ownWords": "Your own words. OYNO doesn't grade or check explanations, and writing one isn't a test.",
+    "untitled": "Article",
+    "articleMissing": "This article isn't available any more - your writing is kept.",
+    "promptTitle": "Choose a prompt",
+    "prompts": {
+      "friend": "How would you explain this to a friend?",
+      "mainIdea": "What is the main idea, in a sentence or two?",
+      "noticed": "What did you notice that you didn't know before?"
+    },
+    "placeholder": "Write in your own words…",
+    "loading": "Loading…",
+    "loadError": "Your explanations couldn't be read on this device. Nothing was changed.",
+    "revising": "You're revising: the saved version stays as it is until this one is saved.",
+    "save": "Save explanation",
+    "saveRevision": "Save this revision",
+    "saved": "Saved on this device.",
+    "saveFailed": "It couldn't be saved - your words are still here, and the earlier saved version is unchanged. Try again.",
+    "showSource": "Show the article beside my writing",
+    "hideSource": "Hide the article",
+    "sourceNote": "The article's sections, for reference - your explanation is separate.",
+    "openArticle": "Open the full article",
+    "none": "No explanations yet. Use \"Explain it yourself\" on an article.",
+    "storageNote": "Saved only on this device, for this account - not synced and not in the data export. An unsaved draft is kept while the app is open (also listed in the Recovery Center).",
+    "count_one": "{{count}} of {{max}} character",
+    "count_few": "{{count}} of {{max}} characters",
+    "count_many": "{{count}} of {{max}} characters",
+    "count_other": "{{count}} of {{max}} characters",
+    "savedMeta_one": "Saved · revised {{count}} time",
+    "savedMeta_few": "Saved · revised {{count}} times",
+    "savedMeta_many": "Saved · revised {{count}} times",
+    "savedMeta_other": "Saved · revised {{count}} times"
   }
 }

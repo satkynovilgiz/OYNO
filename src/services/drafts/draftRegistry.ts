@@ -8,7 +8,7 @@
  * Keys always start with the owner, so listing for one owner never shows
  * another's drafts.
  */
-export type DraftSource = 'portfolio' | 'scrapbook' | 'question' | 'compareNote';
+export type DraftSource = 'portfolio' | 'scrapbook' | 'question' | 'compareNote' | 'explanation';
 const maps = new Map<DraftSource, Map<string, unknown>>();
 
 export function draftMap<T>(source: DraftSource): Map<string, T> {

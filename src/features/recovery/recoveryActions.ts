@@ -1,7 +1,9 @@
 import type { Portfolio } from '@/features/culture/oymo/portfolio/portfolioModel';
+import type { ExplainDraft } from '@/features/explain/explainModel';
 import { clearUnrecordedSave, retryRecording, unrecordedSave } from '@/features/firstUse/firstUseModel';
 import type { Scrapbook } from '@/features/scrapbook/scrapbookModel';
 import { draftMap, ownerKey } from '@/services/drafts/draftRegistry';
+import { useExplanationsStore } from '@/store/useExplanationsStore';
 import { useFirstUseStore } from '@/store/useFirstUseStore';
 import { useJournalDraftStore } from '@/store/useJournalDraftStore';
 import { useListeningCompareStore } from '@/store/useListeningCompareStore';
@@ -61,6 +63,14 @@ export async function retryEntry(owner: string, entry: RecoveryEntry): Promise<b
       clearIfUnchanged(map, key, sent);
       return true;
     }
+    case 'explanation': {
+      const map = draftMap<ExplainDraft>('explanation');
+      const key = ownerKey(owner, rest);
+      const sent = map.get(key);
+      if (!sent || !(await useExplanationsStore.getState().save(owner, { articleId: rest, titleSnapshot: sent.titleSnapshot, promptId: sent.promptId, text: sent.text }))) return false;
+      clearIfUnchanged(map, key, sent);
+      return true;
+    }
     case 'firstUse': {
       const pending = unrecordedSave(owner);
       if (!pending) return false;
@@ -90,6 +100,9 @@ export async function discardEntry(owner: string, entry: RecoveryEntry): Promise
       return;
     case 'compareNote':
       draftMap('compareNote').delete(ownerKey(owner, rest));
+      return;
+    case 'explanation':
+      draftMap('explanation').delete(ownerKey(owner, rest));
       return;
     case 'journal':
       await useJournalDraftStore.getState().remove(owner, rest);

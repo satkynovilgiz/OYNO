@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Award, BarChart3, Bookmark, BookMarked, BookOpen, CalendarPlus, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, HelpCircle, Library, Mail, Palette, MessageSquareWarning, RotateCcw } from 'lucide-react-native';
+import { Award, BarChart3, Bookmark, BookMarked, BookOpen, CalendarPlus, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, HelpCircle, Library, Mail, Palette, MessageSquareWarning, PenLine, RotateCcw } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -149,6 +149,7 @@ export function ProfileScreen() {
               { route: '/profile/recovery', icon: RotateCcw, title: t('recovery.title'), meta: t('recovery.profileMeta') },
               { route: '/profile/discovery-recap', icon: History, title: t('discoveryRecap.title'), meta: t('discoveryRecap.profileMeta') },
               { route: '/profile/next-visit', icon: CalendarPlus, title: t('nextVisit.title'), meta: t('nextVisit.profileMeta') },
+              { route: '/profile/explanations', icon: PenLine, title: t('explain.listTitle'), meta: t('explain.profileMeta') },
               { route: '/profile/questions', icon: HelpCircle, title: t('myQuestions.title'), meta: t('myQuestions.profileMeta') },
               { route: '/profile/oymo-portfolios', icon: Palette, title: t('oymoPortfolio.title'), meta: t('oymoPortfolio.profileMeta') },
               { route: '/profile/portfolio', icon: BookMarked, title: t('portfolio.title'), meta: t('portfolio.profileMeta') },

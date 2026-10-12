@@ -15,7 +15,7 @@ import { entriesFor } from '@/services/drafts/draftRegistry';
  * record, or recording a step) - never for anything that would CREATE a
  * record (a new question, a new journal memory, a deleted parent).
  */
-export type RecoveryKind = 'portfolio' | 'scrapbook' | 'questionNew' | 'questionEdit' | 'compareNote' | 'journal' | 'firstUse';
+export type RecoveryKind = 'portfolio' | 'scrapbook' | 'questionNew' | 'questionEdit' | 'compareNote' | 'explanation' | 'journal' | 'firstUse';
 export type ParentState = 'ok' | 'missing' | 'loading' | 'none';
 export type RecoveryEntry = {
   id: string;
@@ -70,6 +70,10 @@ export function listRecovery(input: RecoveryInputs): RecoveryEntry[] {
     const found = input.comparison(rest);
     const parent = found === undefined ? 'loading' : found ? 'ok' : 'missing';
     out.push({ id: `compareNote:${rest}`, kind: 'compareNote', state: 'unsaved', survivesRestart: false, title: found ? `${found.a} · ${found.b}` : value.slice(0, 60), parent, route: `/culture/komuz/compare/${encodeURIComponent(rest)}`, retry: parent === 'ok' });
+  }
+  // An explanation saves as an update keyed by its article, so retrying can't make a duplicate.
+  for (const { rest, value } of entriesFor<{ text: string; titleSnapshot: string }>('explanation', input.owner)) {
+    out.push({ id: `explanation:${rest}`, kind: 'explanation', state: 'unsaved', survivesRestart: false, title: value.titleSnapshot || value.text.slice(0, 60), parent: 'none', route: `/culture/item/${encodeURIComponent(rest)}/explain`, retry: value.text.trim().length > 0 });
   }
   for (const draft of input.journalDrafts) {
     const isNew = draft.target === 'new';
