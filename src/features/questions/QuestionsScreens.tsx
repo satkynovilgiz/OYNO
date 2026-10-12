@@ -182,7 +182,7 @@ export function QuestionsListScreen({ onPressBack }: { onPressBack: () => void }
                 {t(`myQuestions.empty.${tab}`)}
               </Text>
             ) : (
-              <View accessibilityRole="list" style={styles.stack}>
+              <View style={styles.stack}>
                 {list.map((question) => (
                   <AnimatedPressable key={question.id} style={styles.card} onPress={() => router.push(questionRoute(question.id) as never)} accessibilityRole="button" accessibilityLabel={`${question.text}. ${question.origin ? t('myQuestions.fromShort', { article: question.origin.articleTitle, section: question.origin.sectionLabel }) : ''}`} testID={`questions-item-${question.id}`}>
                     <View style={styles.row}>

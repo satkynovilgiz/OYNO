@@ -26,6 +26,7 @@ import { ReaderButton, useReaderSettings } from '@/features/culture/reader/Reade
 import { ContentsButton } from '@/features/culture/reader/navigator/ContentsSheet';
 import { DETAIL_FIELDS } from '@/features/culture/itemSections';
 import { SectionBookmark } from '@/features/culture/reading/SectionBookmark';
+import { AddToNextVisit } from '@/features/nextVisit/NextVisitScreen';
 import { SaveQuestion } from '@/features/questions/QuestionsScreens';
 import { currentSectionAt, jumpOffset, resumeSection, tableOfContents, type NavSection } from '@/features/culture/reader/navigator/sectionNavigator';
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
@@ -354,6 +355,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
             {/* Connections: curated cross-topic relationships (explicit, sourced; not same-category browsing). */}
             {reader.focusMode ? null : <ConnectionsSection type="culture_item" id={item.id} experience={experience} />}
+            {reader.focusMode ? null : <AddToNextVisit kind="article" id={item.id} title={item.title} />}
             {reader.focusMode ? null : <Button label={t('discoveryBoard.fromArticle')} variant="secondary" onPress={() => router.push(`/culture/board?from=${encodeURIComponent(`culture_item:${item.id}`)}` as never)} accessibilityHint={t('discoveryBoard.fromArticleHint')} testID="board-from-article" />}
             {reader.focusMode ? null : <Button label={t('compare.free.fromArticle')} variant="secondary" onPress={() => router.push(freeCompareRoute({ left: item.id, right: null }) as never)} testID="compare-from-article" />}
 
