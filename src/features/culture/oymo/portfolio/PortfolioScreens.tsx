@@ -16,7 +16,7 @@ import { ownerPortfolio, ownerPortfolios, usePortfolioStore } from '@/store/useP
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { OymoArtwork } from '../components/OymoArtwork';
-import { CAPTION_MAX, INTRO_MAX, MAX_ENTRIES, moveEntry, newPortfolio, portfolioCardContent, rename, resolveEntries, setCaption, setIntro, TITLE_MAX, toggleEntry, type Portfolio, type PortfolioCard, type ResolvedEntry } from './portfolioModel';
+import { CAPTION_MAX, draftAfterSave, INTRO_MAX, MAX_ENTRIES, moveEntry, newPortfolio, portfolioCardContent, rename, resolveEntries, setCaption, setIntro, TITLE_MAX, toggleEntry, type Portfolio, type PortfolioCard, type ResolvedEntry } from './portfolioModel';
 
 export const portfolioRoute = (id: string) => `/profile/oymo-portfolios/${encodeURIComponent(id)}`;
 /** Logical exported card (captured at 3x by the share flow). */
@@ -160,8 +160,11 @@ export function PortfolioScreen({ portfolioId, onPressBack }: { portfolioId: str
       return;
     }
     setFailed(false);
-    drafts.delete(key);
-    setDraftState(null);
+    // Only what was sent is now saved; edits made during the write stay as the draft.
+    const remaining = draftAfterSave(drafts.get(key), portfolio);
+    if (remaining) drafts.set(key, remaining);
+    else drafts.delete(key);
+    setDraftState(remaining);
     announce(t('oymoPortfolio.saved'));
   };
 

@@ -20,7 +20,7 @@ import { useFirstUseStore } from '@/store/useFirstUseStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
-import { currentStep, draftFor, FIRST_USE_STEPS, homeCard, keepDraft, normalizeRecord, pickArticle, saveGuideDesign, type FirstUseStep } from './firstUseModel';
+import { currentStep, draftFor, FIRST_USE_STEPS, homeCard, keepDraft, normalizeRecord, pickArticle, retryRecording, saveGuideDesign, unrecordedSave, type FirstUseStep } from './firstUseModel';
 
 const GUIDE_LAYERS = 12;
 
@@ -47,6 +47,7 @@ export function FirstUseScreen({ onPressBack }: { onPressBack: () => void }) {
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const [writeFailed, setWriteFailed] = useState(false);
+  const [unrecorded, setUnrecorded] = useState(() => unrecordedSave(owner));
   const shownOwner = useRef(owner);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export function FirstUseScreen({ onPressBack }: { onPressBack: () => void }) {
     setDesign(draft?.state ?? EMPTY_OYMO_STATE);
     setName(draft?.name ?? '');
     setSaveFailed(false);
+    setUnrecorded(unrecordedSave(owner));
     if (adoptedFrom) void useFirstUseStore.getState().adopt(adoptedFrom, owner);
   }, [owner, status]);
   const keep = (state: OymoEditorState, nextName = name, awaitingAuth = false) => keepDraft({ owner, state, symmetry: 'fourWay', name: nextName, awaitingAuth });
@@ -85,6 +87,8 @@ export function FirstUseScreen({ onPressBack }: { onPressBack: () => void }) {
     setSaveFailed(false);
     const finalName = name.trim() || t('firstUse.defaultName');
     const outcome = await saveGuideDesign({
+      owner: forOwner,
+      savedName: finalName,
       save: () => useProgressStore.getState().saveOymoCreation({ name: finalName, layers: design.layers, backgroundColor: design.backgroundColor, symmetryMode: 'fourWay' }),
       markSaved: () => useFirstUseStore.getState().done(forOwner, 'save', { saveChoice: 'saved', savedName: finalName }),
     });
@@ -98,6 +102,19 @@ export function FirstUseScreen({ onPressBack }: { onPressBack: () => void }) {
     }
     announce(t('firstUse.save.saved', { name: finalName }));
     report(outcome === 'saved');
+    setUnrecorded(unrecordedSave(forOwner));
+  };
+  /** The design is already saved - only the guide step is recorded again (never a second save). */
+  const retryRecord = async () => {
+    const forOwner = owner;
+    const pending = unrecordedSave(forOwner);
+    if (!pending) return;
+    setSaving(true);
+    const ok = await retryRecording(forOwner, () => useFirstUseStore.getState().done(forOwner, 'save', { saveChoice: 'saved', savedName: pending.savedName }));
+    if (shownOwner.current !== forOwner) return;
+    setSaving(false);
+    report(ok);
+    setUnrecorded(unrecordedSave(forOwner));
   };
   const notSaving = async () => {
     keepDraft(null);
@@ -192,6 +209,14 @@ export function FirstUseScreen({ onPressBack }: { onPressBack: () => void }) {
               {t('firstUse.create.count', { count: design.layers.length, max: Math.min(GUIDE_LAYERS, MAX_OYMO_LAYERS) })}
             </Text>
             <Button label={t('firstUse.create.done')} disabled={design.layers.length === 0} onPress={finishCreating} testID="first-use-create-done" />
+          </View>
+        );
+      }
+      if (which === 'save' && unrecorded) {
+        return (
+          <View style={styles.stack} testID="first-use-unrecorded">
+            <Text style={styles.body}>{t('firstUse.save.savedNotRecorded', { name: unrecorded.savedName })}</Text>
+            <Button label={t('firstUse.save.retryRecord')} loading={saving} onPress={retryRecord} testID="first-use-retry-record" />
           </View>
         );
       }

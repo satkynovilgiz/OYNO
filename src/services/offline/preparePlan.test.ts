@@ -4,7 +4,8 @@ import type { Queue } from '@/features/nextVisit/nextVisitModel';
 
 import { downloadId, type OfflineManifest, type OfflineManifestEntry } from './offlineManifest';
 import { buildLearningPathOfflineManifest, pathRequester } from './pathPacks';
-import { BUNDLED_ACTIVITIES, buildPreparePlan, PLAN_REQUESTER, prepareCancel, prepareDownload, readiness, resourceState } from './preparePlan';
+import { isDownloadUsable } from './offlineAvailability';
+import { BUNDLED_ACTIVITIES, buildPreparePlan, PLAN_REQUESTER, prepareCancel, prepareDownload, prepareRepair, readiness, resourceState } from './preparePlan';
 import type { PackStore } from './regionPacks';
 
 const T = '2026-10-12T00:00:00Z';
@@ -102,5 +103,31 @@ describe('download, partial failure, retry, cancel', () => {
     const m = manifestOf('culture_index:all');
     expect(resourceState(plan.resources[0], m, ['culture_item:boz-uy-overview'], [])).toBe('downloading');
     expect(resourceState(plan.resources[0], m, [], [])).toBe('missing');
+  });
+});
+
+describe('REGRESSION: readiness uses actual download usability (health + cached results)', () => {
+  const plan = buildPreparePlan({ kind: 'plan' }, { queue, articleExists: exists })!;
+  const m = manifestOf('culture_item:boz-uy-overview', 'culture_index:all');
+  it('a listed download that failed its health check is incomplete, not ready', () => {
+    const health = { checkedAt: T, items: { 'culture_item:boz-uy-overview': 'incomplete' } } as never;
+    const usable = (id: string) => isDownloadUsable(m.entries[id], health, () => true);
+    expect(resourceState(plan.resources[0], m, [], [], usable)).toBe('incomplete');
+    const r = readiness(plan, m, [], [], usable);
+    expect(r.ready).toBe(1); // only the built-in activity
+    expect(r.incompleteItems.map((i) => i.id)).toEqual(['culture_item:boz-uy-overview']);
+  });
+  it('a listed download whose results are not in the cache is incomplete', () => {
+    const usable = (id: string) => isDownloadUsable(m.entries[id], null, (hash) => hash !== 'culture_index:all');
+    expect(resourceState(plan.resources[0], m, [], [], usable)).toBe('incomplete');
+  });
+  it('healthy and cached -> downloaded', () => {
+    const usable = (id: string) => isDownloadUsable(m.entries[id], null, () => true);
+    expect(resourceState(plan.resources[0], m, [], [], usable)).toBe('downloaded');
+  });
+  it('repair re-downloads only the incomplete items', async () => {
+    const fake = fakeStore(m);
+    await prepareRepair(plan, [{ kind: 'culture_item', contentId: 'boz-uy-overview', id: 'culture_item:boz-uy-overview' }], fake.store);
+    expect(fake.log).toEqual([`download culture_item:boz-uy-overview ${PLAN_REQUESTER}`]);
   });
 });

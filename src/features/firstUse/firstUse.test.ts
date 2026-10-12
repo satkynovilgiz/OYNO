@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EMPTY_OYMO_STATE, addLayer } from '@/services/culture/oymoEditor';
 import { FIRST_USE_KEY, recordFor, useFirstUseStore } from '@/store/useFirstUseStore';
 
-import { currentStep, draftFor, FIRST_ARTICLE_ID, hasAwaitingDraft, homeCard, keepDraft, markDone, NEW_RECORD, normalizeRecord, peekDraft, pickArticle, saveGuideDesign } from './firstUseModel';
+import { clearUnrecordedSave, retryRecording, unrecordedSave, currentStep, draftFor, FIRST_ARTICLE_ID, hasAwaitingDraft, homeCard, keepDraft, markDone, NEW_RECORD, normalizeRecord, peekDraft, pickArticle, saveGuideDesign } from './firstUseModel';
 
 const design = addLayer(EMPTY_OYMO_STATE, { x: 10, y: 10 }, 'muyuz', '#000000');
 const reset = async () => {
@@ -128,18 +128,39 @@ describe('save', () => {
   it('records "saved" only after the save succeeded', async () => {
     keepDraft({ owner: 'user-a', state: design, symmetry: 'fourWay', name: 'X', awaitingAuth: false });
     const markSaved = jest.fn(async () => true);
-    expect(await saveGuideDesign({ save: async () => true, markSaved })).toBe('saved');
+    expect(await saveGuideDesign({ owner: 'user-a', savedName: 'X', save: async () => true, markSaved })).toBe('saved');
     expect(markSaved).toHaveBeenCalledTimes(1);
     expect(peekDraft()).toBeNull();
   });
   it('a failed save keeps the design and marks nothing', async () => {
     keepDraft({ owner: 'user-a', state: design, symmetry: 'fourWay', name: 'X', awaitingAuth: false });
     const markSaved = jest.fn(async () => true);
-    expect(await saveGuideDesign({ save: async () => false, markSaved })).toBe('failed');
+    expect(await saveGuideDesign({ owner: 'user-a', savedName: 'X', save: async () => false, markSaved })).toBe('failed');
     expect(markSaved).not.toHaveBeenCalled();
     expect(peekDraft()?.state.layers).toHaveLength(1);
   });
   it('a saved design whose step could not be recorded is still reported as saved, separately', async () => {
-    expect(await saveGuideDesign({ save: async () => true, markSaved: async () => false })).toBe('saved_unrecorded');
+    expect(await saveGuideDesign({ owner: 'user-a', savedName: 'X', save: async () => true, markSaved: async () => false })).toBe('saved_unrecorded');
+    clearUnrecordedSave();
+  });
+  it('REGRESSION: retrying after "saved but not recorded" records the step only - the design is never saved twice', async () => {
+    const save = jest.fn(async () => true);
+    let recordWorks = false;
+    const markSaved = jest.fn(async () => recordWorks);
+    expect(await saveGuideDesign({ owner: 'user-a', savedName: 'Mine', save, markSaved })).toBe('saved_unrecorded');
+    expect(unrecordedSave('user-a')).toEqual({ owner: 'user-a', savedName: 'Mine' });
+    // Pressing Save again (or Retry) must not create a second creation.
+    expect(await saveGuideDesign({ owner: 'user-a', savedName: 'Mine', save, markSaved })).toBe('saved_unrecorded');
+    recordWorks = true;
+    expect(await retryRecording('user-a', markSaved)).toBe(true);
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(markSaved).toHaveBeenCalledTimes(3);
+    expect(unrecordedSave('user-a')).toBeNull();
+  });
+  it('the pending record is per owner', async () => {
+    await saveGuideDesign({ owner: 'user-a', savedName: 'A', save: async () => true, markSaved: async () => false });
+    expect(unrecordedSave('user-b')).toBeNull();
+    expect(await retryRecording('user-b', async () => true)).toBe(false);
+    clearUnrecordedSave();
   });
 });

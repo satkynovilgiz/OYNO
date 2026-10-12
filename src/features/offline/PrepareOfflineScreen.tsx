@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -15,7 +16,8 @@ import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { measureEntriesBytes } from '@/services/offline/offlineCache';
 import { formatBytes } from '@/services/offline/offlineModel';
-import { buildPreparePlan, prepareCancel, prepareDownload, readiness, type PrepareSource } from '@/services/offline/preparePlan';
+import { cachedResultChecker, isDownloadUsable } from '@/services/offline/offlineAvailability';
+import { buildPreparePlan, prepareCancel, prepareDownload, prepareRepair, readiness, type PrepareSource } from '@/services/offline/preparePlan';
 import { useOfflineStore } from '@/services/offline/useOfflineStore';
 import { ownerQueue, useNextVisitStore } from '@/store/useNextVisitStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
@@ -36,6 +38,11 @@ export function PrepareOfflineScreen({ onPressBack }: { onPressBack: () => void 
   const manifest = useOfflineStore((state) => state.manifest);
   const inFlight = useOfflineStore((state) => state.inFlight);
   const failed = useOfflineStore((state) => state.failed);
+  const health = useOfflineStore((state) => state.health);
+  const queryClient = useQueryClient();
+  const hasCached = cachedResultChecker(queryClient);
+  // The existing usability rule: listed AND healthy AND in the cache the screens read.
+  const usable = (id: string) => isDownloadUsable(manifest.entries[id], health, hasCached);
   const queueRaw = useNextVisitStore((state) => state.saved[owner]);
   const queue = useMemo(() => ownerQueue({ [owner]: queueRaw } as never, owner), [owner, queueRaw]);
   const [source, setSource] = useState<PrepareSource>({ kind: 'plan' });
@@ -46,7 +53,7 @@ export function PrepareOfflineScreen({ onPressBack }: { onPressBack: () => void 
   }, []);
   const ids = useMemo(() => new Map((items.data ?? []).map((item) => [item.id, item])), [items.data]);
   const plan = buildPreparePlan(source, { queue, articleExists: (id) => (items.data ? ids.has(id) : undefined) });
-  const state = plan ? readiness(plan, manifest, inFlight, failed) : null;
+  const state = plan ? readiness(plan, manifest, inFlight, failed, usable) : null;
   const downloadedKey = state?.downloadedEntries.map((entry) => entry.id).join('|') ?? '';
   useEffect(() => {
     let live = true;
@@ -134,8 +141,11 @@ export function PrepareOfflineScreen({ onPressBack }: { onPressBack: () => void 
             {state.missingItems.length && !state.downloading ? (
               <Button label={state.failedItems.length ? t('prepareOffline.retry', { count: state.missingItems.length }) : t('prepareOffline.download', { count: state.missingItems.length })} disabled={isOffline} onPress={start} testID="prepare-download" />
             ) : null}
+            {state.incompleteItems.length && !state.downloading ? (
+              <Button label={t('prepareOffline.repair', { count: state.incompleteItems.length })} variant="secondary" disabled={isOffline} onPress={() => void prepareRepair(plan, state.incompleteItems, useOfflineStore.getState)} accessibilityHint={t('prepareOffline.repairHint')} testID="prepare-repair" />
+            ) : null}
             {state.downloading ? <Button label={t('prepareOffline.cancel')} variant="secondary" onPress={() => void prepareCancel(plan, useOfflineStore.getState)} accessibilityHint={t('prepareOffline.cancelHint')} testID="prepare-cancel" /> : null}
-            {!state.missingItems.length ? (
+            {!state.missingItems.length && !state.incompleteItems.length ? (
               <Text style={styles.body} testID="prepare-all-ready">
                 {state.ready === state.total ? t('prepareOffline.allReady') : t('prepareOffline.readyExcept')}
               </Text>

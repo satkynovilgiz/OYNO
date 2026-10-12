@@ -92,3 +92,12 @@ export function normalizePortfolio(raw: unknown): Portfolio | null {
   });
   return { id: value.id, title: clean(value.title, TITLE_MAX), intro: clean(value.intro, INTRO_MAX), entries: entries.slice(0, MAX_ENTRIES), createdAt: typeof value.createdAt === 'string' ? value.createdAt : '', updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : '' };
 }
+
+/**
+ * After a successful save of `sent`: the draft that should remain. If the
+ * person kept editing while the write was pending, the newer draft is NOT
+ * the one that was sent - it stays (unsaved) instead of being thrown away.
+ */
+export function draftAfterSave(current: Portfolio | null | undefined, sent: Portfolio): Portfolio | null {
+  return current && current !== sent ? current : null;
+}

@@ -86,12 +86,33 @@ export function draftFor(owner: string): { draft: FirstUseDraft | null; adoptedF
   return { draft: null, adoptedFrom: null };
 }
 
+/* ---------- a design that WAS saved but whose guide step wasn't recorded ---------- */
+let unrecorded: { owner: string; savedName: string } | null = null;
+export const unrecordedSave = (owner: string) => (unrecorded && unrecorded.owner === owner ? unrecorded : null);
+export const clearUnrecordedSave = () => {
+  unrecorded = null;
+};
+
 /**
  * The save step. "Saved" is reported (and the step recorded) only after the
  * save itself succeeded; on failure the draft is kept and nothing is marked.
+ * If the SAVE succeeded but recording the step failed, that is remembered
+ * (per owner) so a retry records the step ONLY - the design is never saved
+ * a second time (that would create a duplicate creation).
  */
-export async function saveGuideDesign(deps: { save: () => Promise<boolean>; markSaved: () => Promise<boolean> }): Promise<'saved' | 'saved_unrecorded' | 'failed'> {
+export async function saveGuideDesign(deps: { owner: string; savedName: string; save: () => Promise<boolean>; markSaved: () => Promise<boolean> }): Promise<'saved' | 'saved_unrecorded' | 'failed'> {
+  if (unrecordedSave(deps.owner)) return (await retryRecording(deps.owner, deps.markSaved)) ? 'saved' : 'saved_unrecorded';
   if (!(await deps.save())) return 'failed';
   keepDraft(null);
-  return (await deps.markSaved()) ? 'saved' : 'saved_unrecorded';
+  if (await deps.markSaved()) return 'saved';
+  unrecorded = { owner: deps.owner, savedName: deps.savedName };
+  return 'saved_unrecorded';
+}
+
+/** Records the step for an already-saved design. Never calls save. */
+export async function retryRecording(owner: string, markSaved: () => Promise<boolean>): Promise<boolean> {
+  if (!unrecordedSave(owner)) return false;
+  if (!(await markSaved())) return false;
+  unrecorded = null;
+  return true;
 }

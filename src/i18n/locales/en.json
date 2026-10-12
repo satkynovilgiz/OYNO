@@ -6969,7 +6969,9 @@
       "dontSave": "Continue without saving",
       "failed": "It couldn't be saved. Your design is still here - try again, or continue without saving.",
       "saved": "Saved \"{{name}}\".",
-      "gone": "This design was cleared (for example after switching accounts). You can continue without saving."
+      "gone": "This design was cleared (for example after switching accounts). You can continue without saving.",
+      "savedNotRecorded": "Your design \"{{name}}\" is saved to your account. Only this guide step couldn't be recorded on this device.",
+      "retryRecord": "Record this step again"
     },
     "defaultName": "My first pattern",
     "find": {
@@ -7416,7 +7418,8 @@
       "failed": "Download failed - can be retried",
       "missing": "Not downloaded yet · Size unknown",
       "unavailable": "Not available - can't be prepared",
-      "unknown": "Can't be prepared in advance - it opens offline only with an article it already loaded"
+      "unknown": "Can't be prepared in advance - it opens offline only with an article it already loaded",
+      "incomplete": "Listed, but not usable offline right now - repair re-downloads it"
     },
     "needsConnection": "Downloading needs a connection.",
     "cancel": "Cancel downloading",
@@ -7437,7 +7440,12 @@
     "retry_one": "Retry {{count}} missing item",
     "retry_few": "Retry {{count}} missing items",
     "retry_many": "Retry {{count}} missing items",
-    "retry_other": "Retry {{count}} missing items"
+    "retry_other": "Retry {{count}} missing items",
+    "repairHint": "Downloads again what is on the device but incomplete",
+    "repair_one": "Repair {{count}} incomplete item",
+    "repair_few": "Repair {{count}} incomplete items",
+    "repair_many": "Repair {{count}} incomplete items",
+    "repair_other": "Repair {{count}} incomplete items"
   },
   "discoveryRecap": {
     "title": "Discovery Recap",
