@@ -17,13 +17,14 @@ type AdminHomeScreenProps = {
   onPressFeedback: () => void;
   onPressRegions: () => void;
   onPressMakers: () => void;
+  onPressExplorer: () => void;
 };
 
 /** Internal tooling, not part of the app's localized surface - kept in
  * English deliberately (same reasoning as the rest of this file: it's for
  * whoever has an admin_roles row, not end users) rather than adding a
  * fourth i18n surface nobody but an admin will ever see. */
-export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback, onPressRegions, onPressMakers }: AdminHomeScreenProps) {
+export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPressFeedback, onPressRegions, onPressMakers, onPressExplorer }: AdminHomeScreenProps) {
   const insets = useSafeAreaInsets();
   const { data: role, isLoading } = useAdminRole();
 
@@ -87,10 +88,14 @@ export function AdminHomeScreen({ onPressBack, onPressSection, onPressPush, onPr
 
           <View style={styles.group}>
             <Text style={styles.groupTitle} accessibilityRole="header">
-              Meet the Makers
+              Internal previews (not public)
             </Text>
             <AnimatedPressable style={styles.row} onPress={onPressMakers} accessibilityRole="button" accessibilityLabel="Meet the Makers - internal schema preview with a demo fixture">
-              <Text style={styles.rowLabel}>Schema preview (demo fixture, not public)</Text>
+              <Text style={styles.rowLabel}>Meet the Makers (demo fixture)</Text>
+              <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+            </AnimatedPressable>
+            <AnimatedPressable style={styles.row} onPress={onPressExplorer} accessibilityRole="button" accessibilityLabel="Object Explorer - internal boz uy schematic fixture">
+              <Text style={styles.rowLabel}>Object Explorer (schematic fixture)</Text>
               <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
             </AnimatedPressable>
           </View>

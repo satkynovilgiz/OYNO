@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   section: { ...typography.overline, color: colors.textSecondary, marginTop: spacing.xs },
   body: { ...textStyles.body, color: colors.textPrimary },
   meta: { ...textStyles.small, color: colors.textSecondary },
-  banner: { ...textStyles.small, fontWeight: '700', color: colors.accentTerracottaText, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted },
+  banner: { ...textStyles.small, fontWeight: '700', color: colors.textPrimary, padding: spacing.sm, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceMuted, borderLeftWidth: 4, borderLeftColor: colors.accentTerracottaText },
   card: { gap: spacing.xs, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   placeholder: { padding: spacing.sm, borderRadius: cardRadii.compact, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderSubtle },
 });

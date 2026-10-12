@@ -7034,5 +7034,20 @@
     "previewLabel_few": "Preview of the {{orientation}} outline page with {{count}} motif copies",
     "previewLabel_many": "Preview of the {{orientation}} outline page with {{count}} motif copies",
     "previewLabel_other": "Preview of the {{orientation}} outline page with {{count}} motif copies"
+  },
+  "objectExplorer": {
+    "fixtureTitle": "Boz uy - Object Explorer",
+    "fixtureBanner": "Internal fixture: a simple schematic drawn by OYNO, not a reviewed illustration of a real boz uy. Points sit on the schematic's own parts. Not public.",
+    "howTo": "Tap a numbered point to read about that part, or use the numbered list below - it has the same information.",
+    "zoomIn": "Zoom in",
+    "reset": "Reset zoom",
+    "zoomLevel": "Zoom {{zoom}}",
+    "source": "Source: {{article}} - {{section}}",
+    "openSource": "Open the source article",
+    "sourceRemoved": "The source article isn't available any more, so it can't be opened.",
+    "sourceOffline": "The source article can't be loaded right now (offline and not saved on this device).",
+    "nothingSelected": "No part selected yet.",
+    "listTitle": "All parts, numbered",
+    "credit": "Illustration: {{credit}} ({{license}})"
   }
 }
