@@ -122,6 +122,14 @@ type Deletable = { exists: boolean; delete: () => void };
  * the sheet.
  */
 export async function generateAndShareBook(html: string, today: string, session: ExportSession): Promise<void> {
+  await printAndSharePdf(html, bookFileName(today), A4, session);
+}
+
+/**
+ * The shared HTML -> PDF -> share sheet -> cleanup flow (Memory Book,
+ * Stencil Studio). `size` is the page size in points.
+ */
+export async function printAndSharePdf(html: string, fileName: string, size: { width: number; height: number }, session: ExportSession): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Print = require('expo-print') as typeof import('expo-print');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -137,12 +145,12 @@ export async function generateAndShareBook(html: string, today: string, session:
     folder.create({ intermediates: true, idempotent: true });
     temps.push(folder);
 
-    const printed = await Print.printToFileAsync({ html, width: A4.width, height: A4.height });
+    const printed = await Print.printToFileAsync({ html, width: size.width, height: size.height });
     const printedFile = new File(printed.uri);
     temps.push(printedFile);
     ensureValid();
 
-    const named = new File(folder, bookFileName(today));
+    const named = new File(folder, fileName);
     await printedFile.copy(named);
     temps.push(named);
     ensureValid();
@@ -150,10 +158,20 @@ export async function generateAndShareBook(html: string, today: string, session:
     if (!(await Sharing.isAvailableAsync())) throw new SharingUnavailableError();
     // Last moment before the file leaves the app.
     ensureValid();
-    await Sharing.shareAsync(named.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: bookFileName(today) });
+    await Sharing.shareAsync(named.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: fileName });
   } finally {
     // Files first, then this export's own folder (recursive).
     cleanupTemps([...temps].reverse());
+  }
+}
+
+/** PDF export without the Journal photo requirement (native build with Print + Sharing). */
+export function pdfExportSupported(): boolean {
+  if (Platform.OS === 'web') return false;
+  try {
+    return !!requireOptionalNativeModule('ExpoPrint') && !!requireOptionalNativeModule('ExpoSharing');
+  } catch {
+    return false;
   }
 }
 

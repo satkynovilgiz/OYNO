@@ -6982,5 +6982,57 @@
     "finishedNotSaved": "You looked around without saving - nothing was kept.",
     "replayNote": "You can replay this guide any time from Settings → Help.",
     "replay": "Replay the guide"
+  },
+  "stencil": {
+    "title": "Stencil Studio",
+    "entry": "Make a stencil",
+    "entryHint": "An outline page of this design to print, colour in or trace",
+    "intro": "An outline version of your design: the motifs' own lines in black, in the same positions, turns, sizes and mirrored copies - no colours.",
+    "notCutReady": "This is an outline page for colouring in or tracing - not a cut-ready stencil. No cutting bridges are added, so if you cut along the lines, enclosed pieces will fall out.",
+    "marginNote": "The dashed blue line shows the safe margin in the preview only - it isn't printed.",
+    "orientationTitle": "Page",
+    "orientation": {
+      "portrait": "A4 portrait",
+      "landscape": "A4 landscape"
+    },
+    "thicknessTitle": "Line thickness",
+    "thickness": {
+      "thin": "Thin ({{mm}} mm)",
+      "medium": "Medium ({{mm}} mm)",
+      "thick": "Thick ({{mm}} mm)"
+    },
+    "extrasTitle": "Guides",
+    "guides": "Placement guides (centre lines and the design's square frame, dashed grey)",
+    "labelsTitle": "Text on the page",
+    "labels": {
+      "name": "Design name",
+      "nameNone": "Design name (this design isn't saved with a name)",
+      "motifs": "Names of the motifs used",
+      "note": "\"Outline page - not a cut-ready stencil\""
+    },
+    "labelsNote": "Nothing else is printed - only the design and the text you tick here.",
+    "printedNote": "Outline page - not a cut-ready stencil",
+    "limitsTitle": "What this page can't show exactly",
+    "limits": {
+      "unknownMotif": "Not drawn - OYNO has no outline for: {{motifs}}. It's left out rather than replaced by another shape.",
+      "smallDetail": "A small filled dot in {{motifs}} is too small to outline at this thickness, so it prints as a solid dot. A thinner line keeps it as a ring.",
+      "openLines": "{{motifs}}: some or all of these motifs' lines are open (not closed shapes), so those parts print as lines to trace or colour along, not areas to fill."
+    },
+    "outputTitle": "What you get",
+    "outputFormat": "One PDF page, {{orientation}}, black lines on white. It's shared through your device's share sheet - save it to Files or send it to a printer app.",
+    "outputSize": "Printed at 100 % (\"Actual size\"), the design is {{mm}} mm square, inside a {{margin}} mm safe margin. \"Fit to page\" or a printer's own margins can make it slightly smaller.",
+    "export": "Export PDF",
+    "retry": "Try the export again",
+    "exported": "The PDF was handed to the share sheet.",
+    "exportFailed": "The PDF couldn't be made. Your settings are kept - try again.",
+    "shareUnavailable": "Sharing isn't available on this device, so the PDF can't be handed over.",
+    "unsupported": "PDF export needs the OYNO app on a phone or tablet with an up-to-date build. In this version you can preview the page, but not export it.",
+    "originalNote": "Your design and its colours stay exactly as they are - this page is made from a copy.",
+    "noDesign": "Open a design in the Oymo Creator and choose \"Make a stencil\".",
+    "backToCreator": "Back",
+    "previewLabel_one": "Preview of the {{orientation}} outline page with {{count}} motif copy",
+    "previewLabel_few": "Preview of the {{orientation}} outline page with {{count}} motif copies",
+    "previewLabel_many": "Preview of the {{orientation}} outline page with {{count}} motif copies",
+    "previewLabel_other": "Preview of the {{orientation}} outline page with {{count}} motif copies"
   }
 }

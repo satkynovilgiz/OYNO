@@ -30,6 +30,7 @@ import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { clearSessionRecipe, fingerprint, fitRecipe, recipeFromHistory, setSessionRecipe, type HistoryEntry, type StepLabel } from '@/features/culture/oymo/recipe/recipeModel';
 import { recipeFor, useOymoRecipeStore } from '@/store/useOymoRecipeStore';
 import { setRemixSource } from '@/features/culture/oymo/remix/remixModel';
+import { setStencilSource } from '@/features/culture/oymo/stencil/stencilModel';
 import { offerDesign, snapshotDesign } from '@/features/capsules/capsuleModel';
 import { fetchOymoCreations, OYMO_CREATIONS_QUERY_KEY, useOymoCreations, type OymoCreationRow } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
@@ -422,6 +423,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         )}
 
         {editorState.layers.length > 0 ? <Button label={t('timeCapsule.fromCreator')} variant="secondary" accessibilityHint={t('timeCapsule.fromCreatorHint')} onPress={() => { offerDesign(owner, snapshotDesign({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })); router.push('/profile/capsules/new' as never); }} testID="oymo-to-capsule" /> : null}
+        {editorState.layers.length > 0 ? <Button label={t('stencil.entry')} variant="secondary" accessibilityHint={t('stencil.entryHint')} onPress={() => { setStencilSource(owner, { layers: editorState.layers, symmetry: symmetryMode, name: openedCreation?.name ?? null }); router.push('/culture/oymo/stencil' as never); }} testID="oymo-make-stencil" /> : null}
         {editorState.layers.length > 0 ? <Button label={t('remixStudio.entry')} variant="secondary" onPress={openRemixStudio} accessibilityHint={t('remixStudio.entryHint')} testID="oymo-explore-variations" /> : null}
         {/* Pattern Recipe: replay how this design was built (this session), or a saved creation's recipe. */}
         {history.length > 1 || historyIndex > 0 ? <Button label={t('culture.oymo.recipe.replayThis')} variant="secondary" onPress={openSessionRecipe} accessibilityHint={t('culture.oymo.recipe.replayThisHint')} testID="oymo-replay-session" /> : null}
