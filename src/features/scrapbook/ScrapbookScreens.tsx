@@ -12,6 +12,7 @@ import { contentRoute } from '@/features/culture/connections/connectionsData';
 import { useConnectionContent } from '@/features/culture/connections/useConnectionContent';
 import { clockTime } from '@/features/culture/komuz/listening/komuzQueue';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
+import { TagPicker } from '@/features/tags/TagScreens';
 import { announce } from '@/services/a11y/announce';
 import { draftMap, ownerKey } from '@/services/drafts/draftRegistry';
 import { useOymoCreations } from '@/services/content/oymoCreationsService';
@@ -265,6 +266,7 @@ export function ScrapbookScreen({ bookId, onPressBack }: { bookId: string; onPre
         ) : (
           <View style={styles.stack} testID="scrapbook-edit">
             <TextField testID="scrapbook-title" label={t('scrapbook.titleLabel')} value={book.title} onChangeText={(value) => edit(rename(book, value))} />
+            {stored ? <TagPicker recordRef={{ type: 'scrapbook', id: stored.id }} /> : null}
             <Text style={styles.section} accessibilityRole="header">
               {t('scrapbook.entriesTitle', { count: book.entries.length, max: MAX_ENTRIES })}
             </Text>

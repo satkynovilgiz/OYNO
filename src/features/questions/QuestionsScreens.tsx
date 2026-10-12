@@ -10,6 +10,7 @@ import { renderedSectionKeys, sectionLabelKey } from '@/features/culture/itemSec
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
 import { announce } from '@/services/a11y/announce';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
+import { TagPicker } from '@/features/tags/TagScreens';
 import { ownerQuestions, useQuestionsStore } from '@/store/useQuestionsStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
@@ -285,6 +286,7 @@ export function QuestionDetailScreen({ questionId, onPressBack }: { questionId: 
           {question.status === 'answered' ? t('myQuestions.statusAnswered') : t('myQuestions.statusExploring')}
         </Text>
         <TextField label={t('myQuestions.yourQuestion')} value={shownText} onChangeText={editText} multiline testID="question-text" />
+        <TagPicker recordRef={{ type: 'question', id: question.id }} />
         {!isValidQuestion(shownText) ? <Text style={styles.warn}>{t('myQuestions.emptyText')}</Text> : null}
 
         {origin ? (
