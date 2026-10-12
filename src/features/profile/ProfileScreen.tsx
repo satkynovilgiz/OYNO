@@ -146,6 +146,7 @@ export function ProfileScreen() {
             {[
               { route: '/profile/shelf', icon: Library, title: t('shelf.title'), meta: t('shelf.profileMeta') },
               { route: '/profile/scrapbooks', icon: BookOpen, title: t('scrapbook.title'), meta: t('scrapbook.profileMeta') },
+              { route: '/profile/discovery-recap', icon: History, title: t('discoveryRecap.title'), meta: t('discoveryRecap.profileMeta') },
               { route: '/profile/next-visit', icon: CalendarPlus, title: t('nextVisit.title'), meta: t('nextVisit.profileMeta') },
               { route: '/profile/questions', icon: HelpCircle, title: t('myQuestions.title'), meta: t('myQuestions.profileMeta') },
               { route: '/profile/oymo-portfolios', icon: Palette, title: t('oymoPortfolio.title'), meta: t('oymoPortfolio.profileMeta') },
