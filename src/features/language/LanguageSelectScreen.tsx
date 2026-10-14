@@ -71,7 +71,7 @@ export function LanguageSelectScreen({ selected, onSelect, onContinue }: Languag
                   testID={`language-${option.id}`}
                   onPress={() => onSelect(option.id)}
                   press="strong"
-                  haptic="light"
+                 
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected }}
                   accessibilityLabel={option.label}

@@ -414,7 +414,6 @@ function PrimaryAction({
       onPress={onPress}
       disabled={disabled}
       pressScale={0.98}
-      haptic={disabled ? false : 'light'}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}

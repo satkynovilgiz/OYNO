@@ -141,7 +141,7 @@ export function KomuzListeningRoomScreen({ onPressBack }: { onPressBack: () => v
               style={[styles.playButton, isChild && styles.playButtonChild]}
               onPress={() => playFrom(shown.id)}
               press="strong"
-              haptic="light"
+             
               accessibilityRole="button"
               accessibilityLabel={`${isPlayingTrack(shown.id) ? t('komuzRoom.pause') : t('komuzRoom.play')} ${shown.title}`}
             >

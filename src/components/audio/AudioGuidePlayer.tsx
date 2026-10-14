@@ -122,7 +122,7 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
             style={styles.listen}
             onPress={() => store.start(sessionKey, plan, { title, route }, { type: resume.type, value: resume.value })}
             press="strong"
-            haptic="light"
+           
             accessibilityRole="button"
             accessibilityLabel={`${t('listening.resume')}: ${where}`}
           >
@@ -142,7 +142,7 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
         style={styles.listen}
         onPress={() => store.start(sessionKey, plan, { title, route })}
         press="strong"
-        haptic="light"
+       
         accessibilityRole="button"
         accessibilityLabel={`${t('audioGuide.title')}: ${label}`}
       >
@@ -160,7 +160,7 @@ export function AudioGuidePlayer({ contentKey, narration, title }: AudioGuidePla
   return (
     <View style={styles.player}>
       <View style={styles.row}>
-        <AnimatedPressable style={styles.playButton} onPress={store.toggle} press="strong" haptic="light" accessibilityRole="button" accessibilityLabel={toggleLabel} testID="audio-toggle">
+        <AnimatedPressable style={styles.playButton} onPress={store.toggle} press="strong" accessibilityRole="button" accessibilityLabel={toggleLabel} testID="audio-toggle">
           {status === 'error' ? <RotateCcw size={18} color={colors.accentGold} strokeWidth={2.5} /> : isPlaying ? <Pause size={18} color={colors.accentGold} strokeWidth={2.5} /> : <Play size={18} color={colors.accentGold} strokeWidth={2.5} />}
         </AnimatedPressable>
 

@@ -150,7 +150,7 @@ export function LocationDetailScreen({
         style={styles.questCard}
         onPress={onPressRelatedQuest}
         hoverEffect
-        haptic="light"
+       
         accessibilityRole="button"
         accessibilityLabel={relatedQuest.title}
       >

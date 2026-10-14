@@ -51,7 +51,7 @@ export function AgeGroupScreen({ initialSelected, onContinue }: AgeGroupScreenPr
                   testID={`age-${option.id}`}
                   onPress={() => setSelected(option.id)}
                   press="strong"
-                  haptic="light"
+                 
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected }}
                   accessibilityLabel={`${t(option.labelKey)}. ${t(option.hintKey)}`}

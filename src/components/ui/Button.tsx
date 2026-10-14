@@ -96,7 +96,6 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
       press="strong"
       hitSlop={hitSlop}
       testID={testID}
-      haptic={isDisabled ? false : variant === 'primary' || variant === 'accent' ? 'medium' : 'light'}
       disabled={keepFocusWhenDisabled ? undefined : isDisabled}
       accessibilityRole="button"
       accessibilityLabel={label}

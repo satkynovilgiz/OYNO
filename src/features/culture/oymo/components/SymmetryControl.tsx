@@ -30,7 +30,7 @@ export function SymmetryControl({ mode, onChangeMode }: SymmetryControlProps) {
             key={candidate}
             style={[styles.segment, isSelected && styles.segmentSelected]}
             onPress={() => onChangeMode(candidate)}
-            haptic="light"
+           
             accessibilityRole="button"
             accessibilityLabel={t(labelKey)}
             accessibilityState={{ selected: isSelected }}

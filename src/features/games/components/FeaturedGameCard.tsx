@@ -31,7 +31,7 @@ export function FeaturedGameCard({ game, experience, onPress }: { game: GameList
       style={[styles.card, { aspectRatio: isChild ? 0.95 : isAdult ? 1.35 : 1.15 }]}
       onPress={() => onPress(game)}
       pressScale={0.985}
-      haptic="medium"
+     
       accessibilityRole="button"
       accessibilityLabel={`${t('games.featured.label')}: ${title}. ${t('games.play')}`}
       accessibilityHint={description ?? undefined}

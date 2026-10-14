@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
+import { SaveStatus, useSaveFeedback } from '@/components/feedback/SaveStatus';
 import { LoadingState, StateMessage } from '@/components/state/ScreenState';
 import { Button, ConfirmationModal, IconButton } from '@/components/ui';
 import { SettingsScreenLayout } from '@/features/settings/components/SettingsScreenLayout';
@@ -25,8 +26,10 @@ export function HomeShortcutsScreen({ onPressBack }: { onPressBack: () => void }
   const owner = useRecordsOwner();
   const status = useHomeShortcutsStore((state) => state.status);
   const saved = useHomeShortcutsStore((state) => state.saved);
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // Saving / Saved / Not saved, from the write's real result (one confirmation haptic, never on the tap).
+  const feedback = useSaveFeedback();
+  const busy = feedback.saving;
+  const [stale, setStale] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const shownOwner = useRef(owner);
   useEffect(() => {
@@ -34,7 +37,7 @@ export function HomeShortcutsScreen({ onPressBack }: { onPressBack: () => void }
   }, []);
   useEffect(() => {
     shownOwner.current = owner;
-    setFailed(false);
+    setStale(false);
     setConfirmReset(false);
   }, [owner]);
 
@@ -46,14 +49,11 @@ export function HomeShortcutsScreen({ onPressBack }: { onPressBack: () => void }
   async function apply(change: PinChange, announce?: string) {
     if (busy) return;
     const startedFor = owner;
-    setBusy(true);
-    setFailed(false);
-    const ok = await useHomeShortcutsStore.getState().change(owner, change);
-    setBusy(false);
+    setStale(false);
+    const ok = await feedback.run(() => useHomeShortcutsStore.getState().change(startedFor, change));
     // A result for an account that's no longer shown is never applied to this one's screen.
-    if (shownOwner.current !== startedFor) return;
-    if (!ok) setFailed(true);
-    else if (announce) AccessibilityInfo.announceForAccessibility(announce);
+    if (shownOwner.current !== startedFor) return setStale(true);
+    if (ok && announce) AccessibilityInfo.announceForAccessibility(announce);
   }
 
   let body: React.ReactNode;
@@ -73,9 +73,9 @@ export function HomeShortcutsScreen({ onPressBack }: { onPressBack: () => void }
               <Text style={[styles.rowTitle, styles.flex]}>
                 {index + 1}. {titleOf(activity)}
               </Text>
-              <IconButton icon={ChevronUp} size={40} elevated={false} disabled={busy || index === 0} accessibilityLabel={t('homeShortcuts.moveUp', { name: titleOf(activity) })} onPress={() => void apply({ type: 'move', id: activity.id, delta: -1 }, t('homeShortcuts.moved', { name: titleOf(activity), position: index }))} testID={`shortcut-up-${activity.id}`} />
-              <IconButton icon={ChevronDown} size={40} elevated={false} disabled={busy || index === shown.length - 1} accessibilityLabel={t('homeShortcuts.moveDown', { name: titleOf(activity) })} onPress={() => void apply({ type: 'move', id: activity.id, delta: 1 }, t('homeShortcuts.moved', { name: titleOf(activity), position: index + 2 }))} testID={`shortcut-down-${activity.id}`} />
-              <IconButton icon={X} size={40} elevated={false} disabled={busy} accessibilityLabel={t('homeShortcuts.remove', { name: titleOf(activity) })} onPress={() => void apply({ type: 'remove', id: activity.id }, t('homeShortcuts.removed', { name: titleOf(activity) }))} testID={`shortcut-remove-${activity.id}`} />
+              <IconButton icon={ChevronUp} size={40} elevated={false} disabled={index === 0} keepFocusWhenDisabled accessibilityLabel={t('homeShortcuts.moveUp', { name: titleOf(activity) })} onPress={() => void apply({ type: 'move', id: activity.id, delta: -1 }, t('homeShortcuts.moved', { name: titleOf(activity), position: index }))} testID={`shortcut-up-${activity.id}`} />
+              <IconButton icon={ChevronDown} size={40} elevated={false} disabled={index === shown.length - 1} keepFocusWhenDisabled accessibilityLabel={t('homeShortcuts.moveDown', { name: titleOf(activity) })} onPress={() => void apply({ type: 'move', id: activity.id, delta: 1 }, t('homeShortcuts.moved', { name: titleOf(activity), position: index + 2 }))} testID={`shortcut-down-${activity.id}`} />
+              <IconButton icon={X} size={40} elevated={false} accessibilityLabel={t('homeShortcuts.remove', { name: titleOf(activity) })} onPress={() => void apply({ type: 'remove', id: activity.id }, t('homeShortcuts.removed', { name: titleOf(activity) }))} testID={`shortcut-remove-${activity.id}`} />
             </View>
           ))}
           {shown.length === 0 ? <Text style={styles.meta}>{t('homeShortcuts.none')}</Text> : null}
@@ -86,11 +86,7 @@ export function HomeShortcutsScreen({ onPressBack }: { onPressBack: () => void }
             <Button label={t('homeShortcuts.removeUnavailable')} variant="secondary" size="sm" disabled={busy} onPress={() => void apply({ type: 'removeUnavailable' })} testID="shortcuts-remove-unavailable" />
           </View>
         ) : null}
-        {failed ? (
-          <Text style={styles.warn} accessibilityLiveRegion="assertive" testID="shortcuts-failed">
-            {t('homeShortcuts.saveFailed')}
-          </Text>
-        ) : null}
+        {stale ? null : <SaveStatus state={feedback.state} failedLabel={t('homeShortcuts.saveFailed')} testID="shortcuts" />}
 
         <Text style={styles.section} accessibilityRole="header">
           {t('homeShortcuts.add')}
@@ -105,7 +101,7 @@ export function HomeShortcutsScreen({ onPressBack }: { onPressBack: () => void }
               {options.map((activity) => (
                 <View key={activity.id} style={styles.row}>
                   <Text style={[styles.body, styles.flex]}>{titleOf(activity)}</Text>
-                  <IconButton icon={Plus} size={40} elevated={false} disabled={busy || full} accessibilityLabel={t('homeShortcuts.addOne', { name: titleOf(activity) })} onPress={() => void apply({ type: 'add', id: activity.id }, t('homeShortcuts.added', { name: titleOf(activity) }))} testID={`shortcut-add-${activity.id}`} />
+                  <IconButton icon={Plus} size={40} elevated={false} disabled={full} accessibilityLabel={t('homeShortcuts.addOne', { name: titleOf(activity) })} onPress={() => void apply({ type: 'add', id: activity.id }, t('homeShortcuts.added', { name: titleOf(activity) }))} testID={`shortcut-add-${activity.id}`} />
                 </View>
               ))}
             </View>

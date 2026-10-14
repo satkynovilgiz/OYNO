@@ -71,7 +71,7 @@ export function AudioMiniPlayer() {
         style={styles.play}
         onPress={store.toggle}
         press="strong"
-        haptic="light"
+       
         accessibilityRole="button"
         accessibilityLabel={status === 'error' ? t('audioGuide.retry') : isPlaying ? t('audioGuide.pause') : status === 'paused' ? t('audioGuide.resume') : t('audioGuide.play')}
         testID="mini-audio-toggle"

@@ -68,7 +68,7 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
                 onPress={() => onPressGame?.(game)}
                 pressScale={0.98}
                 hoverEffect
-                haptic="light"
+               
                 accessibilityRole="button"
                 accessibilityLabel={game.name}
               >

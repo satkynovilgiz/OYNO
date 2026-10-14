@@ -13,9 +13,9 @@ type AnimatedPressableProps = Omit<PressableProps, 'style'> & {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   pressScale?: number;
-  /** Fires expo-haptics on press-in. Omit (or `false`) for non-button
-   * tappables (cards, tiles) that shouldn't buzz on every tap - only actual
-   * buttons should set this. */
+  /** An explicit haptic for a MEANINGFUL press (docs/INTERACTION_FEEDBACK.md):
+   * fired when the press completes - never on press-in, so a touch that
+   * becomes a scroll doesn't buzz. Ordinary taps set nothing. */
   haptic?: 'light' | 'medium' | false;
   /** Adds a subtle scale-up on mouse hover (web only - onHoverIn/Out never
    * fire on native touch, so this is a no-op there). Use for cards/tiles
@@ -44,6 +44,7 @@ export function AnimatedPressable({
   haptic = false,
   press,
   disabled,
+  onPress,
   onPressIn,
   onPressOut,
   onHoverIn,
@@ -74,9 +75,16 @@ export function AnimatedPressable({
       disabled={disabled}
       onPressIn={(event) => {
         if (!reducedMotion) scale.value = pressTo(preset ? preset.scale : pressScale, 'in');
-        if (haptic && !disabled) void hapticImpact(haptic);
         onPressIn?.(event);
       }}
+      onPress={
+        onPress
+          ? (event) => {
+              if (haptic && !disabled) void hapticImpact(haptic);
+              onPress(event);
+            }
+          : undefined
+      }
       onPressOut={(event) => {
         if (!reducedMotion) scale.value = pressTo(hoverEffect && isHovering.value ? hoverScale : 1, 'out');
         onPressOut?.(event);

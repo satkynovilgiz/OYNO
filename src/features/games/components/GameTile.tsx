@@ -55,7 +55,6 @@ export function GameTile({
       onPress={playable ? () => onPress(game) : undefined}
       disabled={!playable}
       pressScale={0.97}
-      haptic={playable ? 'light' : false}
       hoverEffect
       accessibilityRole="button"
       accessibilityState={{ disabled: !playable }}

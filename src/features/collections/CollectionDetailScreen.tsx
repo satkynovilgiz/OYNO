@@ -233,7 +233,7 @@ export function CollectionDetailScreen({ collection, onPressBack }: CollectionDe
                     router.push((nextCollection ? `/collections/${nextCollection.id}` : `/culture/${collection.relatedCategoryId}`) as never)
                   }
                   pressScale={0.98}
-                  haptic="light"
+                 
                   accessibilityRole="button"
                   accessibilityLabel={nextCollection ? resolveLocalized(nextCollection.title, language) : t('collections.relatedDiscovery')}
                 >

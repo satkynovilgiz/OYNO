@@ -26,7 +26,7 @@ export function AddToJournalButton({ type, id, title }: { type: JournalLinkType;
         router.push({ pathname: '/journal/new', params: { linkType: type, linkId: id, linkLabel: title, ...prompt } } as never);
       }}
       pressScale={0.97}
-      haptic="light"
+     
       accessibilityRole="button"
       accessibilityLabel={t('journal.addToJournalA11y', { title })}
     >

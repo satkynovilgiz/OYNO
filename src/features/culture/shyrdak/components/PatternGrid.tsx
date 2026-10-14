@@ -24,7 +24,7 @@ export function PatternGrid({ selectedPatternId, onSelectPattern, color }: Patte
             key={pattern.id}
             style={[styles.tile, isSelected && styles.tileSelected]}
             onPress={() => onSelectPattern(pattern.id)}
-            haptic="light"
+           
             accessibilityRole="button"
             accessibilityLabel={t(pattern.nameKey)}
             accessibilityState={{ selected: isSelected }}

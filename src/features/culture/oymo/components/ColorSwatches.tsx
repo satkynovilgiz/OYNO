@@ -28,7 +28,7 @@ export function ColorSwatches({ selectedColor, onSelectColor }: ColorSwatchesPro
           key={swatch}
           style={[styles.swatch, { backgroundColor: swatch }, swatch === selectedColor && styles.swatchSelected]}
           onPress={() => onSelectColor(swatch)}
-          haptic="light"
+         
           accessibilityRole="button"
           accessibilityLabel={t('culture.oymo.colorLabel')}
           accessibilityState={{ selected: swatch === selectedColor }}

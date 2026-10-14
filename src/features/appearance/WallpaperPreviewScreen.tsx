@@ -98,7 +98,7 @@ export function WallpaperPreviewScreen({ wallpaper, onPressBack }: { wallpaper: 
             onPress={() => void handleSave()}
             disabled={saving}
             pressScale={0.97}
-            haptic="light"
+           
             accessibilityRole="button"
             accessibilityState={{ busy: saving }}
             accessibilityLabel={t('appearance.wallpapers.save')}

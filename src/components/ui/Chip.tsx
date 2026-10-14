@@ -32,7 +32,7 @@ export function Chip({ label, icon, selected = false, onPress, accessibilityRole
       hitSlop={Math.max(4, Math.ceil((target - (larger ? 48 : 38)) / 2))}
       onPress={onPress}
       press="strong"
-      haptic="light"
+     
       accessibilityRole={accessibilityRole}
       accessibilityState={{ selected }}
       // react-native-web reads only aria-* (accessibilityState is dropped on web).

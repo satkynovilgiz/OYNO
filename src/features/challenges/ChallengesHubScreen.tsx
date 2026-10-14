@@ -60,7 +60,7 @@ export function ChallengesHubScreen({ onPressBack }: { onPressBack: () => void }
           style={styles.daily}
           onPress={() => router.push('/challenges/daily' as never)}
           pressScale={0.98}
-          haptic="light"
+         
           accessibilityRole="button"
           accessibilityLabel={`${t('challenges.daily.title')}. ${
             todayResult?.completedAt ? t('challenges.doneToday', { correct: todayResult.lastCorrect, total: todayResult.lastTotal }) : t('challenges.daily.description', { count: dailyCount })

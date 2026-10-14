@@ -44,7 +44,6 @@ export function BottomTabBar({ activeTab, onPressTab }: BottomTabBarProps) {
             key={tab.id}
             style={styles.item}
             press="strong"
-            haptic={isActive ? false : 'light'}
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={t(tab.labelKey)}

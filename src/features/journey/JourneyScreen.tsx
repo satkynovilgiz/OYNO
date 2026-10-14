@@ -423,7 +423,7 @@ function NextDiscoveryCard({ next }: { next: NextDiscovery | null }) {
         onPress={() => go(next.stamp.route)}
         pressScale={0.98}
         hoverEffect
-        haptic="light"
+       
         accessibilityRole="button"
         accessibilityLabel={`${t('journey.next.title')}: ${next.stamp.title}`}
       >

@@ -554,7 +554,7 @@ function MapPin({ place, left, top, scale, spread, size, hit, labelSize, labelSi
         style={[styles.pinHit, { width: hit, height: hit }]}
         onPress={onPress}
         pressScale={0.9}
-        haptic="light"
+       
         accessibilityRole="button"
         accessibilityState={{ selected }}
         accessibilityLabel={`${place.title}, ${visited ? t('explore.map.pinDiscovered') : t('explore.map.pinNotDiscovered')}`}
@@ -654,7 +654,7 @@ function RegionMarkerPin({
   const size = Math.round(hit * 0.62);
   return (
     <Animated.View style={[styles.pinAnchor, { left: left - hit / 2, top: top - hit / 2, width: hit, height: hit }, counterScale]}>
-      <AnimatedPressable style={[styles.pinHit, { width: hit, height: hit }]} onPress={onPress} pressScale={0.9} haptic="light" accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={accessibilityLabel}>
+      <AnimatedPressable style={[styles.pinHit, { width: hit, height: hit }]} onPress={onPress} pressScale={0.9} accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={accessibilityLabel}>
         <View style={selected ? styles.regionSelected : undefined}>
           <RegionBadge status={marker.status} tone={regionTone(marker.id)} size={size} />
         </View>

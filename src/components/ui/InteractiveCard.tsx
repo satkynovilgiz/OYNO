@@ -25,7 +25,7 @@ export function InteractiveCard({ imageSource, title, ctaIcon: CtaIcon, onPress,
       style={[styles.card, style]}
       onPress={onPress}
       hoverEffect
-      haptic="light"
+     
       accessibilityRole="button"
       accessibilityLabel={title}
     >

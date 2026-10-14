@@ -42,7 +42,7 @@ export function SavedContentCard({ item, offline, experience, layout = 'row', on
   const removeLabel = t('saved.v2.removeA11y', { title: item.title });
 
   const heart = (
-    <AnimatedPressable style={[styles.heart, layout === 'tile' && styles.heartOnArt]} onPress={onRemove} haptic="light" hitSlop={4} accessibilityRole="button" accessibilityLabel={removeLabel}>
+    <AnimatedPressable style={[styles.heart, layout === 'tile' && styles.heartOnArt]} onPress={onRemove} hitSlop={4} accessibilityRole="button" accessibilityLabel={removeLabel}>
       <Heart size={layout === 'tile' ? 16 : 19} color={colors.accentTerracotta} fill={colors.accentTerracotta} strokeWidth={0} />
     </AnimatedPressable>
   );

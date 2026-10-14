@@ -42,7 +42,7 @@ export function SearchBar({ value, onChangeText, onPressFilter }: SearchBarProps
         <AnimatedPressable
           style={styles.filterButton}
           onPress={onPressFilter}
-          haptic="light"
+         
           accessibilityRole="button"
           accessibilityLabel={t('games.filterLabel')}
         >

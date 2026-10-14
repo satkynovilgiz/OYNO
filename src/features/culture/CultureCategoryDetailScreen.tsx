@@ -149,7 +149,7 @@ export function CultureCategoryDetailScreen({
                   style={styles.interactiveCard}
                   onPress={() => onPressInteractiveExperience(interactiveExperience.id)}
                   hoverEffect
-                  haptic="light"
+                 
                   accessibilityRole="button"
                   accessibilityLabel={t(interactiveExperience.titleKey)}
                 >
@@ -186,7 +186,7 @@ export function CultureCategoryDetailScreen({
                           style={[styles.itemCard, isAdult && styles.itemCardRow]}
                           onPress={() => onPressItem(item)}
                           hoverEffect
-                          haptic="light"
+                         
                           accessibilityRole="button"
                           accessibilityLabel={item.title}
                         >

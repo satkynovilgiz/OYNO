@@ -49,7 +49,6 @@ export function TextButton({
       onPress={disabled ? undefined : onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
-      haptic={disabled ? false : 'light'}
       disabled={disabled}
       hitSlop={10}
       testID={testID}

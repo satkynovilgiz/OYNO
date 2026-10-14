@@ -184,7 +184,7 @@ export function TrailDetailScreen({ trail, onPressBack }: TrailDetailScreenProps
               style={[styles.continue, isChild && styles.continueChild]}
               onPress={() => router.push(nextDisplay.route as never)}
               pressScale={0.98}
-              haptic="light"
+             
               accessibilityRole="button"
               accessibilityLabel={`${t('trails.continue')}: ${nextDisplay.title}`}
             >

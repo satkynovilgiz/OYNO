@@ -98,7 +98,6 @@ function TodayCard({
       onPress={onPress}
       disabled={!onPress}
       press="soft"
-      haptic={onPress ? 'light' : false}
       accessibilityRole="button"
       accessibilityState={{ disabled: !onPress }}
       aria-disabled={!onPress}

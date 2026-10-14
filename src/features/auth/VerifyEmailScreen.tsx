@@ -99,7 +99,6 @@ export function VerifyEmailScreen({ email, isSubmitting, error, onSubmit, onRese
         style={styles.resend}
         onPress={handleResend}
         disabled={resendDisabled}
-        haptic={resendDisabled ? false : 'light'}
         accessibilityRole="button"
         accessibilityLabel={resendLabel}
         accessibilityState={{ disabled: resendDisabled, busy: isResending }}

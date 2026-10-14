@@ -25,7 +25,7 @@ export function PlayAgainCard({ game, stat, onPress }: { game: GameListItem; sta
       style={styles.card}
       onPress={() => onPress(game)}
       pressScale={0.98}
-      haptic="light"
+     
       accessibilityRole="button"
       accessibilityLabel={`${t('games.playAgain.label')}: ${title}, ${stats}`}
     >

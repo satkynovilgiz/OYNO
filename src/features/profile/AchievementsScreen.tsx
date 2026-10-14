@@ -153,7 +153,7 @@ export function AchievementsScreen({ unlockedIds, onPressBack }: AchievementsScr
             <View style={styles.bleed}>
               <Rail itemWidth={recentWidth}>
                 {view.recent.map((card) => (
-                  <AnimatedPressable key={card.id} style={[styles.recentCard, { width: recentWidth }]} onPress={() => setSelected(card)} press="soft" haptic="light" accessibilityRole="button" accessibilityLabel={a11yFor(card)}>
+                  <AnimatedPressable key={card.id} style={[styles.recentCard, { width: recentWidth }]} onPress={() => setSelected(card)} press="soft" accessibilityRole="button" accessibilityLabel={a11yFor(card)}>
                     <View style={styles.recentHalo}>
                       <Image source={card.iconSource} style={styles.recentBadge} resizeMode="contain" />
                     </View>

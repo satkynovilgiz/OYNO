@@ -26,7 +26,7 @@ export function PassportSummaryCard({ passport, editorialTitle = false, onPress 
       style={styles.card}
       onPress={onPress}
       press="soft"
-      haptic="light"
+     
       accessibilityRole="button"
       accessibilityLabel={`${t('journey.passport.title')}. ${countLabel}. ${t('explore.v2.passportCta')}`}
     >

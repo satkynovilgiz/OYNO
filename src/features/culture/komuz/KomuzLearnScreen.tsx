@@ -90,7 +90,7 @@ export function KomuzLearnScreen({ onPressBack }: KomuzLearnScreenProps) {
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <AnimatedPressable onPress={onPressBack} accessibilityRole="button" accessibilityLabel={t('common.back')} style={styles.backButton} haptic="light">
+        <AnimatedPressable onPress={onPressBack} accessibilityRole="button" accessibilityLabel={t('common.back')} style={styles.backButton}>
           <ChevronLeft size={22} color={colors.primary} strokeWidth={2.25} />
         </AnimatedPressable>
         <View style={styles.headerTitleBlock}>

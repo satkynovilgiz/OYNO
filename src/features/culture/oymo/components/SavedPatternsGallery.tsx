@@ -26,7 +26,7 @@ export function SavedPatternsGallery({ creations, onLoad, onDelete, onNew }: Sav
           <View key={creation.id} style={styles.tile}>
             <AnimatedPressable
               onPress={() => onLoad(creation)}
-              haptic="light"
+             
               accessibilityRole="button"
               accessibilityLabel={creation.name}
             >
@@ -41,7 +41,7 @@ export function SavedPatternsGallery({ creations, onLoad, onDelete, onNew }: Sav
           </View>
         ))}
 
-        <AnimatedPressable style={styles.newTile} onPress={onNew} haptic="light" accessibilityRole="button" accessibilityLabel={t('culture.oymo.gallery.new')}>
+        <AnimatedPressable style={styles.newTile} onPress={onNew} accessibilityRole="button" accessibilityLabel={t('culture.oymo.gallery.new')}>
           <Plus size={24} color={colors.primary} strokeWidth={2.25} />
           <Text style={styles.newLabel}>{t('culture.oymo.gallery.new')}</Text>
         </AnimatedPressable>

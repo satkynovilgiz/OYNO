@@ -1,6 +1,6 @@
 import { type LucideIcon } from 'lucide-react-native';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { colors, controlStates, radii, shadows } from '@/theme';
 
@@ -25,6 +25,9 @@ type IconButtonProps = {
    * `false` for header controls on a flat cream background (tonal
    * surface + hairline instead). */
   elevated?: boolean;
+  /** Looks and announces disabled but stays focusable (web drops keyboard focus from a disabled
+   * <button>) - for controls that become unavailable right after being used (e.g. "move up" at the top). */
+  keepFocusWhenDisabled?: boolean;
 };
 
 export function IconButton({
@@ -39,8 +42,15 @@ export function IconButton({
   showBadge = false,
   disabled = false,
   elevated = true,
+  keepFocusWhenDisabled = false,
 }: IconButtonProps) {
   const [pressed, setPressed] = useState(false);
+  // Web: react-native-web writes aria-disabled from the Pressable's own `disabled`, which a
+  // focus-keeping control can't set - so the attribute is put on the DOM node directly.
+  const webNode = useRef<{ setAttribute?: (name: string, value: string) => void } | null>(null);
+  useEffect(() => {
+    if (Platform.OS === 'web' && keepFocusWhenDisabled) webNode.current?.setAttribute?.('aria-disabled', String(disabled));
+  });
   const isPrimary = variant === 'primary';
   // Visual size can be smaller than the 44pt accessibility minimum touch
   // target (e.g. the 32px card arrow) - hitSlop makes up the difference
@@ -51,12 +61,19 @@ export function IconButton({
   return (
     <AnimatedPressable
       testID={testID}
-      onPress={disabled ? undefined : onPress}
+      onPress={disabled ? (keepFocusWhenDisabled ? () => undefined : undefined) : onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
-      haptic={disabled ? false : 'light'}
+      onLayout={
+        Platform.OS === 'web' && keepFocusWhenDisabled
+          ? (event) => {
+              webNode.current = (event.nativeEvent as unknown as { target?: typeof webNode.current }).target ?? null;
+              webNode.current?.setAttribute?.('aria-disabled', String(disabled));
+            }
+          : undefined
+      }
       press="strong"
-      disabled={disabled}
+      disabled={keepFocusWhenDisabled ? undefined : disabled}
       hitSlop={hitSlopAmount}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}

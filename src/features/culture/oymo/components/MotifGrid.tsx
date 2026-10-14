@@ -24,7 +24,7 @@ export function MotifGrid({ selectedMotifId, onSelectMotif, color }: MotifGridPr
             key={motif.id}
             style={[styles.tile, isSelected && styles.tileSelected]}
             onPress={() => onSelectMotif(motif.id)}
-            haptic="light"
+           
             accessibilityRole="button"
             accessibilityLabel={t(motif.nameKey)}
             accessibilityState={{ selected: isSelected }}

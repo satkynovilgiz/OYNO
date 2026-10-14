@@ -43,7 +43,7 @@ function Action({
   tone?: 'default' | 'danger';
 }) {
   return (
-    <AnimatedPressable style={styles.action} onPress={onPress} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
+    <AnimatedPressable style={styles.action} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
       <Icon size={iconSizes.md} color={tone === 'danger' ? colors.dangerText : colors.primary} strokeWidth={2.25} />
       <Text style={[styles.label, tone === 'danger' && styles.labelDanger]} numberOfLines={1}>
         {label}

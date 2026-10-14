@@ -7904,5 +7904,10 @@
     "unavailable_few": "{{count}} shortcuts are no longer available.",
     "unavailable_many": "{{count}} shortcuts are no longer available.",
     "unavailable_other": "{{count}} shortcuts are no longer available."
+  },
+  "feedbackStates": {
+    "saving": "Saving…",
+    "saved": "Saved",
+    "failed": "Not saved - try again"
   }
 }

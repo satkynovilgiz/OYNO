@@ -41,7 +41,7 @@ export function ProfileIdentityCard({
         <OymoOrnament size={16} color="rgba(199,154,46,0.35)" strokeWidth={1.5} />
       </View>
       <View style={styles.top}>
-        <AnimatedPressable style={[styles.avatar, big && styles.avatarBig]} onPress={onPressAvatar} press="soft" haptic="light" accessibilityRole="button" accessibilityLabel={t('profile.editAvatarLabel')}>
+        <AnimatedPressable style={[styles.avatar, big && styles.avatarBig]} onPress={onPressAvatar} press="soft" accessibilityRole="button" accessibilityLabel={t('profile.editAvatarLabel')}>
           <View style={[styles.avatarClip, big && styles.avatarClipBig]}>
             <UserAvatar characterId={profile.characterId} avatarConfig={profile.avatarConfig} size={big ? 'large' : 'medium'} />
           </View>

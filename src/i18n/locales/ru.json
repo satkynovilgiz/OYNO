@@ -7904,5 +7904,10 @@
     "unavailable_few": "{{count}} ярлыка больше недоступны.",
     "unavailable_many": "{{count}} ярлыков больше недоступны.",
     "unavailable_other": "{{count}} ярлыка больше недоступны."
+  },
+  "feedbackStates": {
+    "saving": "Сохраняем…",
+    "saved": "Сохранено",
+    "failed": "Не сохранено - попробуйте снова"
   }
 }

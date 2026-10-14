@@ -37,7 +37,7 @@ export function KomuzPlaylist({ tracks }: KomuzPlaylistProps) {
             key={track.id}
             style={[styles.row, isActive && styles.rowActive]}
             onPress={() => handlePressTrack(index)}
-            haptic="light"
+           
             accessibilityRole="button"
             accessibilityLabel={`${isPlaying ? t('komuzRoom.pause') : t('komuzRoom.play')} ${track.title}`}
           >

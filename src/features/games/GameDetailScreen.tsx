@@ -271,7 +271,7 @@ export function GameDetailScreen({
                     key={option}
                     style={[styles.difficultyPill, selected && styles.difficultyPillSelected]}
                     onPress={() => onChangeDifficulty?.(option)}
-                    haptic="light"
+                   
                     accessibilityRole="button"
                     accessibilityLabel={t(`gameDetail.${option}`)}
                     accessibilityState={{ selected }}
