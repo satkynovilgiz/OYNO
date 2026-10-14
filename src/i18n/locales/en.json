@@ -7824,5 +7824,34 @@
     "moveDown_few": "Move down {{count}} points",
     "moveDown_many": "Move down {{count}} points",
     "moveDown_other": "Move down {{count}} points"
+  },
+  "surfaces": {
+    "title": "Presentation preview",
+    "entry": "Preview on paper or fabric",
+    "entryHint": "A visual mockup of this design; the design itself does not change.",
+    "mockupNote": "A visual mockup only - not how a real print, felt piece or textile would turn out. Your design underneath is unchanged.",
+    "noDesign": "There is no design to preview. Make something in the Creator first.",
+    "backToCreator": "Back to the Creator",
+    "choose": "Surface",
+    "names": {
+      "plain": "Plain",
+      "paper": "Paper",
+      "fabric": "Fabric"
+    },
+    "colorNote": {
+      "paper": "The paper grain and the soft shading at the edges make colours look a little warmer and darker than they are. The saved colours do not change.",
+      "fabric": "The woven threads and the light across the cloth make colours look slightly lighter at the top and darker at the bottom. The saved colours do not change."
+    },
+    "plainNote": "Plain shows the colours exactly as saved.",
+    "include": "Include the surface in the exported image",
+    "includeOn": "The image will show the design on {{surface}}.",
+    "includeOff": "The image will show the plain design.",
+    "export": "Share image",
+    "exportHint": "Opens a preview of the exact image first.",
+    "privacy": "The image contains only the design and the OYNO label - no name, account, recipe or notes.",
+    "description_one": "Your design shown on {{surface}}: {{count}} motif. A visual mockup.",
+    "description_few": "Your design shown on {{surface}}: {{count}} motifs. A visual mockup.",
+    "description_many": "Your design shown on {{surface}}: {{count}} motifs. A visual mockup.",
+    "description_other": "Your design shown on {{surface}}: {{count}} motifs. A visual mockup."
   }
 }

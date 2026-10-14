@@ -44,6 +44,7 @@ import { cards, colors, headings, iconSizes, layout, radii, spacing, text } from
 
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
 import { PositionControls, ZoomControls } from './canvas/CanvasControls';
+import { setPreviewSource } from './surfaces/surfacesModel';
 import { IDENTITY, type Viewport } from './canvas/canvasViewport';
 import { ColorSwatches } from './components/ColorSwatches';
 import { LayersPanel } from './components/LayersPanel';
@@ -467,6 +468,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         {editorState.layers.length > 0 ? <Button label={t('timeCapsule.fromCreator')} variant="secondary" accessibilityHint={t('timeCapsule.fromCreatorHint')} onPress={() => { offerDesign(owner, snapshotDesign({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })); router.push('/profile/capsules/new' as never); }} testID="oymo-to-capsule" /> : null}
         {milestoneParent && creations?.some((creation) => creation.id === milestoneParent) ? <MilestoneBar owner={owner} creationId={milestoneParent} snapshot={() => ({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })} /> : null}
         <Button label={t('customMotif.entry')} variant="secondary" accessibilityHint={t('customMotif.entryHint')} onPress={() => router.push('/culture/oymo/motifs' as never)} testID="oymo-custom-motifs" />
+        {editorState.layers.length > 0 ? <Button label={t('surfaces.entry')} variant="secondary" accessibilityHint={t('surfaces.entryHint')} onPress={() => { setPreviewSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }); router.push('/culture/oymo/preview' as never); }} testID="oymo-surface-preview" /> : null}
         {editorState.layers.length > 0 ? <Button label={t('colorLab.entry')} variant="secondary" accessibilityHint={t('colorLab.entryHint')} onPress={() => { setColorLabSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }, openedCreation?.name ?? null); router.push('/culture/oymo/colors' as never); }} testID="oymo-color-lab" /> : null}
         {editorState.layers.length > 0 ? <Button label={t('stencil.entry')} variant="secondary" accessibilityHint={t('stencil.entryHint')} onPress={() => { setStencilSource(owner, { layers: editorState.layers, symmetry: symmetryMode, name: openedCreation?.name ?? null }); router.push('/culture/oymo/stencil' as never); }} testID="oymo-make-stencil" /> : null}
         {editorState.layers.length > 0 ? <Button label={t('remixStudio.entry')} variant="secondary" onPress={openRemixStudio} accessibilityHint={t('remixStudio.entryHint')} testID="oymo-explore-variations" /> : null}
