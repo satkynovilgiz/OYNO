@@ -16,7 +16,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
 import { useInbox } from '@/features/notifications/useInbox';
 import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
-import { colors, spacing } from '@/theme';
+import { bounded, colors, layout, spacing } from '@/theme';
 
 import {
   CategoryCarousel,
@@ -289,9 +289,11 @@ const styles = StyleSheet.create({
   // Rhythm: header -> hero 16; between sections 24 (spacing.xl); title ->
   // content 12 inside a section. The ScrollView ends above the tab bar
   // (a sibling, not an overlay), so nothing is hidden behind it.
+  // Phones: full width. Tablets / wide windows: one centred column, so cards never stretch edge to edge.
   content: {
     gap: spacing.md,
     paddingBottom: spacing.xl,
+    ...bounded(layout.maxListWidth),
   },
   sectionList: {
     gap: spacing.xl,

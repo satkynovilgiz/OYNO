@@ -14,7 +14,7 @@ import { formatShortDate, localDateKeyOf } from '@/services/i18n/formatDate';
 import { ownerCapsules, useCapsuleStore } from '@/store/useCapsuleStore';
 import { ownerBoards, useDiscoveryBoardStore } from '@/store/useDiscoveryBoardStore';
 import { ownerCollections, useMyCollectionsStore } from '@/store/useMyCollectionsStore';
-import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
+import { bounded, cardRadii, colors, layout, spacing, textStyles, typography } from '@/theme';
 
 import { boardItems, capsuleItems, designItems, exhibitionItems, SHELF_TYPES, shelfView, SORTS, type ShelfItem, type ShelfType, type SortKey, type SourceState } from './shelfModel';
 
@@ -182,11 +182,12 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, color: colors.textPrimary, flex: 1 },
-  content: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  content: { paddingHorizontal: spacing.lg, gap: spacing.md, ...bounded(layout.maxListWidth) },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   inline: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   flex: { flex: 1, gap: 2 },
-  list: { gap: spacing.sm },
+  // One column on phones; two on tablets / wide windows (cards wrap at 320 pt, never wider than half the list).
+  list: { gap: spacing.sm, flexDirection: 'row', flexWrap: 'wrap' },
   section: { ...typography.overline, color: colors.textSecondary },
   body: { ...textStyles.body, color: colors.textPrimary },
   meta: { ...textStyles.small, color: colors.textSecondary },
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   untitled: { fontStyle: 'italic', fontWeight: '400' },
   card: { gap: spacing.xs, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   error: { borderLeftWidth: 4, borderLeftColor: colors.accentTerracotta },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle, flexBasis: 320, flexGrow: 1, maxWidth: (layout.maxListWidth - spacing.sm) / 2 },
   chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: 22, borderWidth: 1, borderColor: colors.borderSubtle, backgroundColor: colors.surface },
   chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { ...textStyles.bodyMedium, color: colors.textPrimary },

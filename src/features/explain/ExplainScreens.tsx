@@ -12,7 +12,7 @@ import { announce } from '@/services/a11y/announce';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import type { CultureItemRow } from '@/services/content/types';
 import { ownerExplanations, useExplanationsStore } from '@/store/useExplanationsStore';
-import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
+import { bounded, cardRadii, colors, layout, spacing, textStyles, typography } from '@/theme';
 
 import { clearExplainDraftIfUnchanged, EXPLANATION_MAX, explainDraft, explainRoute, isValidExplanation, PROMPTS, setExplainDraft, type ExplainDraft, type PromptId } from './explainModel';
 
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, color: colors.textPrimary, flex: 1 },
-  content: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  content: { paddingHorizontal: spacing.lg, gap: spacing.md, ...bounded(layout.maxContentWidth) },
   stack: { gap: 4 },
   flex: { flex: 1 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },

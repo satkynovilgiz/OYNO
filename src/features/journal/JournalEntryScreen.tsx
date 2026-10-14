@@ -16,7 +16,7 @@ import { journalPhotosSupported } from '@/services/journal/journalPhotos';
 import { deleteTempImage, JOURNAL_IMAGE, normalizeToJpeg, pickerOptionsForJpeg } from '@/services/media/normalizeImage';
 import { useShareCard } from '@/services/share/useShareCard';
 import { JournalSaveError, useJournalStore } from '@/store/useJournalStore';
-import { cardRadii, colors, editorial, fontFamily, spacing, textStyles } from '@/theme';
+import { bounded, cardRadii, colors, editorial, fontFamily, layout, spacing, textStyles } from '@/theme';
 
 import { baselineForNew } from './editor/editorDraft';
 import { LeaveEditorModal, RestoreDraftModal } from './editor/EditorDialogs';
@@ -462,8 +462,8 @@ const styles = StyleSheet.create({
   editorial: { fontFamily: fontFamily.wordmark },
   private: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.xs, paddingVertical: 4, borderRadius: 999, backgroundColor: colors.surfaceMuted },
   privateText: { ...textStyles.small, color: colors.textMuted },
-  content: { paddingHorizontal: spacing.md, gap: spacing.md },
-  detail: { paddingHorizontal: spacing.md, gap: spacing.sm },
+  content: { paddingHorizontal: spacing.md, gap: spacing.md, ...bounded(layout.maxContentWidth) },
+  detail: { paddingHorizontal: spacing.md, gap: spacing.sm, ...bounded(layout.maxContentWidth) },
   detailPhoto: { width: '100%', aspectRatio: 4 / 3, borderRadius: cardRadii.media, marginBottom: spacing.xs },
   detailDate: { ...textStyles.caption, color: colors.textMuted },
   detailTitle: { ...textStyles.h1, color: colors.textPrimary },

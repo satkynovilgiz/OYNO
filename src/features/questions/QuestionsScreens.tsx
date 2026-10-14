@@ -12,7 +12,7 @@ import { announce } from '@/services/a11y/announce';
 import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { TagPicker } from '@/features/tags/TagScreens';
 import { ownerQuestions, useQuestionsStore } from '@/store/useQuestionsStore';
-import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
+import { bounded, cardRadii, colors, layout, spacing, textStyles, typography } from '@/theme';
 
 import { ANSWER_MAX, byStatus, clearDraftIfUnchanged, getDraft, isValidQuestion, MAX_SUPPORTS, newQuestionId, QUESTION_MAX, questionRoute, resolveOrigin, setDraft, type ArticleLookup, type Question, type QuestionStatus } from './questionsModel';
 import { LoadingState, StateMessage } from '@/components/state/ScreenState';
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, color: colors.textPrimary, flex: 1 },
-  content: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  content: { paddingHorizontal: spacing.lg, gap: spacing.md, ...bounded(layout.maxContentWidth) },
   stack: { gap: spacing.sm },
   flex: { flex: 1 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, alignItems: 'center' },

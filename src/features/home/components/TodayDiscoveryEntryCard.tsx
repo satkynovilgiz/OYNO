@@ -8,7 +8,7 @@ import { cultureCategoryImages } from '@/features/culture/data';
 import type { CultureCategoryId } from '@/features/culture/types';
 import type { TodayDiscovery } from '@/features/daily/useTodayDiscovery';
 import type { AgeExperience } from '@/services/ageExperience/types';
-import { cardRadii, colors, radii, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, layout, radii, spacing, textStyles } from '@/theme';
 
 type TodayDiscoveryEntryCardProps = {
   discovery: TodayDiscovery | null;
@@ -32,7 +32,8 @@ export function TodayDiscoveryEntryCard({ discovery, isLoading, experience, onPr
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const isChild = experience === 'child';
-  const minHeight = Math.round((width - spacing.md * 2) / (isChild ? RATIO_CHILD : RATIO));
+  // Home is a bounded column on tablets / wide windows - size from the column, not the window.
+  const minHeight = Math.min(480, Math.round((Math.min(width, layout.maxListWidth) - spacing.md * 2) / (isChild ? RATIO_CHILD : RATIO)));
 
   if (isLoading) return <Skeleton height={minHeight} borderRadius={cardRadii.media} />;
   if (!discovery) return null;

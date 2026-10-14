@@ -40,7 +40,7 @@ import { fetchOymoCreations, OYMO_CREATIONS_QUERY_KEY, useOymoCreations, type Oy
 import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { cards, colors, headings, iconSizes, layout, radii, spacing, text } from '@/theme';
+import { bounded, cards, colors, headings, iconSizes, layout, radii, spacing, text } from '@/theme';
 
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
 import { PositionControls, ZoomControls } from './canvas/CanvasControls';
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   headerTitle: { ...headings.screen, color: colors.textPrimary },
   headerSubtitle: { ...text.fine, color: colors.textSecondary, textAlign: 'center', marginTop: 2 },
   headerActions: { flexShrink: 0 },
-  content: { paddingHorizontal: layout.gutter, gap: spacing.md },
+  content: { paddingHorizontal: layout.gutter, gap: spacing.md, ...bounded(layout.maxWorkspaceWidth) },
   tabletRow: { flexDirection: 'row', gap: spacing.md },
   canvasColumn: { flex: 1, gap: spacing.sm, alignItems: 'center' },
   historyRow: { flexDirection: 'row', gap: spacing.sm, alignSelf: 'stretch' },

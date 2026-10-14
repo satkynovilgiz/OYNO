@@ -46,7 +46,14 @@ export const layout = {
   cardGap: spacing.xs,
   /** Reading / form content never grows wider than this on tablets and wide windows. */
   maxContentWidth: 720,
+  /** Lists and grids of cards (Home, Shelf, record lists). */
+  maxListWidth: 960,
+  /** Tool workspaces (Creator: canvas + tools side by side). */
+  maxWorkspaceWidth: 1200,
 } as const;
+
+/** Centre a column and stop it stretching across a tablet or wide window (phones are narrower, so unchanged). */
+export const bounded = (maxWidth: number) => ({ width: '100%' as const, maxWidth, alignSelf: 'center' as const });
 
 /** Card padding + radius pairs - the only three card shapes. */
 export const cardPadding = { compact: spacing.sm, standard: spacing.md, feature: spacing.lg } as const;

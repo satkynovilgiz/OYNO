@@ -19,7 +19,7 @@ import { useOymoCreations } from '@/services/content/oymoCreationsService';
 import { useJournalStore } from '@/store/useJournalStore';
 import { ownerNotebook, useListeningNotebookStore } from '@/store/useListeningNotebookStore';
 import { ownerScrapbook, ownerScrapbooks, useScrapbookStore } from '@/store/useScrapbookStore';
-import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
+import { bounded, cardRadii, colors, layout, spacing, textStyles, typography } from '@/theme';
 
 import { addEntry, CAPTION_MAX, ENTRY_KINDS, MAX_ENTRIES, moveEntry, newScrapbook, removeEntry, rename, resolveEntries, setCaption, TITLE_MAX, type EntryKind, type EntryRef, type Scrapbook, type SourceView } from './scrapbookModel';
 import { LoadingState, StateMessage, StateScreen } from '@/components/state/ScreenState';
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h1, color: colors.textPrimary, flex: 1 },
-  content: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  content: { paddingHorizontal: spacing.lg, gap: spacing.md, ...bounded(layout.maxContentWidth) },
   stack: { gap: spacing.sm },
   flex: { flex: 1, gap: 4 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },

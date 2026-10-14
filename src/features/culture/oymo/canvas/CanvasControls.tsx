@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   level: { ...text.emphasis, color: colors.textPrimary, minWidth: 52, textAlign: 'center' },
   hint: { ...text.fine, color: colors.textSecondary, textAlign: 'center', flexBasis: '100%' },
-  panel: { gap: layout.cardGap, alignSelf: 'stretch', padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
+  panel: { gap: layout.cardGap, alignSelf: 'stretch', width: '100%', maxWidth: 480, marginHorizontal: 'auto', padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   title: { ...headings.label, color: colors.textSecondary, textAlign: 'center' },
   field: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
   fieldLabel: { ...text.emphasis, fontWeight: '700', color: colors.textPrimary },

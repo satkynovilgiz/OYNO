@@ -49,7 +49,7 @@ import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
 import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
-import { cardRadii, colors, editorial, headings, iconSizes, layout, spacing, text, textStyles } from '@/theme';
+import { bounded, cardRadii, colors, editorial, headings, iconSizes, layout, spacing, text, textStyles } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 import { cultureItemNarrationParts, shouldAutoScroll } from './readListen/narrationSections';
 import { ReadListenControls, readListenStyles, useReadListen } from './readListen/ReadListen';
@@ -471,7 +471,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   reader: { flex: 1 },
   content: { paddingBottom: spacing.xxl, gap: spacing.lg },
-  hero: { width: '100%', aspectRatio: 1.25, borderBottomLeftRadius: cardRadii.hero, borderBottomRightRadius: cardRadii.hero, overflow: 'hidden', backgroundColor: colors.surfaceFeature },
+  // Tablets / wide windows: the hero stays a hero, not a screen-filling image (aspect ratio until the cap).
+  hero: { width: '100%', aspectRatio: 1.25, maxHeight: 460, borderBottomLeftRadius: cardRadii.hero, borderBottomRightRadius: cardRadii.hero, overflow: 'hidden', backgroundColor: colors.surfaceFeature },
   heroChild: { aspectRatio: 1.05 },
   heroFocus: { aspectRatio: 2 },
   heroImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%' },
@@ -482,7 +483,7 @@ const styles = StyleSheet.create({
   heroEyebrow: { ...headings.label, color: colors.accentGold },
   heroTitle: { ...textStyles.display, color: colors.textOnDark },
   heroTitleEditorial: { ...editorial(textStyles.display) },
-  plainHeader: { paddingHorizontal: spacing.md, gap: spacing.xs },
+  plainHeader: { paddingHorizontal: spacing.md, gap: spacing.xs, ...bounded(layout.maxContentWidth) },
   plainTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
   plainEyebrow: { ...headings.label, color: colors.accentTerracottaText },
   plainHeaderTitle: { ...textStyles.display, color: colors.textPrimary },

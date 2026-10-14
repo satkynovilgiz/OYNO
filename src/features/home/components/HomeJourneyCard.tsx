@@ -7,7 +7,7 @@ import type { HomeRecommendation } from '@/features/home/homeRecommendation';
 import type { HomeRecommendationDisplay } from '@/features/home/useHomeRecommendation';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
-import { colors, spacing, textStyles } from '@/theme';
+import { colors, layout, spacing, textStyles } from '@/theme';
 
 type HomeJourneyCardProps = {
   recommendation: HomeRecommendation;
@@ -31,7 +31,8 @@ export function HomeJourneyCard({ recommendation, display, onPress }: HomeJourne
   const { t } = useTranslation();
   const { experience, config } = useAgeExperience();
   const { width } = useWindowDimensions();
-  const minHeight = Math.round((width - spacing.md * 2) / resolveByCardScale(config.cardScale, RATIO_BY_CARD_SCALE));
+  // Home is a bounded column on tablets / wide windows - size from the column, not the window.
+  const minHeight = Math.min(480, Math.round((Math.min(width, layout.maxListWidth) - spacing.md * 2) / resolveByCardScale(config.cardScale, RATIO_BY_CARD_SCALE)));
   const progress = recommendation.progress && recommendation.progress.total > 0 ? recommendation.progress : null;
   const isChild = experience === 'child';
   const subtitle = display.subtitle && !isChild ? display.subtitle : undefined;
