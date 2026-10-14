@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { NativeModules, PixelRatio, Platform, Share, StyleSheet, TurboModuleRegistry, View } from 'react-native';
 
 import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH, ShareCard, shareCardSize, type ShareCardContent } from '@/components/share/ShareCard';
+import { approvedContent } from '@/components/share/cardContent';
 import { SharePreviewSheet, type ShareImageChoice } from '@/components/share/SharePreviewSheet';
 import { showToast } from '@/components/ui/Toast';
 import { recordDiagnostic } from '@/services/feedback/diagnosticTrail';
@@ -87,7 +88,8 @@ export function useShareCard(): {
     // A public content link rides along in the text fallback (an image
     // share can't carry text) and as its own "Share link" action.
     const url = options.link ? buildOYNODeepLink(options.link) : null;
-    setPreview({ content, fallbackMessage: url ? `${fallbackMessage}\n${url}` : fallbackMessage, choices: options.imageChoices ?? null, link: url ? options.link! : null });
+    // Only the card type's approved fields from here on - the preview and the capture get the same content.
+    setPreview({ content: approvedContent(content), fallbackMessage: url ? `${fallbackMessage}\n${url}` : fallbackMessage, choices: options.imageChoices ?? null, link: url ? options.link! : null });
   }
 
   /** Renders the card off-screen, waits for its picture, captures a JPEG. */

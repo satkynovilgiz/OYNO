@@ -107,7 +107,8 @@ it('a rejected shareAsync leaves the same preview open, immediately retryable', 
   // Still open, not busy, same composition; the failure was reported honestly.
   expect(mockSheet.open).toBe(true);
   expect(sheet().busy).toBeNull();
-  expect(sheet().content).toBe(CARD);
+  // The same (approved-field) content, still open for a retry.
+  expect(sheet().content).toEqual(CARD);
   expect(mockToasts).toEqual(['journal.v2.shareFailed']);
   // The failed export's file is gone.
   expect(currentExportForTests()).toBeNull();

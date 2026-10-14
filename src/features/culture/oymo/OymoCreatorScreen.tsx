@@ -43,6 +43,7 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { bounded, cards, colors, headings, iconSizes, layout, radii, spacing, text } from '@/theme';
 
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
+import { OymoArtwork } from './components/OymoArtwork';
 import { PositionControls, ZoomControls } from './canvas/CanvasControls';
 import { setPreviewSource } from './surfaces/surfacesModel';
 import { SectionError, StateMessage } from '@/components/state/ScreenState';
@@ -222,7 +223,8 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         title: t('culture.labs.myDesign'),
         label: t('culture.interactive.oymo'),
         imageSource: null,
-        artwork: <OymoCanvas layers={editorState.layers} backgroundColor={editorState.backgroundColor} symmetryMode={symmetryMode} selectedLayerId={null} onTapCanvas={() => {}} onSelectLayer={() => {}} />,
+        // The design alone (no symmetry guide lines): the same renderer as every other artwork export.
+        artwork: <OymoArtwork layers={editorState.layers} backgroundColor={editorState.backgroundColor} symmetryMode={symmetryMode} size={CANVAS_SIZE} />,
         artworkSize: { width: CANVAS_SIZE, height: CANVAS_SIZE },
       },
       t('culture.labs.shareMessage'),

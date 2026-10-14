@@ -1,8 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { forwardRef, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
+import { CARD_FIT, fitCardText, type FitRole } from '@/components/share/cardFit';
+import { CARD_STYLES, defaultStyle, type CardStyleId } from '@/components/share/cardContent';
 import { colors, editorial, overlays, spacing, textStyles } from '@/theme';
 
 /** Logical size of the card - captured at 1080×1350 physical (4:5 post). */
@@ -68,6 +71,8 @@ export type ShareCardContent = {
   featured?: string[];
   /** `summary` variant: heading above the featured titles. */
   featuredLabel?: string | null;
+  /** `creation` / `summary`: one of the OYNO card styles (cardContent.ts CARD_STYLES). */
+  cardStyle?: CardStyleId;
 };
 
 type ShareCardProps = ShareCardContent & {
@@ -75,7 +80,8 @@ type ShareCardProps = ShareCardContent & {
 };
 
 /** No user data ever: no name, avatar, email, id, coordinates - only the
- * content being shared and what the user explicitly typed for the card. */
+ * content being shared and what the user explicitly typed for the card.
+ * (useShareCard filters every card to its approved fields first: cardContent.ts.) */
 export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(props, ref) {
   const variant = props.variant ?? 'story';
   if (variant === 'journal') return <JournalCard ref={ref} {...props} />;
@@ -85,7 +91,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
   if (variant === 'postcard') {
     const size = shareCardSize(props);
     return (
-      <View ref={ref} collapsable={false} style={{ width: size.width, height: size.height, overflow: 'hidden' }}>
+      <View ref={ref} collapsable={false} style={{ width: size.width, height: size.height, overflow: 'hidden' }} testID="share-card-postcard">
         {props.artwork}
       </View>
     );
@@ -93,13 +99,94 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(pro
   return <PhotoCard ref={ref} {...props} variant={variant} />;
 });
 
+/* ---------- shared layout primitives (every card is built from these) ---------- */
+
+/** Cards have a fixed logical size and are captured at 3x: system font scaling would change the export. */
+const FIXED = { allowFontScaling: false, maxFontSizeMultiplier: 1 } as const;
+
+/** Text fitted by the ONE rule (cardFit.ts) - the same in the preview and the exported image. */
+export function CardText({ text, role, style, testID }: { text: string; role: FitRole; style: object | object[]; testID?: string }) {
+  const fit = fitCardText(text, role);
+  return (
+    <Text {...FIXED} style={[style, { fontSize: fit.fontSize, lineHeight: fit.lineHeight }]} numberOfLines={role.maxLines} testID={testID}>
+      {fit.text}
+    </Text>
+  );
+}
+const isShortened = (entries: [string | null | undefined, FitRole][]) => entries.some(([text, role]) => !!text && fitCardText(text, role).shortened);
+
+/** "Shortened to fit the card" - shown on the card itself whenever the fit rule had to cut text. */
+function ShortenedNote({ show, color }: { show: boolean; color: string }) {
+  const { t } = useTranslation();
+  if (!show) return null;
+  return (
+    <Text {...FIXED} style={[styles.shortened, { color }]} testID="share-card-shortened">
+      {t('shareCards.shortened')}
+    </Text>
+  );
+}
+
+/** Attribution: oymo mark + the content's label + the OYNO wordmark. */
+function CardAttribution({ label, labelColor, wordmarkColor, ornamentColor }: { label: string; labelColor: string; wordmarkColor: string; ornamentColor: string }) {
+  return (
+    <View style={styles.attribution}>
+      <OymoOrnament size={10} color={ornamentColor} strokeWidth={1.75} />
+      <Text {...FIXED} style={[styles.attributionLabel, { color: labelColor }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text {...FIXED} style={[styles.attributionWordmark, { color: wordmarkColor }]}>
+        OYNO
+      </Text>
+    </View>
+  );
+}
+
+/** The artwork, whole: scaled to fit its frame, never cropped. */
+function CardArtwork({ children, natural, frame, frameColor }: { children: ReactNode; natural: { width: number; height: number }; frame: number; frameColor: string }) {
+  const scale = Math.min(frame / natural.width, frame / natural.height);
+  return (
+    <View style={[styles.artworkFrame, { width: frame + 24, height: frame + 24, backgroundColor: frameColor }]} testID="share-card-artwork">
+      <View style={{ width: natural.width, height: natural.height, transform: [{ scale }] }}>{children}</View>
+    </View>
+  );
+}
+
+function Brand({ light }: { light: boolean }) {
+  return (
+    <View style={styles.brandRow}>
+      <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.75} />
+      <Text {...FIXED} style={[styles.wordmark, !light && styles.wordmarkDark]}>
+        OYNO
+      </Text>
+    </View>
+  );
+}
+
+function Rule({ color = 'rgba(232,185,61,0.5)' }: { color?: string }) {
+  return (
+    <View style={styles.footerRule}>
+      <View style={[styles.ruleLine, { backgroundColor: color }]} />
+      <OymoOrnament size={8} color="rgba(232,185,61,0.8)" strokeWidth={1.5} />
+      <View style={[styles.ruleLine, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+/* ---------- the card types (each keeps its own layout) ---------- */
+
 const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
   { title, label, subtitle, imageSource, fallbackTone = colors.surfaceFeature, completedLabel, excerpt, variant, stat, onImageReady },
   ref,
 ) {
   const score = variant === 'score' && !!stat;
+  const titleRole = score ? CARD_FIT.scoreTitle : CARD_FIT.heroTitle;
+  const shortened = isShortened([
+    [title, titleRole],
+    [subtitle, CARD_FIT.line],
+    [excerpt ? `“${excerpt}”` : null, CARD_FIT.line],
+  ]);
   return (
-    <View ref={ref} collapsable={false} style={[styles.card, { backgroundColor: fallbackTone }]}>
+    <View ref={ref} collapsable={false} style={[styles.card, { backgroundColor: fallbackTone }]} testID={`share-card-${variant ?? 'story'}`}>
       {imageSource ? (
         <Image source={imageSource} style={styles.fill} resizeMode="cover" onLoad={onImageReady} onError={onImageReady} />
       ) : (
@@ -117,35 +204,28 @@ const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
 
       {score ? (
         <View style={styles.scoreCenter}>
-          <Text style={styles.scoreValue} numberOfLines={1} adjustsFontSizeToFit>
+          <Text {...FIXED} style={styles.scoreValue} numberOfLines={1}>
             {stat}
           </Text>
         </View>
       ) : null}
 
       <View style={styles.content}>
-        <Text style={styles.label} numberOfLines={1}>
+        <Text {...FIXED} style={styles.label} numberOfLines={1}>
           {label}
         </Text>
-        <Text style={[styles.title, score && styles.titleScore]} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.7}>
-          {title}
-        </Text>
-        {subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={2}>
-            {subtitle}
-          </Text>
-        ) : null}
-        {excerpt ? (
-          <Text style={styles.excerpt} numberOfLines={3}>
-            {`“${excerpt}”`}
-          </Text>
-        ) : null}
+        <CardText text={title} role={titleRole} style={styles.title} testID="share-card-title" />
+        {subtitle ? <CardText text={subtitle} role={CARD_FIT.line} style={styles.subtitle} /> : null}
+        {excerpt ? <CardText text={`“${excerpt}”`} role={CARD_FIT.line} style={styles.excerpt} /> : null}
         {completedLabel ? (
           <View style={styles.completed}>
             <OymoOrnament size={10} color={colors.textPrimary} strokeWidth={2} />
-            <Text style={styles.completedText}>{completedLabel}</Text>
+            <Text {...FIXED} style={styles.completedText}>
+              {completedLabel}
+            </Text>
           </View>
         ) : null}
+        <ShortenedNote show={shortened} color={colors.textOnDarkSecondary} />
         <Rule />
       </View>
     </View>
@@ -153,8 +233,13 @@ const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
 });
 
 const JournalCard = forwardRef<View, ShareCardProps>(function JournalCard({ title, label, imageSource, excerpt, linkedLabel, onImageReady }, ref) {
+  const paper = CARD_STYLES.paper;
+  const shortened = isShortened([
+    [title, CARD_FIT.paperTitle],
+    [excerpt ? `“${excerpt}”` : null, CARD_FIT.line],
+  ]);
   return (
-    <View ref={ref} collapsable={false} style={[styles.card, styles.paper]}>
+    <View ref={ref} collapsable={false} style={[styles.card, styles.paper, { backgroundColor: paper.background }]} testID="share-card-journal">
       <View style={styles.frame}>
         {imageSource ? (
           <Image source={imageSource} style={styles.fill} resizeMode="cover" onLoad={onImageReady} onError={onImageReady} />
@@ -166,23 +251,12 @@ const JournalCard = forwardRef<View, ShareCardProps>(function JournalCard({ titl
         <View style={styles.tape} />
       </View>
       <View style={styles.paperText}>
-        <View style={styles.paperBrand}>
-          <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
-          <Text style={styles.paperLabel} numberOfLines={1}>
-            {label}
-          </Text>
-          <Text style={styles.paperWordmark}>OYNO</Text>
-        </View>
-        <Text style={styles.paperTitle} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
-          {title}
-        </Text>
-        {excerpt ? (
-          <Text style={styles.paperExcerpt} numberOfLines={2}>
-            {`“${excerpt}”`}
-          </Text>
-        ) : null}
+        <CardAttribution label={label} labelColor={paper.label} wordmarkColor={paper.wordmark} ornamentColor={colors.accentGoldPressed} />
+        <CardText text={title} role={CARD_FIT.paperTitle} style={[styles.paperTitle, { color: paper.ink }]} testID="share-card-title" />
+        {excerpt ? <CardText text={`“${excerpt}”`} role={CARD_FIT.line} style={[styles.paperExcerpt, { color: paper.inkSoft }]} /> : null}
+        <ShortenedNote show={shortened} color={paper.inkSoft} />
         {linkedLabel ? (
-          <Text style={styles.paperLinked} numberOfLines={1}>
+          <Text {...FIXED} style={styles.paperLinked} numberOfLines={1}>
             ◆ {linkedLabel}
           </Text>
         ) : null}
@@ -193,18 +267,21 @@ const JournalCard = forwardRef<View, ShareCardProps>(function JournalCard({ titl
 
 const BadgeCard = forwardRef<View, ShareCardProps>(function BadgeCard({ title, label, imageSource, completedLabel, onImageReady }, ref) {
   return (
-    <View ref={ref} collapsable={false} style={[styles.card, styles.badgeCard]}>
+    <View ref={ref} collapsable={false} style={[styles.card, styles.badgeCard]} testID="share-card-badge">
       <Brand light />
       <View style={styles.badgeHalo} />
       {imageSource ? <Image source={imageSource} style={styles.badgeArt} resizeMode="contain" onLoad={onImageReady} onError={onImageReady} /> : null}
       <View style={styles.badgeText}>
-        <Text style={styles.label} numberOfLines={1}>
+        <Text {...FIXED} style={styles.label} numberOfLines={1}>
           {label}
         </Text>
-        <Text style={[styles.title, styles.badgeTitle]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
-          {title}
-        </Text>
-        {completedLabel ? <Text style={styles.badgeNote}>{completedLabel}</Text> : null}
+        <CardText text={title} role={CARD_FIT.centerTitle} style={[styles.title, styles.centered]} testID="share-card-title" />
+        {completedLabel ? (
+          <Text {...FIXED} style={styles.badgeNote}>
+            {completedLabel}
+          </Text>
+        ) : null}
+        <ShortenedNote show={isShortened([[title, CARD_FIT.centerTitle]])} color={colors.textOnDarkSecondary} />
         <Rule />
       </View>
     </View>
@@ -213,78 +290,55 @@ const BadgeCard = forwardRef<View, ShareCardProps>(function BadgeCard({ title, l
 
 const CREATION_FRAME = 240;
 
-const CreationCard = forwardRef<View, ShareCardProps>(function CreationCard({ title, label, artwork, artworkSize }, ref) {
-  const size = artworkSize ?? { width: CREATION_FRAME, height: CREATION_FRAME };
-  const scale = Math.min(CREATION_FRAME / size.width, CREATION_FRAME / size.height);
+const CreationCard = forwardRef<View, ShareCardProps>(function CreationCard({ title, label, artwork, artworkSize, cardStyle }, ref) {
+  const tone = CARD_STYLES[cardStyle ?? defaultStyle('creation')];
   return (
-    <View ref={ref} collapsable={false} style={[styles.card, styles.paper, styles.creationCard]}>
-      <View style={[styles.paperBrand, styles.creationBrand]}>
-        <OymoOrnament size={10} color={colors.accentGoldPressed} strokeWidth={1.75} />
-        <Text style={styles.paperLabel} numberOfLines={1}>
-          {label}
-        </Text>
-        <Text style={styles.paperWordmark}>OYNO</Text>
+    <View ref={ref} collapsable={false} style={[styles.card, styles.paper, styles.creationCard, { backgroundColor: tone.background }]} testID={`share-card-creation-${cardStyle ?? defaultStyle('creation')}`}>
+      <CardAttribution label={label} labelColor={tone.label} wordmarkColor={tone.wordmark} ornamentColor={colors.accentGoldPressed} />
+      <CardArtwork natural={artworkSize ?? { width: CREATION_FRAME, height: CREATION_FRAME }} frame={CREATION_FRAME} frameColor={tone.frame}>
+        {artwork}
+      </CardArtwork>
+      <View style={styles.creationFooter}>
+        <CardText text={title} role={CARD_FIT.paperTitle} style={[styles.paperTitle, styles.centered, { color: tone.ink }]} testID="share-card-title" />
+        <ShortenedNote show={isShortened([[title, CARD_FIT.paperTitle]])} color={tone.inkSoft} />
       </View>
-      <View style={styles.creationFrame}>
-        <View style={{ width: size.width, height: size.height, transform: [{ scale }] }}>{artwork}</View>
-      </View>
-      <Text style={[styles.paperTitle, styles.creationTitle]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
-        {title}
-      </Text>
     </View>
   );
 });
 
-const SummaryCard = forwardRef<View, ShareCardProps>(function SummaryCard({ title, label, lines = [], featured = [], featuredLabel }, ref) {
+const SummaryCard = forwardRef<View, ShareCardProps>(function SummaryCard({ title, label, lines = [], featured = [], featuredLabel, cardStyle }, ref) {
+  const tone = CARD_STYLES[cardStyle ?? defaultStyle('summary')];
+  const shown = lines.slice(0, 4);
+  const names = featured.slice(0, 3);
+  const shortened = isShortened([[title, CARD_FIT.centerTitle], ...shown.map((line) => [line, CARD_FIT.figure] as [string, FitRole]), ...names.map((name) => [`◆ ${name}`, { ...CARD_FIT.line, maxLines: 1 }] as [string, FitRole])]);
   return (
-    <View ref={ref} collapsable={false} style={[styles.card, styles.summaryCard]}>
-      <Brand light />
+    <View ref={ref} collapsable={false} style={[styles.card, { backgroundColor: tone.background }]} testID={`share-card-summary-${cardStyle ?? defaultStyle('summary')}`}>
+      <View style={styles.summaryTop}>
+        <CardAttribution label={label} labelColor={tone.label} wordmarkColor={tone.wordmark} ornamentColor={colors.accentGold} />
+      </View>
       <View style={styles.summaryBody}>
-        <Text style={styles.label} numberOfLines={1}>
-          {label}
-        </Text>
-        <Text style={[styles.title, styles.summaryTitle]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
-          {title}
-        </Text>
-        {lines.slice(0, 4).map((line) => (
-          <Text key={line} style={styles.summaryLine} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
-            {line}
-          </Text>
+        <CardText text={title} role={CARD_FIT.centerTitle} style={[styles.title, { color: tone.ink, marginBottom: spacing.xs }]} testID="share-card-title" />
+        {shown.map((line) => (
+          <CardText key={line} text={line} role={CARD_FIT.figure} style={[styles.summaryLine, { color: tone.ink }]} />
         ))}
-        {featured.length > 0 ? (
+        {names.length > 0 ? (
           <View style={styles.summaryFeatured}>
-            {featuredLabel ? <Text style={styles.label}>{featuredLabel}</Text> : null}
-            {featured.slice(0, 3).map((name) => (
-              <Text key={name} style={styles.summaryFeaturedItem} numberOfLines={1}>
-                ◆ {name}
+            {featuredLabel ? (
+              <Text {...FIXED} style={[styles.label, { color: tone.label }]}>
+                {featuredLabel}
               </Text>
+            ) : null}
+            {names.map((name) => (
+              <CardText key={name} text={`◆ ${name}`} role={{ ...CARD_FIT.line, maxLines: 1 }} style={[styles.summaryFeaturedItem, { color: tone.inkSoft }]} />
             ))}
           </View>
         ) : null}
-        <Rule />
+        <ShortenedNote show={shortened} color={tone.inkSoft} />
+        <Rule color={tone.rule} />
       </View>
     </View>
   );
 });
-
-function Brand({ light }: { light: boolean }) {
-  return (
-    <View style={styles.brandRow}>
-      <OymoOrnament size={12} color={colors.accentGold} strokeWidth={1.75} />
-      <Text style={[styles.wordmark, !light && styles.wordmarkDark]}>OYNO</Text>
-    </View>
-  );
-}
-
-function Rule() {
-  return (
-    <View style={styles.footerRule}>
-      <View style={styles.ruleLine} />
-      <OymoOrnament size={8} color="rgba(232,185,61,0.8)" strokeWidth={1.5} />
-      <View style={styles.ruleLine} />
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   card: { width: SHARE_CARD_WIDTH, height: SHARE_CARD_HEIGHT, overflow: 'hidden', justifyContent: 'flex-end' },
@@ -295,42 +349,40 @@ const styles = StyleSheet.create({
   wordmarkDark: { color: colors.primary },
   content: { padding: spacing.lg, gap: spacing.xs },
   label: { ...textStyles.overline, color: colors.accentGold },
-  title: { ...editorial(textStyles.display), fontSize: 34, lineHeight: 40, color: colors.textOnDark },
-  titleScore: { fontSize: 26, lineHeight: 32 },
-  subtitle: { ...textStyles.body, fontSize: 17, lineHeight: 23, color: 'rgba(255,255,255,0.88)' },
-  excerpt: { ...textStyles.body, fontSize: 17, lineHeight: 24, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)' },
+  title: { ...editorial(textStyles.display), color: colors.textOnDark },
+  centered: { textAlign: 'center' },
+  subtitle: { ...textStyles.body, color: 'rgba(255,255,255,0.88)' },
+  excerpt: { ...textStyles.body, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)' },
+  shortened: { ...textStyles.small, fontStyle: 'italic' },
   completed: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingHorizontal: spacing.sm, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.accentGold, marginTop: spacing.xxs },
   completedText: { ...textStyles.small, color: colors.textPrimary },
   scoreCenter: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingBottom: 120 },
   scoreValue: { ...editorial(textStyles.display), fontSize: 84, lineHeight: 92, color: colors.textOnDark, paddingHorizontal: spacing.lg },
   footerRule: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  ruleLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(232,185,61,0.5)' },
+  ruleLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  attribution: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'stretch' },
+  attributionLabel: { ...textStyles.overline, flex: 1 },
+  attributionWordmark: { ...editorial(textStyles.title), fontSize: 15, letterSpacing: 2.5 },
+  artworkFrame: { alignItems: 'center', justifyContent: 'center', borderRadius: 18, overflow: 'hidden' },
   badgeCard: { backgroundColor: colors.surfaceFeature, alignItems: 'center', justifyContent: 'flex-end' },
   badgeHalo: { position: 'absolute', top: 66, width: 230, height: 230, borderRadius: 115, backgroundColor: 'rgba(232,185,61,0.14)' },
   badgeArt: { position: 'absolute', top: 76, width: 210, height: 210 },
   badgeText: { alignSelf: 'stretch', padding: spacing.lg, gap: spacing.xs, alignItems: 'center' },
-  badgeTitle: { textAlign: 'center', fontSize: 30, lineHeight: 36 },
   badgeNote: { ...textStyles.caption, color: colors.textOnDarkSecondary, textAlign: 'center' },
   // Journal: cream paper, framed picture with a strip of gold "tape".
-  paper: { backgroundColor: colors.surfaceElevated, justifyContent: 'flex-start', padding: spacing.lg, gap: spacing.md },
+  paper: { justifyContent: 'flex-start', padding: spacing.lg, gap: spacing.md },
   frame: { height: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: colors.surfaceFeature, borderWidth: 5, borderColor: '#FFFDF7', transform: [{ rotate: '-1.5deg' }] },
   frameFallback: { backgroundColor: colors.surfaceFeature },
   tape: { position: 'absolute', top: -4, alignSelf: 'center', width: 70, height: 18, backgroundColor: 'rgba(232,185,61,0.6)', transform: [{ rotate: '2deg' }] },
   paperText: { flex: 1, gap: 6 },
-  paperBrand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  paperLabel: { ...textStyles.overline, color: colors.accentTerracotta, flex: 1 },
-  paperWordmark: { ...editorial(textStyles.title), fontSize: 15, letterSpacing: 2.5, color: colors.primary },
-  paperTitle: { ...editorial(textStyles.h1), color: colors.textPrimary },
-  paperExcerpt: { ...textStyles.body, fontSize: 16, lineHeight: 22, fontStyle: 'italic', color: colors.textSecondary },
-  creationCard: { alignItems: 'center', justifyContent: 'space-between' },
-  creationFrame: { width: CREATION_FRAME + 24, height: CREATION_FRAME + 24, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: '#FFFDF7', overflow: 'hidden' },
-  creationTitle: { textAlign: 'center' },
-  creationBrand: { alignSelf: 'stretch' },
-  summaryCard: { backgroundColor: colors.surfaceFeature },
-  summaryBody: { padding: spacing.lg, gap: spacing.xs },
-  summaryTitle: { fontSize: 30, lineHeight: 36, marginBottom: spacing.xs },
-  summaryLine: { ...editorial(textStyles.title), fontSize: 24, lineHeight: 30, color: colors.textOnDark },
-  summaryFeatured: { gap: 4, marginTop: spacing.sm },
-  summaryFeaturedItem: { ...textStyles.body, fontSize: 17, lineHeight: 23, color: 'rgba(255,255,255,0.9)' },
+  paperTitle: { ...editorial(textStyles.h1) },
+  paperExcerpt: { ...textStyles.body, fontStyle: 'italic' },
   paperLinked: { ...textStyles.caption, fontWeight: '700', color: colors.primary, marginTop: 'auto' },
+  creationCard: { alignItems: 'center', justifyContent: 'space-between' },
+  creationFooter: { alignSelf: 'stretch', gap: 2 },
+  summaryTop: { position: 'absolute', top: spacing.lg, left: spacing.lg, right: spacing.lg },
+  summaryBody: { padding: spacing.lg, gap: spacing.xs },
+  summaryLine: { ...editorial(textStyles.title) },
+  summaryFeatured: { gap: 4, marginTop: spacing.sm },
+  summaryFeaturedItem: { ...textStyles.body },
 });

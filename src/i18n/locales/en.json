@@ -7909,5 +7909,15 @@
     "saving": "Saving…",
     "saved": "Saved",
     "failed": "Not saved - try again"
+  },
+  "shareCards": {
+    "shortened": "Shortened to fit the card",
+    "picture": "Picture",
+    "style": "Card style",
+    "styles": {
+      "paper": "Paper",
+      "forest": "Forest",
+      "felt": "Felt red"
+    }
   }
 }

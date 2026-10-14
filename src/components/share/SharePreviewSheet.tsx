@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Chip } from '@/components/ui';
+import { AnimatedPressable, Button } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { cardRadii, colors, elevation, overlays, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, controlStates, elevation, overlays, spacing, textStyles } from '@/theme';
+
+import { CARD_STYLE_IDS, defaultStyle, STYLEABLE, type CardStyleId } from './cardContent';
 
 import { ShareCard, shareCardSize, type ShareCardContent } from './ShareCard';
 
@@ -43,7 +45,10 @@ export function SharePreviewSheet({
   const { width, height } = useWindowDimensions();
   const [choiceKey, setChoiceKey] = useState<string | null>(choices?.[0]?.key ?? null);
   const chosen = choices?.find((choice) => choice.key === choiceKey);
-  const card: ShareCardContent = chosen ? { ...content, imageSource: chosen.image } : content;
+  // Card styles where the artwork or the figures are the subject (cardContent.ts) - the same choice goes to the export.
+  const styleable = STYLEABLE.includes(content.variant ?? 'story');
+  const [cardStyle, setCardStyle] = useState<CardStyleId>(content.cardStyle ?? defaultStyle(content.variant ?? 'story'));
+  const card: ShareCardContent = { ...(chosen ? { ...content, imageSource: chosen.image } : content), ...(styleable ? { cardStyle } : null) };
 
   // Preview size: fits the sheet at 375-430 pt without dominating it.
   const size = shareCardSize(card);
@@ -65,13 +70,8 @@ export function SharePreviewSheet({
               <ShareCard {...card} />
             </View>
           </View>
-          {choices && choices.length > 1 ? (
-            <View style={styles.choices} accessibilityRole="radiogroup">
-              {choices.map((choice) => (
-                <Chip key={choice.key} label={choice.label} selected={choice.key === choiceKey} onPress={() => setChoiceKey(choice.key)} />
-              ))}
-            </View>
-          ) : null}
+          {choices && choices.length > 1 ? <ChoiceRow label={t('shareCards.picture')} options={choices.map((choice) => ({ key: choice.key, label: choice.label }))} selected={choiceKey} onSelect={setChoiceKey} testID="share-picture" /> : null}
+          {styleable ? <ChoiceRow label={t('shareCards.style')} options={CARD_STYLE_IDS.map((id) => ({ key: id, label: t(`shareCards.styles.${id}`) }))} selected={cardStyle} onSelect={(key) => setCardStyle(key as CardStyleId)} testID="share-style" /> : null}
         </ScrollView>
         {onShareLink ? (
           <View style={styles.linkRow}>
@@ -90,7 +90,27 @@ export function SharePreviewSheet({
   );
 }
 
+/** A labelled radio group (real radios - a chip's aria-selected is not allowed on a button). */
+function ChoiceRow({ label, options, selected, onSelect, testID }: { label: string; options: { key: string; label: string }[]; selected: string | null; onSelect: (key: string) => void; testID: string }) {
+  return (
+    <View style={styles.choices} accessibilityRole="radiogroup" accessibilityLabel={label}>
+      {options.map((option) => {
+        const on = option.key === selected;
+        return (
+          <AnimatedPressable key={option.key} style={[styles.choice, on && styles.choiceOn]} onPress={() => onSelect(option.key)} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={option.label} testID={`${testID}-${option.key}`}>
+            <Text style={[styles.choiceText, on && styles.choiceTextOn]}>{option.label}</Text>
+          </AnimatedPressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  choice: { minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: cardRadii.chip, borderWidth: 1, borderColor: colors.borderSubtle, backgroundColor: colors.surfaceElevated },
+  choiceOn: { backgroundColor: controlStates.selected.bg, borderColor: controlStates.selected.border },
+  choiceText: { ...textStyles.caption, fontWeight: '700', color: colors.textPrimary },
+  choiceTextOn: { color: controlStates.selected.fg },
   linkRow: { alignItems: 'center' },
   backdrop: { flex: 1, backgroundColor: overlays.half },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '92%', paddingTop: spacing.xs, paddingHorizontal: spacing.md, gap: spacing.sm, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
