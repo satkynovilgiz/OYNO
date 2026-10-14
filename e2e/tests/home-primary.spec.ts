@@ -13,7 +13,7 @@ test('a new person sees where to begin; Discover and Create open their destinati
   await expect(primary).toContainText('Where to begin');
   await expect(page.getByTestId('home-primary-discover')).toContainText('Start here');
   await expect(page.getByTestId('home-continue-empty-new')).toContainText('Nothing to continue yet');
-  await expect(page.getByTestId('home-destinations')).toBeVisible();
+  await expect(page.getByTestId('home-shortcuts')).toBeVisible();
   await expectNoSeriousViolations(page, 'home primary (new)');
   await page.screenshot({ path: 'e2e/.results/home-primary-new.png' });
 

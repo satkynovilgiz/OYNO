@@ -43,7 +43,7 @@ import { mockGamesList } from '@/features/games/mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 import { useHomeRecommendation } from './useHomeRecommendation';
 import { HomePrimary } from './primary/HomePrimary';
-import { HomeDestinations } from './primary/HomeDestinationsRow';
+import { HomeShortcutsRow } from './shortcuts/HomeShortcutsRow';
 import { heroShowsRecommendation } from './primary/homePrimaryModel';
 import { useHomeContinue } from './primary/useHomeContinue';
 
@@ -262,7 +262,7 @@ export function HomeScreen() {
           <FirstUseHomeCard offerOnly />
           {/* Discover / Create / Continue - static tiles first, so Home is never blank while data loads. */}
           <HomePrimary state={continueState} journeyDisplay={recommendationDisplay} />
-          <HomeDestinations />
+          <HomeShortcutsRow />
         </View>
 
         <AgeExperienceTransition style={styles.sectionList}>

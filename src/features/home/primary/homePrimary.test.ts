@@ -9,7 +9,6 @@ import { routeExists } from '@/test-utils/routeExists';
 
 import type { HomeRecommendation } from '../homeRecommendation';
 import { CREATE_GROUPS } from './createHub';
-import { HOME_DESTINATIONS } from './homeDestinations';
 import { CREATE_ROUTE, DISCOVER_ROUTE, GUIDE_ROUTE, heroShowsRecommendation, homeAudience, pickContinue, RECOVERY_ROUTE, type ContinueInputs } from './homePrimaryModel';
 
 jest.mock('@/services/supabase/client', () => ({ supabase: {} }));
@@ -87,7 +86,6 @@ describe('first-use vs returning; hero never duplicates Continue', () => {
 describe('destinations and copy', () => {
   it('Discover, Create, every Create hub entry and the Recovery/guide routes open existing screens', () => {
     for (const route of [DISCOVER_ROUTE, CREATE_ROUTE, RECOVERY_ROUTE, GUIDE_ROUTE, ...CREATE_GROUPS.flatMap((group) => group.entries.map((entry) => entry.route))]) expect([route, routeExists(route)]).toEqual([route, true]);
-    for (const destination of HOME_DESTINATIONS) expect([destination.route, routeExists(destination.route)]).toEqual([destination.route, true]);
   });
 
   it('every label exists in KG, RU and EN', () => {
