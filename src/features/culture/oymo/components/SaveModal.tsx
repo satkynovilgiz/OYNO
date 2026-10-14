@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.small,
-    color: colors.danger,
+    color: colors.dangerText,
   },
   actions: {
     flexDirection: 'row',

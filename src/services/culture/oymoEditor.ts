@@ -88,6 +88,20 @@ function roundScale(scale: number): number {
   return Math.round(scale * 100) / 100;
 }
 
+/** Precise positioning: move a layer's ORIGINAL point (mirrors follow), clamped to the canvas on the integer grid. */
+export function moveLayerTo(state: OymoEditorState, layerId: string, point: Point, canvasSize: number): OymoEditorState {
+  const layer = state.layers.find((l) => l.id === layerId);
+  if (!layer) return state;
+  const next = { x: Math.round(Math.min(canvasSize, Math.max(0, point.x))), y: Math.round(Math.min(canvasSize, Math.max(0, point.y))) };
+  if (next.x === layer.point.x && next.y === layer.point.y) return state;
+  return { ...state, layers: state.layers.map((l) => (l.id === layerId ? { ...l, point: next } : l)) };
+}
+
+export function moveLayerBy(state: OymoEditorState, layerId: string, dx: number, dy: number, canvasSize: number): OymoEditorState {
+  const layer = state.layers.find((l) => l.id === layerId);
+  return layer ? moveLayerTo(state, layerId, { x: layer.point.x + dx, y: layer.point.y + dy }, canvasSize) : state;
+}
+
 export function reorderLayer(state: OymoEditorState, layerId: string, direction: 'up' | 'down'): OymoEditorState {
   const index = state.layers.findIndex((l) => l.id === layerId);
   if (index === -1) return state;

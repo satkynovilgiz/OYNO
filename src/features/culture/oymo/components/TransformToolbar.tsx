@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, iconSizes, radii, spacing, text } from '@/theme';
 
 type TransformToolbarProps = {
   onRotate: () => void;
@@ -44,7 +44,7 @@ function Action({
 }) {
   return (
     <AnimatedPressable style={styles.action} onPress={onPress} haptic="light" accessibilityRole="button" accessibilityLabel={label}>
-      <Icon size={18} color={tone === 'danger' ? colors.danger : colors.primary} strokeWidth={2.25} />
+      <Icon size={iconSizes.md} color={tone === 'danger' ? colors.dangerText : colors.primary} strokeWidth={2.25} />
       <Text style={[styles.label, tone === 'danger' && styles.labelDanger]} numberOfLines={1}>
         {label}
       </Text>
@@ -69,10 +69,10 @@ const styles = StyleSheet.create({
     minWidth: 56,
   },
   label: {
-    ...typography.small,
+    ...text.fine,
     color: colors.textPrimary,
   },
   labelDanger: {
-    color: colors.danger,
+    color: colors.dangerText,
   },
 });

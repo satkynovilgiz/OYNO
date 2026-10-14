@@ -149,7 +149,7 @@ export function AccountSettingsScreen({
         onCancel={closeDelete}
       >
         <View style={styles.deleteWarning}>
-          <ShieldAlert size={16} color={colors.danger} strokeWidth={2} />
+          <ShieldAlert size={16} color={colors.dangerText} strokeWidth={2} />
           <Text style={styles.deleteWarningText}>{providerName ? t('settings.account.deleteOAuthHint') : t('settings.account.deleteConfirmHint')}</Text>
         </View>
         {choices.length > 1 ? (
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
-    color: colors.danger,
+    color: colors.dangerText,
   },
   saved: {
     ...typography.caption,
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   deleteWarningText: {
     ...typography.small,
-    color: colors.danger,
+    color: colors.dangerText,
     flex: 1,
   },
 });

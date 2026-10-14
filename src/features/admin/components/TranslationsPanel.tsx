@@ -226,5 +226,5 @@ const styles = StyleSheet.create({
   pillTextActive: { color: colors.textOnPrimary, fontWeight: '700' },
   spacer: { flex: 1 },
   state: { ...typography.small, color: colors.textMuted },
-  stateError: { color: colors.danger },
+  stateError: { color: colors.dangerText },
 });

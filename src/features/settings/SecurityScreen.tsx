@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
-    color: colors.danger,
+    color: colors.dangerText,
   },
   saved: {
     ...typography.caption,

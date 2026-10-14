@@ -63,6 +63,8 @@ describe('UI conventions - contrast (WCAG AA 4.5:1 for text)', () => {
       ['goldText/background', colors.accentGoldText, colors.background],
       ['onDark/feature', colors.textOnDark, colors.surfaceFeature],
       ['onDark/terracottaDark', colors.textOnDark, colors.accentTerracottaDark],
+      ['dangerText/surfaceAlt', colors.dangerText, colors.surfaceAlt],
+      ['dangerText/background', colors.dangerText, colors.background],
     ];
     for (const [name, fg, bg] of pairs) expect([name, contrastRatio(fg, bg) >= AA]).toEqual([name, true]);
   });

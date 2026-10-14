@@ -1,7 +1,10 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Line } from 'react-native-svg';
+
+import { artworkToScreen, clampArtworkPoint, clampViewport, handleSize, hitLayer, insideFrame, PAN_THRESHOLD, screenToArtwork, TAP_SLOP, zoomTo, type Viewport } from '../canvas/canvasViewport';
 
 import { getLayerRenderPoints, type MotifLayer } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
@@ -18,9 +21,120 @@ type OymoCanvasProps = {
   selectedLayerId: string | null;
   onTapCanvas: (point: { x: number; y: number }) => void;
   onSelectLayer: (layerId: string) => void;
+  /** Zoom / pan (Creator only). Without it the canvas is the plain, fixed view used everywhere else (and by exports). */
+  viewport?: Viewport;
+  onViewportChange?: (viewport: Viewport) => void;
 };
 
-export function OymoCanvas({ layers, backgroundColor, symmetryMode, selectedLayerId, onTapCanvas, onSelectLayer }: OymoCanvasProps) {
+const MOTIF = 36;
+
+export function OymoCanvas(props: OymoCanvasProps) {
+  if (props.onViewportChange) return <ZoomableOymoCanvas {...props} viewport={props.viewport ?? { zoom: 1, panX: 0, panY: 0 }} onViewportChange={props.onViewportChange} />;
+  return <PlainOymoCanvas {...props} />;
+}
+
+function SymmetryGuides({ symmetryMode }: { symmetryMode: SymmetryMode }) {
+  if (symmetryMode === 'none') return null;
+  return (
+    <>
+      <Line x1={0} y1={0} x2={CANVAS_SIZE} y2={CANVAS_SIZE} stroke={colors.surfaceBorder} strokeWidth={1} strokeDasharray="4,4" />
+      <Line x1={CANVAS_SIZE} y1={0} x2={0} y2={CANVAS_SIZE} stroke={colors.surfaceBorder} strokeWidth={1} strokeDasharray="4,4" />
+      <Line x1={CANVAS_SIZE / 2} y1={0} x2={CANVAS_SIZE / 2} y2={CANVAS_SIZE} stroke={colors.surfaceBorder} strokeWidth={1} strokeDasharray="4,4" />
+    </>
+  );
+}
+
+/**
+ * Zoom / pan over the SAME artwork. Gestures (react-native-gesture-handler,
+ * as on the Explore map): a tap places or selects; a drag pans and a pinch
+ * zooms. The tap only runs when no pan/pinch started (Race), so a pan
+ * can never place a motif. Every screen point is mapped back to artwork
+ * coordinates (canvasViewport.ts) - layers never store a screen position.
+ * Selection handles are drawn unscaled, so they stay readable at any zoom.
+ */
+function ZoomableOymoCanvas({ layers, backgroundColor, symmetryMode, selectedLayerId, onTapCanvas, onSelectLayer, viewport, onViewportChange }: OymoCanvasProps & { viewport: Viewport; onViewportChange: (viewport: Viewport) => void }) {
+  const { t } = useTranslation();
+  const latest = useRef({ viewport, layers, symmetryMode, onTapCanvas, onSelectLayer, onViewportChange });
+  latest.current = { viewport, layers, symmetryMode, onTapCanvas, onSelectLayer, onViewportChange };
+  const start = useRef(viewport);
+
+  const handleTap = (screen: { x: number; y: number }) => {
+    const current = latest.current;
+    if (!insideFrame(screen, CANVAS_SIZE)) return;
+    const at = screenToArtwork(screen, current.viewport, CANVAS_SIZE);
+    const hit = hitLayer(
+      current.layers.map((layer) => ({ id: layer.id, visible: layer.visible, scale: layer.scale, points: getLayerRenderPoints(layer, current.symmetryMode, CANVAS_SIZE) })),
+      at,
+      MOTIF / 2,
+    );
+    if (hit) current.onSelectLayer(hit);
+    else current.onTapCanvas(clampArtworkPoint(at, CANVAS_SIZE));
+  };
+
+  const tap = Gesture.Tap()
+    .maxDistance(TAP_SLOP)
+    .runOnJS(true)
+    .onEnd((event, success) => {
+      if (success) handleTap({ x: event.x, y: event.y });
+    });
+  const pan = Gesture.Pan()
+    .minDistance(PAN_THRESHOLD)
+    .runOnJS(true)
+    .onStart(() => {
+      start.current = latest.current.viewport;
+    })
+    .onUpdate((event) => latest.current.onViewportChange(clampViewport({ ...start.current, panX: start.current.panX + event.translationX, panY: start.current.panY + event.translationY }, CANVAS_SIZE)));
+  const pinch = Gesture.Pinch()
+    .runOnJS(true)
+    .onStart(() => {
+      start.current = latest.current.viewport;
+    })
+    .onUpdate((event) => latest.current.onViewportChange(zoomTo(start.current, start.current.zoom * event.scale, CANVAS_SIZE, { x: event.focalX, y: event.focalY })));
+  // Race: the first to activate wins. A tap activates only within TAP_SLOP (< PAN_THRESHOLD), and
+  // an active pan/pinch cancels it - so a pan never places. (Exclusive would wait for the pinch to
+  // FAIL, which a mouse never does.)
+  const gesture = Gesture.Race(Gesture.Simultaneous(pinch, pan), tap);
+
+  const selected = layers.find((layer) => layer.id === selectedLayerId && layer.visible) ?? null;
+  return (
+    <GestureDetector gesture={gesture}>
+      <View style={[styles.wrap, { backgroundColor }]} accessibilityLabel={t('culture.oymo.canvasLabel')} role="group" testID="oymo-canvas">
+        <View style={[styles.content, { transform: [{ translateX: viewport.panX }, { translateY: viewport.panY }, { scale: viewport.zoom }] }]} pointerEvents="box-none">
+          <Svg width={CANVAS_SIZE} height={CANVAS_SIZE} viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`} pointerEvents="none">
+            <SymmetryGuides symmetryMode={symmetryMode} />
+          </Svg>
+          {layers
+            .filter((layer) => layer.visible)
+            .map((layer) =>
+              getLayerRenderPoints(layer, symmetryMode, CANVAS_SIZE).map((point, index) => (
+                // Pointer taps are hit-tested by the canvas gesture; the button stays for keyboards and screen readers.
+                <Pressable
+                  key={`${layer.id}-${index}`}
+                  onPress={() => onSelectLayer(layer.id)}
+                  pointerEvents="none"
+                  style={[styles.placement, { left: point.x - MOTIF / 2, top: point.y - MOTIF / 2, transform: [{ rotate: `${layer.rotation}deg` }, { scale: layer.scale }] }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('culture.oymo.selectMotifLabel')}
+                  accessibilityState={{ selected: layer.id === selectedLayerId }}
+                >
+                  <LayerMotif layer={layer} size={MOTIF} />
+                </Pressable>
+              )),
+            )}
+        </View>
+        {selected
+          ? getLayerRenderPoints(selected, symmetryMode, CANVAS_SIZE).map((point, index) => {
+              const at = artworkToScreen(point, viewport, CANVAS_SIZE);
+              const size = handleSize(MOTIF, selected.scale, viewport.zoom);
+              return <View key={`handle-${index}`} pointerEvents="none" style={[styles.handle, { left: at.x - size / 2, top: at.y - size / 2, width: size, height: size, borderRadius: size / 2 }]} testID={`oymo-handle-${index}`} />;
+            })
+          : null}
+      </View>
+    </GestureDetector>
+  );
+}
+
+function PlainOymoCanvas({ layers, backgroundColor, symmetryMode, selectedLayerId, onTapCanvas, onSelectLayer }: OymoCanvasProps) {
   const { t } = useTranslation();
   const wrapRef = useRef<View>(null);
 
@@ -46,13 +160,7 @@ export function OymoCanvas({ layers, backgroundColor, symmetryMode, selectedLaye
     >
       <Pressable onPress={handlePress} style={StyleSheet.absoluteFill} accessibilityRole="none">
         <Svg width={CANVAS_SIZE} height={CANVAS_SIZE} viewBox={`0 0 ${CANVAS_SIZE} ${CANVAS_SIZE}`}>
-          {symmetryMode !== 'none' && (
-            <>
-              <Line x1={0} y1={0} x2={CANVAS_SIZE} y2={CANVAS_SIZE} stroke={colors.surfaceBorder} strokeWidth={1} strokeDasharray="4,4" />
-              <Line x1={CANVAS_SIZE} y1={0} x2={0} y2={CANVAS_SIZE} stroke={colors.surfaceBorder} strokeWidth={1} strokeDasharray="4,4" />
-              <Line x1={CANVAS_SIZE / 2} y1={0} x2={CANVAS_SIZE / 2} y2={CANVAS_SIZE} stroke={colors.surfaceBorder} strokeWidth={1} strokeDasharray="4,4" />
-            </>
-          )}
+          <SymmetryGuides symmetryMode={symmetryMode} />
         </Svg>
       </Pressable>
 
@@ -103,6 +211,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  content: { position: 'absolute', left: 0, top: 0, width: CANVAS_SIZE, height: CANVAS_SIZE },
+  // Unscaled: the same 2 px outline at every zoom.
+  handle: { position: 'absolute', borderWidth: 2, borderColor: colors.primary, borderStyle: 'dashed', backgroundColor: 'transparent' },
   selectionRing: {
     position: 'absolute',
     width: 44,

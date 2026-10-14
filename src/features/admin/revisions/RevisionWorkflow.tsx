@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.overline, color: colors.accentTerracotta },
   muted: { ...typography.small, color: colors.textMuted },
   warning: { ...typography.small, color: colors.accentTerracotta },
-  error: { ...typography.small, color: colors.danger },
+  error: { ...typography.small, color: colors.dangerText },
   banner: { gap: spacing.xs, padding: spacing.sm, borderRadius: radii.lg, backgroundColor: colors.surfaceWarm },
   bannerText: { ...typography.small, color: colors.textPrimary },
   row: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },

@@ -15,6 +15,8 @@ import {
   EMPTY_OYMO_STATE,
   addLayer,
   duplicateLayer,
+  moveLayerBy,
+  moveLayerTo,
   removeLayer,
   reorderLayer,
   resetCanvas,
@@ -41,6 +43,8 @@ import { useProgressStore } from '@/store/useProgressStore';
 import { cards, colors, headings, iconSizes, layout, radii, spacing, text } from '@/theme';
 
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
+import { PositionControls, ZoomControls } from './canvas/CanvasControls';
+import { IDENTITY, type Viewport } from './canvas/canvasViewport';
 import { ColorSwatches } from './components/ColorSwatches';
 import { LayersPanel } from './components/LayersPanel';
 import { MotifGrid } from './components/MotifGrid';
@@ -111,6 +115,25 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
     pushEntry({ state: next, symmetry: symmetryMode, label, ...(motifId ? { motifId } : {}) });
   }
 
+  /** Precise moves of one layer in a row are ONE undo step (and one recipe step). */
+  const lastMove = useRef<{ layerId: string; index: number } | null>(null);
+  function applyMove(layerId: string, mutate: (state: OymoEditorState) => OymoEditorState) {
+    const next = mutate(editorState);
+    if (next === editorState) return;
+    const entry: HistoryEntry = { state: next, symmetry: symmetryMode, label: 'move' };
+    const continues = lastMove.current?.layerId === layerId && lastMove.current.index === historyIndex && history[historyIndex]?.label === 'move' && historyIndex === history.length - 1;
+    if (continues) {
+      setOpenedCreationId(null);
+      setHistory([...history.slice(0, historyIndex), entry]);
+      return;
+    }
+    pushEntry(entry);
+    lastMove.current = { layerId, index: history.slice(0, historyIndex + 1).length };
+  }
+
+  // Zoom / pan: a view of the artwork for this session only (never saved, never exported).
+  const [viewport, setViewport] = useState<Viewport>(IDENTITY);
+
   /** A symmetry change is an undoable step of its own (and part of the recipe). */
   function setSymmetryMode(mode: SymmetryMode) {
     if (mode === symmetryMode) return;
@@ -154,6 +177,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
   }
 
   function handleReset() {
+    setViewport(IDENTITY);
     setHistory([{ state: EMPTY_OYMO_STATE, symmetry: symmetryMode, label: 'start' }]);
     setHistoryIndex(0);
     setSelectedLayerId(null);
@@ -168,6 +192,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
       backgroundColor: creation.background_color,
       nextId: creation.layers.length,
     };
+    setViewport(IDENTITY);
     setHistory([{ state: loaded, symmetry: creation.symmetry_mode, label: 'load' }]);
     setHistoryIndex(0);
     setSelectedLayerId(null);
@@ -394,7 +419,10 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
               selectedLayerId={selectedLayerId}
               onTapCanvas={handlePlace}
               onSelectLayer={handleSelectLayer}
+              viewport={viewport}
+              onViewportChange={setViewport}
             />
+            <ZoomControls viewport={viewport} size={CANVAS_SIZE} onChange={setViewport} />
 
             {selectedLayer && (
               <TransformToolbar
@@ -408,6 +436,14 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
                 }}
               />
             )}
+            {selectedLayer ? (
+              <PositionControls
+                point={selectedLayer.point}
+                size={CANVAS_SIZE}
+                onMoveTo={(point) => applyMove(selectedLayer.id, (state) => moveLayerTo(state, selectedLayer.id, point, CANVAS_SIZE))}
+                onMoveBy={(dx, dy) => applyMove(selectedLayer.id, (state) => moveLayerBy(state, selectedLayer.id, dx, dy, CANVAS_SIZE))}
+              />
+            ) : null}
 
             <View style={styles.canvasActions}>
               <Button label={t('culture.oymo.placeAtCenter')} variant="secondary" onPress={handlePlaceAtCenter} />

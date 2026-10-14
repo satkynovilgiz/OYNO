@@ -11,8 +11,8 @@ import type { SymmetryMode } from '@/services/culture/symmetry';
 export const MAX_RECIPE_STEPS = 100;
 export const MAX_RECIPE_BYTES = 60_000;
 
-export type StepLabel = 'start' | 'copy' | 'load' | 'place' | 'remove' | 'duplicate' | 'rotate' | 'scale' | 'reorder' | 'visibility' | 'background' | 'symmetry';
-export const STEP_LABELS: StepLabel[] = ['start', 'copy', 'load', 'place', 'remove', 'duplicate', 'rotate', 'scale', 'reorder', 'visibility', 'background', 'symmetry'];
+export type StepLabel = 'start' | 'copy' | 'load' | 'place' | 'remove' | 'duplicate' | 'rotate' | 'scale' | 'reorder' | 'visibility' | 'background' | 'symmetry' | 'move';
+export const STEP_LABELS: StepLabel[] = ['start', 'copy', 'load', 'place', 'remove', 'duplicate', 'rotate', 'scale', 'reorder', 'visibility', 'background', 'symmetry', 'move'];
 
 export type ReplayState = { layers: MotifLayer[]; backgroundColor: string; symmetry: SymmetryMode };
 export type RecipeStep = { label: StepLabel; motifId?: string; state: ReplayState };

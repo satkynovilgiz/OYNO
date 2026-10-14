@@ -1013,7 +1013,8 @@
           "reorder": "Катмарлар алмашты",
           "visibility": "Катмар көрсөтүлдү же жашырылды",
           "background": "Фон өзгөрдү",
-          "symmetry": "Симметрия өзгөрдү"
+          "symmetry": "Симметрия өзгөрдү",
+          "move": "Мотив жылдырылды"
         }
       }
     },
@@ -7791,5 +7792,37 @@
     "announceOn": "Алаксыбай окуу күйдү. Ашыкча баскычтар жашырылды.",
     "announceOff": "Алаксыбай окуу өчтү. Бардык баскычтар кайтты.",
     "short": "Алаксыбай"
+  },
+  "canvasView": {
+    "zoomIn": "Чоңойтуу",
+    "zoomOut": "Кичирейтүү",
+    "reset": "Көрүнүштү баштапкы абалга келтирүү",
+    "zoomLevel": "Масштаб {{percent}}%",
+    "gestureHint": "Жылдыруу үчүн сүйрөңүз, масштаб үчүн эки манжа менен кысыңыз. Масштаб оюмду өзгөртпөйт.",
+    "position": "Жайгашуусу",
+    "xLabel": "Туурасынан, 0дөн {{max}}гө чейин",
+    "yLabel": "Тигинен, 0дөн {{max}}гө чейин",
+    "step": "Кадам",
+    "positionNote": "Жайгашуу оюмдун өзүндө белгиленет (0дөн {{max}}гө чейин) жана ар кандай масштабда бирдей.",
+    "stepValue_one": "{{count}} пункт",
+    "stepValue_few": "{{count}} пункт",
+    "stepValue_many": "{{count}} пункт",
+    "stepValue_other": "{{count}} пункт",
+    "moveLeft_one": "{{count}} пункт солго жылдыруу",
+    "moveLeft_few": "{{count}} пункт солго жылдыруу",
+    "moveLeft_many": "{{count}} пункт солго жылдыруу",
+    "moveLeft_other": "{{count}} пункт солго жылдыруу",
+    "moveRight_one": "{{count}} пункт оңго жылдыруу",
+    "moveRight_few": "{{count}} пункт оңго жылдыруу",
+    "moveRight_many": "{{count}} пункт оңго жылдыруу",
+    "moveRight_other": "{{count}} пункт оңго жылдыруу",
+    "moveUp_one": "{{count}} пункт өйдө жылдыруу",
+    "moveUp_few": "{{count}} пункт өйдө жылдыруу",
+    "moveUp_many": "{{count}} пункт өйдө жылдыруу",
+    "moveUp_other": "{{count}} пункт өйдө жылдыруу",
+    "moveDown_one": "{{count}} пункт ылдый жылдыруу",
+    "moveDown_few": "{{count}} пункт ылдый жылдыруу",
+    "moveDown_many": "{{count}} пункт ылдый жылдыруу",
+    "moveDown_other": "{{count}} пункт ылдый жылдыруу"
   }
 }

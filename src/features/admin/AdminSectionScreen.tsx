@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   empty: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl },
   muted: { ...typography.small, color: colors.textMuted },
-  error: { ...typography.small, color: colors.danger },
+  error: { ...typography.small, color: colors.dangerText },
   editorSection: { gap: spacing.sm, paddingTop: spacing.sm },
   editorSectionTitle: { ...typography.overline, color: colors.accentTerracotta },
   imagePreview: { width: '100%', height: 160, borderRadius: radii.lg, backgroundColor: colors.surfaceAlt },

@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   saveError: {
     ...typography.small,
-    color: colors.danger,
+    color: colors.dangerText,
     textAlign: 'center',
   },
   controls: {

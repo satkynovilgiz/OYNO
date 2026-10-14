@@ -23,6 +23,8 @@ const palette = {
   red500: '#D64545',
   // Destructive button FILL: white on red500 measured 4.38:1 (AA needs 4.5).
   red600: '#C53F3F',
+  // Destructive TEXT on cream: red500 measured 3.23:1 on cream200 (2026-10-14); #A83232 is 4.89 / 5.32 / 6.01 on cream200 / cream100 / cream50.
+  red700: '#A83232',
   // Real terracotta accent (Section "Use terracotta selectively for
   // cultural warmth") - distinct from tileOrange below, which stays as
   // the existing Home culture-tile tone so nothing that already renders
@@ -87,6 +89,8 @@ export const colors = {
   danger: palette.red500,
   /** Fill behind white text on destructive buttons (AA: 5.05:1 with white). */
   dangerFill: palette.red600,
+  /** Destructive TEXT / icons on cream surfaces (AA 4.5:1 on every cream). */
+  dangerText: palette.red700,
 
   textPrimary: palette.ink900,
   textSecondary: palette.ink600,

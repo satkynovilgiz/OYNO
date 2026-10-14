@@ -173,5 +173,5 @@ const styles = StyleSheet.create({
   empty: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg },
   // Long links wrap instead of overflowing the card.
   url: Platform.OS === 'web' ? ({ wordBreak: 'break-all' } as object) : {},
-  error: { ...typography.small, color: colors.danger },
+  error: { ...typography.small, color: colors.dangerText },
 });
