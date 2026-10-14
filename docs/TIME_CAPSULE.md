@@ -45,6 +45,18 @@ date.
 - **Design:** a deep copy of the layers, background and symmetry
   (`snapshotDesign`), so later edits to the design don't change it.
   The Creator hand-over is in memory, bound to the owner, and taken once.
+- **Custom motifs in the design** (review fix, 2026-10-14). Before the fix,
+  `normalizeDesign` rebuilt each layer without its embedded `custom` geometry,
+  so a capsule saved with a user-created motif reopened as the "can't show"
+  placeholder. The snapshot also shared the nested primitives with the
+  Creator. Both now go through `carryEmbedded` (customMotifModel.ts):
+  - a valid version-1 embed is re-validated and deep-copied;
+  - an embed this version can't read (a newer `v`, damaged primitives) is
+    kept as an independent copy of at most 8,000 JSON characters. The layer
+    still renders the labelled placeholder and is never dropped or swapped
+    for another shape;
+  - built-in layers never carry a `custom` field and normalize exactly as
+    before.
 
 ## Storage (`useCapsuleStore`)
 
@@ -76,6 +88,10 @@ date.
     opening needs the flag and is recorded; a reflection keeps the message;
     at most 3 articles.
   - **Snapshot:** independent of the source design; owner-bound, taken once.
+  - **Custom motifs:** Creator -> capsule -> save -> restart keeps the geometry
+    beside a built-in layer; nested primitives are deep-copied by the snapshot
+    and by normalization; newer or damaged embeds are kept; oversized and
+    stray embeds are bounded.
   - **Tampered storage** is bounded.
   - **Store:** per owner; restart; a failed write changes nothing;
     unreadable data is an error and is not saved over.
@@ -88,6 +104,10 @@ date.
     seal -> 23:59 the day before is still sealed -> 00:01 on the date is
     ready -> open -> reflection survives a reload;
   - KG: early opening with confirm and cancel, then delete with confirm.
+- `e2e/tests/capsule-custom-motif.spec.ts`: a saved custom motif -> Place ->
+  Creator -> capsule -> save draft -> reload (stored geometry equals the
+  motif; no placeholder drawn), and a seeded version-2 embed shows the
+  placeholder and survives saving the draft again.
 
 ## Platform limitations / pending
 

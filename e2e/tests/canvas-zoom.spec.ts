@@ -37,6 +37,10 @@ test('zoomed tap, pan without placing, select, numeric move, undo', async ({ pag
   for (let step = 1; step <= 8; step++) await page.mouse.move(box.x + 200 - step * 10, box.y + 200 - step * 10);
   await page.mouse.up();
   await expect(motifs(page)).toHaveCount(4);
+  // A click right after a pan is still part of it (canvasGesture.ts TAP_QUIET_MS) - it never places.
+  await page.mouse.click(box.x + 280, box.y + 24);
+  await page.waitForTimeout(300);
+  await expect(motifs(page)).toHaveCount(4);
 
   // Panned by -80: the copy mirrored to artwork (195, 195) is drawn at screen (195-150)*2+150-80 = 160.
   // Tapping it selects the layer (no new motif); the fields show the layer's own point.

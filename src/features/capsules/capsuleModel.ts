@@ -1,4 +1,5 @@
 import type { ConnectionContentType } from '@/features/culture/connections/connectionsData';
+import { carryEmbedded } from '@/features/culture/oymo/customMotif/customMotifModel';
 import { shiftDate } from '@/features/journal/journalDisplay';
 import { MAX_OYMO_LAYERS, type MotifLayer } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
@@ -63,7 +64,7 @@ export function newCapsule(now = new Date()): Capsule {
 
 /** A deep, independent copy of an Oymo design (later edits to the design can't reach it). */
 export function snapshotDesign(design: { layers: readonly MotifLayer[]; backgroundColor: string; symmetry: SymmetryMode }, now = new Date()): DesignSnapshot {
-  return { layers: design.layers.map((layer) => ({ ...layer, point: { ...layer.point } })), backgroundColor: design.backgroundColor, symmetry: design.symmetry, takenAt: now.toISOString() };
+  return { layers: design.layers.map((layer) => ({ id: layer.id, motifId: layer.motifId, color: layer.color, point: { x: layer.point.x, y: layer.point.y }, rotation: layer.rotation, scale: layer.scale, visible: layer.visible, ...carryEmbedded(layer.motifId, layer.custom) })), backgroundColor: design.backgroundColor, symmetry: design.symmetry, takenAt: now.toISOString() };
 }
 
 /* ---------- dates ---------- */
@@ -166,7 +167,7 @@ function normalizeDesign(raw: unknown): DesignSnapshot | null {
   if (!Array.isArray(value.layers) || typeof value.backgroundColor !== 'string' || !MODES.includes(value.symmetry as string)) return null;
   const layers = value.layers.flatMap((layer): MotifLayer[] => {
     if (!layer || typeof layer !== 'object' || typeof layer.motifId !== 'string' || typeof layer.color !== 'string' || !layer.point || typeof layer.point.x !== 'number' || typeof layer.point.y !== 'number') return [];
-    return [{ id: typeof layer.id === 'string' ? layer.id : 'layer', motifId: layer.motifId, color: layer.color, point: { x: layer.point.x, y: layer.point.y }, rotation: Number(layer.rotation) || 0, scale: Number(layer.scale) || 1, visible: layer.visible !== false }];
+    return [{ id: typeof layer.id === 'string' ? layer.id : 'layer', motifId: layer.motifId, color: layer.color, point: { x: layer.point.x, y: layer.point.y }, rotation: Number(layer.rotation) || 0, scale: Number(layer.scale) || 1, visible: layer.visible !== false, ...carryEmbedded(layer.motifId, layer.custom) }];
   });
   return { layers: layers.slice(0, MAX_OYMO_LAYERS), backgroundColor: value.backgroundColor, symmetry: value.symmetry as SymmetryMode, takenAt: typeof value.takenAt === 'string' ? value.takenAt : '' };
 }

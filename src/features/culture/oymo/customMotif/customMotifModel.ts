@@ -67,6 +67,30 @@ export function validateMotif(raw: unknown): CustomMotif | null {
 
 export const copyPrimitive = (p: CustomPrimitive): CustomPrimitive => (p.kind === 'polygon' ? { kind: 'polygon', points: p.points.map(([x, y]) => [x, y] as [number, number]) } : { ...p });
 
+/** Largest embedded payload kept verbatim when it can't be read (an unsupported version) - bounds stored junk. */
+export const UNREADABLE_EMBED_MAX = 8000;
+
+/**
+ * The `custom` field to carry when copying or normalizing a layer:
+ *   - a built-in motif carries none;
+ *   - a valid version-1 embed is re-validated and deep-copied (no shared primitives);
+ *   - an embed this version can't read (a newer `v`, damaged primitives) is kept as an
+ *     independent JSON copy, so the layer still renders the labelled placeholder and a newer
+ *     app version can still read it - it is never swapped for another shape or dropped.
+ */
+export function carryEmbedded(motifId: string, raw: unknown): { custom?: EmbeddedMotif | { v: number; name: string; primitives: unknown[] } } {
+  if (!isCustomId(motifId) || !raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const valid = validateEmbedded(raw);
+  if (valid) return { custom: valid };
+  try {
+    const json = JSON.stringify(raw);
+    if (json.length > UNREADABLE_EMBED_MAX) return {};
+    return { custom: JSON.parse(json) as { v: number; name: string; primitives: unknown[] } };
+  } catch {
+    return {};
+  }
+}
+
 /** The deterministic geometry both the preview and the Creator draw (same primitive type as the built-ins). */
 export function toGeometry(primitives: readonly CustomPrimitive[]): MotifPrimitive[] {
   return primitives.map((p): MotifPrimitive => {

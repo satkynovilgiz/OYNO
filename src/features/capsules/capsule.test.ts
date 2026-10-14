@@ -269,3 +269,67 @@ describe('the screens', () => {
     expect(JSON.stringify(screen.toJSON())).toContain('timeCapsule.unavailable');
   });
 });
+
+describe('custom motifs inside a capsule design', () => {
+  const geometry = () => ({ v: 1, name: 'Synthetic star 7c', primitives: [{ kind: 'polygon', points: [[2, 2], [22, 2], [12, 20]] }, { kind: 'circle', cx: 12, cy: 12, r: 4 }, { kind: 'line', x1: 0, y1: 12, x2: 24, y2: 12 }] });
+  const customLayer = (custom: unknown = geometry()): MotifLayer => ({ id: 'layerC', motifId: 'custom:cm-synthetic7c', color: '#7A3226', point: { x: 150, y: 90 }, rotation: 30, scale: 1.5, visible: true, custom: custom as MotifLayer['custom'] });
+
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    useCapsuleStore.setState({ status: 'ready', saved: {} });
+  });
+
+  it('Creator -> capsule -> save -> reopen keeps the custom geometry exactly, beside built-in motifs', async () => {
+    const editor = { layers: [layer(60), customLayer()], backgroundColor: '#EADCC0', symmetry: 'mirror' as const };
+    offerDesign('user-a', snapshotDesign(editor));
+    const capsule = editDraft(ready(), { design: takeOfferedDesign('user-a') });
+    expect(await useCapsuleStore.getState().save('user-a', capsule)).toBe(true);
+    // Reopen: a restart reads storage through normalizeCapsule.
+    useCapsuleStore.setState({ status: 'idle', saved: {} });
+    await useCapsuleStore.getState().load();
+    const reopened = ownerCapsules(useCapsuleStore.getState().saved, 'user-a')[0].design!;
+    expect(reopened.layers[1]).toEqual(customLayer());
+    // The built-in layer is unchanged and carries no `custom` field.
+    expect(reopened.layers[0]).toEqual(layer(60));
+    expect('custom' in reopened.layers[0]).toBe(false);
+  });
+
+  it('the snapshot deep-copies nested primitives (later edits to the design cannot reach it)', () => {
+    const source = customLayer();
+    const snap = snapshotDesign({ layers: [source], backgroundColor: '#EADCC0', symmetry: 'none' });
+    const primitives = source.custom!.primitives as { points?: number[][]; r?: number }[];
+    primitives[0].points![0][0] = 9;
+    primitives[1].r = 11;
+    source.custom!.primitives.push({ kind: 'line', x1: 1, y1: 1, x2: 2, y2: 2 });
+    expect(snap.layers[0].custom).toEqual(geometry());
+    // Normalizing also returns an independent copy.
+    const raw = { id: 'tc1', design: { layers: [customLayer()], backgroundColor: '#EADCC0', symmetry: 'none', takenAt: '' } };
+    const normalized = normalizeCapsule(raw)!;
+    (raw.design.layers[0].custom!.primitives[0] as { points: number[][] }).points[1][1] = 7;
+    expect(normalized.design!.layers[0].custom).toEqual(geometry());
+  });
+
+  it('an embed this version cannot read is kept (placeholder, never dropped or substituted)', () => {
+    const newer = { v: 2, name: 'From a newer app', primitives: [{ kind: 'bezier', d: [1, 2, 3] }] };
+    const damaged = { v: 1, name: 'Damaged', primitives: [{ kind: 'circle', cx: 99, cy: 1, r: 1 }] };
+    for (const custom of [newer, damaged]) {
+      const normalized = normalizeCapsule({ id: 'tc1', design: { layers: [customLayer(custom)], backgroundColor: '#EADCC0', symmetry: 'none', takenAt: '' } })!;
+      const kept = normalized.design!.layers[0];
+      expect(kept.motifId).toBe('custom:cm-synthetic7c');
+      expect(kept.custom).toEqual(custom);
+      expect(kept.custom).not.toBe(custom);
+    }
+    // A custom id with no embed at all stays a custom layer (renders the placeholder).
+    const bare = normalizeCapsule({ id: 'tc1', design: { layers: [{ ...customLayer(), custom: undefined }], backgroundColor: '#EADCC0', symmetry: 'none', takenAt: '' } })!;
+    expect(bare.design!.layers[0]).toMatchObject({ motifId: 'custom:cm-synthetic7c' });
+    expect('custom' in bare.design!.layers[0]).toBe(false);
+  });
+
+  it('stray or oversized embeds are bounded; built-in layers never pick one up', () => {
+    const huge = { v: 9, name: 'x', primitives: Array.from({ length: 2000 }, (_, i) => ({ kind: 'line', i })) };
+    const normalized = normalizeCapsule({ id: 'tc1', design: { layers: [customLayer(huge), { ...layer(30), custom: geometry() }, customLayer('text'), customLayer([1, 2])], backgroundColor: '#EADCC0', symmetry: 'none', takenAt: '' } })!;
+    const layers = normalized.design!.layers;
+    expect(layers.map((entry) => 'custom' in entry)).toEqual([false, false, false, false]);
+    expect(layers[1]).toEqual(layer(30));
+  });
+});

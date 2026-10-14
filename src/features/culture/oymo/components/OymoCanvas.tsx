@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-n
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Line } from 'react-native-svg';
 
-import { artworkToScreen, clampArtworkPoint, clampViewport, handleSize, hitLayer, insideFrame, PAN_THRESHOLD, screenToArtwork, TAP_SLOP, zoomTo, type Viewport } from '../canvas/canvasViewport';
+import { endPan, endPinch, gestureIdle, movePan, movePinch, openGesture, startPan, startPinch, tapAllowed, type GestureSession } from '../canvas/canvasGesture';
+import { artworkToScreen, clampArtworkPoint, handleSize, hitLayer, insideFrame, PAN_THRESHOLD, screenToArtwork, TAP_SLOP, type Viewport } from '../canvas/canvasViewport';
 
 import { getLayerRenderPoints, type MotifLayer } from '@/services/culture/oymoEditor';
 import type { SymmetryMode } from '@/services/culture/symmetry';
@@ -47,8 +48,9 @@ function SymmetryGuides({ symmetryMode }: { symmetryMode: SymmetryMode }) {
 /**
  * Zoom / pan over the SAME artwork. Gestures (react-native-gesture-handler,
  * as on the Explore map): a tap places or selects; a drag pans and a pinch
- * zooms. The tap only runs when no pan/pinch started (Race), so a pan
- * can never place a motif. Every screen point is mapped back to artwork
+ * zooms, together, through one composed transform (canvasGesture.ts). The
+ * tap only runs when no pan/pinch started (Race) and not right after one,
+ * so a pan or pinch can never place a motif. Every screen point is mapped back to artwork
  * coordinates (canvasViewport.ts) - layers never store a screen position.
  * Selection handles are drawn unscaled, so they stay readable at any zoom.
  */
@@ -56,10 +58,25 @@ function ZoomableOymoCanvas({ layers, backgroundColor, symmetryMode, selectedLay
   const { t } = useTranslation();
   const latest = useRef({ viewport, layers, symmetryMode, onTapCanvas, onSelectLayer, onViewportChange });
   latest.current = { viewport, layers, symmetryMode, onTapCanvas, onSelectLayer, onViewportChange };
-  const start = useRef(viewport);
+  // One session for pan + pinch together (canvasGesture.ts): both write one composed transform,
+  // so neither gesture's update can undo the other's.
+  const session = useRef<GestureSession | null>(null);
+  const lastEndedAt = useRef<number | null>(null);
+  const update = (change: (current: GestureSession) => GestureSession) => {
+    const wasActive = session.current !== null;
+    const current = session.current ?? openGesture(latest.current.viewport, CANVAS_SIZE);
+    const next = change(current);
+    session.current = gestureIdle(next) ? null : next;
+    if (wasActive && !session.current) lastEndedAt.current = Date.now();
+    if (next.viewport !== current.viewport) latest.current.onViewportChange(next.viewport);
+  };
+  const finish = (change: (current: GestureSession) => GestureSession) => {
+    if (session.current) update(change);
+  };
 
   const handleTap = (screen: { x: number; y: number }) => {
     const current = latest.current;
+    if (!tapAllowed(session.current !== null, lastEndedAt.current, Date.now())) return;
     if (!insideFrame(screen, CANVAS_SIZE)) return;
     const at = screenToArtwork(screen, current.viewport, CANVAS_SIZE);
     const hit = hitLayer(
@@ -80,16 +97,14 @@ function ZoomableOymoCanvas({ layers, backgroundColor, symmetryMode, selectedLay
   const pan = Gesture.Pan()
     .minDistance(PAN_THRESHOLD)
     .runOnJS(true)
-    .onStart(() => {
-      start.current = latest.current.viewport;
-    })
-    .onUpdate((event) => latest.current.onViewportChange(clampViewport({ ...start.current, panX: start.current.panX + event.translationX, panY: start.current.panY + event.translationY }, CANVAS_SIZE)));
+    .onStart(() => update(startPan))
+    .onUpdate((event) => update((current) => movePan(current, { x: event.translationX, y: event.translationY }, CANVAS_SIZE)))
+    .onFinalize(() => finish(endPan));
   const pinch = Gesture.Pinch()
     .runOnJS(true)
-    .onStart(() => {
-      start.current = latest.current.viewport;
-    })
-    .onUpdate((event) => latest.current.onViewportChange(zoomTo(start.current, start.current.zoom * event.scale, CANVAS_SIZE, { x: event.focalX, y: event.focalY })));
+    .onStart((event) => update((current) => startPinch(current, { x: event.focalX, y: event.focalY })))
+    .onUpdate((event) => update((current) => movePinch(current, event.scale, { x: event.focalX, y: event.focalY }, CANVAS_SIZE)))
+    .onFinalize(() => finish(endPinch));
   // Race: the first to activate wins. A tap activates only within TAP_SLOP (< PAN_THRESHOLD), and
   // an active pan/pinch cancels it - so a pan never places. (Exclusive would wait for the pinch to
   // FAIL, which a mouse never does.)

@@ -40,6 +40,8 @@ primitive = { kind: 'line', x1, y1, x2, y2 }        // not zero-length
 - **Unsupported or corrupt data** (another version, bad coordinates) renders as a marked
   placeholder labelled "a user-created motif in a format this version can't show". It is never
   replaced by a built-in motif. Stencil reports it as "can't be outlined", and nothing crashes.
+- **Time Capsule** keeps the embedded geometry through its snapshot and storage normalization
+  (`carryEmbedded`), including embeds it can't read, which stay placeholders (docs/TIME_CAPSULE.md).
 - **Built-in motifs and existing saved designs are unchanged:** layers without `custom` render
   exactly as before.
 
