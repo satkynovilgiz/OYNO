@@ -100,4 +100,4 @@ export function shelfView(items: readonly ShelfItem[], options: { type: ShelfTyp
 }
 
 /** A source's state on the shelf - an error or "not available" is never shown as an empty category. */
-export type SourceState = { status: 'loading' } | { status: 'ready'; items: ShelfItem[] } | { status: 'error'; retry: () => void } | { status: 'unavailable'; reason: 'signedOut' };
+export type SourceState = { status: 'loading' } | { status: 'ready'; items: ShelfItem[] } | { status: 'error'; retry: () => void } | { status: 'unavailable'; reason: 'signedOut' | 'offline' };

@@ -45,6 +45,7 @@ import { cards, colors, headings, iconSizes, layout, radii, spacing, text } from
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
 import { PositionControls, ZoomControls } from './canvas/CanvasControls';
 import { setPreviewSource } from './surfaces/surfacesModel';
+import { SectionError, StateMessage } from '@/components/state/ScreenState';
 import { IDENTITY, type Viewport } from './canvas/canvasViewport';
 import { ColorSwatches } from './components/ColorSwatches';
 import { LayersPanel } from './components/LayersPanel';
@@ -68,7 +69,8 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const queryClient = useQueryClient();
-  const { data: creations } = useOymoCreations();
+  const creationsQuery = useOymoCreations();
+  const creations = creationsQuery.data;
   const isGuest = useAuthStore((state) => state.status === 'guest');
   const { share, shareHost } = useShareCard();
 
@@ -479,12 +481,18 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
           <Button label={t('postcard.entry')} variant="secondary" onPress={() => router.push(`/culture/oymo/postcard?pattern=${encodeURIComponent(openedCreationId)}` as never)} accessibilityHint={t('postcard.entryHint')} testID="oymo-create-postcard" />
         ) : null}
 
-        <SavedPatternsGallery
-          creations={creations ?? []}
-          onLoad={loadCreation}
-          onDelete={setPendingDeleteCreation}
-          onNew={() => setShowResetConfirm(true)}
-        />
+        {/* Saved designs: loading, failed and empty are different things (a failure is never shown as "no designs"). */}
+        {initialCreationId && creations && !creations.some((creation) => creation.id === initialCreationId) && !handoff ? (
+          <StateMessage kind="notFound" title={t('states.designMissing')} body={t('states.designMissingBody')} testID="oymo-design-missing" />
+        ) : null}
+        {creationsQuery.isError && !creations ? (
+          <SectionError message={initialCreationId ? t('states.designOpenError') : t('states.designsError')} onRetry={() => void creationsQuery.refetch()} testID="oymo-designs-error" />
+        ) : !creations ? (
+          <Text style={styles.handoffNote} testID="oymo-designs-loading">
+            {t('states.loadingDesigns')}
+          </Text>
+        ) : null}
+        {creations ? <SavedPatternsGallery creations={creations} onLoad={loadCreation} onDelete={setPendingDeleteCreation} onNew={() => setShowResetConfirm(true)} /> : null}
       </ScrollView>
 
       <SaveModal

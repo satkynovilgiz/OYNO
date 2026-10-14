@@ -15,6 +15,7 @@ import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { GeometryShape } from '../components/LayerMotif';
 import { CUSTOM_PREFIX, current, edit, embed, GRID, MAX_PRIMITIVES, NAME_MAX, newMotif, POLYGON_MAX, POLYGON_MIN, redo, snap, startHistory, toGeometry, undo, type CustomMotif, type CustomPrimitive, type History } from './customMotifModel';
+import { LoadingState, StateMessage } from '@/components/state/ScreenState';
 
 const CELL = 12;
 const SIZE = GRID * CELL;
@@ -133,7 +134,15 @@ export function CustomMotifEditorScreen({ motifId, onPressBack }: { motifId: str
     return (
       <View style={styles.root}>
         <Header title={t('customMotif.editTitle')} onPressBack={onPressBack} />
-        <View style={styles.content}>{status === 'ready' ? <Text style={styles.body} testID="custom-motif-not-found">{t('customMotif.notFound')}</Text> : <Text style={styles.meta}>{status === 'error' ? t('customMotif.loadError') : t('customMotif.loading')}</Text>}</View>
+        <View style={styles.content}>
+          {status === 'ready' ? (
+            <StateMessage kind="notFound" title={t('customMotif.notFound')} testID="custom-motif-not-found" />
+          ) : status === 'error' ? (
+            <StateMessage kind="error" title={t('customMotif.loadError')} body={t('states.recordsErrorBody')} action={{ label: t('common.retry'), onPress: () => void useCustomMotifsStore.getState().retryLoad(), testID: 'custom-motif-retry' }} testID="custom-motif-load-error" />
+          ) : (
+            <LoadingState label={t('customMotif.loading')} onRetry={() => void useCustomMotifsStore.getState().retryLoad()} />
+          )}
+        </View>
       </View>
     );
   }

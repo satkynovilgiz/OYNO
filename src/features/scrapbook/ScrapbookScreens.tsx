@@ -22,6 +22,7 @@ import { ownerScrapbook, ownerScrapbooks, useScrapbookStore } from '@/store/useS
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { addEntry, CAPTION_MAX, ENTRY_KINDS, MAX_ENTRIES, moveEntry, newScrapbook, removeEntry, rename, resolveEntries, setCaption, TITLE_MAX, type EntryKind, type EntryRef, type Scrapbook, type SourceView } from './scrapbookModel';
+import { LoadingState, StateMessage, StateScreen } from '@/components/state/ScreenState';
 
 export const scrapbookRoute = (id: string) => `/profile/scrapbooks/${encodeURIComponent(id)}`;
 
@@ -171,8 +172,19 @@ export function ScrapbookScreen({ bookId, onPressBack }: { bookId: string; onPre
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  if (status === 'error') return <NotFoundState onPressBack={onPressBack} />;
-  if (status !== 'ready') return <View style={styles.root} />;
+  // A failed load is not "not found", and loading is never a blank screen.
+  if (status === 'error')
+    return (
+      <StateScreen onPressBack={onPressBack} testID="scrapbook-state-error">
+        <StateMessage kind="error" title={t('scrapbook.loadError')} body={t('states.recordsErrorBody')} action={{ label: t('scrapbook.retry'), onPress: () => void useScrapbookStore.getState().retryLoad(), testID: 'scrapbook-detail-retry' }} />
+      </StateScreen>
+    );
+  if (status !== 'ready')
+    return (
+      <StateScreen onPressBack={onPressBack} testID="scrapbook-state-loading">
+        <LoadingState label={t('scrapbook.loading')} onRetry={() => void useScrapbookStore.getState().retryLoad()} />
+      </StateScreen>
+    );
   const stored = ownerScrapbook(saved, owner, bookId);
   const book = draft ?? stored;
   if (!book) return <NotFoundState onPressBack={onPressBack} />;

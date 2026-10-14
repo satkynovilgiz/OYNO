@@ -15,6 +15,7 @@ import { ownerQuestions, useQuestionsStore } from '@/store/useQuestionsStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { ANSWER_MAX, byStatus, clearDraftIfUnchanged, getDraft, isValidQuestion, MAX_SUPPORTS, newQuestionId, QUESTION_MAX, questionRoute, resolveOrigin, setDraft, type ArticleLookup, type Question, type QuestionStatus } from './questionsModel';
+import { LoadingState, StateMessage } from '@/components/state/ScreenState';
 
 function useQuestions() {
   const owner = useRecordsOwner();
@@ -49,14 +50,8 @@ function Header({ title, onPressBack }: { title: string; onPressBack: () => void
 
 function LoadState({ status }: { status: string }) {
   const { t } = useTranslation();
-  if (status === 'error')
-    return (
-      <View style={styles.stack} testID="questions-load-error">
-        <Text style={styles.warn}>{t('myQuestions.loadError')}</Text>
-        <Button label={t('common.retry')} onPress={() => void useQuestionsStore.getState().retryLoad()} />
-      </View>
-    );
-  return <Text style={styles.meta}>{t('myQuestions.loading')}</Text>;
+  if (status === 'error') return <StateMessage kind="error" title={t('myQuestions.loadError')} body={t('states.recordsErrorBody')} action={{ label: t('common.retry'), onPress: () => void useQuestionsStore.getState().retryLoad(), testID: 'questions-retry' }} testID="questions-load-error" />;
+  return <LoadingState label={t('myQuestions.loading')} onRetry={() => void useQuestionsStore.getState().retryLoad()} />;
 }
 
 /* ---------- under an article section ---------- */

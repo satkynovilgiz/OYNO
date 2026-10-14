@@ -40,7 +40,7 @@ function useShelfSources(owner: string): Record<ShelfType, SourceState> {
   }, []);
   return useMemo(
     () => ({
-      design: !signedIn ? { status: 'unavailable', reason: 'signedOut' } : designs.isError ? { status: 'error', retry: () => void designs.refetch() } : designs.data ? { status: 'ready', items: designItems(designs.data) } : { status: 'loading' },
+      design: !signedIn ? { status: 'unavailable', reason: 'signedOut' } : !designs.data && designs.fetchStatus === 'paused' ? { status: 'unavailable', reason: 'offline' } : designs.isError ? { status: 'error', retry: () => void designs.refetch() } : designs.data ? { status: 'ready', items: designItems(designs.data) } : { status: 'loading' },
       exhibition: collectionsLoaded ? { status: 'ready', items: exhibitionItems(museums[owner], ownerCollections(collections, owner)) } : { status: 'loading' },
       board: boardStatus === 'error' ? { status: 'error', retry: () => void useDiscoveryBoardStore.getState().retryLoad() } : boardStatus === 'ready' ? { status: 'ready', items: boardItems(ownerBoards(boards, owner)) } : { status: 'loading' },
       capsule:
@@ -57,7 +57,7 @@ function useShelfSources(owner: string): Record<ShelfType, SourceState> {
             : { status: 'loading' },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [signedIn, owner, designs.isError, designs.data, collectionsLoaded, collections, museums, boardStatus, boards, capsuleStatus, capsules],
+    [signedIn, owner, designs.isError, designs.data, designs.fetchStatus, collectionsLoaded, collections, museums, boardStatus, boards, capsuleStatus, capsules],
   );
 }
 
@@ -134,7 +134,7 @@ export function ShelfScreen({ onPressBack }: { onPressBack: () => void }) {
           if (state.status === 'unavailable')
             return (
               <View key={entry} style={styles.card} testID={`shelf-unavailable-${entry}`}>
-                <Text style={styles.body}>{t('shelf.signedOut')}</Text>
+                <Text style={styles.body}>{state.reason === 'offline' ? t('states.shelfOffline', { type: t(`shelf.types.${entry}`) }) : t('shelf.signedOut')}</Text>
               </View>
             );
           if (state.items.length === 0)

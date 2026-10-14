@@ -7853,5 +7853,21 @@
     "description_few": "Your design shown on {{surface}}: {{count}} motifs. A visual mockup.",
     "description_many": "Your design shown on {{surface}}: {{count}} motifs. A visual mockup.",
     "description_other": "Your design shown on {{surface}}: {{count}} motifs. A visual mockup."
+  },
+  "states": {
+    "slow": "This is taking longer than usual. Check your connection, or try again.",
+    "offlineBody": "You are offline and this was not downloaded. Downloaded content works without the internet.",
+    "reconnectedBody": "You are back online. Try again to load it.",
+    "openDownloads": "Open downloads",
+    "errorBody": "Something went wrong while loading. Nothing you saved was changed.",
+    "loadingArticle": "Opening the article…",
+    "articleError": "Couldn't load this article",
+    "recordsErrorBody": "Your saved records on this device couldn't be read. Nothing was changed - try again.",
+    "designsError": "Couldn't load your saved designs. The design on the canvas is not affected.",
+    "designOpenError": "Couldn't open the saved design. The canvas is not affected - try again.",
+    "loadingDesigns": "Loading your saved designs…",
+    "designMissing": "This saved design isn't here any more",
+    "designMissingBody": "It may have been deleted on another device. You can start a new design here.",
+    "shelfOffline": "{{type}}: you are offline, so these can't be loaded right now."
   }
 }
