@@ -15,7 +15,7 @@ import { StoryCompanion } from '@/components/companion/CompanionMoment';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, spacing, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
 import { useShowcase } from '../showcase/AchievementShowcase';
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     width: 128,
     height: 128,
     borderRadius: 64,
-    backgroundColor: 'rgba(232,185,61,0.35)',
+    backgroundColor: overlays.goldGlow,
   },
   badgeRing: {
     width: 116,

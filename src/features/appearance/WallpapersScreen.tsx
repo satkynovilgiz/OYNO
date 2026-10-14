@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AnimatedPressable, Chip, EmptyState, IconButton, MediaImage } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useWallpaperFavoritesStore } from '@/store/useWallpaperFavoritesStore';
-import { cardRadii, colors, editorial, fontFamily, spacing, textStyles, typography } from '@/theme';
+import { cardRadii, colors, editorial, fontFamily, overlays, spacing, textStyles, typography } from '@/theme';
 
 import { WALLPAPER_CATEGORIES, wallpapers, type WallpaperCategory } from './wallpapers';
 
@@ -136,12 +136,12 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(19,32,24,0.55)',
+    backgroundColor: overlays.chip,
     alignItems: 'center',
     justifyContent: 'center',
   },
   // A small label strip below the photo edge - kept off the artwork so the
   // wallpaper itself stays text-free.
-  nameTag: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingVertical: 6, paddingHorizontal: spacing.sm, backgroundColor: 'rgba(19,32,24,0.55)' },
+  nameTag: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingVertical: 6, paddingHorizontal: spacing.sm, backgroundColor: overlays.chip },
   name: { ...typography.small, color: colors.textOnDark, textAlign: 'center' },
 });

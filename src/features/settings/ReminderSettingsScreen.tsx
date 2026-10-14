@@ -13,7 +13,7 @@ import type { ReminderSettings, ReminderType } from '@/services/reminders/remind
 import { getReminderPermission, requestReminderPermission, type ReminderPermission } from '@/services/reminders/reminderScheduler';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useReminderSettingsStore } from '@/store/useReminderSettingsStore';
-import { cardRadii, colors, elevation, radii, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, elevation, overlays, radii, spacing, textStyles } from '@/theme';
 
 import { SettingsScreenLayout } from './components/SettingsScreenLayout';
 
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   time: { ...textStyles.title, fontSize: 16, color: colors.primary, fontVariant: ['tabular-nums'] },
   footnote: { ...textStyles.caption, color: colors.textMuted, marginTop: spacing.xs, marginHorizontal: spacing.xxs },
   sectionTitle: { ...textStyles.overline, color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.xs, marginHorizontal: spacing.xxs },
-  backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.5)' },
+  backdrop: { flex: 1, backgroundColor: overlays.half },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '55%', paddingTop: spacing.xs, paddingHorizontal: spacing.md, gap: spacing.sm, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle },
   sheetTitle: { ...textStyles.title, color: colors.textPrimary, textAlign: 'center' },

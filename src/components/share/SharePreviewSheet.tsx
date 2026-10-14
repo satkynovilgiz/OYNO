@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Chip } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { cardRadii, colors, elevation, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, elevation, overlays, spacing, textStyles } from '@/theme';
 
 import { ShareCard, shareCardSize, type ShareCardContent } from './ShareCard';
 
@@ -92,7 +92,7 @@ export function SharePreviewSheet({
 
 const styles = StyleSheet.create({
   linkRow: { alignItems: 'center' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.5)' },
+  backdrop: { flex: 1, backgroundColor: overlays.half },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '92%', paddingTop: spacing.xs, paddingHorizontal: spacing.md, gap: spacing.sm, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle, marginBottom: spacing.xs },
   title: { ...textStyles.title, color: colors.textPrimary, textAlign: 'center' },

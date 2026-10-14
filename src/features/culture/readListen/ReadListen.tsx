@@ -1,12 +1,12 @@
 import { Headphones } from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import { track } from '@/services/analytics/analytics';
 import { useAudioGuideStore } from '@/services/audioGuide/useAudioGuideStore';
-import { colors, radii, spacing, textStyles } from '@/theme';
+import { colors, controlStates, radii, spacing, textStyles } from '@/theme';
 
 import { activeSections, chunkSectionMap, narrationChunks, type NarrationPart } from './narrationSections';
 
@@ -45,17 +45,26 @@ export function ReadListenControls({ enabled, onToggle, follow, onToggleFollow, 
       >
         <Headphones size={16} color={colors.primary} strokeWidth={2.25} />
         <Text style={styles.label}>{t('readListen.mode')}</Text>
-        <Switch value={enabled} onValueChange={onToggle} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+        <SwitchMark on={enabled} />
       </AnimatedPressable>
       {enabled ? (
         <>
           {showFollow ? <AnimatedPressable style={styles.row} onPress={() => onToggleFollow(!follow)} accessibilityRole="switch" accessibilityState={{ checked: follow }} aria-checked={follow} accessibilityLabel={t('readListen.follow')}>
             <Text style={[styles.label, styles.sub]}>{t('readListen.follow')}</Text>
-            <Switch value={follow} onValueChange={onToggleFollow} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+            <SwitchMark on={follow} />
           </AnimatedPressable> : null}
           <Text style={styles.note}>{recorded ? t('readListen.recordedNote') : t('readListen.note')}</Text>
         </>
       ) : null}
+    </View>
+  );
+}
+
+/** Visual only: the row itself is the switch (a real Switch inside it would be a nested control - an unlabeled checkbox on web). */
+function SwitchMark({ on }: { on: boolean }) {
+  return (
+    <View style={[styles.track, on && styles.trackOn]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={[styles.knob, on && styles.knobOn]} />
     </View>
   );
 }
@@ -71,4 +80,8 @@ const styles = StyleSheet.create({
   label: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary, flex: 1 },
   sub: { fontWeight: '500' },
   note: { ...textStyles.small, color: colors.textMuted },
+  track: { width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: colors.surfaceBorder, justifyContent: 'center' },
+  trackOn: { backgroundColor: controlStates.selected.bg },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.surface },
+  knobOn: { alignSelf: 'flex-end' },
 });

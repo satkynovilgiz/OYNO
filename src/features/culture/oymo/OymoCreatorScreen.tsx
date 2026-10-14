@@ -38,7 +38,7 @@ import { fetchOymoCreations, OYMO_CREATIONS_QUERY_KEY, useOymoCreations, type Oy
 import { useShareCard } from '@/services/share/useShareCard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, radii, spacing, typography } from '@/theme';
+import { cards, colors, headings, iconSizes, layout, radii, spacing, text } from '@/theme';
 
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
 import { ColorSwatches } from './components/ColorSwatches';
@@ -335,45 +335,45 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
           </Text>
         ) : null}
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
-          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('restorePattern.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('restorePattern.entryMeta')}</Text>
+            <Text style={styles.restoreMeta}>{t('restorePattern.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/remember' as never)} accessibilityRole="button" accessibilityLabel={`${t('rememberPattern.title')}. ${t('rememberPattern.entryMeta')}`} testID="remember-entry">
-          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('rememberPattern.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('rememberPattern.entryMeta')}</Text>
+            <Text style={styles.restoreMeta}>{t('rememberPattern.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/together' as never)} accessibilityRole="button" accessibilityLabel={`${t('createTogether.title')}. ${t('createTogether.entryMeta')}`} testID="together-create-entry">
-          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('createTogether.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('createTogether.entryMeta')}</Text>
+            <Text style={styles.restoreMeta}>{t('createTogether.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/border' as never)} accessibilityRole="button" accessibilityLabel={`${t('borderWorkshop.title')}. ${t('borderWorkshop.entryMeta')}`} testID="border-entry">
-          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('borderWorkshop.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('borderWorkshop.entryMeta')}</Text>
+            <Text style={styles.restoreMeta}>{t('borderWorkshop.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/pattern-detective' as never)} accessibilityRole="button" accessibilityLabel={`${t('patternDetective.title')}. ${t('patternDetective.entryMeta')}`} testID="detective-entry">
-          <Shapes size={18} color={colors.primary} strokeWidth={2} />
+          <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('patternDetective.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('patternDetective.entryMeta')}</Text>
+            <Text style={styles.restoreMeta}>{t('patternDetective.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/symmetry' as never)} accessibilityRole="button" accessibilityLabel={`${t('symmetryPlayground.title')}. ${t('symmetryPlayground.entryMeta')}`} testID="symmetry-entry">
-          <Wand2 size={18} color={colors.primary} strokeWidth={2} />
+          <Wand2 size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('symmetryPlayground.title')}</Text>
-            <Text style={styles.headerSubtitle}>{t('symmetryPlayground.entryMeta')}</Text>
+            <Text style={styles.restoreMeta}>{t('symmetryPlayground.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
         <View style={isTablet ? styles.tabletRow : undefined}>
@@ -495,108 +495,37 @@ function TabButton({ icon: Icon, label, active, onPress }: { icon: typeof Shapes
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
     >
-      <Icon size={18} color={active ? colors.primary : colors.textMuted} strokeWidth={2.25} />
+      <Icon size={iconSizes.md} color={active ? colors.primary : colors.textSecondary} strokeWidth={2.25} />
       <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
     </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
-  handoffNote: { ...typography.small, color: colors.textSecondary, marginBottom: spacing.sm },
-  restoreEntry: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.sm, marginBottom: spacing.md, borderRadius: radii.lg, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
-  restoreTitle: { ...typography.body, fontWeight: '700', color: colors.textPrimary },
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  headerTitleBlock: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    ...typography.h1,
-    color: colors.textPrimary,
-  },
-  headerSubtitle: {
-    ...typography.small,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 2,
-  },
-  headerActions: {
-    flexShrink: 0,
-  },
-  content: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
-  },
-  tabletRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  canvasColumn: {
-    flex: 1,
-    gap: spacing.sm,
-    alignItems: 'center',
-  },
-  historyRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignSelf: 'stretch',
-  },
-  historySpacer: {
-    flex: 1,
-  },
-  canvasActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  panel: {
-    width: 200,
-    gap: spacing.md,
-  },
-  panelSection: {
-    gap: spacing.xs,
-  },
-  panelLabel: {
-    ...typography.overline,
-    color: colors.textSecondary,
-  },
-  backgroundPicker: {
-    marginTop: spacing.xs,
-  },
-  tabRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radii.lg,
-    padding: 3,
-    gap: 3,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xxs,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.md,
-  },
-  tabActive: {
-    backgroundColor: colors.surface,
-  },
-  tabLabel: {
-    ...typography.small,
-    color: colors.textMuted,
-    fontWeight: '700',
-  },
-  tabLabelActive: {
-    color: colors.primary,
-  },
+  handoffNote: { ...text.fine, color: colors.textSecondary, marginBottom: spacing.sm },
+  restoreEntry: { ...cards.compact, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56 },
+  restoreTitle: { ...headings.card, color: colors.textPrimary },
+  restoreMeta: { ...text.meta, color: colors.textSecondary },
+  root: { flex: 1, backgroundColor: colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
+  headerTitleBlock: { flex: 1, alignItems: 'center' },
+  headerTitle: { ...headings.screen, color: colors.textPrimary },
+  headerSubtitle: { ...text.fine, color: colors.textSecondary, textAlign: 'center', marginTop: 2 },
+  headerActions: { flexShrink: 0 },
+  content: { paddingHorizontal: layout.gutter, gap: spacing.md },
+  tabletRow: { flexDirection: 'row', gap: spacing.md },
+  canvasColumn: { flex: 1, gap: spacing.sm, alignItems: 'center' },
+  historyRow: { flexDirection: 'row', gap: spacing.sm, alignSelf: 'stretch' },
+  historySpacer: { flex: 1 },
+  canvasActions: { flexDirection: 'row', gap: spacing.sm },
+  panel: { width: 200, gap: spacing.md },
+  panelSection: { gap: spacing.xs },
+  panelLabel: { ...headings.label, color: colors.textSecondary },
+  backgroundPicker: { marginTop: spacing.xs },
+  tabRow: { flexDirection: 'row', backgroundColor: colors.surfaceAlt, borderRadius: radii.lg, padding: 3, gap: 3 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xxs, paddingVertical: spacing.xs, borderRadius: radii.md },
+  tabActive: { backgroundColor: colors.surface },
+  // textMuted measured 4.36:1 on surfaceAlt (below AA) - inactive tabs use textSecondary.
+  tabLabel: { ...text.fine, color: colors.textSecondary, fontWeight: '700' },
+  tabLabelActive: { color: colors.primary },
 });

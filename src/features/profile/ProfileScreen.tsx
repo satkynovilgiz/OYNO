@@ -28,7 +28,7 @@ import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useAvatarStore } from '@/store/useAvatarStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { cardRadii, colors, spacing, textStyles } from '@/theme';
+import { cardPadding, cards, colors, headings, iconSizes, layout, spacing, text } from '@/theme';
 
 import { AchievementsPreviewCard, FavoriteGamesCard, ProfileCollectionRow, ProfileIdentityCard } from './components';
 import { achievementsTotal, getCollectionItems, profileAchievements } from './data';
@@ -133,14 +133,14 @@ export function ProfileScreen() {
               accessibilityRole="button"
               accessibilityLabel={`${t('quests.title')}. ${questsSummary}`}
             >
-              <Compass size={18} color={colors.primary} strokeWidth={2} />
+              <Compass size={iconSizes.md} color={colors.primary} strokeWidth={2} />
               <View style={styles.questsText}>
                 <Text style={styles.questsTitle}>{t('quests.title')}</Text>
                 <Text style={styles.questsMeta} numberOfLines={1}>
                   {questsSummary}
                 </Text>
               </View>
-              <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+              <ChevronRight size={iconSizes.sm} color={colors.textMuted} strokeWidth={2} />
             </AnimatedPressable>
             {/* Two small private entries: per-game records and the recap. */}
             {[
@@ -176,14 +176,14 @@ export function ProfileScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`${entry.title}. ${entry.meta}`}
               >
-                <entry.icon size={18} color={colors.primary} strokeWidth={2} />
+                <entry.icon size={iconSizes.md} color={colors.primary} strokeWidth={2} />
                 <View style={styles.questsText}>
                   <Text style={styles.questsTitle}>{entry.title}</Text>
                   <Text style={styles.questsMeta} numberOfLines={1}>
                     {entry.meta}
                   </Text>
                 </View>
-                <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+                <ChevronRight size={iconSizes.sm} color={colors.textMuted} strokeWidth={2} />
               </AnimatedPressable>
             ))}
           </View>
@@ -239,8 +239,8 @@ export function ProfileScreen() {
               {t('profile.title')}
             </Text>
             <View style={styles.topActions}>
-              <IconButton icon={Heart} size={40} iconSize={19} shape="roundedSquare" elevated={false} accessibilityLabel={t('saved.title')} onPress={() => router.push('/saved' as never)} />
-              <IconButton icon={Settings} size={40} iconSize={19} shape="roundedSquare" elevated={false} accessibilityLabel={t('profile.settingsLabel')} onPress={() => router.push('/settings' as never)} />
+              <IconButton icon={Heart} size={40} iconSize={iconSizes.md} shape="roundedSquare" elevated={false} accessibilityLabel={t('saved.title')} onPress={() => router.push('/saved' as never)} />
+              <IconButton icon={Settings} size={40} iconSize={iconSizes.md} shape="roundedSquare" elevated={false} accessibilityLabel={t('profile.settingsLabel')} onPress={() => router.push('/settings' as never)} />
             </View>
           </View>
         </ScreenEntrance>
@@ -290,45 +290,17 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  questsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
+  questsRow: { ...cards.standard, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm, paddingVertical: cardPadding.compact },
   questsText: { flex: 1, gap: 2 },
-  questsTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
-  questsMeta: { ...textStyles.small, color: colors.textSecondary },
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  sectionList: {
-    gap: spacing.xl,
-  },
-  horizontalPad: {
-    paddingHorizontal: spacing.md,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-  },
-  topTitle: {
-    ...textStyles.h2,
-    color: colors.textPrimary,
-  },
-  topActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  emptyStats: {
-    ...textStyles.caption,
-    color: colors.textSecondary,
-  },
+  questsTitle: { ...headings.card, color: colors.textPrimary },
+  questsMeta: { ...text.fine, color: colors.textSecondary },
+  root: { flex: 1, backgroundColor: colors.background },
+  content: { gap: spacing.lg, paddingBottom: spacing.xl },
+  sectionList: { gap: layout.sectionGap },
+  horizontalPad: { paddingHorizontal: layout.gutter },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: layout.gutter },
+  topTitle: { ...headings.screen, color: colors.textPrimary },
+  topActions: { flexDirection: 'row', gap: spacing.xs },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  emptyStats: { ...text.meta, color: colors.textSecondary },
 });

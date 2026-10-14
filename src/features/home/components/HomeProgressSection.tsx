@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { UserAvatar } from '@/components/avatar';
 import { Button, LevelBadge, ProgressBar, SectionHeader, StatPill } from '@/components/ui';
 import type { AgeExperience } from '@/services/ageExperience/types';
-import { cardRadii, colors, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, medallion, spacing, text, textStyles } from '@/theme';
 
 import type { DailyProgress, PlayerSummary } from '../types';
 
@@ -104,21 +104,21 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   card: { marginHorizontal: spacing.md, padding: spacing.md, gap: spacing.sm, borderRadius: cardRadii.media, backgroundColor: colors.surfaceElevated },
   playerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  avatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden', borderWidth: 2, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
+  avatar: { ...medallion(48), overflow: 'hidden', borderWidth: 2, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
   avatarRewarding: { borderColor: colors.accentGold },
-  identity: { flex: 1, gap: 4, minWidth: 0 },
+  identity: { flex: 1, gap: spacing.xxs, minWidth: 0 },
   name: { ...textStyles.title, color: colors.textPrimary },
   levelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   xp: { ...textStyles.caption, fontWeight: '600', color: colors.textSecondary, flexShrink: 1 },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   divider: { height: StyleSheet.hairlineWidth * 2, backgroundColor: colors.borderSubtle },
   playRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  playIcon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
+  playIcon: { ...medallion(36), backgroundColor: colors.surfaceMuted },
   playIconReady: { backgroundColor: colors.accentGold },
   playText: { flex: 1, gap: 6, minWidth: 0 },
   playHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.xs },
-  playTitle: { ...textStyles.caption, fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
-  claimed: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
+  playTitle: { ...text.emphasis, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
+  claimed: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, flexShrink: 0 },
   claimedText: { ...textStyles.small, color: colors.primary },
   playCount: { ...textStyles.small, color: colors.textSecondary },
 });

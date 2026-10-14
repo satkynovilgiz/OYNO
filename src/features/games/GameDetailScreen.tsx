@@ -15,7 +15,7 @@ import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useCultureItem } from '@/services/content/cultureItemsService';
 import { useHeroParallax } from '@/services/motion/useHeroParallax';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, shadows, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, shadows, spacing, typography } from '@/theme';
 import { getGameHostConfig } from '@games/gameHostCharacters';
 
 import { AddToCollectionButton } from '@/features/myCollections/AddToCollection';
@@ -160,7 +160,7 @@ export function GameDetailScreen({
                 </View>
               )}
             </Animated.View>
-            <LinearGradient colors={['rgba(19,32,24,0.45)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.92)']} locations={[0, 0.3, 1]} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={[overlays.medium, overlays.clear, 'rgba(19,32,24,0.92)']} locations={[0, 0.3, 1]} style={StyleSheet.absoluteFill} />
 
             <View style={styles.heroOverlay} pointerEvents="box-none">
               <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>

@@ -7,7 +7,7 @@ import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, FadeSlideIn, TextButton } from '@/components/ui';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, overlays, radii, spacing, typography } from '@/theme';
 
 import type { FavoriteGame } from '../types';
 
@@ -79,7 +79,7 @@ export function FavoriteGamesCard({ games, onPressSeeAll, onPressGame }: Favorit
                     <Gamepad2 size={28} color={colors.accentGold} strokeWidth={1.5} />
                   </View>
                 )}
-                <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+                <LinearGradient colors={[overlays.clear, 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
 
                 <View style={styles.overlay} pointerEvents="box-none">
                   <View style={styles.favoriteBadge}>
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: 'rgba(19,32,24,0.55)',
+    backgroundColor: overlays.chip,
     alignItems: 'center',
     justifyContent: 'center',
   },

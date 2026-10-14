@@ -10,7 +10,7 @@ import type { CharacterId } from '@/components/character/characterAssets';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import type { useHeroParallax } from '@/services/motion/useHeroParallax';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, spacing, typography } from '@/theme';
 
 import { GAMES_HERO_ART } from '../gamesCatalog';
 
@@ -46,7 +46,7 @@ export function GamesHero({
       <Animated.View style={[StyleSheet.absoluteFill, parallaxStyle]}>
         <Image source={GAMES_HERO_ART} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
       </Animated.View>
-      <LinearGradient colors={['rgba(19,32,24,0.55)', 'rgba(19,32,24,0.05)', 'rgba(19,32,24,0.94)']} locations={[0, 0.38, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[overlays.chip, 'rgba(19,32,24,0.05)', 'rgba(19,32,24,0.94)']} locations={[0, 0.38, 1]} style={StyleSheet.absoluteFill} />
 
       <View style={styles.topRow}>
         <View style={styles.brand}>

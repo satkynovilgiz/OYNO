@@ -26,7 +26,7 @@ import { deleteTempImage, FEEDBACK_IMAGE, normalizeToJpeg, pickerOptionsForJpeg,
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFeedbackStore } from '@/store/useFeedbackStore';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, overlays, radii, spacing, typography } from '@/theme';
 
 /** Time for the sheet to slide away before the screen underneath is captured. */
 const HIDE_BEFORE_CAPTURE_MS = 450;
@@ -427,7 +427,7 @@ export function FeedbackSheet() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(19,32,24,0.45)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: overlays.medium },
   sheet: { maxHeight: '92%', backgroundColor: colors.background, borderTopLeftRadius: radii.xxl, borderTopRightRadius: radii.xxl, paddingTop: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   title: { ...typography.h2, color: colors.textPrimary, flex: 1 },

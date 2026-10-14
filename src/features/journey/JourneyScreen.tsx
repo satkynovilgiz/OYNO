@@ -31,7 +31,7 @@ import { xpProgress } from '@/services/progress/levelConfig';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, spacing, typography } from '@/theme';
 
 import { CollectionsJourneySection } from './components/CollectionsJourneySection';
 import { JournalJourneySection } from './components/JournalJourneySection';
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   stitchFeature: {
-    borderColor: 'rgba(232,185,61,0.35)',
+    borderColor: overlays.goldGlow,
   },
   pageHintFeature: {
     color: 'rgba(255,255,255,0.75)',

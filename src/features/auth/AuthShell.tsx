@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, MediaImage } from '@/components/ui';
 import { openingImage } from '@/features/onboarding/data';
-import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, editorial, overlays, spacing, textStyles } from '@/theme';
 
 /**
  * The one auth layout (Sign in, Create account, reset, verification):
@@ -50,7 +50,7 @@ export function AuthShell({
       >
         <View style={[styles.hero, { height: heroHeight }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <MediaImage source={openingImage} position="center" />
-          <LinearGradient colors={['rgba(19,32,24,0.45)', 'rgba(19,32,24,0.05)', 'rgba(19,32,24,0.55)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={[overlays.medium, 'rgba(19,32,24,0.05)', overlays.chip]} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
           <View style={[styles.brand, { bottom: spacing.xl + 4 }]}>
             <OymoOrnament size={14} color={colors.accentGold} strokeWidth={1.75} />
             <Text style={styles.wordmark}>OYNO</Text>
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   hero: { overflow: 'hidden', backgroundColor: colors.surfaceFeature },
   brand: { position: 'absolute', left: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   wordmark: { ...editorial(textStyles.title), fontSize: 22, letterSpacing: 4, color: colors.textOnDark },
-  back: { position: 'absolute', left: spacing.md, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(19,32,24,0.45)' },
+  back: { position: 'absolute', left: spacing.md, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: overlays.medium },
   sheet: { flexGrow: 1, marginTop: -cardRadii.hero, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, gap: spacing.md, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   heading: { gap: 6, marginBottom: spacing.xxs },
   title: { ...editorial(textStyles.h1), color: colors.textPrimary },

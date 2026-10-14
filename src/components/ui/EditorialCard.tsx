@@ -4,7 +4,7 @@ import { Image, StyleSheet, Text, View, type ImageSourcePropType, type StyleProp
 import { GRADIENT_BY_ARTWORK_PROMINENCE } from '@/services/ageExperience/cardGradient';
 import { resolveByCardScale } from '@/services/ageExperience/scale';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, overlays, radii, spacing, typography } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
 
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     backgroundColor: colors.surfaceAlt,
     borderWidth: 1.5,
-    borderColor: 'rgba(232,185,61,0.35)',
+    borderColor: overlays.goldGlow,
   },
   // Explicit width/height alongside the absolute-fill insets - insets
   // alone (StyleSheet.absoluteFill) can leave Image sized by its own

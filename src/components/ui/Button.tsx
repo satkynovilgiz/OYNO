@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radii, spacing, textStyles } from '@/theme';
+import { controlStates, radii, spacing, textStyles } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
 import { useMinTarget } from '@/services/comfort/useComfortStore';
@@ -53,14 +53,8 @@ const SIZE = {
   lg: { minHeight: 52, paddingHorizontal: spacing.lg, text: textStyles.title },
 } as const;
 
-const VARIANT: Record<Exclude<ButtonVariant, 'danger'>, { bg: string; fg: string; border?: string }> = {
-  primary: { bg: colors.primary, fg: colors.textOnPrimary },
-  accent: { bg: colors.accentGold, fg: colors.textPrimary },
-  secondary: { bg: colors.surfaceElevated, fg: colors.primary, border: colors.borderSubtle },
-  ghost: { bg: 'transparent', fg: colors.primary, border: colors.border },
-  text: { bg: 'transparent', fg: colors.primary },
-  destructive: { bg: colors.dangerFill, fg: colors.textOnPrimary },
-};
+// One state table for every control (theme/ui.ts controlStates).
+const VARIANT = controlStates;
 
 /**
  * Labeled button (design system v2). States: normal, pressed (short
@@ -76,7 +70,10 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
   const guardedPress = useCallback(() => {
     if (!latest.current.isDisabled) latest.current.onPress?.();
   }, []);
-  const v = VARIANT[variant === 'danger' ? 'destructive' : variant];
+  const tone = VARIANT[variant === 'danger' ? 'destructive' : variant];
+  // Explicit state colours (not just opacity): pressed darkens the fill, disabled is a muted surface with muted text.
+  const v = disabled ? (variant === 'text' ? { ...tone, bg: 'transparent', fg: controlStates.disabledText.fg, border: undefined } : { ...tone, ...controlStates.disabled }) : tone;
+  const background = pressed && !isDisabled ? tone.pressedBg : v.bg;
   const base = SIZE[size];
   // Accessibility & Comfort "Larger controls": a taller button (never below
   // 48) and a 56 pt touch target; layouts themselves aren't scaled.
@@ -89,11 +86,9 @@ export function Button({ label, onPress, icon, disabled = false, loading = false
     <AnimatedPressable
       style={[
         styles.button,
-        { minHeight: s.minHeight, paddingHorizontal: variant === 'text' ? spacing.xxs : s.paddingHorizontal, backgroundColor: v.bg },
+        { minHeight: s.minHeight, paddingHorizontal: variant === 'text' ? spacing.xxs : s.paddingHorizontal, backgroundColor: background },
         v.border ? { borderWidth: 1, borderColor: v.border } : null,
         block && styles.block,
-        pressed && !isDisabled && styles.pressed,
-        disabled && styles.disabled,
       ]}
       onPress={keepFocusWhenDisabled ? guardedPress : isDisabled ? undefined : onPress}
       onPressIn={() => setPressed(true)}
@@ -133,6 +128,4 @@ const styles = StyleSheet.create({
   hidden: { opacity: 0 },
   spinner: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   label: { fontWeight: '700' },
-  pressed: { opacity: 0.88 },
-  disabled: { opacity: 0.45 },
 });

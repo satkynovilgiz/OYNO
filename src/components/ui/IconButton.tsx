@@ -2,7 +2,7 @@ import { type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { colors, radii, shadows } from '@/theme';
+import { colors, controlStates, radii, shadows } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
 import { useMinTarget } from '@/services/comfort/useComfortStore';
@@ -69,15 +69,14 @@ export function IconButton({
           width: size,
           height: size,
           borderRadius: shape === 'circle' ? size / 2 : radii.lg,
-          backgroundColor: isPrimary ? colors.primary : colors.surface,
+          // Same state table as Button (theme/ui.ts): explicit pressed / disabled colours.
+          backgroundColor: disabled ? controlStates.disabled.bg : isPrimary ? (pressed ? controlStates.primary.pressedBg : colors.primary) : pressed ? controlStates.secondary.pressedBg : colors.surface,
         },
-        pressed && !disabled && styles.pressed,
-        disabled && styles.disabled,
       ]}
     >
       <Icon
         size={iconSize ?? Math.round(size * 0.45)}
-        color={isPrimary ? colors.textOnPrimary : colors.primary}
+        color={disabled ? controlStates.disabled.fg : isPrimary ? colors.textOnPrimary : colors.primary}
         strokeWidth={2.25}
       />
       {showBadge ? <View style={styles.badge} /> : null}
@@ -93,12 +92,6 @@ const styles = StyleSheet.create({
   flat: {
     borderWidth: 1,
     borderColor: colors.borderSubtle,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  disabled: {
-    opacity: 0.4,
   },
   badge: {
     position: 'absolute',

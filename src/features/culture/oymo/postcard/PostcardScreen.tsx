@@ -8,7 +8,7 @@ import { AnimatedPressable, Button, IconButton, Toggle } from '@/components/ui';
 import { useAgeExperience } from '@/services/ageExperience/useAgeExperience';
 import { useOymoCreations } from '@/services/content/oymoCreationsService';
 import { useShareCard } from '@/services/share/useShareCard';
-import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
+import { cardRadii, colors, overlays, spacing, textStyles, typography } from '@/theme';
 
 import { BACKGROUNDS, cardSize, cleanGreeting, CLOCK_ZONE, compositionFor, exportSize, FORMATS, GREETING_MAX, greetingLength, LAYOUTS, POSITIONS, SIZES, startDesignSet, typedGreeting, updatePlacement, updateShared, type DesignSet, type OutputPlacement, type PostcardFormat } from './postcardModel';
 import { PostcardView } from './PostcardView';
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   outputOn: { borderWidth: 2, borderColor: colors.primary },
   outputName: { ...textStyles.small, color: colors.textPrimary, textAlign: 'center' },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  clockGuide: { position: 'absolute', borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(19,32,24,0.35)', alignItems: 'center', justifyContent: 'center' },
+  clockGuide: { position: 'absolute', borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.9)', backgroundColor: overlays.soft, alignItems: 'center', justifyContent: 'center' },
   clockGuideText: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textOnPrimary },
   choice: { minHeight: 44, paddingHorizontal: spacing.md, justifyContent: 'center', borderRadius: 22, borderWidth: 1, borderColor: colors.borderSubtle, backgroundColor: colors.surface },
   choiceOn: { backgroundColor: colors.primary, borderColor: colors.primary },

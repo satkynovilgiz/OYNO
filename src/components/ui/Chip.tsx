@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radii, spacing, textStyles } from '@/theme';
+import { colors, controlStates, radii, spacing, textStyles } from '@/theme';
 
 import { AnimatedPressable } from './AnimatedPressable';
 import { useMinTarget } from '@/services/comfort/useComfortStore';
@@ -49,10 +49,10 @@ export function Chip({ label, icon, selected = false, onPress, accessibilityRole
 
 const styles = StyleSheet.create({
   chipLarge: { minHeight: 48 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle, flexShrink: 0 },
-  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs, minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radii.pill, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle, flexShrink: 0 },
+  chipSelected: { backgroundColor: controlStates.selected.bg, borderColor: controlStates.selected.border },
   text: { ...textStyles.caption, fontWeight: '700', color: colors.textPrimary },
-  textSelected: { color: colors.textOnDark },
+  textSelected: { color: controlStates.selected.fg },
   info: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', paddingHorizontal: spacing.xs, paddingVertical: 3, borderRadius: radii.sm, backgroundColor: colors.surfaceMuted },
   infoText: { ...textStyles.small, color: colors.textSecondary },
 });

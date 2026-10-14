@@ -5,3 +5,4 @@ export * from './sizes';
 export * from './spacing';
 export * from './typography';
 export * from './motion';
+export * from './ui';

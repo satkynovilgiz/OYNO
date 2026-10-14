@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable, Badge, FadeSlideIn } from '@/components/ui';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, overlays, radii, spacing, typography } from '@/theme';
 
 import type { CultureDiscovery } from '../types';
 
@@ -25,7 +25,7 @@ export function TodayDiscoveryCard({ discovery, onPress }: TodayDiscoveryCardPro
     <FadeSlideIn>
       <AnimatedPressable style={styles.card} onPress={onPress} hoverEffect accessibilityRole="button" accessibilityLabel={discovery.title}>
         <Image source={discovery.imageSource} style={styles.artwork} resizeMode="cover" />
-        <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.9)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={[overlays.clear, 'rgba(19,32,24,0.9)']} locations={[0.3, 1]} style={StyleSheet.absoluteFill} />
 
         <View style={styles.overlay} pointerEvents="box-none">
           <View style={styles.header}>

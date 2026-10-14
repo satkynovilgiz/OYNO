@@ -32,7 +32,7 @@ import { isWaitingForNetwork } from '@/services/offline/offlineManifest';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { cardRadii, colors, editorial, radii, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, editorial, overlays, radii, spacing, textStyles } from '@/theme';
 
 import { regionIntroOverride, regionOwnImage, regionTone, type RegionExperienceConfig } from './regionExperiences';
 import { useRegionExperience } from './useRegionExperiences';
@@ -144,7 +144,7 @@ function RegionHub({ config, onPressBack }: { config: RegionExperienceConfig; on
         {/* Hero: the region's photo (or its tone), name, intro, real progress. */}
         <View style={[styles.hero, isChild && styles.heroChild, { backgroundColor: tone }]}>
           {config.heroImage ? <Image source={config.heroImage} style={styles.heroImage} resizeMode="cover" accessibilityIgnoresInvertColors /> : null}
-          <LinearGradient colors={['rgba(19,32,24,0.5)', 'rgba(19,32,24,0.05)', 'rgba(19,32,24,0.9)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={[overlays.half, 'rgba(19,32,24,0.05)', 'rgba(19,32,24,0.9)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroTop, { paddingTop: insets.top + spacing.xs }]}>
             <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" accessibilityLabel={t('common.back')} onPress={onPressBack} />
             {name ? <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" accessibilityLabel={t('regionHub.shareLabel', { name })} onPress={handleShare} /> : null}

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { FadeSlideIn, TextButton } from '@/components/ui';
-import { colors, spacing, textStyles, typography } from '@/theme';
+import { colors, overlays, spacing, textStyles, typography } from '@/theme';
 
 import type { ProfileAchievement } from '../types';
 
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(19,32,24,0.8)',
+    backgroundColor: overlays.strong,
     alignItems: 'center',
     justifyContent: 'center',
   },

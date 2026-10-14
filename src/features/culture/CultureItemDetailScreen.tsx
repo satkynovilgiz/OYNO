@@ -47,7 +47,7 @@ import type { SupportedLanguage } from '@/i18n';
 import type { CultureItemRow } from '@/services/content/types';
 import { useShareCard } from '@/services/share/useShareCard';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
-import { cardRadii, colors, editorial, spacing, textStyles, typography } from '@/theme';
+import { cardRadii, colors, editorial, headings, iconSizes, layout, spacing, text, textStyles } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 import { cultureItemNarrationParts, shouldAutoScroll } from './readListen/narrationSections';
 import { ReadListenControls, readListenStyles, useReadListen } from './readListen/ReadListen';
@@ -217,11 +217,11 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
     <View style={styles.headerActions}>
       <ReaderButton isChild={isChild} elevated={!!heroSource} />
       {toc ? <ContentsButton sections={toc} current={currentSection} onJump={jumpToSection} elevated={!!heroSource} /> : null}
-      <IconButton icon={Share2} size={40} iconSize={19} shape="roundedSquare" elevated={!!heroSource} accessibilityLabel={t('share.action')} onPress={handleShare} />
+      <IconButton icon={Share2} size={40} iconSize={iconSizes.md} shape="roundedSquare" elevated={!!heroSource} accessibilityLabel={t('share.action')} onPress={handleShare} />
       <IconButton
         icon={Heart}
         size={40}
-        iconSize={19}
+        iconSize={iconSizes.md}
         shape="roundedSquare"
         elevated={!!heroSource}
         variant={isFavorite ? 'primary' : 'surface'}
@@ -264,7 +264,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
                 <View style={styles.heroOverlay} pointerEvents="box-none">
                   <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.xs }]}>
-                    <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                    <IconButton icon={ChevronLeft} size={40} iconSize={iconSizes.md} shape="roundedSquare" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
                     {actions}
                   </View>
                   <View style={styles.heroText}>
@@ -279,7 +279,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
           ) : (
             <View style={[styles.plainHeader, { paddingTop: insets.top + spacing.xs }]}>
               <View style={styles.plainTopRow}>
-                <IconButton icon={ChevronLeft} size={40} iconSize={20} shape="roundedSquare" elevated={false} accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
+                <IconButton icon={ChevronLeft} size={40} iconSize={iconSizes.md} shape="roundedSquare" elevated={false} accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
                 {actions}
               </View>
               {typeLabel ? <Text style={styles.plainEyebrow}>{typeLabel}</Text> : null}
@@ -430,15 +430,15 @@ const styles = StyleSheet.create({
   heroOverlay: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', justifyContent: 'space-between', padding: spacing.md, paddingBottom: spacing.lg },
   headerActions: { flexDirection: 'row', gap: spacing.xs },
   heroTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  heroText: { gap: 4 },
-  heroEyebrow: { ...textStyles.overline, color: colors.accentGold },
+  heroText: { gap: spacing.xxs },
+  heroEyebrow: { ...headings.label, color: colors.accentGold },
   heroTitle: { ...textStyles.display, color: colors.textOnDark },
   heroTitleEditorial: { ...editorial(textStyles.display) },
   plainHeader: { paddingHorizontal: spacing.md, gap: spacing.xs },
   plainTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
-  plainEyebrow: { ...textStyles.overline, color: colors.accentTerracottaText },
+  plainEyebrow: { ...headings.label, color: colors.accentTerracottaText },
   plainHeaderTitle: { ...textStyles.display, color: colors.textPrimary },
-  contentBody: { paddingHorizontal: spacing.lg, gap: spacing.lg },
+  contentBody: { paddingHorizontal: spacing.lg, gap: spacing.lg, width: '100%', maxWidth: layout.maxContentWidth, alignSelf: 'center' },
   context: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
   altNames: { ...textStyles.body, fontStyle: 'italic', color: colors.textSecondary, flexShrink: 1 },
   galleryBleed: { marginHorizontal: -spacing.lg },
@@ -447,9 +447,9 @@ const styles = StyleSheet.create({
   pending: { ...textStyles.body, color: colors.textSecondary },
   fields: { gap: spacing.md },
   field: { gap: spacing.xs },
-  fieldLabel: { ...textStyles.overline, color: colors.accentTerracottaText },
-  paragraph: { ...textStyles.body, fontSize: 16, lineHeight: 25, color: colors.textPrimary },
-  paragraphChild: { fontSize: 17, lineHeight: 26 },
+  fieldLabel: { ...headings.label, color: colors.accentTerracottaText },
+  paragraph: { ...text.reading, color: colors.textPrimary },
+  paragraphChild: { fontSize: text.readingLarge.fontSize, lineHeight: text.readingLarge.lineHeight },
   actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  sourceLink: { ...typography.small, color: colors.primary, textDecorationLine: 'underline', minHeight: 32, paddingVertical: 8 },
+  sourceLink: { ...text.fine, color: colors.primary, textDecorationLine: 'underline', minHeight: 32, paddingVertical: spacing.xs },
 });

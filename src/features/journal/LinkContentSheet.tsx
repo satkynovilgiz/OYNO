@@ -16,7 +16,7 @@ import { useAllCultureItems } from '@/services/content/cultureItemsService';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { mapExploreRegionName } from '@/services/content/types';
 import { normalizeSearchQuery } from '@/services/search/globalSearch';
-import { cardRadii, colors, elevation, radii, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, elevation, overlays, radii, spacing, textStyles } from '@/theme';
 
 import { rememberCultureItemId, type JournalLink, type JournalLinkType } from './journalModel';
 
@@ -125,7 +125,7 @@ export function LinkContentSheet({ visible, onPick, onClose }: { visible: boolea
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.5)' },
+  backdrop: { flex: 1, backgroundColor: overlays.half },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '78%', paddingTop: spacing.xs, paddingHorizontal: spacing.md, gap: spacing.sm, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle },
   title: { ...textStyles.title, color: colors.textPrimary, textAlign: 'center' },

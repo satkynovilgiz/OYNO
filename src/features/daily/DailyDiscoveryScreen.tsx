@@ -25,7 +25,7 @@ import { buildImageChallenge } from '@/services/daily/dailyDiscovery';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useDailyDiscoveryStore } from '@/store/useDailyDiscoveryStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, spacing, typography } from '@/theme';
 
 import { CHILD_DAILY_QUESTION_COUNT, challengeForItem, DAILY_QUESTION_COUNT } from '@/features/challenges/challengeLogic';
 import { collections } from '@/features/collections/collectionsData';
@@ -176,9 +176,9 @@ function DailyDiscoveryContent({ discovery, onPressBack }: { discovery: TodayDis
       <ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }} showsVerticalScrollIndicator={false}>
         <View style={[styles.hero, { height: heroHeight }]}>
           <Image source={discovery.imageSource} style={styles.heroImage} resizeMode="cover" />
-          <LinearGradient colors={['rgba(19,32,24,0.45)', 'rgba(19,32,24,0)']} locations={[0, 1]} style={styles.heroTopScrim} />
+          <LinearGradient colors={[overlays.medium, overlays.clear]} locations={[0, 1]} style={styles.heroTopScrim} />
           <LinearGradient
-            colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.55)', 'rgba(19,32,24,0.94)']}
+            colors={[overlays.clear, overlays.chip, 'rgba(19,32,24,0.94)']}
             locations={[0, 0.45, 1]}
             style={styles.heroBottomScrim}
           />

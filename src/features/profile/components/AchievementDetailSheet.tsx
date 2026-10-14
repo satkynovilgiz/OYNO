@@ -10,7 +10,7 @@ import type { SupportedLanguage } from '@/i18n';
 import { formatLongDate } from '@/services/i18n/formatDate';
 import { localDateKey } from '@/services/daily/dailyDiscovery';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { cardRadii, colors, editorial, elevation, radii, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, editorial, elevation, overlays, radii, spacing, textStyles } from '@/theme';
 
 import type { AchievementCard } from '../achievementsModel';
 
@@ -82,14 +82,14 @@ export function AchievementDetailSheet({ card, onClose, onShare }: { card: Achie
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.5)' },
+  backdrop: { flex: 1, backgroundColor: overlays.half },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: spacing.xs, paddingTop: spacing.xs, paddingHorizontal: spacing.lg, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle, marginBottom: spacing.sm },
   badgeStage: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted },
   badgeStageEarned: { backgroundColor: 'rgba(232,185,61,0.18)' },
   badge: { width: 132, height: 132 },
   badgeLocked: { opacity: 0.6 },
-  lock: { position: 'absolute', right: 10, bottom: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(19,32,24,0.8)' },
+  lock: { position: 'absolute', right: 10, bottom: 10, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: overlays.strong },
   category: { ...textStyles.overline, color: colors.accentTerracotta, marginTop: spacing.xs },
   title: { ...editorial(textStyles.h1), color: colors.textPrimary, textAlign: 'center' },
   status: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.sm, paddingVertical: 5, borderRadius: radii.pill },

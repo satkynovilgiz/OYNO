@@ -3,7 +3,7 @@ import { forwardRef, type ReactNode } from 'react';
 import { Image, type ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
-import { colors, editorial, spacing, textStyles } from '@/theme';
+import { colors, editorial, overlays, spacing, textStyles } from '@/theme';
 
 /** Logical size of the card - captured at 1080×1350 physical (4:5 post). */
 export const SHARE_CARD_WIDTH = 360;
@@ -108,7 +108,7 @@ const PhotoCard = forwardRef<View, ShareCardProps>(function PhotoCard(
         </View>
       )}
       <LinearGradient
-        colors={score ? ['rgba(19,32,24,0.45)', 'rgba(19,32,24,0.35)', 'rgba(19,32,24,0.6)', 'rgba(19,32,24,0.95)'] : ['rgba(19,32,24,0.35)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.2)', 'rgba(19,32,24,0.92)']}
+        colors={score ? [overlays.medium, overlays.soft, 'rgba(19,32,24,0.6)', 'rgba(19,32,24,0.95)'] : [overlays.soft, overlays.clear, 'rgba(19,32,24,0.2)', 'rgba(19,32,24,0.92)']}
         locations={[0, 0.2, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />

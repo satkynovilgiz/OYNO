@@ -16,7 +16,7 @@ import { useDiscoveries } from '@/services/content/discoveriesService';
 import { useExploreRegions } from '@/services/content/exploreService';
 import { mapExploreRegionName } from '@/services/content/types';
 import { useProgressStore } from '@/store/useProgressStore';
-import { cardRadii, colors, editorial, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, editorial, headings, medallion, spacing, textStyles } from '@/theme';
 
 import { pickContinueRegion } from '../continueRegion';
 
@@ -95,15 +95,15 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: '100%' },
   text: { flex: 1, gap: 1 },
   heading: { ...textStyles.overline, color: colors.accentTerracottaText },
-  title: { ...textStyles.bodyMedium, fontSize: 18, fontWeight: '800', color: colors.textPrimary },
-  titleEditorial: { ...editorial(textStyles.bodyMedium), fontSize: 19 },
-  titleChild: { fontSize: 20 },
+  title: { ...headings.card, color: colors.textPrimary },
+  titleEditorial: { ...editorial(headings.card) },
+  titleChild: { ...headings.section },
   meta: { ...textStyles.caption, color: colors.textSecondary },
   next: { ...textStyles.caption, fontWeight: '700', color: colors.primary },
   ctaWrap: { paddingHorizontal: spacing.xs },
-  ctaWrapChild: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentGold },
+  ctaWrapChild: { ...medallion(44), backgroundColor: colors.accentGold },
   cta: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.primary },
   done: { justifyContent: 'space-between' },
-  doneIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentGold },
+  doneIcon: { ...medallion(40), backgroundColor: colors.accentGold },
   doneTitle: { flex: 1 },
 });

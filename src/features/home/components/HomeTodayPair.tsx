@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { AnimatedPressable, ProgressBar, SectionHeader } from '@/components/ui';
-import { cardRadii, colors, spacing, textStyles } from '@/theme';
+import { cardPadding, cardRadii, colors, headings, medallion, spacing, textStyles } from '@/theme';
 
 import type { DailyChallenge, DailyGift } from '../types';
 
@@ -122,13 +122,13 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   row: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.md },
   stack: { flexDirection: 'column' },
-  card: { flex: 1, minHeight: 156, padding: spacing.md, gap: 4, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1.5, borderColor: 'transparent' },
+  card: { flex: 1, minHeight: 156, padding: cardPadding.standard, gap: spacing.xxs, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1.5, borderColor: 'transparent' },
   cardReady: { borderColor: colors.accentGold },
-  medallion: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMuted, marginBottom: 4 },
+  medallion: { ...medallion(36), backgroundColor: colors.surfaceMuted, marginBottom: spacing.xxs },
   medallionReady: { backgroundColor: colors.accentGold },
-  title: { ...textStyles.title, fontSize: 16, lineHeight: 21, color: colors.textPrimary },
+  title: { ...headings.card, color: colors.textPrimary },
   body: { ...textStyles.caption, color: colors.textSecondary },
-  footer: { marginTop: 'auto', gap: 4, paddingTop: spacing.xs },
+  footer: { marginTop: 'auto', gap: spacing.xxs, paddingTop: spacing.xs },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   bar: { flex: 1 },
   count: { ...textStyles.small, color: colors.textSecondary },

@@ -16,7 +16,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { Button, TextButton } from '@/components/ui';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
-import { colors, editorial, radii, spacing, textStyles } from '@/theme';
+import { colors, editorial, overlays, radii, spacing, textStyles } from '@/theme';
 
 import { onboardingSlideImages, type OnboardingSlideImage } from './data';
 import {
@@ -241,7 +241,7 @@ function OnboardingSlide({ slide, slideIndex, scrollX, screenWidth, screenHeight
         resizeMode="cover"
       />
       <LinearGradient
-        colors={['rgba(19,32,24,0.55)', 'rgba(19,32,24,0.4)', 'rgba(19,32,24,0.96)']}
+        colors={[overlays.chip, 'rgba(19,32,24,0.4)', 'rgba(19,32,24,0.96)']}
         locations={[0, 0.5, 0.85]}
         style={StyleSheet.absoluteFill}
       />
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   skipChip: {
-    backgroundColor: 'rgba(19,32,24,0.45)',
+    backgroundColor: overlays.medium,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,

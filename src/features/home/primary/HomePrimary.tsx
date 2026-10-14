@@ -7,7 +7,7 @@ import { AnimatedPressable, Button, ProgressBar, Skeleton } from '@/components/u
 import { cultureCategoryImages } from '@/features/culture/data';
 import { percentRead } from '@/features/culture/reading/readingModel';
 import { track } from '@/services/analytics/analytics';
-import { cardRadii, colors, iconSizes, spacing, textStyles } from '@/theme';
+import { cardPadding, cardRadii, cards, colors, headings, iconSizes, layout, radii, spacing, text } from '@/theme';
 
 import type { HomeRecommendationDisplay } from '../useHomeRecommendation';
 import { CREATE_ROUTE, DISCOVER_ROUTE, type ContinuePick, type PrimaryActionId } from './homePrimaryModel';
@@ -101,13 +101,7 @@ function continueText(pick: ContinuePick, state: HomeContinue, journey: HomeReco
         progress: null,
       };
     case 'guide':
-      return {
-        title: t('firstUse.cardContinueTitle'),
-        body: t('firstUse.cardBody'),
-        cta: t('firstUse.continue'),
-        image: null,
-        progress: null,
-      };
+      return { title: t('firstUse.cardContinueTitle'), body: t('firstUse.cardBody'), cta: t('firstUse.continue'), image: null, progress: null };
     case 'reading':
       return {
         title: state.reading?.title ?? '',
@@ -118,13 +112,7 @@ function continueText(pick: ContinuePick, state: HomeContinue, journey: HomeReco
       };
     case 'journey': {
       const progress = pick.recommendation.progress && pick.recommendation.progress.total > 0 ? pick.recommendation.progress.completed / pick.recommendation.progress.total : null;
-      return {
-        title: journey.title,
-        body: journey.subtitle ?? '',
-        cta: journey.ctaLabel,
-        image: journey.imageSource,
-        progress,
-      };
+      return { title: journey.title, body: journey.subtitle ?? '', cta: journey.ctaLabel, image: journey.imageSource, progress };
     }
   }
 }
@@ -170,16 +158,7 @@ function ContinueCard({ state, journeyDisplay, onOpen }: { state: HomeContinue; 
         </View>
       </View>
       {text.progress !== null ? (
-        <View
-          accessible
-          accessibilityRole="progressbar"
-          accessibilityLabel={t('reading.progress')}
-          accessibilityValue={{
-            min: 0,
-            max: 100,
-            now: Math.round(text.progress * 100),
-          }}
-        >
+        <View accessible accessibilityRole="progressbar" accessibilityLabel={t('reading.progress')} accessibilityValue={{ min: 0, max: 100, now: Math.round(text.progress * 100) }}>
           <ProgressBar progress={text.progress} height={4} fillColor={colors.accentGold} trackColor={colors.surfaceMuted} />
         </View>
       ) : null}
@@ -189,49 +168,28 @@ function ContinueCard({ state, journeyDisplay, onOpen }: { state: HomeContinue; 
 }
 
 const styles = StyleSheet.create({
-  root: { gap: spacing.sm },
-  heading: { ...textStyles.h3, color: colors.textPrimary },
-  lead: { ...textStyles.body, color: colors.textSecondary },
-  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  root: { gap: layout.stackGap },
+  heading: { ...headings.section, color: colors.textPrimary },
+  lead: { ...text.body, color: colors.textSecondary },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: layout.stackGap },
   // Two across on phones, one per row when text is large or the screen narrow (flexBasis wraps).
-  tile: {
-    flexGrow: 1,
-    flexBasis: 150,
-    borderRadius: cardRadii.media,
-    overflow: 'hidden',
-    minHeight: 176,
-  },
+  tile: { flexGrow: 1, flexBasis: 150, borderRadius: cardRadii.media, overflow: 'hidden', minHeight: 176 },
   tileDiscover: { backgroundColor: colors.surfaceFeature },
   tileCreate: { backgroundColor: colors.accentTerracottaDark },
   tileImage: { width: '100%', height: 92 },
-  tileBody: { padding: spacing.sm, gap: spacing.xxs },
+  tileBody: { padding: cardPadding.compact, gap: spacing.xxs },
   tileTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  tileTitle: { ...textStyles.title, color: colors.textOnDark, flexShrink: 1 },
-  tileText: { ...textStyles.caption, color: colors.textOnDarkSecondary },
-  badge: {
-    position: 'absolute',
-    top: spacing.xs,
-    left: spacing.xs,
-    backgroundColor: colors.accentGold,
-    borderRadius: cardRadii.chip,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-  },
-  badgeText: { ...textStyles.small, color: colors.textPrimary },
-  card: {
-    gap: spacing.sm,
-    padding: spacing.md,
-    borderRadius: cardRadii.compact,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.accentGold,
-  },
+  tileTitle: { ...headings.card, color: colors.textOnDark, flexShrink: 1 },
+  tileText: { ...text.meta, color: colors.textOnDarkSecondary },
+  badge: { position: 'absolute', top: spacing.xs, left: spacing.xs, backgroundColor: colors.accentGold, borderRadius: cardRadii.chip, paddingHorizontal: spacing.xs, paddingVertical: 2 },
+  badgeText: { ...text.fine, color: colors.textPrimary },
+  card: { ...cards.highlighted, gap: layout.stackGap, borderColor: colors.accentGold },
   cardQuiet: { borderColor: colors.borderSubtle },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
-  kicker: { ...textStyles.overline, color: colors.accentTerracottaText },
+  kicker: { ...headings.label, color: colors.accentTerracottaText },
   cardRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  thumb: { width: 56, height: 56, borderRadius: 12 },
+  thumb: { width: 56, height: 56, borderRadius: radii.md },
   flex: { flex: 1, gap: spacing.xxs },
-  cardTitle: { ...textStyles.title, color: colors.textPrimary },
-  cardBody: { ...textStyles.caption, color: colors.textSecondary },
+  cardTitle: { ...headings.card, color: colors.textPrimary },
+  cardBody: { ...text.meta, color: colors.textSecondary },
 });

@@ -11,7 +11,7 @@ import { track } from '@/services/analytics/analytics';
 import { describeSources, normalizeVerification, verificationCopyKey, type SourceInfo } from '@/services/content/verification';
 import { useReducedMotion } from '@/services/motion/useReducedMotion';
 import { sourceExplorerRoute } from '@/features/culture/sources/sourceExplorer';
-import { cardRadii, colors, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, overlays, spacing, textStyles } from '@/theme';
 
 type Props = {
   contentType: 'culture_item' | 'culture_material' | 'explore_region';
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 2 },
   rowTitle: { ...textStyles.bodyMedium, fontWeight: '700', color: colors.textPrimary },
   rowMeta: { ...textStyles.small, color: colors.textSecondary },
-  backdrop: { flex: 1, backgroundColor: 'rgba(19,32,24,0.45)' },
+  backdrop: { flex: 1, backgroundColor: overlays.medium },
   sheet: { maxHeight: '75%', paddingTop: spacing.xs, paddingHorizontal: spacing.lg, gap: spacing.xs, borderTopLeftRadius: cardRadii.hero, borderTopRightRadius: cardRadii.hero, backgroundColor: colors.background },
   handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: colors.borderSubtle, marginBottom: spacing.sm },
   sheetTitle: { ...textStyles.h2, color: colors.textPrimary },

@@ -9,7 +9,7 @@ import { AnimatedPressable, IconButton } from '@/components/ui';
 import { useTrackScreenView } from '@/services/analytics/useTrackScreenView';
 import { useNetworkStatus } from '@/services/offline/networkStatus';
 import { isRouteAvailableOffline } from '@/services/offline/offlineAvailability';
-import { cardRadii, colors, iconSizes, spacing, textStyles, typography } from '@/theme';
+import { cards, colors, headings, iconSizes, layout, spacing, text } from '@/theme';
 
 import { CREATE_GROUPS, type CreateEntry } from './createHub';
 
@@ -76,42 +76,16 @@ export function CreateHubScreen({ onPressBack }: { onPressBack: () => void }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  title: { ...typography.h1, color: colors.textPrimary, flex: 1 },
-  content: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.lg,
-    width: '100%',
-    maxWidth: 720,
-    alignSelf: 'center',
-  },
-  intro: { ...textStyles.body, color: colors.textSecondary },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
+  title: { ...headings.screen, color: colors.textPrimary, flex: 1 },
+  content: { paddingHorizontal: layout.gutter, gap: layout.sectionGap, width: '100%', maxWidth: layout.maxContentWidth, alignSelf: 'center' },
+  intro: { ...text.body, color: colors.textSecondary },
   group: { gap: spacing.xs },
-  section: { ...textStyles.overline, color: colors.textSecondary },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: 56,
-    padding: spacing.md,
-    borderRadius: cardRadii.compact,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-  },
-  rowOff: { opacity: 0.7 },
+  section: { ...headings.label, color: colors.textSecondary },
+  row: { ...cards.standard, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56 },
+  rowOff: { backgroundColor: colors.surfaceMuted },
   flex: { flex: 1, gap: 2 },
-  rowTitle: {
-    ...textStyles.bodyMedium,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  rowBody: { ...textStyles.caption, color: colors.textSecondary },
-  warn: { ...textStyles.small, color: colors.accentTerracottaText },
+  rowTitle: { ...headings.card, color: colors.textPrimary },
+  rowBody: { ...text.meta, color: colors.textSecondary },
+  warn: { ...text.fine, color: colors.accentTerracottaText },
 });

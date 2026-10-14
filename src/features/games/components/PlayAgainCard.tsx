@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import type { GameStat } from '@/store/useProgressStore';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, overlays, radii, spacing, typography } from '@/theme';
 
 import { gameArt } from '../gamesCatalog';
 import { gameTitleKey, type GameListItem } from '../types';
@@ -47,7 +47,7 @@ export function PlayAgainCard({ game, stat, onPress }: { game: GameListItem; sta
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.xs, paddingRight: spacing.sm, borderRadius: radii.xl, backgroundColor: 'rgba(19,32,24,0.78)', borderWidth: 1, borderColor: 'rgba(232,185,61,0.35)' },
+  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.xs, paddingRight: spacing.sm, borderRadius: radii.xl, backgroundColor: 'rgba(19,32,24,0.78)', borderWidth: 1, borderColor: overlays.goldGlow },
   thumb: { width: 56, height: 56, borderRadius: radii.lg },
   text: { flex: 1, gap: 1 },
   eyebrow: { ...typography.overline, color: colors.accentGold },

@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable } from '@/components/ui';
 import type { AgeExperience } from '@/services/ageExperience/types';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, spacing, typography } from '@/theme';
 
 import { firstSentence, gameArt, gameDescriptionKey } from '../gamesCatalog';
 import { gameTitleKey, type GameListItem } from '../types';
@@ -37,9 +37,9 @@ export function FeaturedGameCard({ game, experience, onPress }: { game: GameList
       accessibilityHint={description ?? undefined}
     >
       <GameArt source={gameArt(game, 'large')} title={title} style={StyleSheet.absoluteFill} ornamentSize={120} />
-      <LinearGradient colors={['rgba(19,32,24,0.1)', 'rgba(19,32,24,0)', 'rgba(19,32,24,0.92)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['rgba(19,32,24,0.1)', overlays.clear, 'rgba(19,32,24,0.92)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
       {/* Text sits on the left: a soft side fade keeps it legible over bright skies. */}
-      <LinearGradient colors={['rgba(19,32,24,0.55)', 'rgba(19,32,24,0)']} locations={[0, 0.75]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[overlays.chip, overlays.clear]} locations={[0, 0.75]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
       <View style={styles.badge}>
         <OymoOrnament size={11} color={colors.accentGold} strokeWidth={1.75} />
         <Text style={styles.badgeText}>{t('games.featured.label')}</Text>

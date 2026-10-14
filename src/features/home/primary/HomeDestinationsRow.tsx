@@ -5,14 +5,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedPressable } from '@/components/ui';
 import { HOME_DESTINATIONS, type DestinationId } from './homeDestinations';
-import { cardRadii, colors, iconSizes, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, headings, iconSizes, spacing, textStyles } from '@/theme';
 
-const ICONS: Record<DestinationId, LucideIcon> = {
-  games: Gamepad2,
-  map: Map,
-  activities: Timer,
-  shelf: Library,
-};
+const ICONS: Record<DestinationId, LucideIcon> = { games: Gamepad2, map: Map, activities: Timer, shelf: Library };
 
 export function HomeDestinations() {
   const { t } = useTranslation();
@@ -38,7 +33,7 @@ export function HomeDestinations() {
 
 const styles = StyleSheet.create({
   root: { gap: spacing.xs },
-  heading: { ...textStyles.overline, color: colors.textSecondary },
+  heading: { ...headings.label, color: colors.textSecondary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   item: {
     flexGrow: 1,

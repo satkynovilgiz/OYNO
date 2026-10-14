@@ -4,7 +4,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { OymoOrnament } from '@/components/patterns/OymoOrnament';
 import { AnimatedPressable, Rail, SectionHeader } from '@/components/ui';
 import type { RecentDisplay } from '@/features/home/useHomeRecommendation';
-import { colors, radii, spacing, textStyles } from '@/theme';
+import { colors, medallion, radii, spacing, text, textStyles } from '@/theme';
 
 /**
  * Real recent history (destination visits, completed Daily OYNO days) as a
@@ -42,7 +42,7 @@ export function RecentlyExploredRow({ items, onPress }: { items: RecentDisplay[]
 const styles = StyleSheet.create({
   section: { gap: spacing.xs },
   pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 44, maxWidth: 220, paddingLeft: 6, paddingRight: spacing.sm + 2, borderRadius: radii.pill, backgroundColor: colors.surfaceElevated },
-  thumb: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceMuted },
+  thumb: { ...medallion(32), backgroundColor: colors.surfaceMuted },
   thumbFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
-  title: { ...textStyles.caption, fontSize: 14, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
+  title: { ...text.emphasis, fontWeight: '700', color: colors.textPrimary, flexShrink: 1 },
 });

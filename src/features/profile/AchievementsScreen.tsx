@@ -18,7 +18,7 @@ import { xpProgress } from '@/services/progress/levelConfig';
 import { useShareCard } from '@/services/share/useShareCard';
 import { useActivityStore } from '@/store/useActivityStore';
 import { DAILY_GIFT_REWARD, useProgressStore } from '@/store/useProgressStore';
-import { cardRadii, colors, editorial, radii, spacing, textStyles } from '@/theme';
+import { cardRadii, colors, editorial, overlays, radii, spacing, textStyles } from '@/theme';
 
 import { buildAchievementsView, type AchievementCard } from './achievementsModel';
 import { AchievementDetailSheet } from './components';
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   cellImageLocked: { opacity: 0.55 },
   stateMark: { position: 'absolute', right: 0, bottom: 0, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.surfaceElevated },
   stateEarned: { backgroundColor: colors.accentGold },
-  stateLocked: { backgroundColor: 'rgba(19,32,24,0.8)' },
+  stateLocked: { backgroundColor: overlays.strong },
   cellTitle: { ...textStyles.caption, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
   cellTitleLocked: { color: colors.textSecondary },
   cellHint: { ...textStyles.small, fontWeight: '500', color: colors.textMuted, textAlign: 'center' },

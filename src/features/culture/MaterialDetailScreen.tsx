@@ -26,7 +26,7 @@ import { ReaderButton, useReaderSettings } from '@/features/culture/reader/Reade
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
-import { colors, radii, spacing, typography } from '@/theme';
+import { colors, overlays, radii, spacing, typography } from '@/theme';
 import { toggleFavoriteWithFeedback } from '@/features/saved/toggleFavoriteWithFeedback';
 import { materialNarrationParts } from './readListen/narrationSections';
 import { ReadListenControls, readListenStyles, useReadListen } from './readListen/ReadListen';
@@ -94,7 +94,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
             <HeroEntrance>
               <View style={[styles.hero, reader.focusMode && styles.heroFocus]}>
                 <ExpoImage source={{ uri: material.image_url }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
-                <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
+                <LinearGradient colors={[overlays.clear, 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
 
                 <View style={styles.heroOverlay} pointerEvents="box-none">
                   <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>

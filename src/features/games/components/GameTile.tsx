@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { AnimatedPressable } from '@/components/ui';
 import type { AgeExperience } from '@/services/ageExperience/types';
 import type { GameStat } from '@/store/useProgressStore';
-import { colors, fontFamily, radii, spacing, typography } from '@/theme';
+import { colors, fontFamily, overlays, radii, spacing, typography } from '@/theme';
 
 import { gameArt, isPlayable } from '../gamesCatalog';
 import { gameTitleKey, type GameListItem } from '../types';
@@ -62,7 +62,7 @@ export function GameTile({
       accessibilityLabel={playable ? `${title}${meta ? `, ${meta}` : ''}` : `${title}, ${t('games.comingSoonBadge')}`}
     >
       <GameArt source={gameArt(game, isChild ? 'large' : 'card')} title={title} style={StyleSheet.absoluteFill} ornamentSize={isChild ? 72 : 52} />
-      <LinearGradient colors={['rgba(19,32,24,0)', 'rgba(19,32,24,0.88)']} locations={[0.45, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[overlays.clear, 'rgba(19,32,24,0.88)']} locations={[0.45, 1]} style={StyleSheet.absoluteFill} />
       <View style={styles.text}>
         <Text style={[styles.title, isChild && styles.titleChild, isAdult && styles.titleAdult]} numberOfLines={2}>
           {title}
