@@ -17,7 +17,7 @@ type State = {
   isLoaded: boolean;
   saved: Saved;
   load: () => Promise<void>;
-  record: (owner: string, contentType: ReadingContentType, contentId: string, ratio: number) => void;
+  record: (owner: string, contentType: ReadingContentType, contentId: string, ratio: number, options?: { completeByScroll?: boolean }) => void;
   /** Reader Navigator: the section last read (existing records only). */
   recordSection: (owner: string, contentType: ReadingContentType, contentId: string, sectionKey: string | null) => void;
   markRead: (owner: string, contentType: ReadingContentType, contentId: string) => void;
@@ -60,7 +60,7 @@ export const useReadingStore = create<State>((set, get) => {
       const parsed = safeJsonParse<Saved>(raw, {});
       set({ saved: parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}, isLoaded: true });
     },
-    record: (owner, contentType, contentId, ratio) => update(owner, (data) => recordPosition(data, contentType, contentId, ratio)),
+    record: (owner, contentType, contentId, ratio, options) => update(owner, (data) => recordPosition(data, contentType, contentId, ratio, new Date(), options)),
     recordSection: (owner, contentType, contentId, sectionKey) => update(owner, (data) => recordSection(data, contentType, contentId, sectionKey)),
     markRead: (owner, contentType, contentId) => update(owner, (data) => markRead(data, contentType, contentId)),
     reset: (owner, contentType, contentId) => update(owner, (data) => resetReading(data, contentType, contentId)),

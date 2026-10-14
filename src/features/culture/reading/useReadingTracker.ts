@@ -47,7 +47,10 @@ export type ReadingTracker = {
  * current layout (so a language change can't send the reader to a stale
  * pixel offset). Analytics: event + content type/id only.
  */
-export function useReadingTracker(contentType: ReadingContentType, contentId: string): ReadingTracker {
+export function useReadingTracker(contentType: ReadingContentType, contentId: string, options: { completeByScroll?: boolean } = {}): ReadingTracker {
+  // Focus view: scrolling records progress only - never completion.
+  const completeByScroll = useRef(options.completeByScroll !== false);
+  completeByScroll.current = options.completeByScroll !== false;
   const owner = useRecordsOwner();
   const record = useReadingStore((state) => ownerReading(state.saved, owner)[readingKey(contentType, contentId)]);
   const isLoaded = useReadingStore((state) => state.isLoaded);
@@ -62,6 +65,10 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
   const lastRatio = useRef<number | null>(null);
   // True after a TOC jump until the next hand scroll: nothing is recorded.
   const jumped = useRef(false);
+  // Where the jump went, and whether the scroll has arrived there. A wheel
+  // or keyboard scroll (web) fires no drag event: moving clearly away from
+  // the settled target is a hand scroll too.
+  const jumpTarget = useRef<{ y: number; settled: boolean } | null>(null);
 
   useEffect(() => {
     void useReadingStore.getState().load();
@@ -114,7 +121,15 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
       // belongs to the old layout - never record it.
       if (pendingResume.current !== null) return;
       // A Table of Contents jump is not reading.
-      if (jumped.current) return;
+      if (jumped.current) {
+        const target = jumpTarget.current;
+        // A target past the end lands at the end of the scrollable range.
+        const landing = target ? Math.min(target.y, Math.max(0, contentSize.height - layoutMeasurement.height)) : 0;
+        if (target && !target.settled && Math.abs(contentOffset.y - landing) < 4) target.settled = true;
+        if (!target || !target.settled || Math.abs(contentOffset.y - landing) < 48) return;
+        jumped.current = false;
+        jumpTarget.current = null;
+      }
       // While the resume question is open, the top-of-page position must not
       // overwrite the saved place; scrolling on past it is an answer.
       if (promptVisible) {
@@ -124,7 +139,7 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
       const now = Date.now();
       if (now - lastRecordAt.current < RECORD_INTERVAL_MS && next < 0.999) return;
       lastRecordAt.current = now;
-      useReadingStore.getState().record(owner, contentType, contentId, next);
+      useReadingStore.getState().record(owner, contentType, contentId, next, { completeByScroll: completeByScroll.current });
     },
     [owner, contentType, contentId, promptVisible],
   );
@@ -160,10 +175,12 @@ export function useReadingTracker(contentType: ReadingContentType, contentId: st
     },
     jumpTo: (offsetY, animated) => {
       jumped.current = true;
+      jumpTarget.current = { y: Math.max(0, offsetY), settled: false };
       scrollRef.current?.scrollTo({ y: Math.max(0, offsetY), animated });
     },
     onScrollBeginDrag: () => {
       jumped.current = false;
+      jumpTarget.current = null;
     },
     noteSection: (sectionKey) => {
       if (jumped.current || pendingResume.current !== null) return;

@@ -54,8 +54,10 @@ export function resumeOffset(ratio: number, contentHeight: number, viewportHeigh
 }
 
 /** One measured position. Tiny positions never create a record; a
- * completed article stays completed (re-reading it doesn't undo that). */
-export function recordPosition(data: ReadingData, contentType: ReadingContentType, contentId: string, ratio: number, now = new Date()): ReadingData {
+ * completed article stays completed (re-reading it doesn't undo that).
+ * `completeByScroll: false` (Focus view) records progress but never marks
+ * the article read - only "Mark as read" does. */
+export function recordPosition(data: ReadingData, contentType: ReadingContentType, contentId: string, ratio: number, now = new Date(), options: { completeByScroll?: boolean } = {}): ReadingData {
   const key = readingKey(contentType, contentId);
   const existing = data[key];
   if (ratio < MIN_MEANINGFUL_PROGRESS && !existing) return data;
@@ -67,7 +69,7 @@ export function recordPosition(data: ReadingData, contentType: ReadingContentTyp
     progress: ratio,
     furthest,
     lastReadAt: at,
-    completedAt: existing?.completedAt ?? (ratio >= COMPLETION_THRESHOLD ? at : null),
+    completedAt: existing?.completedAt ?? (options.completeByScroll !== false && ratio >= COMPLETION_THRESHOLD ? at : null),
     ...(existing?.lastSectionKey ? { lastSectionKey: existing.lastSectionKey } : {}),
   };
   if (existing && existing.progress === next.progress && existing.furthest === next.furthest && existing.completedAt === next.completedAt) return data;

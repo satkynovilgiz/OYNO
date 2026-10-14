@@ -48,7 +48,7 @@ describe('Reader controls', () => {
     expect(detail).toMatch(/<SourcesAndNotes contentType="culture_item" level=\{item\.accuracy_level\} sources=\{item\.sources\} contentId=\{item\.id\} \/>/);
     expect(detail).toMatch(/<ReportIssueLink contentType="culture_item"/);
     expect(detail).toMatch(/hasRemainingGallery && !reader\.focusMode/);
-    expect(detail).toMatch(/reader\.focusMode \? null : <RelatedItemsRail/);
+    expect(detail).toMatch(/focus \? null : <RelatedItemsRail/);
     expect(detail).not.toMatch(/focusMode[^\n]*SourcesAndNotes|focusMode[^\n]*ReportIssueLink/);
     expect(material).toMatch(/<SourcesAndNotes contentType="culture_material"/);
   });

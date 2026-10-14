@@ -104,8 +104,11 @@ describe('Jumping is not reading', () => {
   it('no completion on jump: a jump suppresses recording until the next hand scroll', () => {
     expect(tracker).toMatch(/jumpTo: \(offsetY, animated\) => \{\s*jumped\.current = true;/);
     const onScroll = tracker.slice(tracker.indexOf('const onScroll'), tracker.indexOf('return {'));
-    expect(onScroll.indexOf('if (jumped.current) return;')).toBeGreaterThan(-1);
-    expect(onScroll.indexOf('if (jumped.current) return;')).toBeLessThan(onScroll.indexOf('useReadingStore.getState().record('));
+    // The jump guard comes before any recording; it only lets go once the scroll has
+    // settled on the jump target and then clearly moved away (wheel/keyboard on web).
+    expect(onScroll.indexOf('if (jumped.current) {')).toBeGreaterThan(-1);
+    expect(onScroll.indexOf('if (jumped.current) {')).toBeLessThan(onScroll.indexOf('useReadingStore.getState().record('));
+    expect(onScroll).toMatch(/if \(!target \|\| !target\.settled \|\| Math\.abs\(contentOffset\.y - landing\) < 48\) return;/);
     expect(tracker).toMatch(/onScrollBeginDrag: \(\) => \{\s*jumped\.current = false;/);
     expect(tracker).toMatch(/noteSection: \(sectionKey\) => \{\s*if \(jumped\.current/);
     // Sanity: the rule that WOULD complete an article on a deep scroll still exists for real reading.

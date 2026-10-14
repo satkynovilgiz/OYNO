@@ -23,6 +23,7 @@ import { useReadingTracker } from '@/features/culture/reading/useReadingTracker'
 import { PassageActions } from '@/features/culture/highlights/PassageActions';
 import { GlossaryText, InlineGlossaryProvider } from '@/features/culture/glossary/inline/InlineGlossary';
 import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
+import { FocusExitBar, FocusFloatingButton, FocusViewButton } from '@/features/culture/reader/FocusView';
 import { readerBodyStyle } from '@/features/culture/reader/readerSettings';
 import type { CultureMaterialRow } from '@/services/content/types';
 import { favoriteKey, useFavoritesStore } from '@/store/useFavoritesStore';
@@ -48,9 +49,11 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
   const onToggleFavorite = () => void toggleFavoriteWithFeedback('culture_material', material.id);
   const { experience } = useAgeExperience();
   // Private reading progress (real scroll measurement; resume is offered).
-  const reading = useReadingTracker('culture_material', material.id);
   // Reader controls (presentation only); a change keeps the reading RATIO.
   const reader = useReaderSettings();
+  const focus = reader.focusMode;
+  // Focus view: scrolling never marks the material read (Mark as read does).
+  const reading = useReadingTracker('culture_material', material.id, { completeByScroll: !focus });
   const bodyStyle = readerBodyStyle(typography.body.fontSize, reader, experience === 'child');
   const readerChanged = useRef(false);
   useEffect(() => {
@@ -80,6 +83,8 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
   return (
     <InlineGlossaryProvider articleItemId={null}>
       <View style={styles.root}>
+        <View style={styles.reader}>
+        <FocusFloatingButton on={focus} />
         <ScrollView
           ref={reading.scrollRef}
           contentContainerStyle={styles.content}
@@ -92,7 +97,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
         >
           {material.image_url ? (
             <HeroEntrance>
-              <View style={[styles.hero, reader.focusMode && styles.heroFocus]}>
+              <View style={[styles.hero, focus && styles.heroFocus]}>
                 <ExpoImage source={{ uri: material.image_url }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" />
                 <LinearGradient colors={[overlays.clear, 'rgba(19,32,24,0.85)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
 
@@ -100,15 +105,20 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
                   <View style={[styles.heroTopRow, { paddingTop: insets.top + spacing.sm }]}>
                     <IconButton icon={ChevronLeft} shape="roundedSquare" variant="surface" accessibilityLabel={t('settings.backLabel')} onPress={onPressBack} />
                     <View style={styles.headerButtons}>
-                      <IconButton
-                        icon={Heart}
-                        shape="roundedSquare"
-                        variant={isFavorite ? 'primary' : 'surface'}
-                        accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                        onPress={onToggleFavorite}
-                      />
-                      <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+                      {focus ? null : (
+                        <>
+                          <IconButton
+                            icon={Heart}
+                            shape="roundedSquare"
+                            variant={isFavorite ? 'primary' : 'surface'}
+                            accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                            onPress={onToggleFavorite}
+                          />
+                          <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+                        </>
+                      )}
                       <ReaderButton isChild={experience === 'child'} elevated />
+                      <FocusViewButton on={focus} elevated />
                     </View>
                   </View>
                   <Text style={styles.heroTitle} numberOfLines={2}>
@@ -123,14 +133,20 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
               <Text style={styles.plainHeaderTitle} numberOfLines={1}>
                 {material.title}
               </Text>
-              <IconButton
-                icon={Heart}
-                shape="roundedSquare"
-                variant={isFavorite ? 'primary' : 'surface'}
-                accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
-                onPress={onToggleFavorite}
-              />
-              <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+              {focus ? null : (
+                <>
+                  <IconButton
+                    icon={Heart}
+                    shape="roundedSquare"
+                    variant={isFavorite ? 'primary' : 'surface'}
+                    accessibilityLabel={isFavorite ? t('saved.removeLabel') : t('saved.saveLabel')}
+                    onPress={onToggleFavorite}
+                  />
+                  <AddToCollectionButton contentType="culture_material" contentId={material.id} title={material.title} />
+                </>
+              )}
+              <ReaderButton isChild={experience === 'child'} />
+              <FocusViewButton on={focus} />
             </View>
           )}
 
@@ -156,6 +172,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
                 <View style={bodyNow ? readListenStyles.current : undefined}>
                   <GlossaryText text={material.body} language={bodyLanguage} style={[styles.body, bodyStyle]} />
                 </View>
+                {focus ? null : (
                 <PassageActions
                   contentType="culture_material"
                   contentId={material.id}
@@ -166,18 +183,21 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
                   language={bodyLanguage}
                   simple={experience === 'child'}
                 />
+                )}
               </View>
             ) : (
               <Text style={styles.pending}>{t('culture.item.pendingResearch')}</Text>
             )}
 
             {material.body ? <ReadingActions tracker={reading} /> : null}
-            <TopicQuizLink type="culture_material" id={material.id} />
+            {focus ? null : <TopicQuizLink type="culture_material" id={material.id} />}
             <SourcesAndNotes contentType="culture_material" level={material.accuracy_level} sources={material.sources} contentId={material.id} />
             <ReportIssueLink contentType="culture_material" contentId={material.id} title={material.title} />
           </View>
         </ScrollView>
         <ReadingOverlay tracker={reading} experience={experience} />
+        </View>
+        <FocusExitBar on={focus} />
       </View>
     </InlineGlossaryProvider>
   );
@@ -185,6 +205,7 @@ export function MaterialDetailScreen({ material, onPressBack }: MaterialDetailSc
 
 const styles = StyleSheet.create({
   heroFocus: { aspectRatio: 2.4 },
+  reader: { flex: 1 },
   headerButtons: { flexDirection: 'row', gap: spacing.xs },
   root: {
     flex: 1,

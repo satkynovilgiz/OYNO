@@ -23,6 +23,8 @@ import { resolveContentByDepth } from '@/services/ageExperience/contentDepth';
 import { ReadingActions, ReadingOverlay } from '@/features/culture/reading/ReadingChrome';
 import { useReadingTracker } from '@/features/culture/reading/useReadingTracker';
 import { ReaderButton, useReaderSettings } from '@/features/culture/reader/ReaderControls';
+import { FocusExitBar, FocusFloatingButton, FocusViewButton } from '@/features/culture/reader/FocusView';
+import { restoreOnSwitch, RESTORE_WINDOW_MS } from '@/features/culture/reader/focusViewRules';
 import { ContentsButton } from '@/features/culture/reader/navigator/ContentsSheet';
 import { DETAIL_FIELDS } from '@/features/culture/itemSections';
 import { SectionBookmark } from '@/features/culture/reading/SectionBookmark';
@@ -73,20 +75,43 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
   const { t, i18n } = useTranslation();
   const { config, experience } = useAgeExperience();
   // Private reading progress (real scroll measurement; resume is offered).
-  const reading = useReadingTracker('culture_item', item.id);
-  // Reader controls (presentation only): body size/spacing + focus mode.
+  // Reader controls (presentation only): body size/spacing + Focus view.
   // A change relays the text, so the reading RATIO is kept, not the pixels.
   const reader = useReaderSettings();
+  const focus = reader.focusMode;
+  // Focus view: scrolling never marks the article read (Mark as read does).
+  const reading = useReadingTracker('culture_item', item.id, { completeByScroll: !focus });
   const bodyStyle = readerBodyStyle(experience === 'child' ? 17 : 16, reader, experience === 'child');
   const readerChanged = useRef(false);
+  const shownFocus = useRef(focus);
+  // Entering/leaving Focus view: back to the SAME section (re-measured by key in the new layout).
+  const pendingSection = useRef<{ key: string; until: number } | null>(null);
+  const applyPendingSection = () => {
+    const pending = pendingSection.current;
+    if (!pending) return;
+    if (Date.now() > pending.until) {
+      pendingSection.current = null;
+      return;
+    }
+    const top = sectionTop(pending.key);
+    // A jump: records no progress or completion until the reader scrolls by hand.
+    if (top !== null) reading.jumpTo(jumpOffset(top), false);
+  };
   useEffect(() => {
     if (!readerChanged.current) {
       readerChanged.current = true;
       return;
     }
+    const change = restoreOnSwitch(shownFocus.current, focus, currentSectionRef.current, navSections.map((section) => section.key));
+    shownFocus.current = focus;
+    if (change.kind === 'section') {
+      pendingSection.current = { key: change.key, until: Date.now() + RESTORE_WINDOW_MS };
+      requestAnimationFrame(applyPendingSection);
+      return;
+    }
     reading.keepPosition();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reader.textSize, reader.lineSpacing, reader.focusMode]);
+  }, [reader.textSize, reader.lineSpacing, focus]);
   // Coming back from a source / the Source Explorer: the same place in the article.
   // Only when it was left from an open Source Lens (never on an ordinary visit).
   useFocusEffect(
@@ -213,10 +238,14 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
   const challengeCollection = challengeCollectionFor(item.id);
   const typeLabel = item.type_label ? t(`culture.item.type.${item.type_label}`) : null;
 
+  // Focus view keeps: text settings, contents and the Focus toggle itself (focusViewRules.ts).
   const actions = (
     <View style={styles.headerActions}>
       <ReaderButton isChild={isChild} elevated={!!heroSource} />
       {toc ? <ContentsButton sections={toc} current={currentSection} onJump={jumpToSection} elevated={!!heroSource} /> : null}
+      <FocusViewButton on={focus} elevated={!!heroSource} />
+      {focus ? null : (
+        <>
       <IconButton icon={Share2} size={40} iconSize={iconSizes.md} shape="roundedSquare" elevated={!!heroSource} accessibilityLabel={t('share.action')} onPress={handleShare} />
       <IconButton
         icon={Heart}
@@ -229,6 +258,8 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
         onPress={onToggleFavorite}
       />
       <AddToCollectionButton contentType="culture_item" contentId={item.id} title={item.title} elevated={!!heroSource} />
+        </>
+      )}
     </View>
   );
 
@@ -237,23 +268,29 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
   return (
     <InlineGlossaryProvider articleItemId={item.id}>
       <View style={styles.root}>
+        <View style={styles.reader}>
+        <FocusFloatingButton on={focus} />
         <ScrollView
           ref={reading.scrollRef}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           onScroll={onScroll}
           scrollEventThrottle={64}
-          onContentSizeChange={reading.onContentSizeChange}
+          onContentSizeChange={(width, height) => {
+            reading.onContentSizeChange(width, height);
+            applyPendingSection();
+          }}
           onLayout={reading.onLayout}
           onScrollBeginDrag={() => {
           lastManualScroll.current = Date.now();
+          pendingSection.current = null;
           reading.onScrollBeginDrag();
         }}
         >
           {/* 1. Hero media - title sits on the photo (serif for teen/adult). */}
           {heroSource ? (
             <HeroEntrance>
-              <View style={[styles.hero, isChild && styles.heroChild, reader.focusMode && styles.heroFocus]}>
+              <View style={[styles.hero, isChild && styles.heroChild, focus && styles.heroFocus]}>
                 {item.image_url ? (
                   // Storage-backed (admin-uploaded, see admin_set_culture_item_image).
                   <ExpoImage source={heroSource as { uri: string }} style={styles.heroImage} contentFit="cover" cachePolicy="disk" transition={reducedMotion ? 0 : 200} accessibilityLabel="" />
@@ -295,6 +332,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
               sectionOffsets.current.body = event.nativeEvent.layout.y;
               // Layout runs child-first: the sections are measured before this container, so retry here.
               scrollToInitialSection();
+              applyPendingSection();
             }}
           >
             {/* 2. Short context: alternative names. (Review state and sources
@@ -324,6 +362,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                 onLayout={(event) => {
                   sectionOffsets.current.fields = event.nativeEvent.layout.y;
                   scrollToInitialSection();
+                  applyPendingSection();
                 }}
               >
                 {filledFields.map((field, index) => (
@@ -333,15 +372,17 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                     onLayout={(event) => {
                       sectionOffsets.current[field.key] = event.nativeEvent.layout.y;
                       scrollToInitialSection();
+                      applyPendingSection();
                     }}
                   >
-                    {index > 0 && !reader.focusMode ? <OymoDivider /> : null}
+                    {index > 0 && !focus ? <OymoDivider /> : null}
                     <Text style={styles.fieldLabel} accessibilityRole="header">
                       {t(field.labelKey)}
                     </Text>
                     {/* Known glossary terms are tappable (first per section, authored forms in this language only). */}
                     <GlossaryText text={item[field.key] as string} language={bodyLanguage} sectionKey={field.key as string} style={[styles.paragraph, isChild && styles.paragraphChild, bodyStyle]} />
                     {/* Save the WHOLE authored section (no fragile text selection). */}
+                    {focus ? null : (
                     <PassageActions
                       contentType="culture_item"
                       contentId={item.id}
@@ -352,12 +393,13 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
                       language={bodyLanguage}
                       simple={isChild}
                     />
+                    )}
                     {/* Reading Companion: bookmark this named section, optionally with your own note. */}
                     <SectionBookmark contentType="culture_item" contentId={item.id} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} articleTitle={item.title} />
                     {/* Source Lens: what OYNO actually records about this section's information. */}
                     <SourceLensToggle article={item} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} />
                     {/* My Questions: a question in your own words, linked to this section by its key. */}
-                    <SaveQuestion articleId={item.id} articleTitle={item.title} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} />
+                    {focus ? null : <SaveQuestion articleId={item.id} articleTitle={item.title} sectionKey={field.key as string} sectionLabel={t(field.labelKey)} />}
                   </View>
                 ))}
               </View>
@@ -365,17 +407,17 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
             {/* 4b. Then & Now - only when the item has real authored
                 historical AND modern fields (derived, never stored). */}
-            <ThenAndNowSection item={item} experience={experience} language={i18n.language} onPressOpen={() => router.push(thenNowRoute(item.id) as never)} />
+            {focus ? null : <ThenAndNowSection item={item} experience={experience} language={i18n.language} onPressOpen={() => router.push(thenNowRoute(item.id) as never)} />}
 
             {/* Key terms: explicit glossary links for this article (no auto-linking). */}
             <KeyTermsSection itemId={item.id} />
 
             {/* Connections: curated cross-topic relationships (explicit, sourced; not same-category browsing). */}
-            {reader.focusMode ? null : <ConnectionsSection type="culture_item" id={item.id} experience={experience} />}
-            {reader.focusMode ? null : <Button label={t('explain.entry')} variant="secondary" accessibilityHint={t('explain.entryHint')} onPress={() => router.push(explainRoute(item.id) as never)} testID="explain-entry" />}
-            {reader.focusMode ? null : <AddToNextVisit kind="article" id={item.id} title={item.title} />}
-            {reader.focusMode ? null : <Button label={t('discoveryBoard.fromArticle')} variant="secondary" onPress={() => router.push(`/culture/board?from=${encodeURIComponent(`culture_item:${item.id}`)}` as never)} accessibilityHint={t('discoveryBoard.fromArticleHint')} testID="board-from-article" />}
-            {reader.focusMode ? null : <Button label={t('compare.free.fromArticle')} variant="secondary" onPress={() => router.push(freeCompareRoute({ left: item.id, right: null }) as never)} testID="compare-from-article" />}
+            {focus ? null : <ConnectionsSection type="culture_item" id={item.id} experience={experience} />}
+            {focus ? null : <Button label={t('explain.entry')} variant="secondary" accessibilityHint={t('explain.entryHint')} onPress={() => router.push(explainRoute(item.id) as never)} testID="explain-entry" />}
+            {focus ? null : <AddToNextVisit kind="article" id={item.id} title={item.title} />}
+            {focus ? null : <Button label={t('discoveryBoard.fromArticle')} variant="secondary" onPress={() => router.push(`/culture/board?from=${encodeURIComponent(`culture_item:${item.id}`)}` as never)} accessibilityHint={t('discoveryBoard.fromArticleHint')} testID="board-from-article" />}
+            {focus ? null : <Button label={t('compare.free.fromArticle')} variant="secondary" onPress={() => router.push(freeCompareRoute({ left: item.id, right: null }) as never)} testID="compare-from-article" />}
 
             {/* 5. Relevant images. */}
             {/* Focus mode: the decorative gallery and related rail step back;
@@ -398,22 +440,27 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
             ) : null}
 
             {/* 6. Save / Journal - secondary, after reading. */}
-            <View style={styles.actionsRow}>
-              <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
-            </View>
+            {focus ? null : (
+              <View style={styles.actionsRow}>
+                <AddToJournalButton type="culture_item" id={item.id} title={item.title} />
+              </View>
+            )}
             <ReadingActions tracker={reading} />
 
             {/* A Topic Quiz that really tests this article comes first; else the collection challenge. */}
-            {topicsForContent('culture_item', item.id, getQuestion).length > 0 ? <TopicQuizLink type="culture_item" id={item.id} /> : challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
+            {focus ? null : topicsForContent('culture_item', item.id, getQuestion).length > 0 ? <TopicQuizLink type="culture_item" id={item.id} /> : challengeCollection ? <TestKnowledgeLink collection={challengeCollection} /> : null}
 
             <SourcesAndNotes contentType="culture_item" level={item.accuracy_level} sources={item.sources} contentId={item.id} />
             <ReportIssueLink contentType="culture_item" contentId={item.id} title={item.title} />
           </View>
 
           {/* 7. Related real items from the same category. */}
-          {reader.focusMode ? null : <RelatedItemsRail item={item} />}
+          {focus ? null : <RelatedItemsRail item={item} />}
         </ScrollView>
         <ReadingOverlay tracker={reading} experience={experience} sectionOffset={resumeOffset} />
+        </View>
+        {/* Focus view's clear exit - in the layout under the article, never over the text. */}
+        <FocusExitBar on={focus} />
         {shareHost}
       </View>
     </InlineGlossaryProvider>
@@ -422,6 +469,7 @@ export function CultureItemDetailScreen({ item, images, audioTracks, initialSect
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  reader: { flex: 1 },
   content: { paddingBottom: spacing.xxl, gap: spacing.lg },
   hero: { width: '100%', aspectRatio: 1.25, borderBottomLeftRadius: cardRadii.hero, borderBottomRightRadius: cardRadii.hero, overflow: 'hidden', backgroundColor: colors.surfaceFeature },
   heroChild: { aspectRatio: 1.05 },

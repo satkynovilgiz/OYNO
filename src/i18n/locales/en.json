@@ -3556,8 +3556,8 @@
       "comfortable": "Comfortable",
       "spacious": "Spacious"
     },
-    "focus": "Focus mode",
-    "focusHint": "Hides the gallery and related stories. Sources and verification always stay.",
+    "focus": "Focus view",
+    "focusHint": "A calmer page: extra buttons, the gallery and related stories step back. Sources, notes, glossary and audio stay.",
     "reset": "Reset reading settings",
     "done": "Done",
     "preview": "The boz üy is a home you can carry - wood, felt and care."
@@ -7781,5 +7781,15 @@
     "colorLabBody": "Try colour combinations for your designs.",
     "shelfBody": "Your saved designs, exhibitions and boards.",
     "needsConnection": "Needs an internet connection"
+  },
+  "focusView": {
+    "enter": "Turn on Focus view",
+    "enterHint": "Hides extra buttons while you read. You stay in the same section.",
+    "exit": "Exit Focus view",
+    "active": "Focus view is on",
+    "activeHint": "Sources, your notes and the glossary are still here.",
+    "announceOn": "Focus view on. Extra buttons are hidden.",
+    "announceOff": "Focus view off. All buttons are back.",
+    "short": "Focus"
   }
 }
