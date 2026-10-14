@@ -140,10 +140,19 @@ export async function nextOnboardingSlide(page: Page, slide: number, total = 3) 
 
 /** No serious / critical axe violations (WCAG 2.1 A/AA + best practice; 'region' off - see docs/ACCESSIBILITY.md). */
 export async function expectNoSeriousViolations(page: Page, label: string) {
+  // react-native-web's Modal gives its dialog `role="dialog"` one effect AFTER mounting (it first
+  // registers in the modal stack); scanning in that frame reports aria-modal-without-role. Wait it out.
+  await expect(page.locator('[aria-modal="true"]:not([role])'), `a modal is still mounting before axe on ${label}`).toHaveCount(0);
   const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice']).disableRules(['region']).analyze();
   const serious = result.violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical');
   expect(
-    serious.map((violation) => `${violation.impact} ${violation.id}: ${violation.help} -> ${violation.nodes.map((node) => node.target.join(' ')).slice(0, 3).join(' | ')}`),
+    serious.map(
+      (violation) =>
+        `${violation.impact} ${violation.id}: ${violation.help} -> ${violation.nodes
+          .map((node) => node.target.join(' '))
+          .slice(0, 3)
+          .join(' | ')}`,
+    ),
     `axe on ${label}`,
   ).toEqual([]);
 }

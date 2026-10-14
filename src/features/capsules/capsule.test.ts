@@ -7,7 +7,26 @@ import { localDateKey } from '@/services/daily/dailyDiscovery';
 import type { MotifLayer } from '@/services/culture/oymoEditor';
 import { CAPSULES_KEY, ownerCapsules, useCapsuleStore } from '@/store/useCapsuleStore';
 
-import { addArticle, clampOpenOn, daysUntil, earliestOpenOn, editDraft, isDue, latestOpenOn, newCapsule, normalizeCapsule, offerDesign, openCapsule, reflect, seal, sealProblems, snapshotDesign, stepDate, takeOfferedDesign, type Capsule } from './capsuleModel';
+import {
+  addArticle,
+  clampOpenOn,
+  daysUntil,
+  earliestOpenOn,
+  editDraft,
+  isDue,
+  latestOpenOn,
+  newCapsule,
+  normalizeCapsule,
+  offerDesign,
+  openCapsule,
+  reflect,
+  seal,
+  sealProblems,
+  snapshotDesign,
+  stepDate,
+  takeOfferedDesign,
+  type Capsule,
+} from './capsuleModel';
 import { CapsuleListScreen, CapsuleScreen } from './CapsuleScreens';
 
 jest.mock('react-i18next', () => ({ initReactI18next: { type: '3rdParty', init: () => undefined }, useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'en' } }) }));
@@ -22,7 +41,14 @@ jest.mock('@/features/games/records/useGameRecords', () => {
 });
 const mockOwner = (jest.requireMock('@/features/games/records/useGameRecords') as { mockOwner: { setState: (state: { owner: string }) => void } }).mockOwner;
 jest.mock('@/features/culture/connections/useConnectionContent', () => ({
-  useConnectionContent: () => ({ get: (type: string, id: string) => (id === 'boz-uy-tunduk' ? { type, id, title: 'Tunduk', image: null } : null), all: () => [], exists: () => false, isLoading: false, waitingForNetwork: false, retry: () => undefined }),
+  useConnectionContent: () => ({
+    get: (type: string, id: string) => (id === 'boz-uy-tunduk' ? { type, id, title: 'Tunduk', image: null } : null),
+    all: () => [],
+    exists: () => false,
+    isLoading: false,
+    waitingForNetwork: false,
+    retry: () => undefined,
+  }),
 }));
 jest.mock('@/components/ui', () => {
   const { createElement: h } = jest.requireActual('react');
@@ -110,7 +136,10 @@ describe('lifecycle', () => {
     offerDesign('user-a', snapshotDesign({ ...design, layers: design.layers.slice(0, 2) }));
     const taken = takeOfferedDesign('user-a')!;
     design.layers[1].color = '#000000';
-    expect(taken.layers.map((entry) => [entry.point.x, entry.color])).toEqual([[5, '#2F5233'], [120, '#2F5233']]);
+    expect(taken.layers.map((entry) => [entry.point.x, entry.color])).toEqual([
+      [5, '#2F5233'],
+      [120, '#2F5233'],
+    ]);
     expect(takeOfferedDesign('user-a')).toBeNull(); // taken once
   });
 
@@ -162,7 +191,10 @@ describe('the screens', () => {
   let screen: ReactTestRenderer;
   const all = (testID: string) => screen.root.findAll((node: ReactTestInstance) => node.props.testID === testID && typeof node.type === 'string');
   const has = (testID: string) => all(testID).length > 0;
-  const press = (testID: string) => act(async () => { await all(testID)[0].props.onPress(); });
+  const press = (testID: string) =>
+    act(async () => {
+      await all(testID)[0].props.onPress();
+    });
   const type = (testID: string, value: string) => act(() => all(testID)[0].props.onChangeText(value));
 
   beforeEach(async () => {
@@ -260,7 +292,10 @@ describe('the screens', () => {
   });
 
   it('a missing article keeps its saved title and says Unavailable', async () => {
-    const opened = openCapsule(seal(addArticle(addArticle(ready(), { type: 'culture_item', id: 'boz-uy-tunduk', titleSnapshot: 'Tunduk' }), { type: 'culture_item', id: 'gone-article', titleSnapshot: 'A removed article 3k' }), '2026-10-10'), '2026-10-11');
+    const opened = openCapsule(
+      seal(addArticle(addArticle(ready(), { type: 'culture_item', id: 'boz-uy-tunduk', titleSnapshot: 'Tunduk' }), { type: 'culture_item', id: 'gone-article', titleSnapshot: 'A removed article 3k' }), '2026-10-10'),
+      '2026-10-11',
+    );
     await useCapsuleStore.getState().save('user-a', opened);
     act(() => {
       screen = create(createElement(CapsuleScreen, { capsuleId: opened.id, onPressBack: () => undefined }));
@@ -271,8 +306,32 @@ describe('the screens', () => {
 });
 
 describe('custom motifs inside a capsule design', () => {
-  const geometry = () => ({ v: 1, name: 'Synthetic star 7c', primitives: [{ kind: 'polygon', points: [[2, 2], [22, 2], [12, 20]] }, { kind: 'circle', cx: 12, cy: 12, r: 4 }, { kind: 'line', x1: 0, y1: 12, x2: 24, y2: 12 }] });
-  const customLayer = (custom: unknown = geometry()): MotifLayer => ({ id: 'layerC', motifId: 'custom:cm-synthetic7c', color: '#7A3226', point: { x: 150, y: 90 }, rotation: 30, scale: 1.5, visible: true, custom: custom as MotifLayer['custom'] });
+  const geometry = () => ({
+    v: 1,
+    name: 'Synthetic star 7c',
+    primitives: [
+      {
+        kind: 'polygon',
+        points: [
+          [2, 2],
+          [22, 2],
+          [12, 20],
+        ],
+      },
+      { kind: 'circle', cx: 12, cy: 12, r: 4 },
+      { kind: 'line', x1: 0, y1: 12, x2: 24, y2: 12 },
+    ],
+  });
+  const customLayer = (custom: unknown = geometry()): MotifLayer => ({
+    id: 'layerC',
+    motifId: 'custom:cm-synthetic7c',
+    color: '#7A3226',
+    point: { x: 150, y: 90 },
+    rotation: 30,
+    scale: 1.5,
+    visible: true,
+    custom: custom as MotifLayer['custom'],
+  });
 
   beforeEach(async () => {
     await AsyncStorage.clear();

@@ -28,15 +28,7 @@ import { clampViewport, MAX_ZOOM, MIN_ZOOM, type Viewport } from './canvasViewpo
  *
  * Pure and session-only: nothing here touches layers or is saved.
  */
-export type GestureSession = {
-  viewport: Viewport;
-  base: Viewport;
-  translationBase: Point;
-  scaleBase: number;
-  focal: Point;
-  pan: Point | null;
-  pinch: { scale: number; focal: Point } | null;
-};
+export type GestureSession = { viewport: Viewport; base: Viewport; translationBase: Point; scaleBase: number; focal: Point; pan: Point | null; pinch: { scale: number; focal: Point } | null };
 
 /** After a pan/pinch ends, a tap in this window is treated as part of it (a finger lifting late) and never places. */
 export const TAP_QUIET_MS = 250;

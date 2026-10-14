@@ -7797,7 +7797,7 @@
     "zoomOut": "Zoom out",
     "reset": "Reset view",
     "zoomLevel": "Zoom {{percent}}%",
-    "gestureHint": "Drag to move around, pinch to zoom. Zooming never changes the design.",
+    "gestureHint": "Drag to move around, pinch to zoom. Drag the selected motif to move it. Zooming never changes the design.",
     "position": "Position",
     "xLabel": "Horizontal position, 0 to {{max}}",
     "yLabel": "Vertical position, 0 to {{max}}",
@@ -7918,6 +7918,29 @@
       "paper": "Paper",
       "forest": "Forest",
       "felt": "Felt red"
+    }
+  },
+  "guides": {
+    "title": "Guides",
+    "grid": "Grid",
+    "axes": "Centre lines",
+    "margins": "Safe margin",
+    "spacing": "Grid spacing",
+    "spacingValue_one": "Every {{count}} point",
+    "spacingValue_few": "Every {{count}} points",
+    "spacingValue_many": "Every {{count}} points",
+    "spacingValue_other": "Every {{count}} points",
+    "snap": "Snap to guides",
+    "freeHintWeb": "Hold Alt (Option on a Mac) while you place or drag to position freely. Guides are never part of the design.",
+    "freeHint": "Turn snapping off to place freely. Guides are never part of the design.",
+    "snapNeedsGuide": "Show a guide to snap to it. Guides are never part of the design.",
+    "preview": "Preview artwork",
+    "backToEditing": "Back to editing",
+    "previewNote": "Guides, symmetry lines and the selection are hidden: this is the artwork as it will be saved and shared. Taps don't edit while previewing.",
+    "snapped": {
+      "axis": "Snapped to a centre line: {{x}}, {{y}}",
+      "margin": "Snapped to the safe margin: {{x}}, {{y}}",
+      "grid": "Snapped to the grid: {{x}}, {{y}}"
     }
   }
 }

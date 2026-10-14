@@ -59,12 +59,40 @@ const isDate = (value: unknown): value is string => {
 };
 
 export function newCapsule(now = new Date()): Capsule {
-  return { id: `tc${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`, status: 'draft', title: '', message: '', articles: [], design: null, openOn: null, createdAt: now.toISOString(), sealedAt: null, openedAt: null, openedEarly: false, reflection: '', reflectedAt: null };
+  return {
+    id: `tc${now.getTime().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+    status: 'draft',
+    title: '',
+    message: '',
+    articles: [],
+    design: null,
+    openOn: null,
+    createdAt: now.toISOString(),
+    sealedAt: null,
+    openedAt: null,
+    openedEarly: false,
+    reflection: '',
+    reflectedAt: null,
+  };
 }
 
 /** A deep, independent copy of an Oymo design (later edits to the design can't reach it). */
 export function snapshotDesign(design: { layers: readonly MotifLayer[]; backgroundColor: string; symmetry: SymmetryMode }, now = new Date()): DesignSnapshot {
-  return { layers: design.layers.map((layer) => ({ id: layer.id, motifId: layer.motifId, color: layer.color, point: { x: layer.point.x, y: layer.point.y }, rotation: layer.rotation, scale: layer.scale, visible: layer.visible, ...carryEmbedded(layer.motifId, layer.custom) })), backgroundColor: design.backgroundColor, symmetry: design.symmetry, takenAt: now.toISOString() };
+  return {
+    layers: design.layers.map((layer) => ({
+      id: layer.id,
+      motifId: layer.motifId,
+      color: layer.color,
+      point: { x: layer.point.x, y: layer.point.y },
+      rotation: layer.rotation,
+      scale: layer.scale,
+      visible: layer.visible,
+      ...carryEmbedded(layer.motifId, layer.custom),
+    })),
+    backgroundColor: design.backgroundColor,
+    symmetry: design.symmetry,
+    takenAt: now.toISOString(),
+  };
 }
 
 /* ---------- dates ---------- */
@@ -129,7 +157,10 @@ export function editDraft(capsule: Capsule, patch: Partial<Pick<Capsule, 'title'
 }
 const dedupeArticles = (articles: readonly ArticleRef[]) => {
   const seen = new Set<string>();
-  return articles.filter((entry) => !seen.has(`${entry.type}:${entry.id}`) && seen.add(`${entry.type}:${entry.id}`)).slice(0, MAX_ARTICLES).map((entry) => ({ type: entry.type, id: entry.id, titleSnapshot: clean(entry.titleSnapshot, 120) }));
+  return articles
+    .filter((entry) => !seen.has(`${entry.type}:${entry.id}`) && seen.add(`${entry.type}:${entry.id}`))
+    .slice(0, MAX_ARTICLES)
+    .map((entry) => ({ type: entry.type, id: entry.id, titleSnapshot: clean(entry.titleSnapshot, 120) }));
 };
 export function addArticle(capsule: Capsule, article: ArticleRef): Capsule {
   if (capsule.articles.length >= MAX_ARTICLES) return capsule;
@@ -167,7 +198,18 @@ function normalizeDesign(raw: unknown): DesignSnapshot | null {
   if (!Array.isArray(value.layers) || typeof value.backgroundColor !== 'string' || !MODES.includes(value.symmetry as string)) return null;
   const layers = value.layers.flatMap((layer): MotifLayer[] => {
     if (!layer || typeof layer !== 'object' || typeof layer.motifId !== 'string' || typeof layer.color !== 'string' || !layer.point || typeof layer.point.x !== 'number' || typeof layer.point.y !== 'number') return [];
-    return [{ id: typeof layer.id === 'string' ? layer.id : 'layer', motifId: layer.motifId, color: layer.color, point: { x: layer.point.x, y: layer.point.y }, rotation: Number(layer.rotation) || 0, scale: Number(layer.scale) || 1, visible: layer.visible !== false, ...carryEmbedded(layer.motifId, layer.custom) }];
+    return [
+      {
+        id: typeof layer.id === 'string' ? layer.id : 'layer',
+        motifId: layer.motifId,
+        color: layer.color,
+        point: { x: layer.point.x, y: layer.point.y },
+        rotation: Number(layer.rotation) || 0,
+        scale: Number(layer.scale) || 1,
+        visible: layer.visible !== false,
+        ...carryEmbedded(layer.motifId, layer.custom),
+      },
+    ];
   });
   return { layers: layers.slice(0, MAX_OYMO_LAYERS), backgroundColor: value.backgroundColor, symmetry: value.symmetry as SymmetryMode, takenAt: typeof value.takenAt === 'string' ? value.takenAt : '' };
 }
@@ -184,7 +226,9 @@ export function normalizeCapsule(raw: unknown): Capsule | null {
     status,
     title: clean(value.title, TITLE_MAX),
     message: clean(value.message, MESSAGE_MAX),
-    articles: Array.isArray(value.articles) ? dedupeArticles(value.articles.filter((entry): entry is ArticleRef => !!entry && (entry.type === 'culture_item' || entry.type === 'culture_material') && typeof entry.id === 'string' && SAFE_ID.test(entry.id))) : [],
+    articles: Array.isArray(value.articles)
+      ? dedupeArticles(value.articles.filter((entry): entry is ArticleRef => !!entry && (entry.type === 'culture_item' || entry.type === 'culture_material') && typeof entry.id === 'string' && SAFE_ID.test(entry.id)))
+      : [],
     design: normalizeDesign(value.design),
     openOn,
     createdAt: typeof value.createdAt === 'string' ? value.createdAt : new Date(0).toISOString(),

@@ -45,6 +45,8 @@ import { bounded, cards, colors, headings, iconSizes, layout, radii, spacing, te
 import { CANVAS_SIZE, OymoCanvas } from './components/OymoCanvas';
 import { OymoArtwork } from './components/OymoArtwork';
 import { PositionControls, ZoomControls } from './canvas/CanvasControls';
+import { DEFAULT_GUIDES, type GuideSettings } from './guides/compositionGuides';
+import { GuideControls } from './guides/GuideControls';
 import { setPreviewSource } from './surfaces/surfacesModel';
 import { SectionError, StateMessage } from '@/components/state/ScreenState';
 import { IDENTITY, type Viewport } from './canvas/canvasViewport';
@@ -119,12 +121,20 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
     pushEntry({ state: next, symmetry: symmetryMode, label, ...(motifId ? { motifId } : {}) });
   }
 
-  /** Precise moves of one layer in a row are ONE undo step (and one recipe step). */
+  /**
+   * Precise moves of one layer in a row are ONE undo step (and one recipe step).
+   * A drag on the canvas is committed once, on release, as its own step (`coalesce: false`).
+   */
   const lastMove = useRef<{ layerId: string; index: number } | null>(null);
-  function applyMove(layerId: string, mutate: (state: OymoEditorState) => OymoEditorState) {
+  function applyMove(layerId: string, mutate: (state: OymoEditorState) => OymoEditorState, coalesce = true) {
     const next = mutate(editorState);
     if (next === editorState) return;
     const entry: HistoryEntry = { state: next, symmetry: symmetryMode, label: 'move' };
+    if (!coalesce) {
+      pushEntry(entry);
+      lastMove.current = null;
+      return;
+    }
     const continues = lastMove.current?.layerId === layerId && lastMove.current.index === historyIndex && history[historyIndex]?.label === 'move' && historyIndex === history.length - 1;
     if (continues) {
       setOpenedCreationId(null);
@@ -137,6 +147,9 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
 
   // Zoom / pan: a view of the artwork for this session only (never saved, never exported).
   const [viewport, setViewport] = useState<Viewport>(IDENTITY);
+  // Composition guides and the final-artwork preview: session view settings, never part of the design.
+  const [guides, setGuides] = useState<GuideSettings>(DEFAULT_GUIDES);
+  const [preview, setPreview] = useState(false);
 
   /** A symmetry change is an undoable step of its own (and part of the recipe). */
   function setSymmetryMode(mode: SymmetryMode) {
@@ -191,11 +204,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
   }
 
   function loadCreation(creation: OymoCreationRow) {
-    const loaded: OymoEditorState = {
-      layers: creation.layers,
-      backgroundColor: creation.background_color,
-      nextId: creation.layers.length,
-    };
+    const loaded: OymoEditorState = { layers: creation.layers, backgroundColor: creation.background_color, nextId: creation.layers.length };
     setViewport(IDENTITY);
     setHistory([{ state: loaded, symmetry: creation.symmetry_mode, label: 'load' }]);
     setHistoryIndex(0);
@@ -238,12 +247,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
     const before = new Set((queryClient.getQueryData<OymoCreationRow[]>(OYMO_CREATIONS_QUERY_KEY) ?? creations ?? []).map((creation) => creation.id));
     const recipe = includeRecipe ? recipeFromHistory(history, historyIndex) : null;
     const saved = { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode };
-    const success = await useProgressStore.getState().saveOymoCreation({
-      name,
-      layers: editorState.layers,
-      backgroundColor: editorState.backgroundColor,
-      symmetryMode,
-    });
+    const success = await useProgressStore.getState().saveOymoCreation({ name, layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetryMode });
     setIsSaving(false);
     if (success) {
       setShowSaveModal(false);
@@ -326,10 +330,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
           />
           {showBackgroundColors && (
             <View style={styles.backgroundPicker}>
-              <ColorSwatches
-                selectedColor={editorState.backgroundColor}
-                onSelectColor={(color) => applyMutation((state) => setBackgroundColor(state, color), 'background')}
-              />
+              <ColorSwatches selectedColor={editorState.backgroundColor} onSelectColor={(color) => applyMutation((state) => setBackgroundColor(state, color), 'background')} />
             </View>
           )}
         </View>
@@ -361,45 +362,101 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
         <LabAboutNote lab="oymo" />
         {handoff ? (
           <Text style={styles.handoffNote} testID="oymo-handoff-note">
-            {handoff.source === 'symmetry' ? t('symmetryPlayground.openedCopy') : handoff.source === 'recipe' ? t('culture.oymo.recipe.openedCopy') : handoff.source === 'remember' ? t('rememberPattern.openedCopy') : handoff.source === 'remix' ? t('remixStudio.openedCopy') : handoff.source === 'detective' ? t('patternDetective.openedCopy') : handoff.source === 'border' ? t('borderWorkshop.openedCopy') : handoff.source === 'together' ? t('createTogether.openedCopy') : handoff.source === 'colorLab' ? t('colorLab.openedCopy') : handoff.source === 'milestone' ? t('milestones.openedCopy') : handoff.source === 'customMotif' ? t('customMotif.openedCopy') : t('restorePattern.openedCopy')}
+            {handoff.source === 'symmetry'
+              ? t('symmetryPlayground.openedCopy')
+              : handoff.source === 'recipe'
+                ? t('culture.oymo.recipe.openedCopy')
+                : handoff.source === 'remember'
+                  ? t('rememberPattern.openedCopy')
+                  : handoff.source === 'remix'
+                    ? t('remixStudio.openedCopy')
+                    : handoff.source === 'detective'
+                      ? t('patternDetective.openedCopy')
+                      : handoff.source === 'border'
+                        ? t('borderWorkshop.openedCopy')
+                        : handoff.source === 'together'
+                          ? t('createTogether.openedCopy')
+                          : handoff.source === 'colorLab'
+                            ? t('colorLab.openedCopy')
+                            : handoff.source === 'milestone'
+                              ? t('milestones.openedCopy')
+                              : handoff.source === 'customMotif'
+                                ? t('customMotif.openedCopy')
+                                : t('restorePattern.openedCopy')}
           </Text>
         ) : null}
-        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/restore' as never)} accessibilityRole="button" accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`} testID="restore-entry">
+        <AnimatedPressable
+          style={styles.restoreEntry}
+          onPress={() => router.push('/culture/oymo/restore' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('restorePattern.title')}. ${t('restorePattern.entryMeta')}`}
+          testID="restore-entry"
+        >
           <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('restorePattern.title')}</Text>
             <Text style={styles.restoreMeta}>{t('restorePattern.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
-        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/remember' as never)} accessibilityRole="button" accessibilityLabel={`${t('rememberPattern.title')}. ${t('rememberPattern.entryMeta')}`} testID="remember-entry">
+        <AnimatedPressable
+          style={styles.restoreEntry}
+          onPress={() => router.push('/culture/oymo/remember' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('rememberPattern.title')}. ${t('rememberPattern.entryMeta')}`}
+          testID="remember-entry"
+        >
           <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('rememberPattern.title')}</Text>
             <Text style={styles.restoreMeta}>{t('rememberPattern.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
-        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/together' as never)} accessibilityRole="button" accessibilityLabel={`${t('createTogether.title')}. ${t('createTogether.entryMeta')}`} testID="together-create-entry">
+        <AnimatedPressable
+          style={styles.restoreEntry}
+          onPress={() => router.push('/culture/oymo/together' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('createTogether.title')}. ${t('createTogether.entryMeta')}`}
+          testID="together-create-entry"
+        >
           <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('createTogether.title')}</Text>
             <Text style={styles.restoreMeta}>{t('createTogether.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
-        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/border' as never)} accessibilityRole="button" accessibilityLabel={`${t('borderWorkshop.title')}. ${t('borderWorkshop.entryMeta')}`} testID="border-entry">
+        <AnimatedPressable
+          style={styles.restoreEntry}
+          onPress={() => router.push('/culture/oymo/border' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('borderWorkshop.title')}. ${t('borderWorkshop.entryMeta')}`}
+          testID="border-entry"
+        >
           <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('borderWorkshop.title')}</Text>
             <Text style={styles.restoreMeta}>{t('borderWorkshop.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
-        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/pattern-detective' as never)} accessibilityRole="button" accessibilityLabel={`${t('patternDetective.title')}. ${t('patternDetective.entryMeta')}`} testID="detective-entry">
+        <AnimatedPressable
+          style={styles.restoreEntry}
+          onPress={() => router.push('/culture/oymo/pattern-detective' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('patternDetective.title')}. ${t('patternDetective.entryMeta')}`}
+          testID="detective-entry"
+        >
           <Shapes size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('patternDetective.title')}</Text>
             <Text style={styles.restoreMeta}>{t('patternDetective.entryMeta')}</Text>
           </View>
         </AnimatedPressable>
-        <AnimatedPressable style={styles.restoreEntry} onPress={() => router.push('/culture/oymo/symmetry' as never)} accessibilityRole="button" accessibilityLabel={`${t('symmetryPlayground.title')}. ${t('symmetryPlayground.entryMeta')}`} testID="symmetry-entry">
+        <AnimatedPressable
+          style={styles.restoreEntry}
+          onPress={() => router.push('/culture/oymo/symmetry' as never)}
+          accessibilityRole="button"
+          accessibilityLabel={`${t('symmetryPlayground.title')}. ${t('symmetryPlayground.entryMeta')}`}
+          testID="symmetry-entry"
+        >
           <Wand2 size={iconSizes.md} color={colors.primary} strokeWidth={2} />
           <View style={{ flex: 1 }}>
             <Text style={styles.restoreTitle}>{t('symmetryPlayground.title')}</Text>
@@ -426,10 +483,14 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
               onSelectLayer={handleSelectLayer}
               viewport={viewport}
               onViewportChange={setViewport}
+              guides={guides}
+              preview={preview}
+              onMoveLayer={(layerId, point) => applyMove(layerId, (state) => moveLayerTo(state, layerId, point, CANVAS_SIZE), false)}
             />
             <ZoomControls viewport={viewport} size={CANVAS_SIZE} onChange={setViewport} />
+            <GuideControls settings={guides} onChange={setGuides} preview={preview} onPreviewChange={setPreview} />
 
-            {selectedLayer && (
+            {selectedLayer && !preview && (
               <TransformToolbar
                 onRotate={() => applyMutation((state) => rotateLayer(state, selectedLayer.id), 'rotate')}
                 onScaleUp={() => applyMutation((state) => scaleLayer(state, selectedLayer.id), 'scale')}
@@ -441,7 +502,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
                 }}
               />
             )}
-            {selectedLayer ? (
+            {selectedLayer && !preview ? (
               <PositionControls
                 point={selectedLayer.point}
                 size={CANVAS_SIZE}
@@ -469,18 +530,74 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
           </>
         )}
 
-        {editorState.layers.length > 0 ? <Button label={t('timeCapsule.fromCreator')} variant="secondary" accessibilityHint={t('timeCapsule.fromCreatorHint')} onPress={() => { offerDesign(owner, snapshotDesign({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })); router.push('/profile/capsules/new' as never); }} testID="oymo-to-capsule" /> : null}
-        {milestoneParent && creations?.some((creation) => creation.id === milestoneParent) ? <MilestoneBar owner={owner} creationId={milestoneParent} snapshot={() => ({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })} /> : null}
+        {editorState.layers.length > 0 ? (
+          <Button
+            label={t('timeCapsule.fromCreator')}
+            variant="secondary"
+            accessibilityHint={t('timeCapsule.fromCreatorHint')}
+            onPress={() => {
+              offerDesign(owner, snapshotDesign({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }));
+              router.push('/profile/capsules/new' as never);
+            }}
+            testID="oymo-to-capsule"
+          />
+        ) : null}
+        {milestoneParent && creations?.some((creation) => creation.id === milestoneParent) ? (
+          <MilestoneBar owner={owner} creationId={milestoneParent} snapshot={() => ({ layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode })} />
+        ) : null}
         <Button label={t('customMotif.entry')} variant="secondary" accessibilityHint={t('customMotif.entryHint')} onPress={() => router.push('/culture/oymo/motifs' as never)} testID="oymo-custom-motifs" />
-        {editorState.layers.length > 0 ? <Button label={t('surfaces.entry')} variant="secondary" accessibilityHint={t('surfaces.entryHint')} onPress={() => { setPreviewSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }); router.push('/culture/oymo/preview' as never); }} testID="oymo-surface-preview" /> : null}
-        {editorState.layers.length > 0 ? <Button label={t('colorLab.entry')} variant="secondary" accessibilityHint={t('colorLab.entryHint')} onPress={() => { setColorLabSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }, openedCreation?.name ?? null); router.push('/culture/oymo/colors' as never); }} testID="oymo-color-lab" /> : null}
-        {editorState.layers.length > 0 ? <Button label={t('stencil.entry')} variant="secondary" accessibilityHint={t('stencil.entryHint')} onPress={() => { setStencilSource(owner, { layers: editorState.layers, symmetry: symmetryMode, name: openedCreation?.name ?? null }); router.push('/culture/oymo/stencil' as never); }} testID="oymo-make-stencil" /> : null}
+        {editorState.layers.length > 0 ? (
+          <Button
+            label={t('surfaces.entry')}
+            variant="secondary"
+            accessibilityHint={t('surfaces.entryHint')}
+            onPress={() => {
+              setPreviewSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode });
+              router.push('/culture/oymo/preview' as never);
+            }}
+            testID="oymo-surface-preview"
+          />
+        ) : null}
+        {editorState.layers.length > 0 ? (
+          <Button
+            label={t('colorLab.entry')}
+            variant="secondary"
+            accessibilityHint={t('colorLab.entryHint')}
+            onPress={() => {
+              setColorLabSource(owner, { layers: editorState.layers, backgroundColor: editorState.backgroundColor, symmetry: symmetryMode }, openedCreation?.name ?? null);
+              router.push('/culture/oymo/colors' as never);
+            }}
+            testID="oymo-color-lab"
+          />
+        ) : null}
+        {editorState.layers.length > 0 ? (
+          <Button
+            label={t('stencil.entry')}
+            variant="secondary"
+            accessibilityHint={t('stencil.entryHint')}
+            onPress={() => {
+              setStencilSource(owner, { layers: editorState.layers, symmetry: symmetryMode, name: openedCreation?.name ?? null });
+              router.push('/culture/oymo/stencil' as never);
+            }}
+            testID="oymo-make-stencil"
+          />
+        ) : null}
         {editorState.layers.length > 0 ? <Button label={t('remixStudio.entry')} variant="secondary" onPress={openRemixStudio} accessibilityHint={t('remixStudio.entryHint')} testID="oymo-explore-variations" /> : null}
         {/* Pattern Recipe: replay how this design was built (this session), or a saved creation's recipe. */}
-        {history.length > 1 || historyIndex > 0 ? <Button label={t('culture.oymo.recipe.replayThis')} variant="secondary" onPress={openSessionRecipe} accessibilityHint={t('culture.oymo.recipe.replayThisHint')} testID="oymo-replay-session" /> : null}
-        {openedCreationId && openedHasRecipe ? <Button label={t('culture.oymo.recipe.replaySaved')} variant="secondary" onPress={() => router.push(`/culture/oymo/recipe?creation=${encodeURIComponent(openedCreationId)}` as never)} testID="oymo-replay-saved" /> : null}
+        {history.length > 1 || historyIndex > 0 ? (
+          <Button label={t('culture.oymo.recipe.replayThis')} variant="secondary" onPress={openSessionRecipe} accessibilityHint={t('culture.oymo.recipe.replayThisHint')} testID="oymo-replay-session" />
+        ) : null}
+        {openedCreationId && openedHasRecipe ? (
+          <Button label={t('culture.oymo.recipe.replaySaved')} variant="secondary" onPress={() => router.push(`/culture/oymo/recipe?creation=${encodeURIComponent(openedCreationId)}` as never)} testID="oymo-replay-saved" />
+        ) : null}
         {openedCreationId && creations?.some((creation) => creation.id === openedCreationId) ? (
-          <Button label={t('postcard.entry')} variant="secondary" onPress={() => router.push(`/culture/oymo/postcard?pattern=${encodeURIComponent(openedCreationId)}` as never)} accessibilityHint={t('postcard.entryHint')} testID="oymo-create-postcard" />
+          <Button
+            label={t('postcard.entry')}
+            variant="secondary"
+            onPress={() => router.push(`/culture/oymo/postcard?pattern=${encodeURIComponent(openedCreationId)}` as never)}
+            accessibilityHint={t('postcard.entryHint')}
+            testID="oymo-create-postcard"
+          />
         ) : null}
 
         {/* Saved designs: loading, failed and empty are different things (a failure is never shown as "no designs"). */}
@@ -536,13 +653,7 @@ export function OymoCreatorScreen({ onPressBack, initialCreationId = null }: Oym
 
 function TabButton({ icon: Icon, label, active, onPress }: { icon: typeof Shapes; label: string; active: boolean; onPress: () => void }) {
   return (
-    <AnimatedPressable
-      style={[styles.tab, active && styles.tabActive]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected: active }}
-    >
+    <AnimatedPressable style={[styles.tab, active && styles.tabActive]} onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active }}>
       <Icon size={iconSizes.md} color={active ? colors.primary : colors.textSecondary} strokeWidth={2.25} />
       <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
     </AnimatedPressable>
