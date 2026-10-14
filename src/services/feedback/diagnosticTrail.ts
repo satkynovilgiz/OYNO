@@ -26,7 +26,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * it is replaced. Kept in step with the route files by a test.
  */
 export const KNOWN_TOP_LEVEL_ROUTES = [
-  'achievements', 'activities', 'admin', 'age-group', 'appearance', 'auth-callback', 'avatar-editor', 'challenges', 'character-select', 'collection', 'collections',
+  'achievements', 'activities', 'admin', 'age-group', 'appearance', 'auth-callback', 'avatar-editor', 'challenges', 'character-select', 'collection', 'collections', 'create',
   'culture', 'daily', 'explore', 'festival', 'forgot-password', 'games', 'home', 'journal', 'journey', 'language', 'learn', 'notifications', 'offline', 'onboarding',
   'open', 'prepare-offline', 'profile', 'profile-setup', 'quests', 'reset-password', 'saved', 'search', 'settings', 'sign-in', 'start', 'sign-up', 'study', 'trails', 'verify-email',
   'verify-reset-code', 'whats-new',

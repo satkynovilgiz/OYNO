@@ -42,6 +42,10 @@ import { cultureTileAssets } from './mockData';
 import { mockGamesList } from '@/features/games/mockData';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 import { useHomeRecommendation } from './useHomeRecommendation';
+import { HomePrimary } from './primary/HomePrimary';
+import { HomeDestinations } from './primary/HomeDestinationsRow';
+import { heroShowsRecommendation } from './primary/homePrimaryModel';
+import { useHomeContinue } from './primary/useHomeContinue';
 
 /** Home's own tile ids map onto Culture's category routes 1:1, except
  * "culture" (the hub itself) and "map" (a different feature entirely). */
@@ -84,6 +88,8 @@ export function HomeScreen() {
   const progress = useProgressStore();
   const { isLoading: todayLoading, discovery: todayDiscovery } = useTodayDiscovery();
   const { recommendation, display: recommendationDisplay, recent } = useHomeRecommendation();
+  const hasPlayed = Object.values(progress.gameStats).some((stats) => (stats?.played ?? 0) > 0);
+  const continueState = useHomeContinue({ recommendation, hasRecent: recent.length > 0, hasPlayed });
 
   // Product analytics only: which kind of content was recommended/opened -
   // content type + id, never content text or user data.
@@ -159,7 +165,8 @@ export function HomeScreen() {
         // The ONE primary recommendation (buildHomeJourneyRecommendation).
         return (
           <View key={id} style={styles.horizontalPad}>
-            <HomeJourneyCard recommendation={recommendation} display={recommendationDisplay} onPress={openRecommendation} />
+            {/* A continuation lives in the Continue card above - never shown twice. */}
+            {heroShowsRecommendation(recommendation) ? <HomeJourneyCard recommendation={recommendation} display={recommendationDisplay} onPress={openRecommendation} /> : null}
             {/* Cultural Calendar: only on/just before a curated date. */}
             <CalendarHomeCard />
             <WhatsNewHomeEntry />
@@ -251,8 +258,11 @@ export function HomeScreen() {
           />
         </ScreenEntrance>
 
-        <View style={styles.horizontalPad}>
-          <FirstUseHomeCard />
+        <View style={[styles.horizontalPad, styles.primaryBlock]}>
+          <FirstUseHomeCard offerOnly />
+          {/* Discover / Create / Continue - static tiles first, so Home is never blank while data loads. */}
+          <HomePrimary state={continueState} journeyDisplay={recommendationDisplay} />
+          <HomeDestinations />
         </View>
 
         <AgeExperienceTransition style={styles.sectionList}>
@@ -288,5 +298,8 @@ const styles = StyleSheet.create({
   },
   horizontalPad: {
     paddingHorizontal: spacing.md,
+  },
+  primaryBlock: {
+    gap: spacing.md,
   },
 });

@@ -7739,5 +7739,47 @@
     "count_few": "{{count}} records",
     "count_many": "{{count}} records",
     "count_other": "{{count}} records"
+  },
+  "homePrimary": {
+    "title": "What would you like to do?",
+    "newTitle": "Where to begin",
+    "newBody": "Start with Discover: read a short article about Kyrgyz culture. Create lets you make your own ornament.",
+    "startHere": "Start here",
+    "more": "More in OYNO",
+    "discover": {
+      "title": "Discover",
+      "body": "Read about Kyrgyz culture, crafts and music"
+    },
+    "create": {
+      "title": "Create",
+      "body": "Make ornaments, shyrdak and yurt designs"
+    },
+    "continue": {
+      "title": "Continue",
+      "checking": "Checking for unfinished work",
+      "emptyNew": "Nothing to continue yet. Work you start will appear here.",
+      "emptyReturning": "Nothing unfinished right now. Pick Discover or Create to start something new.",
+      "unsavedMany_one": "{{count}} piece of unsaved work",
+      "unsavedMany_few": "{{count}} pieces of unsaved work",
+      "unsavedMany_many": "{{count}} pieces of unsaved work",
+      "unsavedMany_other": "{{count}} pieces of unsaved work",
+      "unsavedMemory": "Unsaved changes. They are kept only until the app is closed.",
+      "unsavedKept": "Unsaved changes, kept on this device.",
+      "openWork": "Open and finish",
+      "openRecovery": "Open Recovery Center"
+    }
+  },
+  "createHub": {
+    "title": "Create",
+    "intro": "Everything for making things in OYNO, in one place.",
+    "groups": {
+      "make": "Make something",
+      "tools": "Tools",
+      "work": "Your work"
+    },
+    "motifsBody": "Draw your own motifs to use in designs.",
+    "colorLabBody": "Try colour combinations for your designs.",
+    "shelfBody": "Your saved designs, exhibitions and boards.",
+    "needsConnection": "Needs an internet connection"
   }
 }

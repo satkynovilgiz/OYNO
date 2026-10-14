@@ -87,8 +87,9 @@ test('skip from Home; resume an unfinished guide after a reload', async ({ page,
   await page.getByTestId('first-use-open-article').click();
   await expect(page).toHaveURL(/\/culture\/item\//);
   await page.goto('/home');
-  await expect(page.getByTestId('first-use-card-continue')).toBeVisible();
-  await page.getByTestId('first-use-card-start').click();
+  // The started guide is Home's one Continue card.
+  await expect(page.getByTestId('home-continue-guide')).toBeVisible();
+  await page.getByTestId('home-continue-open').click();
   await expect(page.getByTestId('first-use-step-create')).toContainText('Now');
   expectNoPageErrors(errors);
 });

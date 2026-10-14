@@ -40,6 +40,7 @@ export type AnalyticsEventName =
   | 'age_group_selected'
   | 'home_recommendation_shown'
   | 'home_recommendation_opened'
+  | 'home_primary_opened'
   | 'reminder_enabled'
   | 'reminder_disabled'
   | 'reminder_opened'

@@ -299,7 +299,8 @@ export function FirstUseScreen({ onPressBack }: { onPressBack: () => void }) {
 }
 
 /** Home: offered once after onboarding (per owner); "Continue" while a run is unfinished. */
-export function FirstUseHomeCard() {
+/** `offerOnly`: Home's Continue card already carries the started guide. */
+export function FirstUseHomeCard({ offerOnly = false }: { offerOnly?: boolean } = {}) {
   const { t } = useTranslation();
   const owner = useRecordsOwner();
   const status = useFirstUseStore((state) => state.status);
@@ -311,7 +312,7 @@ export function FirstUseHomeCard() {
   }, []);
   if (status !== 'ready' || signedOutGate) return null;
   const kind = homeCard(record);
-  if (!kind) return null;
+  if (!kind || (offerOnly && kind !== 'offer')) return null;
   return (
     <View style={styles.homeCard} testID={`first-use-card-${kind}`}>
       <Text style={styles.cardTitle}>{kind === 'offer' ? t('firstUse.cardTitle') : t('firstUse.cardContinueTitle')}</Text>
