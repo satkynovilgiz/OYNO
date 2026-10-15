@@ -55,6 +55,7 @@ function looksPrivate(segment: string): boolean {
  *   /culture/board/<id>              (a person's Discovery Board)
  *   /profile/capsules/<id>           (a person's Time Capsule)
  *   /profile/oymo-portfolios/<id>    (a person's Oymo Design Portfolio)
+ *   /profile/workspaces/<type:id>    (a person's project workspace)
  *   /open/<type>/<id>                unknown type -> both replaced
  *   /<auth screen>/<anything>
  *   /<unknown top-level route>/...   the whole path is unknown text
@@ -70,6 +71,7 @@ function privateByStructure(segments: string[], index: number): boolean {
   if (first === 'profile' && second === 'capsules') return index >= 2;
   if (first === 'profile' && second === 'oymo-portfolios') return index >= 2;
   if (first === 'profile' && second === 'scrapbooks') return index >= 2;
+  if (first === 'profile' && second === 'workspaces') return index >= 2;
   if (first === 'profile' && second === 'questions') return index >= 2;
   if (first === 'profile' && second === 'tags') return index >= 2;
   if (first === 'culture' && second === 'komuz' && segments[2] === 'compare') return index >= 3;

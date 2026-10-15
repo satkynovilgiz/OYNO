@@ -64,3 +64,7 @@ labels or search results.
 Not e2e-tested: saved designs (the e2e backend has no sign-in) and the
 Creator's new `?creation=` param. Both are covered only by the adapter
 unit test.
+
+## Project workspaces (2026-10-14)
+
+Designs and exhibitions have an "Open workspace" button beside their row (docs/PROJECT_WORKSPACE.md). The source hook now lives in `shelf/useShelfSources.ts`, shared with the workspaces.

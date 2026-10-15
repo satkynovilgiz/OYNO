@@ -37,7 +37,17 @@ const iso = (value: unknown): string | null => (typeof value === 'string' && !Nu
 const titleOf = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : null);
 
 export function designItems(rows: readonly OymoCreationRow[]): ShelfItem[] {
-  return rows.map((row) => ({ key: `design:${row.id}`, type: 'design', id: row.id, title: titleOf(row.name), createdAt: iso(row.created_at), updatedAt: iso(row.updated_at), route: `/culture/oymo/create?creation=${encodeURIComponent(row.id)}`, storage: 'cloud', detail: { key: 'shelf.detail.layers', params: { count: Array.isArray(row.layers) ? row.layers.length : 0 } } }));
+  return rows.map((row) => ({
+    key: `design:${row.id}`,
+    type: 'design',
+    id: row.id,
+    title: titleOf(row.name),
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+    route: `/culture/oymo/create?creation=${encodeURIComponent(row.id)}`,
+    storage: 'cloud',
+    detail: { key: 'shelf.detail.layers', params: { count: Array.isArray(row.layers) ? row.layers.length : 0 } },
+  }));
 }
 
 /** Exhibitions exist per collection; a collection without a saved exhibition isn't an exhibition yet. */
@@ -45,12 +55,34 @@ export function exhibitionItems(museums: Record<string, Exhibition> | undefined,
   return Object.entries(museums ?? {}).flatMap(([collectionId, exhibition]) => {
     const collection = collections.collections.find((entry) => entry.id === collectionId);
     if (!collection || !exhibition) return [];
-    return [{ key: `exhibition:${collectionId}`, type: 'exhibition' as const, id: collectionId, title: titleOf(exhibition.title) ?? titleOf(collection.name), createdAt: iso(collection.createdAt), updatedAt: iso(exhibition.updatedAt) ?? iso(collection.updatedAt), route: `/profile/my-collections/museum?collection=${encodeURIComponent(collectionId)}`, storage: 'device' as const, detail: { key: 'shelf.detail.exhibits', params: { count: Array.isArray(exhibition.exhibits) ? exhibition.exhibits.length : 0 } } }];
+    return [
+      {
+        key: `exhibition:${collectionId}`,
+        type: 'exhibition' as const,
+        id: collectionId,
+        title: titleOf(exhibition.title) ?? titleOf(collection.name),
+        createdAt: iso(collection.createdAt),
+        updatedAt: iso(exhibition.updatedAt) ?? iso(collection.updatedAt),
+        route: `/profile/my-collections/museum?collection=${encodeURIComponent(collectionId)}`,
+        storage: 'device' as const,
+        detail: { key: 'shelf.detail.exhibits', params: { count: Array.isArray(exhibition.exhibits) ? exhibition.exhibits.length : 0 } },
+      },
+    ];
   });
 }
 
 export function boardItems(boards: readonly Board[]): ShelfItem[] {
-  return boards.map((board) => ({ key: `board:${board.id}`, type: 'board', id: board.id, title: titleOf(board.title), createdAt: iso(board.createdAt), updatedAt: iso(board.updatedAt), route: `/culture/board/${encodeURIComponent(board.id)}`, storage: 'device', detail: { key: 'shelf.detail.cards', params: { count: board.cards.length } } }));
+  return boards.map((board) => ({
+    key: `board:${board.id}`,
+    type: 'board',
+    id: board.id,
+    title: titleOf(board.title),
+    createdAt: iso(board.createdAt),
+    updatedAt: iso(board.updatedAt),
+    route: `/culture/board/${encodeURIComponent(board.id)}`,
+    storage: 'device',
+    detail: { key: 'shelf.detail.cards', params: { count: board.cards.length } },
+  }));
 }
 
 /** Only metadata: a sealed capsule never exposes its message, articles or design. */

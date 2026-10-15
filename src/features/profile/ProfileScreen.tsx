@@ -1,5 +1,37 @@
 import { router } from 'expo-router';
-import { Award, BarChart3, Bookmark, BookMarked, BookOpen, CalendarPlus, ChevronRight, Coins, Compass, Flame, Gamepad2, Heart, MapPin, FolderOpen, Headphones, Highlighter, Settings, Target, Sparkles, Trophy, Zap, History, HelpCircle, Library, Mail, Palette, MessageSquareWarning, PenLine, RotateCcw, Tags } from 'lucide-react-native';
+import {
+  Award,
+  BarChart3,
+  Briefcase,
+  Bookmark,
+  BookMarked,
+  BookOpen,
+  CalendarPlus,
+  ChevronRight,
+  Coins,
+  Compass,
+  Flame,
+  Gamepad2,
+  Heart,
+  MapPin,
+  FolderOpen,
+  Headphones,
+  Highlighter,
+  Settings,
+  Target,
+  Sparkles,
+  Trophy,
+  Zap,
+  History,
+  HelpCircle,
+  Library,
+  Mail,
+  Palette,
+  MessageSquareWarning,
+  PenLine,
+  RotateCcw,
+  Tags,
+} from 'lucide-react-native';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -81,10 +113,7 @@ export function ProfileScreen() {
 
   // My Journey entry: real Passport count + completed collections, with the
   // most recently visited place as artwork (else the journey backdrop).
-  const passport = useMemo(
-    () => buildPassport(regions ?? [], progress.visitedRegionIds, progress.regionVisitDates, (id) => natureSiteImages[id], language),
-    [regions, progress.visitedRegionIds, progress.regionVisitDates, language],
-  );
+  const passport = useMemo(() => buildPassport(regions ?? [], progress.visitedRegionIds, progress.regionVisitDates, (id) => natureSiteImages[id], language), [regions, progress.visitedRegionIds, progress.regionVisitDates, language]);
   const collectionsCompleted = collections.filter((collection) => computeCollectionProgress(collection, collectionSignals).status === 'completed').length;
   const latestVisit = Object.entries(progress.regionVisitDates).sort(([, a], [, b]) => b.localeCompare(a))[0]?.[0];
   const journeyImage = (latestVisit ? natureSiteImages[latestVisit] : undefined) ?? journeyBackdrop;
@@ -126,13 +155,7 @@ export function ProfileScreen() {
               accessibilityLabel={`${t('journey.title')}. ${t('profile.v2.journeySummary', { places: passport.unlocked, total: passport.total, collections: collectionsCompleted })}`}
             />
             {/* Short themed adventures - real counts only. */}
-            <AnimatedPressable
-              style={styles.questsRow}
-              onPress={() => router.push('/quests' as never)}
-              press="soft"
-              accessibilityRole="button"
-              accessibilityLabel={`${t('quests.title')}. ${questsSummary}`}
-            >
+            <AnimatedPressable style={styles.questsRow} onPress={() => router.push('/quests' as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${t('quests.title')}. ${questsSummary}`}>
               <Compass size={iconSizes.md} color={colors.primary} strokeWidth={2} />
               <View style={styles.questsText}>
                 <Text style={styles.questsTitle}>{t('quests.title')}</Text>
@@ -145,6 +168,7 @@ export function ProfileScreen() {
             {/* Two small private entries: per-game records and the recap. */}
             {[
               { route: '/profile/shelf', icon: Library, title: t('shelf.title'), meta: t('shelf.profileMeta') },
+              { route: '/profile/workspaces', icon: Briefcase, title: t('workspace.listTitle'), meta: t('workspace.profileMeta') },
               { route: '/profile/scrapbooks', icon: BookOpen, title: t('scrapbook.title'), meta: t('scrapbook.profileMeta') },
               { route: '/profile/tags', icon: Tags, title: t('tags.title'), meta: t('tags.profileMeta') },
               { route: '/profile/recovery', icon: RotateCcw, title: t('recovery.title'), meta: t('recovery.profileMeta') },
@@ -168,14 +192,7 @@ export function ProfileScreen() {
               // Signed-in only: guest reports are anonymous.
               ...(showMyReports ? [{ route: '/profile/reports', icon: MessageSquareWarning, title: t('myReports.title'), meta: t('myReports.profileMeta') }] : []),
             ].map((entry) => (
-              <AnimatedPressable
-                key={entry.route}
-                style={styles.questsRow}
-                onPress={() => router.push(entry.route as never)}
-                press="soft"
-                accessibilityRole="button"
-                accessibilityLabel={`${entry.title}. ${entry.meta}`}
-              >
+              <AnimatedPressable key={entry.route} style={styles.questsRow} onPress={() => router.push(entry.route as never)} press="soft" accessibilityRole="button" accessibilityLabel={`${entry.title}. ${entry.meta}`}>
                 <entry.icon size={iconSizes.md} color={colors.primary} strokeWidth={2} />
                 <View style={styles.questsText}>
                   <Text style={styles.questsTitle}>{entry.title}</Text>
@@ -214,23 +231,13 @@ export function ProfileScreen() {
           </View>
         );
       case 'collection':
-        return (
-          <ProfileCollectionRow
-            key={id}
-            items={collectionItems}
-            onPressItem={() => router.push('/collection' as never)}
-            onPressSeeAll={() => router.push('/collection' as never)}
-          />
-        );
+        return <ProfileCollectionRow key={id} items={collectionItems} onPressItem={() => router.push('/collection' as never)} onPressSeeAll={() => router.push('/collection' as never)} />;
     }
   }
 
   return (
     <View style={styles.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}>
         <ScreenEntrance>
           {/* Compact top bar - Profile is identity/progress; everything
               configurable lives behind the one Settings action. */}

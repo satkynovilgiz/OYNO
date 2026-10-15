@@ -12,7 +12,17 @@ import { useFirstUseStore } from '@/store/useFirstUseStore';
 import { discardEntry, retryEntry } from './recoveryActions';
 import { listRecovery, type RecoveryInputs } from './recoveryModel';
 
-const base = (owner: string, change: Partial<RecoveryInputs> = {}): RecoveryInputs => ({ owner, portfolioExists: () => true, scrapbookExists: () => true, question: () => ({ text: 'Q?' }), comparison: () => ({ a: 'A', b: 'B' }), journalDrafts: [], journalEntryExists: () => true, firstUse: null, ...change });
+const base = (owner: string, change: Partial<RecoveryInputs> = {}): RecoveryInputs => ({
+  owner,
+  portfolioExists: () => true,
+  scrapbookExists: () => true,
+  question: () => ({ text: 'Q?' }),
+  comparison: () => ({ a: 'A', b: 'B' }),
+  journalDrafts: [],
+  journalEntryExists: () => true,
+  firstUse: null,
+  ...change,
+});
 
 beforeEach(async () => {
   for (const source of ['portfolio', 'scrapbook', 'question', 'compareNote'] as const) draftMap(source).clear();
@@ -23,7 +33,7 @@ beforeEach(async () => {
 });
 
 describe('listing', () => {
-  it('each draft opens its own editor; only the current owner\'s are listed', () => {
+  it("each draft opens its own editor; only the current owner's are listed", () => {
     draftMap('portfolio').set(ownerKey('user-a', 'p1'), newPortfolio('Mine'));
     draftMap('scrapbook').set(ownerKey('user-a', 'sb1'), { id: 'sb1', title: 'Book', entries: [], createdAt: '', updatedAt: '' });
     draftMap('question').set(ownerKey('user-a', 'origin:boz-uy:history'), 'New question?');
@@ -49,7 +59,11 @@ describe('listing', () => {
     draftMap('portfolio').set(ownerKey('u', 'p1'), newPortfolio('P'));
     const journalDraft = { v: 1, target: 'e5', entryId: 'e5', fields: { title: 'T', note: '', date: '', photoUri: null, link: null }, baseUpdatedAt: null, savedAt: '' } as never;
     const list = listRecovery(base('u', { journalDrafts: [journalDraft], firstUse: { savedName: 'X' } }));
-    expect(list.map((e) => [e.kind, e.state, e.survivesRestart])).toEqual([['portfolio', 'unsaved', false], ['journal', 'unsaved', true], ['firstUse', 'pending', false]]);
+    expect(list.map((e) => [e.kind, e.state, e.survivesRestart])).toEqual([
+      ['portfolio', 'unsaved', false],
+      ['journal', 'unsaved', true],
+      ['firstUse', 'pending', false],
+    ]);
   });
   it('never offers retry where it could create a record; a missing parent is explicit', () => {
     draftMap('portfolio').set(ownerKey('u', 'gone'), newPortfolio('Deleted one'));
@@ -72,7 +86,12 @@ describe('retry', () => {
     const [entry] = listRecovery(base('u'));
     // An edit lands while the retry is being written:
     const real = usePortfolioStore.getState().save;
-    usePortfolioStore.setState({ save: async (owner: string, p: never) => { map.set(ownerKey('u', stored.id), rename(sent, 'Typed meanwhile')); return real(owner, p); } } as never);
+    usePortfolioStore.setState({
+      save: async (owner: string, p: never) => {
+        map.set(ownerKey('u', stored.id), rename(sent, 'Typed meanwhile'));
+        return real(owner, p);
+      },
+    } as never);
     expect(await retryEntry('u', entry)).toBe(true);
     usePortfolioStore.setState({ save: real } as never);
     expect(ownerPortfolio(usePortfolioStore.getState().saved, 'u', stored.id)?.title).toBe('Edited offline');

@@ -10,8 +10,9 @@ import { useListeningCompareStore } from '@/store/useListeningCompareStore';
 import { usePortfolioStore } from '@/store/usePortfolioStore';
 import { useQuestionsStore } from '@/store/useQuestionsStore';
 import { useScrapbookStore } from '@/store/useScrapbookStore';
+import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 
-import type { RecoveryEntry } from './recoveryModel';
+import type { RecoveryEntry, WorkspaceNoteDraft } from './recoveryModel';
 
 /** Clears `key` only if it still holds exactly what was sent - newer edits stay. */
 function clearIfUnchanged<T>(map: Map<string, T>, key: string, sent: T) {
@@ -71,6 +72,14 @@ export async function retryEntry(owner: string, entry: RecoveryEntry): Promise<b
       clearIfUnchanged(map, key, sent);
       return true;
     }
+    case 'workspaceNote': {
+      const map = draftMap<WorkspaceNoteDraft>('workspaceNote');
+      const key = ownerKey(owner, rest);
+      const sent = map.get(key);
+      if (!sent || !(await useWorkspaceStore.getState().change(owner, { kind: 'note', key: rest, note: sent.note, now: new Date().toISOString() }))) return false;
+      clearIfUnchanged(map, key, sent);
+      return true;
+    }
     case 'firstUse': {
       const pending = unrecordedSave(owner);
       if (!pending) return false;
@@ -103,6 +112,9 @@ export async function discardEntry(owner: string, entry: RecoveryEntry): Promise
       return;
     case 'explanation':
       draftMap('explanation').delete(ownerKey(owner, rest));
+      return;
+    case 'workspaceNote':
+      draftMap('workspaceNote').delete(ownerKey(owner, rest));
       return;
     case 'journal':
       await useJournalDraftStore.getState().remove(owner, rest);

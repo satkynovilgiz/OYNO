@@ -1,14 +1,14 @@
 /**
  * The in-memory unsaved-edit maps of the editors that keep drafts while
  * you navigate (portfolios, scrapbooks, My Questions, Listening Compare
- * notes). Each editor still owns its map and its key format; this module
+ * notes, project workspace notes). Each editor still owns its map and its key format; this module
  * only makes those SAME maps listable for the Recovery Center - nothing is
  * copied. In memory only: these drafts end when the app is closed.
  *
  * Keys always start with the owner, so listing for one owner never shows
  * another's drafts.
  */
-export type DraftSource = 'portfolio' | 'scrapbook' | 'question' | 'compareNote' | 'explanation';
+export type DraftSource = 'portfolio' | 'scrapbook' | 'question' | 'compareNote' | 'explanation' | 'workspaceNote';
 const maps = new Map<DraftSource, Map<string, unknown>>();
 
 export function draftMap<T>(source: DraftSource): Map<string, T> {

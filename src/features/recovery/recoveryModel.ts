@@ -3,11 +3,15 @@ import type { Portfolio } from '@/features/culture/oymo/portfolio/portfolioModel
 import type { Scrapbook } from '@/features/scrapbook/scrapbookModel';
 import { entriesFor } from '@/services/drafts/draftRegistry';
 
+/** An unsaved private note of a project workspace (key: the workspace's project key). */
+export type WorkspaceNoteDraft = { note: string; title: string };
+
 /**
  * Recovery Center - lists the CURRENT owner's unfinished work from the
  * editors' own draft sources (nothing copied):
  *  - in-memory unsaved edits: portfolios, scrapbooks, questions (new and
- *    edits), Listening Compare notes - these end when the app is closed;
+ *    edits), Listening Compare notes, project workspace notes - these end
+ *    when the app is closed;
  *  - Journal editor drafts - stored on the device, survive a restart;
  *  - a pending operation: a first-use design that was saved but whose
  *    guide step wasn't recorded.
@@ -15,7 +19,7 @@ import { entriesFor } from '@/services/drafts/draftRegistry';
  * record, or recording a step) - never for anything that would CREATE a
  * record (a new question, a new journal memory, a deleted parent).
  */
-export type RecoveryKind = 'portfolio' | 'scrapbook' | 'questionNew' | 'questionEdit' | 'compareNote' | 'explanation' | 'journal' | 'firstUse';
+export type RecoveryKind = 'portfolio' | 'scrapbook' | 'questionNew' | 'questionEdit' | 'compareNote' | 'explanation' | 'workspaceNote' | 'journal' | 'firstUse';
 export type ParentState = 'ok' | 'missing' | 'loading' | 'none';
 export type RecoveryEntry = {
   id: string;
@@ -38,6 +42,8 @@ export type RecoveryInputs = {
   journalDrafts: readonly EditorDraft[];
   journalEntryExists: (id: string) => boolean | undefined;
   firstUse: { savedName: string } | null;
+  /** Project workspaces (workspaceModel.ts): does the workspace a note belongs to still exist? */
+  workspaceExists?: (key: string) => boolean | undefined;
 };
 
 const parentOf = (exists: boolean | undefined): ParentState => (exists === undefined ? 'loading' : exists ? 'ok' : 'missing');
@@ -58,7 +64,16 @@ export function listRecovery(input: RecoveryInputs): RecoveryEntry[] {
     if (scope === 'origin') {
       const [articleId, sectionKey] = parts;
       // A NEW question: saving creates a record - opened in its section, never retried from here.
-      out.push({ id: `questionNew:${articleId}:${sectionKey}`, kind: 'questionNew', state: 'unsaved', survivesRestart: false, title: value, parent: 'none', route: `/culture/item/${encodeURIComponent(articleId)}?section=${encodeURIComponent(sectionKey)}`, retry: false });
+      out.push({
+        id: `questionNew:${articleId}:${sectionKey}`,
+        kind: 'questionNew',
+        state: 'unsaved',
+        survivesRestart: false,
+        title: value,
+        parent: 'none',
+        route: `/culture/item/${encodeURIComponent(articleId)}?section=${encodeURIComponent(sectionKey)}`,
+        retry: false,
+      });
     } else if ((scope === 'text' || scope === 'answer') && parts[0] && !editedQuestions.has(parts[0])) {
       editedQuestions.add(parts[0]);
       const found = input.question(parts[0]);
@@ -69,16 +84,57 @@ export function listRecovery(input: RecoveryInputs): RecoveryEntry[] {
   for (const { rest, value } of entriesFor<string>('compareNote', input.owner)) {
     const found = input.comparison(rest);
     const parent = found === undefined ? 'loading' : found ? 'ok' : 'missing';
-    out.push({ id: `compareNote:${rest}`, kind: 'compareNote', state: 'unsaved', survivesRestart: false, title: found ? `${found.a} · ${found.b}` : value.slice(0, 60), parent, route: `/culture/komuz/compare/${encodeURIComponent(rest)}`, retry: parent === 'ok' });
+    out.push({
+      id: `compareNote:${rest}`,
+      kind: 'compareNote',
+      state: 'unsaved',
+      survivesRestart: false,
+      title: found ? `${found.a} · ${found.b}` : value.slice(0, 60),
+      parent,
+      route: `/culture/komuz/compare/${encodeURIComponent(rest)}`,
+      retry: parent === 'ok',
+    });
   }
   // An explanation saves as an update keyed by its article, so retrying can't make a duplicate.
   for (const { rest, value } of entriesFor<{ text: string; titleSnapshot: string }>('explanation', input.owner)) {
-    out.push({ id: `explanation:${rest}`, kind: 'explanation', state: 'unsaved', survivesRestart: false, title: value.titleSnapshot || value.text.slice(0, 60), parent: 'none', route: `/culture/item/${encodeURIComponent(rest)}/explain`, retry: value.text.trim().length > 0 });
+    out.push({
+      id: `explanation:${rest}`,
+      kind: 'explanation',
+      state: 'unsaved',
+      survivesRestart: false,
+      title: value.titleSnapshot || value.text.slice(0, 60),
+      parent: 'none',
+      route: `/culture/item/${encodeURIComponent(rest)}/explain`,
+      retry: value.text.trim().length > 0,
+    });
+  }
+  // A private workspace note saves as an update of an existing workspace - safe to retry.
+  for (const { rest, value } of entriesFor<WorkspaceNoteDraft>('workspaceNote', input.owner)) {
+    const parent = parentOf(input.workspaceExists?.(rest));
+    out.push({
+      id: `workspaceNote:${rest}`,
+      kind: 'workspaceNote',
+      state: 'unsaved',
+      survivesRestart: false,
+      title: value.title || value.note.slice(0, 60),
+      parent,
+      route: `/profile/workspaces/${encodeURIComponent(rest)}`,
+      retry: parent === 'ok',
+    });
   }
   for (const draft of input.journalDrafts) {
     const isNew = draft.target === 'new';
     const parent: ParentState = isNew ? 'none' : parentOf(input.journalEntryExists(draft.target));
-    out.push({ id: `journal:${draft.target}`, kind: 'journal', state: 'unsaved', survivesRestart: true, title: draft.fields.title || draft.fields.note.slice(0, 60), parent, route: isNew ? '/journal/new' : `/journal/${encodeURIComponent(draft.target)}`, retry: false });
+    out.push({
+      id: `journal:${draft.target}`,
+      kind: 'journal',
+      state: 'unsaved',
+      survivesRestart: true,
+      title: draft.fields.title || draft.fields.note.slice(0, 60),
+      parent,
+      route: isNew ? '/journal/new' : `/journal/${encodeURIComponent(draft.target)}`,
+      retry: false,
+    });
   }
   if (input.firstUse) out.push({ id: 'firstUse', kind: 'firstUse', state: 'pending', survivesRestart: false, title: input.firstUse.savedName, parent: 'none', route: '/start', retry: true });
   return out;

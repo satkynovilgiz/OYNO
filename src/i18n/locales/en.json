@@ -7529,7 +7529,8 @@
       "compareNote": "Listening comparison note",
       "journal": "Journal draft",
       "firstUse": "Getting-started guide",
-      "explanation": "Explanation"
+      "explanation": "Explanation",
+      "workspaceNote": "Project workspace note"
     },
     "state": {
       "unsaved": "Unsaved edits - not saved yet",
@@ -7942,5 +7943,91 @@
       "margin": "Snapped to the safe margin: {{x}}, {{y}}",
       "grid": "Snapped to the grid: {{x}}, {{y}}"
     }
+  },
+  "workspace": {
+    "title": "Project workspace",
+    "listTitle": "Project workspaces",
+    "profileMeta": "One place for a design or exhibition you're working on",
+    "intro": "A workspace gathers the editing, preview and export actions of one existing Oymo design or Mini Museum exhibition, with a private note. The project itself stays where it is.",
+    "yours": "Your workspaces",
+    "none": "No workspaces yet. Choose a project below.",
+    "hasNote": "Has a private note",
+    "choose": "Choose a project",
+    "open": "Open workspace",
+    "openFor": "Open the workspace for {{name}}",
+    "full": "You have {{max}} workspaces, the most there can be. Remove one to add another.",
+    "homeTitle": "Your projects",
+    "homeAll": "All workspaces",
+    "notFound": "This workspace link isn't valid",
+    "notFoundBody": "It doesn't point to a design or an exhibition.",
+    "allWorkspaces": "All workspaces",
+    "loadError": "Your workspaces couldn't be read",
+    "loading": "Loading your workspaces…",
+    "projectLoading": "Loading the project…",
+    "projectError": "The project couldn't be loaded.",
+    "signedOut": "Sign in to open this design",
+    "offline": "Not available offline",
+    "offlineBody": "Connect to the internet to load your saved designs.",
+    "missing": {
+      "design": "This design is no longer saved",
+      "exhibition": "This exhibition no longer exists"
+    },
+    "missingBody": "It may have been deleted. Nothing was changed here; you can remove this workspace or go to your Shelf.",
+    "toShelf": "Go to My OYNO Shelf",
+    "groups": {
+      "edit": "Edit",
+      "preview": "Preview",
+      "export": "Export and share"
+    },
+    "actions": {
+      "design": {
+        "edit": "Edit in the Creator",
+        "editHint": "Opens this saved design in the Oymo Creator. Saving there keeps a new saved copy.",
+        "milestones": "Milestones",
+        "milestonesHint": "Opens the saved stages of this design.",
+        "surfaces": "Preview on surfaces",
+        "surfacesHint": "Shows the design on felt, paper and other surfaces. Nothing is saved.",
+        "postcard": "Make a postcard",
+        "postcardHint": "Opens the postcard maker with this design.",
+        "share": "Share image",
+        "shareHint": "Shares a card with the design and its name. Your note is never included."
+      },
+      "exhibition": {
+        "edit": "Edit the exhibition",
+        "editHint": "Opens the Mini Museum editor for this exhibition.",
+        "collection": "Open the collection",
+        "collectionHint": "Opens the collection the exhibition is made from.",
+        "visitorPreview": "Visitor preview",
+        "visitorPreviewHint": "Opens the exhibition the way a visitor sees it.",
+        "share": "Share cover",
+        "shareHint": "Shares the exhibition's cover card. Your note is never included."
+      }
+    },
+    "statusTitle": "Saved and unsaved",
+    "savedRecord": "Saved record",
+    "drafts": "Recoverable drafts",
+    "noDrafts": "No unsaved drafts for this project.",
+    "portfolioDraft": "Unsaved changes in the portfolio \"{{name}}\", which includes this design",
+    "openDraft": "Open the portfolio",
+    "draftRule": {
+      "design": "The Creator keeps unsaved changes only while it is open; save there to keep them.",
+      "exhibition": "Exhibition changes are saved as you make them."
+    },
+    "noteTitle": "Private note",
+    "notePrivate": "Only you see this note. It isn't part of the project and is never shared or exported.",
+    "noteLabel": "Your note",
+    "notePlaceholder": "Ideas, next steps, what to change…",
+    "noteSaved": "Note saved",
+    "noteUnsaved": "Note has unsaved changes",
+    "saveNote": "Save note",
+    "noteFailed": "The note couldn't be saved. Your text is kept - try again.",
+    "notAdded": "This project isn't in your workspaces yet.",
+    "add": "Add to my workspaces",
+    "addFailed": "The workspace couldn't be saved.",
+    "remove": "Remove workspace",
+    "removeFailed": "The workspace couldn't be removed.",
+    "removeTitle": "Remove this workspace?",
+    "removeMessage": "Your private note goes with it. The design or exhibition itself is not changed or deleted.",
+    "removeConfirm": "Remove"
   }
 }

@@ -16,6 +16,7 @@ import { ownerComparisons, useListeningCompareStore } from '@/store/useListening
 import { ownerPortfolio, usePortfolioStore } from '@/store/usePortfolioStore';
 import { ownerQuestions, useQuestionsStore } from '@/store/useQuestionsStore';
 import { ownerScrapbook, useScrapbookStore } from '@/store/useScrapbookStore';
+import { ownerWorkspaces, useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { cardRadii, colors, spacing, textStyles, typography } from '@/theme';
 
 import { discardEntry, retryEntry } from './recoveryActions';
@@ -36,6 +37,7 @@ export function RecoveryScreen({ onPressBack }: { onPressBack: () => void }) {
   const compare = useListeningCompareStore((s) => s);
   const journalDrafts = useJournalDraftStore((s) => s);
   const journal = useJournalStore((s) => s);
+  const workspaces = useWorkspaceStore((s) => s);
   useEffect(() => {
     void usePortfolioStore.getState().load();
     void useScrapbookStore.getState().load();
@@ -44,6 +46,7 @@ export function RecoveryScreen({ onPressBack }: { onPressBack: () => void }) {
     void useJournalDraftStore.getState().load();
     void useExplanationsStore.getState().load();
     void useJournalStore.getState().load();
+    void useWorkspaceStore.getState().load();
   }, []);
   // Drafts live in memory maps: re-read them whenever this screen is shown.
   useFocusEffect(useCallback(() => setVersion((v) => v + 1), []));
@@ -68,6 +71,7 @@ export function RecoveryScreen({ onPressBack }: { onPressBack: () => void }) {
     journalDrafts: journalDrafts.isLoaded ? Object.values(journalDrafts.saved[owner] ?? {}) : [],
     journalEntryExists: (id) => (journal.isLoaded ? journal.entries.some((entry) => entry.id === id && !entry.deletedAt) : undefined),
     firstUse: unrecordedSave(owner),
+    workspaceExists: (key) => (ready(workspaces.status) ? !!ownerWorkspaces(workspaces.saved, owner)[key] : undefined),
   });
   void version;
 
@@ -119,7 +123,9 @@ export function RecoveryScreen({ onPressBack }: { onPressBack: () => void }) {
             {!entry.retry && entry.state === 'unsaved' && entry.parent !== 'missing' ? <Text style={styles.meta}>{t('recovery.openToSave')}</Text> : null}
             <View style={styles.wrap}>
               {entry.parent !== 'missing' ? <Button label={t('recovery.open')} variant="secondary" size="sm" onPress={() => router.push(entry.route as never)} testID={`recovery-open-${entry.id}`} /> : null}
-              {entry.retry ? <Button label={entry.kind === 'firstUse' ? t('recovery.recordStep') : t('recovery.retrySave')} size="sm" loading={busy === entry.id} onPress={() => void retry(entry)} testID={`recovery-retry-${entry.id}`} /> : null}
+              {entry.retry ? (
+                <Button label={entry.kind === 'firstUse' ? t('recovery.recordStep') : t('recovery.retrySave')} size="sm" loading={busy === entry.id} onPress={() => void retry(entry)} testID={`recovery-retry-${entry.id}`} />
+              ) : null}
               <Button label={t('recovery.discard')} variant="text" size="sm" onPress={() => setConfirm(entry.id)} testID={`recovery-discard-${entry.id}`} />
             </View>
             {message?.id === entry.id && !message.ok ? <Text style={styles.warn}>{t('recovery.retryFailed')}</Text> : null}

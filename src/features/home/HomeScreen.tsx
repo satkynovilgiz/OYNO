@@ -18,16 +18,7 @@ import { useInbox } from '@/features/notifications/useInbox';
 import { DAILY_PLAY_GOAL, useProgressStore } from '@/store/useProgressStore';
 import { bounded, colors, layout, spacing } from '@/theme';
 
-import {
-  CategoryCarousel,
-  GamesCarousel,
-  HomeHeader,
-  HomeJourneyCard,
-  HomeProgressSection,
-  HomeTodayPair,
-  RecentlyExploredRow,
-  TodayDiscoveryEntryCard,
-} from './components';
+import { CategoryCarousel, GamesCarousel, HomeHeader, HomeJourneyCard, HomeProgressSection, HomeTodayPair, RecentlyExploredRow, TodayDiscoveryEntryCard } from './components';
 import { ContinueRegionCard } from './components/ContinueRegionCard';
 import { FirstUseHomeCard } from '@/features/firstUse/FirstUseScreen';
 import { ActivityChooserEntry } from './chooser/ActivityChooserScreen';
@@ -40,6 +31,7 @@ import { type HomeSectionId } from './homeSections';
 import { useHomeLayoutStore } from '@/store/useHomeLayoutStore';
 import { cultureTileAssets } from './mockData';
 import { mockGamesList } from '@/features/games/mockData';
+import { HomeWorkspacesRow } from '@/features/workspace/HomeWorkspacesRow';
 import type { CultureTile, DailyChallenge, DailyGift, DailyProgress, PlayerSummary } from './types';
 import { useHomeRecommendation } from './useHomeRecommendation';
 import { HomePrimary } from './primary/HomePrimary';
@@ -110,30 +102,11 @@ export function HomeScreen() {
   const playComplete = progress.playsToday >= DAILY_PLAY_GOAL;
 
   const { level, xpCurrent, xpMax } = xpProgress(progress.xp);
-  const player: PlayerSummary = {
-    name: user?.name ?? t('common.guestName'),
-    rank: t('home.profile.rank'),
-    characterId,
-    avatarConfig,
-    level,
-    xpCurrent,
-    xpMax,
-    coins: progress.coins,
-    gems: progress.gems,
-    streakDays: progress.streakDays,
-  };
+  const player: PlayerSummary = { name: user?.name ?? t('common.guestName'), rank: t('home.profile.rank'), characterId, avatarConfig, level, xpCurrent, xpMax, coins: progress.coins, gems: progress.gems, streakDays: progress.streakDays };
 
-  const dailyChallenge: DailyChallenge = {
-    description: t('home.dailyChallenge.description'),
-    progressCurrent: Math.min(progress.winsToday, 1),
-    progressMax: 1,
-    rewardXp: 100,
-    rewardCoins: 50,
-  };
+  const dailyChallenge: DailyChallenge = { description: t('home.dailyChallenge.description'), progressCurrent: Math.min(progress.winsToday, 1), progressMax: 1, rewardXp: 100, rewardCoins: 50 };
 
-  const dailyGift: DailyGift = {
-    subtitle: t(giftClaimed ? 'home.dailyGift.subtitleClaimed' : 'home.dailyGift.subtitleUnclaimed'),
-  };
+  const dailyGift: DailyGift = { subtitle: t(giftClaimed ? 'home.dailyGift.subtitleClaimed' : 'home.dailyGift.subtitleUnclaimed') };
 
   const dailyProgress: DailyProgress = {
     description: t('home.dailyProgress.description', { played: Math.min(progress.playsToday, DAILY_PLAY_GOAL), goal: DAILY_PLAY_GOAL }),
@@ -204,17 +177,7 @@ export function HomeScreen() {
       case 'recent':
         return recent.length > 0 ? <RecentlyExploredRow key={id} items={recent} onPress={(route) => router.push(route as never)} /> : null;
       case 'progress':
-        return (
-          <HomeProgressSection
-            key={id}
-            player={player}
-            dailyProgress={dailyProgress}
-            claimable={playComplete}
-            claimed={playClaimed}
-            experience={experience}
-            onPressClaim={() => useProgressStore.getState().claimDailyPlay()}
-          />
-        );
+        return <HomeProgressSection key={id} player={player} dailyProgress={dailyProgress} claimable={playComplete} claimed={playClaimed} experience={experience} onPressClaim={() => useProgressStore.getState().claimDailyPlay()} />;
       case 'games':
         return (
           <GamesCarousel
@@ -244,10 +207,7 @@ export function HomeScreen() {
 
   return (
     <View style={styles.root} testID="home-screen">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}>
         <ScreenEntrance>
           <HomeHeader
             hasUnreadNotifications={hasUnreadNotifications}
@@ -263,6 +223,7 @@ export function HomeScreen() {
           {/* Discover / Create / Continue - static tiles first, so Home is never blank while data loads. */}
           <HomePrimary state={continueState} journeyDisplay={recommendationDisplay} />
           <HomeShortcutsRow />
+          <HomeWorkspacesRow />
         </View>
 
         <AgeExperienceTransition style={styles.sectionList}>
@@ -282,26 +243,13 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  root: { flex: 1, backgroundColor: colors.background },
   // Rhythm: header -> hero 16; between sections 24 (spacing.xl); title ->
   // content 12 inside a section. The ScrollView ends above the tab bar
   // (a sibling, not an overlay), so nothing is hidden behind it.
   // Phones: full width. Tablets / wide windows: one centred column, so cards never stretch edge to edge.
-  content: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
-    ...bounded(layout.maxListWidth),
-  },
-  sectionList: {
-    gap: spacing.xl,
-  },
-  horizontalPad: {
-    paddingHorizontal: spacing.md,
-  },
-  primaryBlock: {
-    gap: spacing.md,
-  },
+  content: { gap: spacing.md, paddingBottom: spacing.xl, ...bounded(layout.maxListWidth) },
+  sectionList: { gap: spacing.xl },
+  horizontalPad: { paddingHorizontal: spacing.md },
+  primaryBlock: { gap: spacing.md },
 });

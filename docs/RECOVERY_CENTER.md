@@ -12,6 +12,7 @@ and `src/services/drafts/draftRegistry.ts`.
 | Scrapbook edits | the scrapbook editor's draft map | no |
 | New question (section composer), question text/answer edits | My Questions draft map | no |
 | Listening Compare note | the compare draft map | no |
+| Project workspace note (docs/PROJECT_WORKSPACE.md) | the workspace note draft map | no |
 | Journal editor drafts | `oyno.journal.drafts.v1` (existing store) | **yes** |
 | Getting-started guide: design saved, guide step not recorded | first-use pending marker | no |
 

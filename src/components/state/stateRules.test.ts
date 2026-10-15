@@ -58,7 +58,7 @@ describe('screen states - audited screens', () => {
     expect(creator).toMatch(/\{creations \? <SavedPatternsGallery/);
   });
   it('Shelf: offline is "unavailable", not an endless "loading"', () => {
-    expect(read('src/features/shelf/ShelfScreen.tsx')).toMatch(/designs\.fetchStatus === 'paused' \? \{ status: 'unavailable', reason: 'offline' \}/);
+    expect(read('src/features/shelf/useShelfSources.ts')).toMatch(/designs\.fetchStatus === 'paused'\s*\?\s*\{ status: 'unavailable', reason: 'offline' \}/);
   });
   it('messages exist in KG / RU / EN', () => {
     for (const dict of [en, ru, kg]) {

@@ -23,7 +23,9 @@ jest.mock('@/features/games/records/useGameRecords', () => {
 });
 const mockOwner = (jest.requireMock('@/features/games/records/useGameRecords') as { mockOwner: { setState: (state: { owner: string }) => void } }).mockOwner;
 // Saved designs come from the account (react-query); per owner here.
-const mockDesigns: Record<string, unknown> = { 'user-a': { data: [{ id: 'd1', name: 'Felt corner', layers: [{}, {}], background_color: '#fff', symmetry_mode: 'none', created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-05T10:00:00Z' }] } };
+const mockDesigns: Record<string, unknown> = {
+  'user-a': { data: [{ id: 'd1', name: 'Felt corner', layers: [{}, {}], background_color: '#fff', symmetry_mode: 'none', created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-05T10:00:00Z' }] },
+};
 jest.mock('@tanstack/react-query', () => ({ useQuery: ({ queryKey, enabled }: { queryKey: string[]; enabled: boolean }) => (enabled ? ((mockDesigns[queryKey[2]] as object) ?? { data: [] }) : { data: undefined }) }));
 jest.mock('@/components/ui', () => {
   const { createElement: h } = jest.requireActual('react');
@@ -41,7 +43,13 @@ const item = (patch: Partial<ShelfItem>): ShelfItem => ({ key: patch.key ?? 'k',
 
 describe('adapters', () => {
   it('each type opens its existing route, with truthful storage labels', () => {
-    expect(designItems((mockDesigns['user-a'] as { data: Parameters<typeof designItems>[0] }).data)[0]).toMatchObject({ type: 'design', title: 'Felt corner', route: '/culture/oymo/create?creation=d1', storage: 'cloud', detail: { params: { count: 2 } } });
+    expect(designItems((mockDesigns['user-a'] as { data: Parameters<typeof designItems>[0] }).data)[0]).toMatchObject({
+      type: 'design',
+      title: 'Felt corner',
+      route: '/culture/oymo/create?creation=d1',
+      storage: 'cloud',
+      detail: { params: { count: 2 } },
+    });
     const board = createBoard({ type: 'culture_item', id: 'boz-uy-tunduk', titleSnapshot: 'T' }, { question: 'q', promptId: null, title: '' });
     expect(boardItems([board])[0]).toMatchObject({ type: 'board', title: null, route: `/culture/board/${board.id}`, storage: 'device' });
     const collections = { collections: [{ id: 'uc_1', name: 'Yurt things', description: null, createdAt: '2026-09-01T10:00:00Z', updatedAt: '2026-09-02T10:00:00Z' }], items: [] };

@@ -34,6 +34,7 @@ const PRIVATE_PARAMS: Record<string, string> = {
   '/profile/capsules/[capsuleId]': 'capsuleId',
   '/profile/oymo-portfolios/[portfolioId]': 'portfolioId',
   '/profile/scrapbooks/[bookId]': 'bookId',
+  '/profile/workspaces/[key]': 'key',
   '/profile/questions/[questionId]': 'questionId',
   '/profile/tags/[tagId]': 'tagId',
   '/culture/komuz/compare/[comparisonId]': 'comparisonId',

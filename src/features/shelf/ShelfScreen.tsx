@@ -1,65 +1,22 @@
-import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { ChevronLeft, ChevronRight, Cloud, Smartphone } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Cloud, FolderOpen, Smartphone } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedPressable, Button, IconButton, TextField } from '@/components/ui';
 import { useRecordsOwner } from '@/features/games/records/useGameRecords';
+import { isProjectType, openWorkspace } from '@/features/workspace/openWorkspace';
+import type { ProjectType } from '@/features/workspace/workspaceModel';
 import type { SupportedLanguage } from '@/i18n';
-import { fetchOymoCreations } from '@/services/content/oymoCreationsService';
 import { formatShortDate, localDateKeyOf } from '@/services/i18n/formatDate';
-import { ownerCapsules, useCapsuleStore } from '@/store/useCapsuleStore';
-import { ownerBoards, useDiscoveryBoardStore } from '@/store/useDiscoveryBoardStore';
-import { ownerCollections, useMyCollectionsStore } from '@/store/useMyCollectionsStore';
 import { bounded, cardRadii, colors, layout, spacing, textStyles, typography } from '@/theme';
 
-import { boardItems, capsuleItems, designItems, exhibitionItems, SHELF_TYPES, shelfView, SORTS, type ShelfItem, type ShelfType, type SortKey, type SourceState } from './shelfModel';
+import { SHELF_TYPES, shelfView, SORTS, type ShelfItem, type ShelfType, type SortKey } from './shelfModel';
+import { useShelfSources } from './useShelfSources';
 
 const CREATE_ROUTE: Record<ShelfType, string> = { design: '/culture/oymo/create', exhibition: '/profile/my-collections', board: '/culture/board', capsule: '/profile/capsules/new' };
-
-/** Each source on its own: loading, ready, error (with retry) or not available - independently. */
-function useShelfSources(owner: string): Record<ShelfType, SourceState> {
-  const signedIn = owner !== 'guest';
-  // Saved designs live in the account (RLS: the signed-in user's rows). Keyed by OWNER, so another
-  // account's cached list can never show here after a switch.
-  const designs = useQuery({ queryKey: ['oymo_creations', 'shelf', owner], queryFn: fetchOymoCreations, enabled: signedIn });
-  const collectionsLoaded = useMyCollectionsStore((state) => state.isLoaded);
-  const collections = useMyCollectionsStore((state) => state.saved);
-  const museums = useMyCollectionsStore((state) => state.museums);
-  const boardStatus = useDiscoveryBoardStore((state) => state.status);
-  const boards = useDiscoveryBoardStore((state) => state.saved);
-  const capsuleStatus = useCapsuleStore((state) => state.status);
-  const capsules = useCapsuleStore((state) => state.saved);
-  useEffect(() => {
-    void useMyCollectionsStore.getState().load();
-    void useDiscoveryBoardStore.getState().load();
-    void useCapsuleStore.getState().load();
-  }, []);
-  return useMemo(
-    () => ({
-      design: !signedIn ? { status: 'unavailable', reason: 'signedOut' } : !designs.data && designs.fetchStatus === 'paused' ? { status: 'unavailable', reason: 'offline' } : designs.isError ? { status: 'error', retry: () => void designs.refetch() } : designs.data ? { status: 'ready', items: designItems(designs.data) } : { status: 'loading' },
-      exhibition: collectionsLoaded ? { status: 'ready', items: exhibitionItems(museums[owner], ownerCollections(collections, owner)) } : { status: 'loading' },
-      board: boardStatus === 'error' ? { status: 'error', retry: () => void useDiscoveryBoardStore.getState().retryLoad() } : boardStatus === 'ready' ? { status: 'ready', items: boardItems(ownerBoards(boards, owner)) } : { status: 'loading' },
-      capsule:
-        capsuleStatus === 'error'
-          ? {
-              status: 'error',
-              retry: () => {
-                useCapsuleStore.setState({ status: 'idle' });
-                void useCapsuleStore.getState().load();
-              },
-            }
-          : capsuleStatus === 'ready'
-            ? { status: 'ready', items: capsuleItems(ownerCapsules(capsules, owner)) }
-            : { status: 'loading' },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [signedIn, owner, designs.isError, designs.data, designs.fetchStatus, collectionsLoaded, collections, museums, boardStatus, boards, capsuleStatus, capsules],
-  );
-}
 
 /**
  * /profile/shelf - My OYNO Shelf: saved Oymo designs, Mini Museum
@@ -123,7 +80,12 @@ export function ShelfScreen({ onPressBack }: { onPressBack: () => void }) {
         {/* Every source's own state: a failure never hides what did load, and isn't shown as "empty". */}
         {typesInView.map((entry) => {
           const state = sources[entry];
-          if (state.status === 'loading') return <Text key={entry} style={styles.meta} testID={`shelf-loading-${entry}`}>{t('shelf.loading', { type: t(`shelf.types.${entry}`) })}</Text>;
+          if (state.status === 'loading')
+            return (
+              <Text key={entry} style={styles.meta} testID={`shelf-loading-${entry}`}>
+                {t('shelf.loading', { type: t(`shelf.types.${entry}`) })}
+              </Text>
+            );
           if (state.status === 'error')
             return (
               <View key={entry} style={[styles.card, styles.error]} testID={`shelf-error-${entry}`}>
@@ -147,28 +109,49 @@ export function ShelfScreen({ onPressBack }: { onPressBack: () => void }) {
           return null;
         })}
 
-        {query.trim() && shown.length === 0 ? <Text style={styles.body} testID="shelf-no-match">{t('shelf.noMatch')}</Text> : null}
+        {query.trim() && shown.length === 0 ? (
+          <Text style={styles.body} testID="shelf-no-match">
+            {t('shelf.noMatch')}
+          </Text>
+        ) : null}
         <View style={styles.list} testID="shelf-list">
           {shown.map((item) => {
             const name = item.title ?? t(`shelf.untitled.${item.type}`);
             const storage = item.storage === 'cloud' ? t('shelf.storage.cloud') : t('shelf.storage.device');
             return (
-              <AnimatedPressable key={item.key} style={styles.row} onPress={() => router.push(item.route as never)} accessibilityRole="button" accessibilityLabel={`${name}. ${t(`shelf.types.${item.type}`)}. ${detailText(item)}. ${storage}. ${t('shelf.updated', { date: date(item.updatedAt) })}`} testID={`shelf-item-${item.key}`}>
-                <View style={styles.flex}>
-                  <Text style={styles.typeLabel}>{t(`shelf.types.${item.type}`)}</Text>
-                  <Text style={[styles.itemTitle, item.title === null && styles.untitled]} numberOfLines={2}>
-                    {name}
-                  </Text>
-                  <Text style={styles.meta}>
-                    {detailText(item)} · {t('shelf.updated', { date: date(item.updatedAt) })}
-                  </Text>
-                  <View style={styles.inline}>
-                    {item.storage === 'cloud' ? <Cloud size={12} color={colors.textSecondary} strokeWidth={2} /> : <Smartphone size={12} color={colors.textSecondary} strokeWidth={2} />}
-                    <Text style={styles.meta}>{storage}</Text>
+              <View key={item.key} style={styles.row}>
+                <AnimatedPressable
+                  style={styles.rowMain}
+                  onPress={() => router.push(item.route as never)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${name}. ${t(`shelf.types.${item.type}`)}. ${detailText(item)}. ${storage}. ${t('shelf.updated', { date: date(item.updatedAt) })}`}
+                  testID={`shelf-item-${item.key}`}
+                >
+                  <View style={styles.flex}>
+                    <Text style={styles.typeLabel}>{t(`shelf.types.${item.type}`)}</Text>
+                    <Text style={[styles.itemTitle, item.title === null && styles.untitled]} numberOfLines={2}>
+                      {name}
+                    </Text>
+                    <Text style={styles.meta}>
+                      {detailText(item)} · {t('shelf.updated', { date: date(item.updatedAt) })}
+                    </Text>
+                    <View style={styles.inline}>
+                      {item.storage === 'cloud' ? <Cloud size={12} color={colors.textSecondary} strokeWidth={2} /> : <Smartphone size={12} color={colors.textSecondary} strokeWidth={2} />}
+                      <Text style={styles.meta}>{storage}</Text>
+                    </View>
                   </View>
-                </View>
-                <ChevronRight size={16} color={colors.textSecondary} strokeWidth={2} />
-              </AnimatedPressable>
+                  <ChevronRight size={16} color={colors.textSecondary} strokeWidth={2} />
+                </AnimatedPressable>
+                {isProjectType(item.type) ? (
+                  <IconButton
+                    icon={FolderOpen}
+                    shape="roundedSquare"
+                    accessibilityLabel={t('workspace.openFor', { name })}
+                    onPress={() => void openWorkspace(owner, { type: item.type as ProjectType, id: item.id }, item.title ?? '')}
+                    testID={`shelf-workspace-${item.key}`}
+                  />
+                ) : null}
+              </View>
             );
           })}
         </View>
@@ -196,7 +179,21 @@ const styles = StyleSheet.create({
   untitled: { fontStyle: 'italic', fontWeight: '400' },
   card: { gap: spacing.xs, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle },
   error: { borderLeftWidth: 4, borderLeftColor: colors.accentTerracotta },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.md, borderRadius: cardRadii.compact, backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderSubtle, flexBasis: 320, flexGrow: 1, maxWidth: (layout.maxListWidth - spacing.sm) / 2 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 56,
+    paddingRight: spacing.sm,
+    borderRadius: cardRadii.compact,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    flexBasis: 320,
+    flexGrow: 1,
+    maxWidth: (layout.maxListWidth - spacing.sm) / 2,
+  },
+  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, padding: spacing.md, borderRadius: cardRadii.compact },
   chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: 22, borderWidth: 1, borderColor: colors.borderSubtle, backgroundColor: colors.surface },
   chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { ...textStyles.bodyMedium, color: colors.textPrimary },
